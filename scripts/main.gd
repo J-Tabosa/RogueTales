@@ -409,9 +409,17 @@ func show_preview() -> void:
 	make_arena(200)
 	arena.hero.position.x = 246
 	frame_label = label(page, "", Rect2(24, 558, 492, 40), 20, GOLD)
-	button(page, "Idle · 10", Rect2(24, 624, 150, 58), preview_anim.bind("idle"))
-	button(page, "Walk · 6", Rect2(195, 624, 150, 58), preview_anim.bind("walk"))
-	button(page, "Ataque · 10", Rect2(366, 624, 150, 58), preview_anim.bind("attack"))
+	var animations := ["idle", "walk", "attack"]
+	var titles := ["Idle", "Walk", "Ataque"]
+	for index in animations.size():
+		var anim: String = animations[index]
+		var count: int = arena.hero.sprite_frames.get_frame_count(anim)
+		button(
+			page,
+			"%s · %d" % [titles[index], count],
+			Rect2(24 + index * 171, 624, 150, 58),
+			preview_anim.bind(anim)
+		)
 	var slider := HSlider.new()
 	slider.position = Vector2(24, 733)
 	slider.size = Vector2(492, 36)
