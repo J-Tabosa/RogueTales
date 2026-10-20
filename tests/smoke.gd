@@ -9,6 +9,25 @@ func _initialize() -> void:
 
 func run_checks() -> void:
 	seed(42)
+	# Saved resources, FPS and transforms stay editable and local to each scene.
+	var scene: PackedScene = load("res://scenes/heroes/scarlet.tscn")
+	var first: AnimatedSprite2D = scene.instantiate()
+	var second: AnimatedSprite2D = scene.instantiate()
+	root.add_child(first)
+	root.add_child(second)
+	assert(first.sprite_frames != second.sprite_frames)
+	assert(first.sprite_frames.get_animation_speed("idle") == 4.0)
+	first.scale = Vector2(0.55, 0.55)
+	first.sprite_frames.set_animation_speed("idle", 2.0)
+	first.show_animation("walk")
+	first.show_animation("idle")
+	assert(first.scale == Vector2(0.55, 0.55))
+	assert(first.sprite_frames.get_animation_speed("idle") == 2.0)
+	assert(second.sprite_frames.get_animation_speed("idle") == 4.0)
+	first.sprite_frames.set_animation_speed("attack", 5.0)
+	assert(is_equal_approx(first.get_animation_duration("attack"), 2.0))
+	first.queue_free()
+	second.queue_free()
 	game = load("res://scenes/main.tscn").instantiate()
 	root.add_child(game)
 	game.set_process(false)
@@ -18,6 +37,7 @@ func run_checks() -> void:
 	assert(game.arena.hero.sprite_frames.get_frame_count("attack") == 10)
 	game.preview_anim("attack")
 	game.start_run()
+	assert(not game.arena.hero.sprite_frames.get_animation_loop("attack"))
 	game.arena.set_process(false)
 	game.toggle_pause()
 	var timer: float = game.travel_timer
@@ -48,5 +68,7 @@ func run_checks() -> void:
 	assert(game.state == "menu")
 	game.queue_free()
 	await process_frame
-	print("PASS: sheets, pause, speed, three stages, relics, victory, defeat and menu")
+	print(
+		"PASS: editable hero scene, isolated resources, saved FPS/scale, sheets, pause, speed, three stages, relics, victory, defeat and menu"
+	)
 	quit()

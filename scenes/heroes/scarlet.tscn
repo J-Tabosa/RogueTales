@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/hero.gd" id="1_hero"]
+[ext_resource type="SpriteFrames" path="res://assets/hero/animations/scarlet_frames.tres" id="2_frames"]
+
+[node name="Scarlet" type="AnimatedSprite2D"]
+position = Vector2(270, 520)
+scale = Vector2(0.4, 0.4)
+sprite_frames = ExtResource("2_frames")
+animation = &"idle"
+autoplay = "idle"
+centered = false
+offset = Vector2(-360, -580)
+script = ExtResource("1_hero")

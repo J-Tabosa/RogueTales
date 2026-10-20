@@ -2,7 +2,7 @@ extends Node2D
 ## Provisional enemies and scenery are deliberately drawn with simple shapes.
 signal bomb_hit
 
-const Hero = preload("res://scripts/hero.gd")
+const Hero = preload("res://scenes/heroes/scarlet.tscn")
 var hero: AnimatedSprite2D
 var stage := 0
 var boss := false
@@ -10,6 +10,7 @@ var enemy_visible := false
 var walking := false
 var clock := 0.0
 var attack_time := -1.0
+var attack_duration := 1.0
 var explosion := 0.0
 var flash := 0.0
 var speed := 1.0
@@ -18,10 +19,9 @@ var preview := false
 
 
 func _ready() -> void:
-	hero = AnimatedSprite2D.new()
-	hero.set_script(Hero)
+	hero = Hero.instantiate()
 	add_child(hero)
-	hero.position = Vector2(135, 238)
+	hero.position = Vector2(135, 308)
 	hero.show_animation("idle")
 
 
@@ -31,6 +31,7 @@ func set_animation(anim: String) -> void:
 
 func attack() -> void:
 	attack_time = 0.0
+	attack_duration = hero.get_animation_duration("attack")
 	hero.stop()
 	hero.show_animation("attack")
 
@@ -55,7 +56,7 @@ func _process(delta: float) -> void:
 	explosion = maxf(0.0, explosion - dt)
 	if attack_time >= 0.0:
 		attack_time += dt
-		if attack_time >= 0.92:
+		if attack_time >= attack_duration * 0.92:
 			attack_time = -1.0
 			explosion = 0.28
 			flash = 0.16
@@ -103,8 +104,8 @@ func _draw() -> void:
 	draw_set_transform(Vector2.ZERO)
 	if enemy_visible:
 		draw_enemy(Vector2(369, 292), boss)
-	if attack_time > 0.5:
-		var t := clampf((attack_time - 0.5) / 0.42, 0.0, 1.0)
+	if attack_time > attack_duration * 0.5:
+		var t := clampf((attack_time / attack_duration - 0.5) / 0.42, 0.0, 1.0)
 		var p := Vector2(210, 217).lerp(Vector2(369, 260), t)
 		p.y -= sin(t * PI) * 60
 		draw_circle(p, 10, Color("11151f"))

@@ -131,8 +131,13 @@ func clear_page() -> void:
 func make_arena(y: float) -> void:
 	arena = Node2D.new()
 	arena.set_script(Arena)
-	arena.position = Vector2(24, y)
-	page.add_child(arena)
+	var viewport := Control.new()
+	viewport.position = Vector2(24, y)
+	viewport.size = Vector2(492, 340)
+	viewport.clip_contents = true
+	viewport.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	page.add_child(viewport)
+	viewport.add_child(arena)
 	arena.bomb_hit.connect(on_bomb_hit)
 
 
@@ -238,7 +243,7 @@ func _process(delta: float) -> void:
 		hero_timer -= dt
 		enemy_timer -= dt
 		if hero_timer <= 0:
-			hero_timer += run.interval
+			hero_timer += maxf(run.interval, arena.hero.get_animation_duration("attack") + 0.05)
 			arena.attack()
 		if enemy_timer <= 0:
 			enemy_timer += 2.0

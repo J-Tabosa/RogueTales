@@ -22,21 +22,33 @@ Base de idle RPG com elementos roguelike, em **Godot 4.7 / GDScript**.
 
 ## Sprites fornecidas
 
-Os arquivos originais estão em `assets/hero/`. A leitura é por linhas, da esquerda para a direita:
+Abra **`scenes/heroes/scarlet.tscn`** para editar a heroína. Ela já é a cena usada nas batalhas, no menu e no laboratório.
 
-| Animação | Arquivo | Grade | Quadros | FPS |
-| --- | --- | --- | --- | --- |
-| Idle | idle.png | 5 × 2 | 10 | 8 |
-| Caminhada | walk.png | 3 × 2 | 6 | 9 |
-| Ataque | ataack.png | 5 × 2 | 10 | 10 |
+1. Selecione o nó **Scarlet** (`AnimatedSprite2D`).
+2. No Inspector, clique no recurso **Sprite Frames** para abrir o painel inferior.
+3. Escolha `idle`, `walk` ou `attack`. Ajuste **FPS**, ordem dos quadros, duração de cada quadro ou substitua as texturas.
+4. Ajuste **Transform > Scale** para mudar o tamanho e **Offset** para mudar o pivô. O ponto de origem fica nos pés.
+5. Salve a cena e o recurso. Use **F6** para conferir Scarlet sozinha e **F5** para testar no jogo.
 
-`hero.gd` monta um `SpriteFrames` com `AtlasTexture`; não é necessário recortar as imagens. As folhas de idle e ataque medem 1983 × 793, por isso as regiões usam coordenadas fracionárias. A arte possui deslocamentos e variações de pose entre quadros: o laboratório permite avaliar isso visualmente. Para arte definitiva, recomenda-se exportar células com dimensões inteiras, margens e pivôs consistentes.
+| Animação | Quadros | FPS inicial | Loop |
+| --- | --- | --- | --- |
+| Idle | 10 | 4 | Sim |
+| Caminhada | 6 | 8 | Sim |
+| Ataque | 10 | 10 | Não |
+
+As animações ficam salvas em `assets/hero/animations/scarlet_frames.tres`. O script **não** recria os frames, muda os FPS ou substitui a escala configurada na cena ao iniciar.
+
+As folhas originais estão em `assets/hero/`. Elas não têm células uniformes: alguns desenhos ultrapassam a divisão em colunas. Os quadros usam `MeshTexture` nativo da Godot para mostrar apenas o contorno de cada desenho, preservando os PNGs e evitando pedaços dos sprites vizinhos. Todos usam uma área de 720 × 600, com os pés alinhados em (360, 580); a caminhada foi normalizada para o mesmo tamanho visual. A arte ainda pode ter pequenas variações de pose entre quadros.
+
+Para trocar o modelo, substitua os quadros no painel SpriteFrames. Para adicionar outro herói, duplique a cena, torne o recurso SpriteFrames único e aponte `Hero` em `arena.gd` para a nova cena. O intervalo de ataques respeita a duração da animação, inclusive após ajustes de FPS.
 
 ## Onde alterar
 
 - `scripts/run.gd`: vida, dano, inimigos, fases e relíquias.
 - `scripts/main.gd`: telas e fluxo de combate.
-- `scripts/hero.gd`: grades, FPS e escala das animações.
+- `scenes/heroes/scarlet.tscn`: modelo, escala e origem da heroína.
+- `assets/hero/animations/scarlet_frames.tres`: quadros e FPS editáveis.
+- `scripts/hero.gd`: reprodução e retorno do ataque para idle.
 - `scripts/arena.gd`: cenários e inimigos provisórios desenhados por código, trajetória da bomba e efeitos.
 - `scenes/main.tscn`: ponto de entrada.
 
