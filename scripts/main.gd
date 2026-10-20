@@ -223,14 +223,22 @@ func spawn_enemy() -> void:
 
 func _process(delta: float) -> void:
 	if state == "preview":
-		frame_label.text = (
-			"Quadro %02d / %02d  •  %s"
-			% [
+		if arena.hero.is_idle_animation():
+			if arena.hero.is_idle_resting():
+				frame_label.text = (
+					"Idle · Parada  |  próximo gesto em %.1fs"
+					% maxf(0, arena.hero.idle_wait_left)
+				)
+			else:
+				frame_label.text = "Idle · %s  |  %02d / 04" % [
+					arena.hero.get_idle_state_label(), arena.hero.frame + 1
+				]
+		else:
+			frame_label.text = "Quadro %02d / %02d  •  %s" % [
 				arena.hero.frame + 1,
 				arena.hero.sprite_frames.get_frame_count(arena.hero.animation),
 				arena.hero.animation
 			]
-		)
 		return
 	if paused:
 		return

@@ -1,5 +1,6 @@
 extends SceneTree
 ## godot --headless --path . --script tests/smoke.gd
+const HeroScript = preload("res://scripts/hero.gd")
 var game: Control
 
 
@@ -19,29 +20,56 @@ func run_checks() -> void:
 	assert(first.material != second.material)
 	first.set_process(false)
 	second.set_process(false)
+	# Standing must stay still, rather than continuously cycling the frames.
 	first.show_animation("idle")
-	first._process(0.5)
-	assert(first.idle_weight > 0.99)
-	assert(first.material.get_shader_parameter("idle_weight") > 0.99)
-	var phase: float = first.idle_phase
+	assert(first.frame == 0 and not first.is_playing())
+	first._process(2.0)
+	assert(first.idle_state == HeroScript.IdleState.REST)
+	assert(first.frame == 0 and first.idle_weight == 0.0)
+	first.idle_wait_left = 0.1
 	first.speed_scale = 0.0
 	first._process(0.5)
-	assert(first.idle_phase == phase)
+	assert(first.idle_wait_left == 0.1)
 	first.speed_scale = 1.0
+	first._process(0.2)
+	assert(first.idle_state != HeroScript.IdleState.REST)
+	# The closed-eye drawing exists and a real blink returns to the held pose.
+	assert(first.sprite_frames.get_frame_texture("idle_blink", 2).resource_name == "idle_07")
+	first._start_idle_variation(HeroScript.IdleState.BLINK)
+	assert(first.animation == &"idle_blink")
+	await create_timer(0.5).timeout
+	assert(first.idle_state == HeroScript.IdleState.REST)
+	assert(first.frame == 0 and not first.is_playing())
+	assert(first.idle_wait_left >= first.idle_min_wait)
+	assert(first.idle_wait_left <= first.idle_max_wait)
+	first._start_idle_variation(HeroScript.IdleState.SWAY)
+	first._process(0.5)
+	assert(first.idle_weight > 0.6)
+	# Walking interrupts the idle event and follows frame position, even at 2×.
 	first.show_animation("walk")
+	first.set_frame_and_progress(4, 0.5)
 	first._process(0.5)
 	assert(first.idle_weight < 0.01)
-	assert(second.idle_phase == 0.0)
+	assert(first.walk_weight > 0.99)
+	assert(first.idle_state == HeroScript.IdleState.REST)
+	var phase: float = first.material.get_shader_parameter("walk_phase")
+	assert(is_equal_approx(phase, 4.5 / 16.0 * TAU))
+	first.speed_scale = 0.0
+	first._process(0.5)
+	assert(first.material.get_shader_parameter("walk_phase") == phase)
+	first.speed_scale = 1.0
+	first.show_animation("attack")
+	first._process(0.5)
+	assert(first.walk_weight < 0.01)
 	assert(is_equal_approx(first.get_animation_duration("walk"), 16.0 / 12.0))
-	assert(first.sprite_frames.get_frame_texture("walk", 0).base_texture.resource_path.ends_with("walk_16.png"))
-	assert(first.sprite_frames.get_animation_speed("idle") == 6.0)
+	assert(first.sprite_frames.get_animation_speed("idle") == 2.0)
 	first.scale = Vector2(0.55, 0.55)
-	first.sprite_frames.set_animation_speed("idle", 2.0)
+	first.sprite_frames.set_animation_speed("idle", 1.0)
 	first.show_animation("walk")
 	first.show_animation("idle")
 	assert(first.scale == Vector2(0.55, 0.55))
-	assert(first.sprite_frames.get_animation_speed("idle") == 2.0)
-	assert(second.sprite_frames.get_animation_speed("idle") == 6.0)
+	assert(first.sprite_frames.get_animation_speed("idle") == 1.0)
+	assert(second.sprite_frames.get_animation_speed("idle") == 2.0)
 	first.sprite_frames.set_animation_speed("attack", 5.0)
 	assert(is_equal_approx(first.get_animation_duration("attack"), 2.0))
 	first.queue_free()
@@ -50,7 +78,7 @@ func run_checks() -> void:
 	root.add_child(game)
 	game.set_process(false)
 	game.show_preview()
-	assert(game.arena.hero.sprite_frames.get_frame_count("idle") == 18)
+	assert(game.arena.hero.sprite_frames.get_frame_count("idle") == 4)
 	assert(game.arena.hero.sprite_frames.get_frame_count("walk") == 16)
 	assert(game.arena.hero.sprite_frames.get_frame_count("attack") == 10)
 	game.preview_anim("attack")
@@ -87,6 +115,6 @@ func run_checks() -> void:
 	game.queue_free()
 	await process_frame
 	print(
-		"PASS: editable hero scene, isolated resources, saved FPS/scale, idle motion/pause/fade, 16-frame walk, sheets, pause, speed, three stages, relics, victory, defeat and menu"
+		"PASS: editable hero scene, isolated resources, saved FPS/scale, idle waits/blink/sway, paused timers, stride-synced shoulders, 16-frame walk, sheets, pause, speed, three stages, relics, victory, defeat and menu"
 	)
 	quit()

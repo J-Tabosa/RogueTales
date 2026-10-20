@@ -32,7 +32,8 @@ Abra **`scenes/heroes/scarlet.tscn`** para editar a heroína. Ela já é a cena 
 
 | Animação | Quadros | FPS inicial | Loop |
 | --- | --- | --- | --- |
-| Idle | 18 etapas (10 desenhos, ida e volta) | 6 | Sim |
+| Idle / balanço eventual | 4 | 2 | Não |
+| Piscada (`idle_blink`) | 4 | 12 | Não |
 | Caminhada | 16 | 12 | Sim |
 | Ataque | 10 | 10 | Não |
 
@@ -40,7 +41,15 @@ As animações ficam salvas em `assets/hero/animations/scarlet_frames.tres`. O s
 
 A caminhada usa **`assets/hero/walk_16.png`**, a nova folha de 2048 × 2048 com 16 quadros em 4 × 4. Cada célula mede 512 × 512 e é lida da esquerda para a direita, de cima para baixo. Todos os quadros mantêm o mesmo pivô; o movimento natural dos pés não desloca o corpo inteiro.
 
-O idle usa os dez desenhos originais em ida e volta (0…9…1), sem repetir os extremos. O material `assets/hero/shaders/idle_motion.gdshader` acrescenta respiração e balanço suave de cabelo e capa, com os pés fixos. Na cena Scarlet, ajuste **Idle — movimento suave** no Inspector: `Smooth Idle`, `Idle Cycle Seconds`, `Breath Amplitude` e `Cloth Amplitude`. O efeito respeita pausa e velocidade, e desaparece gradualmente durante caminhada e ataque. Os FPS continuam no painel SpriteFrames.
+O idle usa **quatro quadros**, a 2 FPS, e não fica repetindo em loop. O comportamento em `hero.gd` alterna entre:
+
+- **Parada:** segura o primeiro quadro imóvel por 4 a 8 segundos, sem respiração ou balanço contínuo.
+- **Piscando:** executa `idle_blink` uma vez, usando os desenhos de olhos abertos, semicerrados e fechados da folha original; dura cerca de 0,33 s.
+- **Balançando:** executa os quatro quadros de idle uma vez, com um pequeno movimento de capa e tronco; dura 2 s nos FPS iniciais.
+
+Após cada gesto, volta à pose parada e sorteia uma nova espera. A chance inicial é de 70% para piscada e 30% para balanço. Andar ou atacar interrompe o gesto imediatamente. No Inspector da Scarlet, ajuste **Idle — pausas e variações**: intervalos mínimo/máximo, probabilidade de piscar, intensidade do balanço e ativação das variações. Os FPS e a duração de cada quadro continuam editáveis no SpriteFrames.
+
+A caminhada tem movimento discreto dos ombros e do tronco, sincronizado com `frame + frame_progress` dos 16 quadros. O shader usa uma malha subdividida para movimentar a parte superior sem deformar as pernas. Em **Walk — movimento dos ombros**, ajuste `Walk Shoulders Enabled`, `Shoulder Swing` e `Shoulder Roll`. Pausa e velocidade 1×/2× respeitam tanto os gestos de idle quanto o movimento da caminhada.
 
 As folhas originais estão em `assets/hero/`. Elas não têm células uniformes: alguns desenhos ultrapassam a divisão em colunas. Os quadros usam `MeshTexture` nativo da Godot para mostrar apenas o contorno de cada desenho, preservando os PNGs e evitando pedaços dos sprites vizinhos. Todos usam uma área de 720 × 600, com os pés alinhados em (360, 580); a caminhada foi normalizada para o mesmo tamanho visual, com um pivô fixo em todas as células. A arte ainda pode ter pequenas variações de pose entre quadros.
 
