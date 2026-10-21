@@ -91,6 +91,28 @@ const HEROES = {
 		]
 	},
 }
+const UNLOCKS = {
+	"snow_white":
+	{"goal": 3, "detail": "Vença 3 runs após convocá-la como upgrade.", "unit": "runs vencidas"},
+	"rapunzel":
+	{
+		"goal": 60,
+		"detail": "Restaure 60 PV reais com a cura de Rapunzel nas runs.",
+		"unit": "PV restaurados"
+	},
+	"mulan":
+	{
+		"goal": 8,
+		"detail": "Acerte 8 Terceiros cortes com Mulan nas runs.",
+		"unit": "combos acertados"
+	},
+	"ariel":
+	{
+		"goal": 2,
+		"detail": "Vença 2 capítulos diferentes com Ariel viva na equipe.",
+		"unit": "capítulos diferentes"
+	},
+}
 const STAGES = [
 	{
 		"name": "Bosque dos Sussurros",
@@ -102,7 +124,6 @@ const STAGES = [
 		"color": Color("78bda0"),
 		"sky": Color("142e2b"),
 		"biome": 0,
-		"recruit": "rapunzel",
 		"intro":
 		[
 			[
@@ -132,7 +153,6 @@ const STAGES = [
 		"color": Color("b4a1d5"),
 		"sky": Color("26223c"),
 		"biome": 1,
-		"recruit": "snow_white",
 		"intro":
 		[
 			["Rapunzel", "A torre repete tudo que eu temia ouvir. Não respondam às vozes."],
@@ -156,7 +176,6 @@ const STAGES = [
 		"color": Color("cf83a0"),
 		"sky": Color("302638"),
 		"biome": 2,
-		"recruit": "mulan",
 		"intro":
 		[
 			[
@@ -186,7 +205,6 @@ const STAGES = [
 		"color": Color("99c3b1"),
 		"sky": Color("1c3036"),
 		"biome": 3,
-		"recruit": "",
 		"intro":
 		[
 			[
@@ -216,7 +234,6 @@ const STAGES = [
 		"color": Color("a4c9ed"),
 		"sky": Color("202a43"),
 		"biome": 4,
-		"recruit": "ariel",
 		"intro":
 		[
 			[
@@ -243,7 +260,6 @@ const STAGES = [
 		"color": Color("77cdd2"),
 		"sky": Color("133441"),
 		"biome": 5,
-		"recruit": "",
 		"intro":
 		[
 			["Ariel", "A Costureira quer um oceano sem ondas. Um lugar onde nada muda."],
@@ -270,7 +286,6 @@ const STAGES = [
 		"color": Color("ed9c72"),
 		"sky": Color("3b242a"),
 		"biome": 6,
-		"recruit": "",
 		"intro":
 		[
 			[
@@ -297,7 +312,6 @@ const STAGES = [
 		"color": Color("c7a2e0"),
 		"sky": Color("281f3b"),
 		"biome": 7,
-		"recruit": "",
 		"intro":
 		[
 			["Costureira", "Eu costurei cada perda. Cada despedida. E vocês desfizeram tudo."],
@@ -369,10 +383,17 @@ static func hero_stats(
 	return result
 
 
-static func recruit_chapter(id: String) -> int:
-	if id == "scarlet":
-		return 0
-	for index in STAGES.size():
-		if STAGES[index].recruit == id:
-			return index + 1
-	return 0
+static func offer_data(id: String) -> Dictionary:
+	if id.begins_with("ally:"):
+		var hero_id := id.trim_prefix("ally:")
+		if HEROES.has(hero_id) and hero_id != "scarlet":
+			return {
+				"id": id,
+				"hero": hero_id,
+				"title": "Convocar " + str(HEROES[hero_id].name),
+				"detail": "Luta ao seu lado até o fim desta run."
+			}
+	for relic in RELICS:
+		if relic.id == id:
+			return relic
+	return {}

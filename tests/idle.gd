@@ -117,6 +117,7 @@ func checks() -> void:
 	game.campaign.choose_memory(0, "hope")
 	game.show_heroes()
 	assert(game.state == "heroes")
+	game.campaign.unlocked.append("rapunzel")
 	game.campaign.grant_xp(100)
 	game.show_hero_details("scarlet")
 	game.train_hero()

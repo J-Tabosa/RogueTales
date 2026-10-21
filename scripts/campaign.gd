@@ -35,6 +35,9 @@ var high_quality := true
 var fps_limit := 60
 var text_speed := 36
 var auto_repeat := false
+var unlock_progress: Dictionary = {"snow_white": 0, "rapunzel": 0.0, "mulan": 0, "ariel": []}
+var run_counter := 0
+var last_resolved_run := 0
 const IDLE_CAP := 8 * 3600
 const ACHIEVEMENTS := [
 	{
@@ -127,26 +130,21 @@ func promote(id: String) -> bool:
 	return true
 
 
-func complete_stage(index: int) -> Dictionary:
+func complete_stage(index: int, recipients: Array = []) -> Dictionary:
 	if not can_play(index):
 		return {}
 	var first := not cleared.has(index)
 	var reward := 100 + index * 35 if first else 35 + index * 12
 	earn_gold(reward)
 	total_wins += 1
-	grant_xp(30 + index * 10)
+	grant_xp(30 + index * 10, recipients)
 	checkpoint.clear()
-	var recruit: String = TaleCatalog.STAGES[index].recruit
 	if first:
 		cleared.append(index)
 		cleared.sort()
 		pending_story = index
 		journal.append({"stage": index, "title": TaleCatalog.STAGES[index].name})
-		if not recruit.is_empty() and not unlocked.has(recruit):
-			unlocked.append(recruit)
-			if party.size() < 3:
-				party.append(recruit)
-	return {"first": first, "reward": reward, "recruit": recruit if first else ""}
+	return {"first": first, "reward": reward}
 
 
 func choose_memory(index: int, choice: String) -> bool:
@@ -159,7 +157,7 @@ func choose_memory(index: int, choice: String) -> bool:
 
 func to_dict() -> Dictionary:
 	return {
-		"version": 2,
+		"version": 3,
 		"gold": gold,
 		"unlocked": unlocked,
 		"party": party,
@@ -191,7 +189,10 @@ func to_dict() -> Dictionary:
 		"high_quality": high_quality,
 		"fps_limit": fps_limit,
 		"text_speed": text_speed,
-		"auto_repeat": auto_repeat
+		"auto_repeat": auto_repeat,
+		"unlock_progress": unlock_progress,
+		"run_counter": run_counter,
+		"last_resolved_run": last_resolved_run
 	}
 
 
@@ -253,7 +254,7 @@ func load_data(data: Dictionary) -> void:
 		if (
 			int(candidate.get("wave", -1)) in [0, 1, 2]
 			and candidate.get("health") is Array
-			and candidate.health.size() == party.size()
+			and valid_checkpoint_party(candidate)
 		):
 			checkpoint = candidate.duplicate(true)
 	for id in TaleCatalog.HEROES:
@@ -296,6 +297,30 @@ func load_data(data: Dictionary) -> void:
 	if text_speed not in [0, 24, 48, 36]:
 		text_speed = 36
 	auto_repeat = bool(data.get("auto_repeat", false))
+	unlock_progress = {"snow_white": 0, "rapunzel": 0.0, "mulan": 0, "ariel": []}
+	var progress: Variant = data.get("unlock_progress", {})
+	if progress is Dictionary:
+		for id in ["snow_white", "rapunzel", "mulan"]:
+			unlock_progress[id] = clampf(
+				float(progress.get(id, 0)), 0, TaleCatalog.UNLOCKS[id].goal
+			)
+		if progress.get("ariel") is Array:
+			for chapter in progress.ariel:
+				if (
+					typeof(chapter) in [TYPE_INT, TYPE_FLOAT]
+					and int(chapter) in range(8)
+					and not unlock_progress.ariel.has(int(chapter))
+				):
+					unlock_progress.ariel.append(int(chapter))
+	run_counter = maxi(0, int(data.get("run_counter", 0)))
+	last_resolved_run = clampi(int(data.get("last_resolved_run", 0)), 0, run_counter)
+	if not checkpoint.is_empty():
+		var checkpoint_id := int(checkpoint.get("run_id", 0))
+		if (
+			checkpoint_id > 0
+			and (checkpoint_id <= last_resolved_run or checkpoint_id > run_counter)
+		):
+			checkpoint.clear()
 	# Returning to camp avoids associating an old party member's health with a different heroine.
 	if data.get("party") is Array and data.party.has("cinderella"):
 		checkpoint.clear()
@@ -330,7 +355,7 @@ func load_from(path: String = SAVE_PATH) -> bool:
 			parser.parse(FileAccess.get_file_as_string(candidate)) == OK
 			and parser.data is Dictionary
 		):
-			if int(parser.data.get("version", 0)) in [1, 2]:
+			if int(parser.data.get("version", 0)) in [1, 2, 3]:
 				load_data(parser.data)
 				return true
 	return false
@@ -376,10 +401,12 @@ func level_hero(id: String) -> bool:
 	return true
 
 
-func grant_xp(amount: int) -> void:
+func grant_xp(amount: int, recipients: Array = []) -> void:
 	if amount <= 0:
 		return
-	for id in party:
+	for id in party if recipients.is_empty() else recipients:
+		if not TaleCatalog.HEROES.has(id):
+			continue
 		hero_xp[id] = mini(9999999, int(hero_xp[id]) + amount)
 	player_xp += amount
 	while player_level < 100 and player_xp >= player_next_xp():
@@ -389,10 +416,10 @@ func grant_xp(amount: int) -> void:
 		player_xp = 0
 
 
-func record_enemy(stage: int) -> void:
+func record_enemy(stage: int, recipients: Array = []) -> void:
 	total_kills += 1
 	earn_gold(3 + stage * 2)
-	grant_xp(25 + stage * 10)
+	grant_xp(25 + stage * 10, recipients)
 
 
 func idle_rate() -> int:
@@ -459,3 +486,83 @@ func claim_achievement(id: String) -> bool:
 			earn_gold(int(item.reward))
 			return true
 	return false
+
+
+func valid_checkpoint_party(data: Dictionary) -> bool:
+	if not data.has("hero_ids"):
+		return data.health.size() == party.size()
+	var ids: Variant = data.hero_ids
+	var drafted: Variant = data.get("drafted", [])
+	if not ids is Array or not drafted is Array or ids.is_empty() or ids.size() > 3:
+		return false
+	if data.health.size() != ids.size():
+		return false
+	var seen: Array = []
+	for id in ids:
+		if not TaleCatalog.HEROES.has(id) or seen.has(id):
+			return false
+		if not unlocked.has(id) and not drafted.has(id):
+			return false
+		seen.append(id)
+	return true
+
+
+func new_run_id() -> int:
+	run_counter += 1
+	return run_counter
+
+
+func unlock_amount(id: String) -> float:
+	if id == "ariel":
+		return unlock_progress.ariel.size()
+	return float(unlock_progress.get(id, 0))
+
+
+func unlock_text(id: String) -> String:
+	if unlocked.has(id):
+		return "Desbloqueada permanentemente"
+	if not TaleCatalog.UNLOCKS.has(id):
+		return "Disponível desde o início"
+	var rule: Dictionary = TaleCatalog.UNLOCKS[id]
+	return "%d / %d %s" % [int(unlock_amount(id)), rule.goal, rule.unit]
+
+
+func resolve_run(data: Dictionary, won: bool) -> Array[String]:
+	# One terminal resolution per persisted run ID. Reloads cannot credit it twice.
+	var number := int(data.get("run_id", 0))
+	var newly_unlocked: Array[String] = []
+	if number <= last_resolved_run or number <= 0 or number > run_counter:
+		return newly_unlocked
+	last_resolved_run = number
+	var drafted: Array = data.get("drafted", [])
+	var metrics: Dictionary = data.get("unlock_stats", {})
+	if drafted.has("snow_white") and won:
+		unlock_progress.snow_white = mini(3, int(unlock_progress.snow_white) + 1)
+	if drafted.has("rapunzel"):
+		unlock_progress.rapunzel = minf(
+			60, float(unlock_progress.rapunzel) + maxf(0, float(metrics.get("healing", 0)))
+		)
+	if drafted.has("mulan"):
+		unlock_progress.mulan = mini(
+			8, int(unlock_progress.mulan) + maxi(0, int(metrics.get("combos", 0)))
+		)
+	if drafted.has("ariel") and won:
+		var ids: Array = data.get("hero_ids", [])
+		var health: Array = data.get("health", [])
+		var slot := ids.find("ariel")
+		var chapter := int(data.get("stage", -1))
+		if (
+			slot >= 0
+			and slot < health.size()
+			and float(health[slot]) > 0
+			and chapter in range(8)
+			and not unlock_progress.ariel.has(chapter)
+		):
+			unlock_progress.ariel.append(chapter)
+	for id in TaleCatalog.UNLOCKS:
+		if not unlocked.has(id) and unlock_amount(id) >= TaleCatalog.UNLOCKS[id].goal:
+			unlocked.append(id)
+			newly_unlocked.append(id)
+			if party.size() < 3:
+				party.append(id)
+	return newly_unlocked

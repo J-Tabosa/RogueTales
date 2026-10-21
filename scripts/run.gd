@@ -17,10 +17,20 @@ var burn_left := 0.0
 var poison := 0.0
 var poison_left := 0.0
 var rng := RandomNumberGenerator.new()
+var run_id := 0
+var drafted: Array[String] = []
+var unlock_stats: Dictionary = {"healing": 0.0, "combos": 0}
 
 
-func setup(campaign: TaleCampaign, index: int) -> void:
+func setup(campaign: TaleCampaign, index: int, fresh: bool = true) -> void:
 	stage = index
+	run_id = campaign.new_run_id() if fresh else 0
+	wave = 0
+	drafted.clear()
+	relics.clear()
+	offers.clear()
+	pending_choice = false
+	unlock_stats = {"healing": 0.0, "combos": 0}
 	rng.randomize()
 	actors.clear()
 	for id in campaign.party:
@@ -57,10 +67,14 @@ func enemy_interval() -> float:
 	return 2.5 * (1.0 + slow)
 
 
-func heal_group(amount: float) -> void:
+func heal_group(amount: float) -> float:
+	var restored := 0.0
 	for actor in actors:
 		if actor.hp > 0:
+			var before: float = actor.hp
 			actor.hp = minf(actor.max_hp, actor.hp + amount)
+			restored += actor.hp - before
+	return restored
 
 
 func hit_enemy(index: int) -> Dictionary:
@@ -82,11 +96,12 @@ func hit_enemy(index: int) -> Dictionary:
 			message = "Envenenado"
 		"mulan":
 			if int(actor.hits) % 3 == 0:
+				unlock_stats.combos += 1
 				amount *= 1.3 + actor.ranks[1] * 0.2
 				message = "Terceiro corte"
 		"rapunzel":
 			if int(actor.hits) % 3 == 0:
-				heal_group(3.0 + actor.ranks[0] * 3)
+				unlock_stats.healing += heal_group(3.0 + actor.ranks[0] * 3)
 				message = "Trança restauradora"
 		"ariel":
 			if int(actor.hits) % 3 == 0:
@@ -139,28 +154,42 @@ func apply_relic(id: String) -> bool:
 		return false
 	relics.append(id)
 	for actor in actors:
-		match id:
-			"power":
-				actor.damage *= 1.2
-			"heart":
-				actor.max_hp += 25.0
-				if actor.hp > 0:
-					actor.hp = minf(actor.max_hp, actor.hp + 40.0)
-			"haste":
-				actor.interval = maxf(0.65, actor.interval * 0.88)
-			"critical":
-				actor.crit = minf(0.95, actor.crit + 0.12)
-			"leech":
-				actor.leech += 3
-			"armor":
-				actor.armor += 3
+		apply_relic_to_actor(actor, id)
 	pending_choice = false
 	offers.clear()
 	return true
 
 
-func roll_offers() -> void:
+func apply_relic_to_actor(actor: Dictionary, id: String) -> void:
+	match id:
+		"power":
+			actor.damage *= 1.2
+		"heart":
+			actor.max_hp += 25.0
+			if actor.hp > 0:
+				actor.hp = minf(actor.max_hp, actor.hp + 40.0)
+		"haste":
+			actor.interval = maxf(0.65, actor.interval * 0.88)
+		"critical":
+			actor.crit = minf(0.95, actor.crit + 0.12)
+		"leech":
+			actor.leech += 3
+		"armor":
+			actor.armor += 3
+
+
+func roll_offers(campaign: TaleCampaign) -> void:
 	offers.clear()
+	var guests: Array[String] = []
+	for id in TaleCatalog.UNLOCKS:
+		if not actor_ids().has(id) and not drafted.has(id):
+			guests.append(id)
+	if not guests.is_empty():
+		# The first invitation teaches recruitment with Snow White; later offers vary.
+		var invited := guests[rng.randi_range(0, guests.size() - 1)]
+		if campaign.total_wins == 0 and drafted.is_empty() and guests.has("snow_white"):
+			invited = "snow_white"
+		offers.append("ally:" + invited)
 	var candidates: Array[String] = []
 	for item in RELICS:
 		if not relics.has(item.id):
@@ -178,6 +207,10 @@ func to_checkpoint() -> Dictionary:
 		health.append(float(actor.hp))
 		hits.append(int(actor.hits))
 	return {
+		"run_id": run_id,
+		"hero_ids": actor_ids(),
+		"drafted": drafted.duplicate(),
+		"unlock_stats": unlock_stats.duplicate(true),
 		"stage": stage,
 		"wave": wave,
 		"health": health,
@@ -191,7 +224,27 @@ func to_checkpoint() -> Dictionary:
 
 
 func restore(campaign: TaleCampaign, data: Dictionary) -> void:
-	setup(campaign, int(data.stage))
+	setup(campaign, int(data.stage), false)
+	run_id = int(data.get("run_id", 0))
+	if run_id <= 0:
+		run_id = campaign.new_run_id()
+	var saved_ids: Variant = data.get("hero_ids", campaign.party)
+	actors.clear()
+	for id in saved_ids:
+		actors.append(
+			TaleCatalog.hero_stats(
+				id, campaign.levels[id], campaign.choices, campaign.hero_levels[id]
+			)
+		)
+	var saved_drafted: Variant = data.get("drafted", [])
+	if saved_drafted is Array:
+		for id in saved_drafted:
+			if TaleCatalog.UNLOCKS.has(id) and not drafted.has(id):
+				drafted.append(id)
+	var metrics: Variant = data.get("unlock_stats", {})
+	if metrics is Dictionary:
+		unlock_stats.healing = maxf(0, float(metrics.get("healing", 0)))
+		unlock_stats.combos = maxi(0, int(metrics.get("combos", 0)))
 	wave = clampi(int(data.get("wave", 0)), 0, 2)
 	var saved_relics: Variant = data.get("relics", [])
 	if saved_relics is Array:
@@ -206,11 +259,10 @@ func restore(campaign: TaleCampaign, data: Dictionary) -> void:
 		var saved_offers: Variant = data.get("offers", [])
 		if saved_offers is Array:
 			for id in saved_offers:
-				for item in RELICS:
-					if item.id == id and not offers.has(id):
-						offers.append(id)
+				if not TaleCatalog.offer_data(str(id)).is_empty() and not offers.has(id):
+					offers.append(id)
 		if offers.size() != 3:
-			roll_offers()
+			roll_offers(campaign)
 
 	# Preserve combos and the random stream at the encounter boundary.
 	var counts: Variant = data.get("hits", [])
@@ -220,3 +272,32 @@ func restore(campaign: TaleCampaign, data: Dictionary) -> void:
 	if data.has("rng_seed") and data.has("rng_state"):
 		rng.seed = int(data.rng_seed)
 		rng.state = int(data.rng_state)
+
+
+func actor_ids() -> Array[String]:
+	var ids: Array[String] = []
+	for actor in actors:
+		ids.append(actor.id)
+	return ids
+
+
+func recruit(campaign: TaleCampaign, id: String, replace_index: int = -1) -> bool:
+	if not pending_choice or not offers.has("ally:" + id) or not TaleCatalog.UNLOCKS.has(id):
+		return false
+	if actor_ids().has(id) or drafted.has(id):
+		return false
+	if actors.size() >= 3 and (replace_index < 0 or replace_index >= actors.size()):
+		return false
+	var actor := TaleCatalog.hero_stats(
+		id, campaign.levels[id], campaign.choices, campaign.hero_levels[id]
+	)
+	for relic in relics:
+		apply_relic_to_actor(actor, relic)
+	if actors.size() < 3:
+		actors.append(actor)
+	else:
+		actors[replace_index] = actor
+	drafted.append(id)
+	pending_choice = false
+	offers.clear()
+	return true

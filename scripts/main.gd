@@ -369,9 +369,7 @@ func show_chapter(index: int) -> void:
 	label(page, data.short, Rect2(24, 548, 492, 44), 26, GOLD)
 	label(page, "Dois encontros e um chefe: " + str(data.boss), Rect2(24, 601, 492, 66), 19, MUTED)
 	var reward := 100 + index * 35 if not campaign.cleared.has(index) else 35 + index * 12
-	var info := "Recompensa: %d ouro • relíquias válidas neste capítulo" % reward
-	if not str(data.recruit).is_empty() and not campaign.unlocked.has(data.recruit):
-		info += "\nRecrutamento: " + str(TaleCatalog.HEROES[data.recruit].name)
+	var info := "Recompensa: %d ouro\nEntre encontros: relíquias ou convites de heroínas." % reward
 	label(page, info, Rect2(24, 679, 492, 66), 17)
 	if campaign.checkpoint.is_empty():
 		button(page, "Começar capítulo  →", Rect2(24, 776, 492, 60), start_stage.bind(index), true)
@@ -545,11 +543,7 @@ func show_party() -> void:
 		label(inner, data.name, Rect2(133, y + 12, 325, 32), 22, data.color if owned else MUTED)
 		label(
 			inner,
-			(
-				data.role
-				if owned
-				else "Recrutada ao concluir o capítulo %d" % TaleCatalog.recruit_chapter(id)
-			),
+			data.role if owned else campaign.unlock_text(id),
 			Rect2(133, y + 48, 325, 38),
 			16,
 			MUTED
@@ -577,7 +571,15 @@ func show_party() -> void:
 				not equipped or campaign.party[0] == id or not campaign.checkpoint.is_empty()
 			)
 		else:
-			label(inner, "A história abre o próximo caminho.", Rect2(133, y + 102, 325, 46), 16)
+			(
+				button(
+					inner,
+					"Ver requisito",
+					Rect2(133, y + 108, 325, 44),
+					show_unlock_details.bind(id)
+				)
+				. add_theme_font_size_override("font_size", 16)
+			)
 		index += 1
 	if not campaign.checkpoint.is_empty():
 		label(
@@ -753,7 +755,7 @@ func show_settings() -> void:
 	label(inner, "Patrulha automática", Rect2(17, 934, 442, 31), 21)
 	label(
 		inner,
-		"Repete capítulos concluídos e escolhe relíquias.\nPara ao perder ou ao sair do combate.",
+		"Escolhe upgrades e convites; substitui o 3º espaço.\nPara ao perder ou ao sair do combate.",
 		Rect2(17, 974, 442, 43),
 		14,
 		MUTED
@@ -790,9 +792,9 @@ func show_help() -> void:
 	state = "help"
 	clear_page()
 	header("Como jogar", "Um conto para progredir no seu ritmo.")
-	var inner := scroll_area(186, 646, 1000)
-	var text := "1. CAMPANHA\nAvance pelos oito capítulos. Cada um tem dois encontros e um chefe.\n\n2. FORMAÇÃO\nRecrute cinco heroínas e leve até três. A primeira recebe os ataques até cair.\n\n3. EVOLUÇÃO\nGanhe ouro e EXP nos combates. Na tela Heróis, treine níveis até 30 e melhore três habilidades por princesa.\n\n4. ACAMPAMENTO\nDepois do capítulo 1, recursos acumulam mesmo com o jogo fechado, por até oito horas. Colete no baú da tela inicial.\n\n5. PATRULHA AUTOMÁTICA\nAtive nas configurações para repetir capítulos concluídos e escolher relíquias automaticamente. A patrulha para ao perder ou sair.\n\n6. MEMÓRIAS\nEntre encontros, escolha relíquias temporárias. No desfecho, esperança aumenta vida; coragem aumenta dano permanentemente.\n\nCONTROLES\nMouse ou toque usam os botões. ESC pausa o combate. Progresso e preferências são salvos automaticamente."
-	label(inner, text, Rect2(18, 10, 440, 980), 19)
+	var inner := scroll_area(186, 646, 1250)
+	var text := "1. CAMPANHA\nAvance pelos oito capítulos. Cada um tem dois encontros e um chefe.\n\n2. FORMAÇÃO\nVocê começa só com Scarlet, a Chapeuzinho. Entre encontros, escolha convites temporários de heroínas. Cumpra o requisito de cada uma para desbloqueá-la permanentemente; acompanhe em Heróis. Leve até três; a vanguarda recebe os ataques até cair.\n\n3. EVOLUÇÃO\nGanhe ouro e EXP nos combates. Na tela Heróis, treine níveis até 30 e melhore três habilidades por princesa.\n\n4. ACAMPAMENTO\nDepois do capítulo 1, recursos acumulam mesmo com o jogo fechado, por até oito horas. Colete no baú da tela inicial.\n\n5. PATRULHA AUTOMÁTICA\nAtive nas configurações para repetir capítulos concluídos e escolher upgrades e convites automaticamente. Com a equipe cheia, a convidada substitui o terceiro espaço. A patrulha para ao perder ou sair.\n\n6. MEMÓRIAS\nEntre encontros, escolha relíquias temporárias. No desfecho, esperança aumenta vida; coragem aumenta dano permanentemente.\n\nCONTROLES\nMouse ou toque usam os botões. ESC pausa o combate. Progresso e preferências são salvos automaticamente."
+	label(inner, text, Rect2(18, 10, 440, 1230), 19)
 	button(page, "Voltar às configurações", Rect2(24, 843, 492, 62), show_settings, true)
 
 
@@ -854,6 +856,8 @@ func resume_checkpoint() -> void:
 		persist()
 		show_menu()
 		return
+	campaign.checkpoint = run.to_checkpoint()
+	persist()
 	build_battle()
 	if run.pending_choice:
 		show_relics()
@@ -878,7 +882,7 @@ func build_battle() -> void:
 	)
 	enemy_label = label(page, "", Rect2(24, 106, 492, 47), 18, MUTED)
 	enemy_hp = bar(page, Rect2(24, 164, 492, 12), Color("d27a91"))
-	make_arena(196, [], run.stage)
+	make_arena(196, run.actor_ids(), run.stage)
 	arena.speed = game_speed
 	arena.sync_health(run.actors)
 	for index in run.actors.size():
@@ -1020,15 +1024,17 @@ func resolve_enemy() -> void:
 	run.kills += 1
 	arena.reset_effects()
 	arena.enemy_visible = false
-	campaign.record_enemy(run.stage)
+	campaign.record_enemy(run.stage, run.actor_ids())
 	if run.wave == 2:
-		var result := campaign.complete_stage(run.stage)
+		var new_heroes := campaign.resolve_run(run.to_checkpoint(), true)
+		var result := campaign.complete_stage(run.stage, run.actor_ids())
+		result["unlocks"] = new_heroes
 		persist()
 		show_victory(result)
 	else:
 		run.wave += 1
 		run.pending_choice = true
-		run.roll_offers()
+		run.roll_offers(campaign)
 		campaign.checkpoint = run.to_checkpoint()
 		persist()
 		show_relics()
@@ -1059,7 +1065,10 @@ func update_hud() -> void:
 			"%s%s    %d / %d PV%s"
 			% [
 				"◇ " if index == 0 else "",
-				TaleCatalog.HEROES[actor.id].name,
+				(
+					str(TaleCatalog.HEROES[actor.id].name)
+					+ (" ✦" if not campaign.unlocked.has(actor.id) else "")
+				),
 				int(actor.hp),
 				int(actor.max_hp),
 				(
@@ -1093,6 +1102,7 @@ func modal(title: String, subtitle: String) -> void:
 	if is_instance_valid(overlay):
 		overlay.queue_free()
 	overlay = Control.new()
+	overlay.z_index = 1000
 	overlay.size = Vector2(540, 960)
 	content.add_child(overlay)
 	var shade := ColorRect.new()
@@ -1106,43 +1116,87 @@ func modal(title: String, subtitle: String) -> void:
 func show_relics() -> void:
 	state = "choice"
 	if campaign.auto_repeat and campaign.cleared.has(run.stage):
-		select_relic(run.offers[0])
+		select_relic(run.offers[0], 2 if run.actors.size() == 3 else -1)
 		return
 	arena.reset_effects()
 	arena.frozen = true
 	modal(
 		"Uma página, três destinos.",
-		"Encontro concluído! Escolha uma relíquia.\nO efeito dura até o fim deste capítulo."
+		"Escolha uma relíquia ou convoque uma heroína.\nO upgrade vale até o fim desta run."
 	)
 	for index in run.offers.size():
-		for relic in TaleCatalog.RELICS:
-			if relic.id != run.offers[index]:
-				continue
-			var node := button(
-				overlay,
-				relic.title + "\n" + relic.detail,
-				Rect2(32, 402 + index * 112, 476, 92),
-				select_relic.bind(str(relic.id)),
-				index == 0
-			)
-			node.add_theme_font_size_override("font_size", 18)
+		var offer := TaleCatalog.offer_data(run.offers[index])
+		if offer.is_empty():
+			continue
+		var card := button(
+			overlay, "", Rect2(32, 390 + index * 125, 476, 114), select_relic.bind(str(offer.id))
+		)
+		label(card, offer.title, Rect2(16, 7, 444, 29), 21, GOLD)
+		label(card, offer.detail, Rect2(16, 40, 444, 35), 16)
+		var note := "Relíquia da run"
+		if offer.has("hero"):
+			note = campaign.unlock_text(offer.hero)
+			if run.actors.size() == 3:
+				note += " • escolher substituição"
+		label(card, note, Rect2(16, 82, 444, 24), 13, MUTED)
 	(
 		button(overlay, "Salvar e voltar ao início", Rect2(32, 801, 476, 52), leave_battle)
 		. add_theme_font_size_override("font_size", 17)
 	)
 
 
-func select_relic(id: String) -> void:
+func select_relic(id: String, replace_index: int = -1) -> void:
 	if state != "choice" or not run.offers.has(id):
 		return
-	run.apply_relic(id)
+	var offer := TaleCatalog.offer_data(id)
+	if offer.is_empty():
+		return
+	var applied := false
+	if offer.has("hero"):
+		if run.actors.size() == 3 and replace_index < 0:
+			show_recruit_replacement(id)
+			return
+		applied = run.recruit(campaign, offer.hero, replace_index)
+	else:
+		applied = run.apply_relic(id)
+	if not applied:
+		return
 	campaign.checkpoint = run.to_checkpoint()
 	persist()
-	if is_instance_valid(overlay):
-		overlay.queue_free()
-		overlay = null
-	arena.frozen = false
+	build_battle()
 	begin_travel()
+
+
+func show_recruit_replacement(id: String) -> void:
+	state = "replacement"
+	var offer := TaleCatalog.offer_data(id)
+	modal(
+		"Quem abre espaço?",
+		(
+			str(TaleCatalog.HEROES[offer.hero].name)
+			+ " entra no lugar de uma aliada só nesta run. A formação permanente é preservada."
+		)
+	)
+	for index in run.actors.size():
+		var actor: Dictionary = run.actors[index]
+		button(
+			overlay,
+			(
+				"Substituir "
+				+ str(TaleCatalog.HEROES[actor.id].name)
+				+ "\n%d / %d PV" % [int(actor.hp), int(actor.max_hp)]
+			),
+			Rect2(32, 402 + index * 109, 476, 90),
+			confirm_replacement.bind(id, index)
+		)
+	button(overlay, "Voltar às opções", Rect2(32, 778, 476, 52), show_relics)
+
+
+func confirm_replacement(id: String, index: int) -> void:
+	if state != "replacement":
+		return
+	state = "choice"
+	select_relic(id, index)
 
 
 func toggle_pause() -> void:
@@ -1198,6 +1252,8 @@ func cancel_abandon() -> void:
 
 
 func abandon_expedition() -> void:
+	if not campaign.checkpoint.is_empty():
+		campaign.resolve_run(campaign.checkpoint, false)
 	campaign.checkpoint.clear()
 	persist()
 	run = null
@@ -1221,15 +1277,17 @@ func show_victory(result: Dictionary) -> void:
 	clear_page()
 	label(page, "CAPÍTULO CONCLUÍDO", Rect2(24, 34, 492, 40), 17, GOLD)
 	label(page, TaleCatalog.STAGES[run.stage].name, Rect2(24, 98, 492, 104), 34)
-	var recruited: String = result.get("recruit", "")
-	make_arena(239, [recruited] if not recruited.is_empty() else [], run.stage)
-	if not recruited.is_empty():
+	var unlocked_now: Array = result.get("unlocks", [])
+	make_arena(
+		239, unlocked_now.slice(0, 3) if not unlocked_now.is_empty() else run.actor_ids(), run.stage
+	)
+	if unlocked_now.size() == 1:
 		arena.set_home(0, Vector2(246, arena.heroes[0].position.y))
 	label(
 		page,
 		(
-			(TaleCatalog.HEROES[recruited].name + " entrou para a equipe!")
-			if not recruited.is_empty()
+			("Desbloqueio permanente: " + hero_names(unlocked_now))
+			if not unlocked_now.is_empty()
 			else "Mais uma agulha desfeita."
 		),
 		Rect2(24, 605, 492, 66),
@@ -1243,6 +1301,7 @@ func show_victory(result: Dictionary) -> void:
 		19,
 		MUTED
 	)
+	label(page, run_unlock_summary(), Rect2(24, 741, 492, 42), 14, GOLD)
 	button(
 		page,
 		(
@@ -1260,13 +1319,21 @@ func finish_defeat() -> void:
 	state = "defeat"
 	arena.reset_effects()
 	arena.frozen = true
+	var unlocked_now := campaign.resolve_run(run.to_checkpoint(), false)
 	campaign.checkpoint.clear()
 	campaign.total_defeats += 1
 	audio.play_effect("loss")
 	persist()
 	modal(
 		"O conto ainda não acabou.",
-		"A formação caiu. O ouro conquistado permanece. Tente outra formação ou invista em melhorias."
+		(
+			"Ouro, EXP e requisitos cumpridos permanecem. "
+			+ (
+				"Desbloqueio: " + hero_names(unlocked_now)
+				if not unlocked_now.is_empty()
+				else "Convites e relíquias terminam nesta run."
+			)
+		)
 	)
 	button(overlay, "Melhorar princesas", Rect2(32, 421, 476, 60), show_upgrades, true)
 	button(overlay, "Organizar equipe", Rect2(32, 505, 476, 56), show_party)
@@ -1292,6 +1359,8 @@ func _input(event: InputEvent) -> void:
 			show_menu()
 		elif state in ["battle", "travel"]:
 			toggle_pause()
+		elif state == "replacement":
+			show_relics()
 		elif state not in ["choice", "memory", "story", "result"]:
 			show_menu()
 		get_viewport().set_input_as_handled()
@@ -1315,6 +1384,7 @@ func show_debug_panel() -> void:
 	if is_instance_valid(debug_panel):
 		debug_panel.queue_free()
 	debug_panel = Control.new()
+	debug_panel.z_index = 2000
 	debug_panel.size = Vector2(540, 960)
 	content.add_child(debug_panel)
 	panel(debug_panel, Rect2(24, 96, 492, 248), Color("273044"))
@@ -1336,7 +1406,9 @@ func show_debug_panel() -> void:
 	var lab := button(
 		debug_panel, "Laboratório de animações", Rect2(40, 245, 460, 56), show_preview, true
 	)
-	lab.disabled = state in ["battle", "travel", "choice", "story", "memory", "result"]
+	lab.disabled = (
+		state in ["battle", "travel", "choice", "replacement", "story", "memory", "result"]
+	)
 
 
 func show_preview() -> void:
@@ -1413,7 +1485,7 @@ func update_preview() -> void:
 func show_heroes() -> void:
 	state = "heroes"
 	clear_page()
-	header("Heróis", "%d / 5 recrutadas  •  %d ouro" % [campaign.unlocked.size(), campaign.gold])
+	header("Heróis", "%d / 5 permanentes  •  %d ouro" % [campaign.unlocked.size(), campaign.gold])
 	(
 		button(
 			page,
@@ -1428,16 +1500,15 @@ func show_heroes() -> void:
 		button(page, "Evoluir heroína", Rect2(280, 180, 236, 48), show_upgrades)
 		. add_theme_font_size_override("font_size", 17)
 	)
-	var inner := scroll_area(247, 620, TaleCatalog.HEROES.size() * 181)
+	var inner := scroll_area(247, 620, TaleCatalog.HEROES.size() * 221)
 	var row := 0
 	for id in TaleCatalog.HEROES:
 		var data: Dictionary = TaleCatalog.HEROES[id]
 		var owned := campaign.unlocked.has(id)
-		var y := row * 181.0
-		panel(inner, Rect2(0, y, 476, 168))
-		if owned:
-			portrait(inner, id, Vector2(75, y + 150), 0.66)
-		label(inner, data.name, Rect2(136, y + 12, 325, 32), 22, data.color if owned else MUTED)
+		var y := row * 221.0
+		panel(inner, Rect2(0, y, 476, 207))
+		portrait(inner, id, Vector2(75, y + 176), 0.64)
+		label(inner, data.name, Rect2(136, y + 12, 325, 32), 22, data.color)
 		label(inner, data.role, Rect2(136, y + 49, 325, 30), 15, MUTED)
 		if owned:
 			label(
@@ -1449,7 +1520,7 @@ func show_heroes() -> void:
 						"  •  na formação" if campaign.party.has(id) else ""
 					]
 				),
-				Rect2(136, y + 83, 325, 26),
+				Rect2(136, y + 87, 325, 28),
 				14,
 				GOLD
 			)
@@ -1457,16 +1528,60 @@ func show_heroes() -> void:
 				button(
 					inner,
 					"Ver atributos e evoluir  →",
-					Rect2(136, y + 117, 325, 39),
+					Rect2(136, y + 145, 325, 44),
 					show_hero_details.bind(id)
 				)
 				. add_theme_font_size_override("font_size", 16)
 			)
 		else:
-			var chapter: int = TaleCatalog.recruit_chapter(id)
-			label(inner, "Recrutada no capítulo %d" % chapter, Rect2(136, y + 92, 325, 43), 17)
+			label(inner, TaleCatalog.UNLOCKS[id].detail, Rect2(136, y + 82, 325, 54), 16)
+			label(inner, campaign.unlock_text(id), Rect2(136, y + 139, 325, 23), 13, GOLD)
+			(
+				button(
+					inner,
+					"Ver requisito  →",
+					Rect2(136, y + 167, 325, 29),
+					show_unlock_details.bind(id)
+				)
+				. add_theme_font_size_override("font_size", 14)
+			)
 		row += 1
 	navigation("heroes")
+
+
+func show_unlock_details(id: String) -> void:
+	if not TaleCatalog.UNLOCKS.has(id):
+		return
+	modal(str(TaleCatalog.HEROES[id].name), str(TaleCatalog.UNLOCKS[id].detail))
+	portrait(overlay, id, Vector2(143, 681), 0.9)
+	label(
+		overlay,
+		"Convocada como upgrade entre encontros.\n\nUma run tem dois encontros e um chefe. O vínculo é salvo ao encerrar a run.\n\nApós desbloquear, pode começar na sua formação.",
+		Rect2(266, 400, 242, 279),
+		17,
+		MUTED
+	)
+	var progress := bar(overlay, Rect2(32, 715, 476, 12), TaleCatalog.HEROES[id].color)
+	progress.max_value = TaleCatalog.UNLOCKS[id].goal
+	progress.value = progress.max_value if campaign.unlocked.has(id) else campaign.unlock_amount(id)
+	label(overlay, campaign.unlock_text(id), Rect2(32, 740, 476, 31), 18, GOLD)
+	button(overlay, "Voltar aos heróis", Rect2(32, 803, 476, 54), show_heroes, true)
+
+
+func hero_names(ids: Array) -> String:
+	var names := PackedStringArray()
+	for id in ids:
+		names.append(TaleCatalog.HEROES[id].name)
+	return ", ".join(names)
+
+
+func run_unlock_summary() -> String:
+	var lines := PackedStringArray()
+	for id in run.drafted:
+		if campaign.unlocked.has(id):
+			continue
+		lines.append(str(TaleCatalog.HEROES[id].name) + ": " + campaign.unlock_text(id))
+	return "\n".join(lines)
 
 
 func show_hero_details(id: String) -> void:

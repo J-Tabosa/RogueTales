@@ -166,26 +166,14 @@ func checks() -> void:
 	assert(hits[0] == 1 and timeline.time < 0)
 	game._input(key)
 	assert(not game.debug_enabled and game.state == "menu")
-	# Eight chapters, genuine UI combat, relic choices, recruiting, persistence and ending.
+	# Eight chapters with ordinary XP/gold, temporary recruitment and replay farming on defeat.
 	for chapter in 8:
 		assert(game.campaign.can_play(chapter))
-		game.campaign.checkpoint.clear()
-		# Buy affordable upgrades between chapters; the same income is available in normal play.
-		for id in game.campaign.party:
-			for branch in 3:
-				if game.campaign.gold >= game.campaign.upgrade_cost(id, branch):
-					game.campaign.buy_upgrade(id, branch)
-		# Test a tank + healer formation as soon as it is recruited.
-		if chapter >= 3:
-			game.campaign.party.assign(["mulan", "rapunzel", "scarlet"])
+		train_party()
 		game.start_stage(chapter)
 		assert(game.state == "story")
 		game.finish_story()
 		assert(game.state == "travel")
-		game.run.rng.seed = 42
-		game.arena.set_process(false)
-		for actor in game.arena.heroes:
-			actor.set_process(false)
 		assert(game.arena.heroes.size() == game.campaign.party.size())
 		if chapter == 0:
 			game.toggle_pause()
@@ -196,41 +184,39 @@ func checks() -> void:
 			game.resume_battle()
 			game.toggle_speed()
 			assert(game.game_speed == 2)
-		for tick in 12000:
-			game._process(0.05)
-			if is_instance_valid(game.arena):
-				game.arena._process(0.05)
-			if game.state == "choice":
-				if chapter == 0 and game.run.wave == 1:
-					var offered: Array = game.run.offers.duplicate()
-					game.leave_battle()
-					game.resume_checkpoint()
-					game.arena.set_process(false)
-					assert(game.run.offers == offered and game.state == "choice")
-				game.select_relic(game.run.offers[0])
-			if game.state in ["result", "defeat"]:
+		drive_combat(42, chapter == 0)
+		for retry in 8:
+			if game.state == "result":
 				break
+			# Idle progression includes replaying an easier cleared chapter, with no free currency.
+			for farm in 2:
+				train_party()
+				game.begin_chapter_combat(maxi(0, chapter - 3))
+				drive_combat(100 + retry * 13 + farm)
+				assert(game.state == "result", "The earlier chapter must remain farmable")
+			train_party()
+			game.begin_chapter_combat(chapter)
+			drive_combat(200 + retry * 17)
 		assert(
 			game.state == "result",
-			"Chapter %d should be winnable with earned upgrades" % (chapter + 1)
+			"Chapter %d must be reachable with earned progression" % (chapter + 1)
 		)
-		assert(game.campaign.cleared.has(chapter))
-		assert(game.campaign.party.size() <= 3)
+		assert(game.campaign.cleared.has(chapter) and game.campaign.party.size() <= 3)
 		game.show_story(chapter, "outro")
 		game.finish_story()
 		assert(game.state == "memory")
 		game.save_memory("hope")
 		assert(game.campaign.checkpoint.is_empty())
-	assert(game.campaign.unlocked.size() == 5 and game.campaign.cleared.size() == 8)
+	assert(game.campaign.cleared.size() == 8)
 	assert(game.state == "ending" and game.campaign.choices.size() == 8)
 	var saved := TaleCampaign.new()
-	assert(saved.load_from(test_path))
-	assert(saved.cleared.size() == 8)
+	assert(saved.load_from(test_path) and saved.cleared.size() == 8)
 	var gold: int = game.campaign.gold
 	game.show_story(0, "intro", 0, true)
 	game.finish_story()
 	assert(game.state == "journal" and game.campaign.gold == gold)
 	# Party formation rules, fallback targets, defeat and checkpoint disposal.
+	game.campaign.unlocked.assign(TaleCatalog.HEROES.keys())
 	game.campaign.party.assign(["scarlet", "rapunzel", "ariel"])
 	assert(not game.campaign.toggle_party("mulan"))
 	assert(game.campaign.promote("ariel") and game.campaign.party[0] == "ariel")
@@ -257,6 +243,49 @@ func checks() -> void:
 		if FileAccess.file_exists(path):
 			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	print(
-		"PASS: 8 chapters + ending; five recruits; 3-member formation; unique skills/upgrades; earned-income balance; relics/checkpoint; atomic saves/backup; pause/2x; attack recovery/one hit; idle; debug Ctrl+B guard; all screens; defeat and replay"
+		"PASS: 8 chapters + ending; temporary recruitment; 3-member formation; unique skills/upgrades; earned-income balance; relics/checkpoint; atomic saves/backup; pause/2x; attack recovery/one hit; idle; debug Ctrl+B guard; all screens; defeat and replay"
 	)
 	quit()
+
+
+func train_party() -> void:
+	var trained := true
+	while trained:
+		trained = false
+		for id in game.campaign.party:
+			if game.campaign.can_level_hero(id):
+				assert(game.campaign.level_hero(id))
+				trained = true
+	for branch in 3:
+		for id in game.campaign.party:
+			game.campaign.buy_upgrade(id, branch)
+
+
+func drive_combat(seed_value: int, check_resume: bool = false) -> void:
+	game.run.rng.seed = seed_value
+	game.arena.set_process(false)
+	for tick in 12000:
+		game._process(0.05)
+		if is_instance_valid(game.arena):
+			game.arena.set_process(false)
+			game.arena._process(0.05)
+		if game.state == "choice":
+			if check_resume and game.run.wave == 1:
+				var offered: Array = game.run.offers.duplicate()
+				game.leave_battle()
+				game.resume_checkpoint()
+				game.arena.set_process(false)
+				assert(game.run.offers == offered and game.state == "choice")
+			game.select_relic(game.run.offers[0])
+			if game.state == "replacement":
+				var weakest := 0
+				for slot in game.run.actors.size():
+					if (
+						game.run.actors[slot].hp / game.run.actors[slot].max_hp
+						< game.run.actors[weakest].hp / game.run.actors[weakest].max_hp
+					):
+						weakest = slot
+				game.confirm_replacement(game.run.offers[0], weakest)
+		if game.state in ["result", "defeat"]:
+			return
+	assert(false, "Combat stalled in state: " + game.state)

@@ -6,28 +6,45 @@ Idle RPG de fantasia em **Godot 4.7 / GDScript**, com oito capítulos, cinco her
 
 1. Clone o repositório e importe `project.godot` na **Godot 4.7**.
 2. Pressione **F5**. Abra o mapa e entre no primeiro capítulo.
-3. Scarlet começa a jornada. Recrute as outras heroínas na história e organize a formação pela tela **Heróis**.
+3. Você começa só com Scarlet, a Chapeuzinho Vermelho. Convoque outras heroínas como upgrades temporários e cumpra seus requisitos para liberá-las permanentemente em **Heróis**.
 4. Derrote inimigos para ganhar ouro e EXP. Nos detalhes de cada heroína, compre níveis e habilidades exclusivas.
 5. Depois do capítulo 1, recolha ouro e EXP no baú do início, inclusive depois de fechar o jogo.
 
-O combate é automático. Cada capítulo tem dois encontros e um chefe. Entre encontros, escolha uma relíquia que dura apenas durante aquela expedição. A derrota mantém o ouro, a EXP, os recrutamentos e as melhorias permanentes. Uma nova expedição restaura a vida da equipe.
+O combate é automático. Cada capítulo tem dois encontros e um chefe. Entre encontros, escolha uma relíquia ou um convite temporário de heroína. Cada capítulo completo corresponde a uma run. A derrota mantém o ouro, a EXP, os recrutamentos e as melhorias permanentes. Uma nova expedição restaura a vida da equipe.
 
 ## Campanha
 
 A Costureira roubou os finais dos contos e prendeu os reinos com oito agulhas. As princesas precisam recuperar suas vozes e decidir o que escrever depois.
 
-| Capítulo | Local | Chefe | Recrutamento ao concluir |
-| --- | --- | --- | --- |
-| 1 | Bosque dos Sussurros | O Devorador de Trilhas | Rapunzel |
-| 2 | Torre dos Ecos | A Guardiã da Janela | Branca de Neve |
-| 3 | Pomar do Espelho | O Espelho Faminto | Mulan |
-| 4 | Desfiladeiro de Jade | O General Sem Nome | — |
-| 5 | Palácio da Meia-noite | O Relógio Partido | Ariel |
-| 6 | Santuário das Marés | O Leviatã Silencioso | — |
-| 7 | Forja das Cinzas | O Ferreiro de Destinos | — |
-| 8 | Biblioteca do Último Fio | A Costureira dos Finais | Epílogo |
+| Capítulo | Local | Chefe |
+| --- | --- | --- |
+| 1 | Bosque dos Sussurros | O Devorador de Trilhas |
+| 2 | Torre dos Ecos | A Guardiã da Janela |
+| 3 | Pomar do Espelho | O Espelho Faminto |
+| 4 | Desfiladeiro de Jade | O General Sem Nome |
+| 5 | Palácio da Meia-noite | O Relógio Partido |
+| 6 | Santuário das Marés | O Leviatã Silencioso |
+| 7 | Forja das Cinzas | O Ferreiro de Destinos |
+| 8 | Biblioteca do Último Fio | A Costureira dos Finais |
 
 Cada capítulo tem introdução, desfecho e uma memória permanente: **esperança** concede +5 PV máximos a cada princesa; **coragem** concede +1 de dano. O epílogo varia conforme essas escolhas. O diário permite rever os diálogos sem conceder recompensas novamente.
+
+## Recrutamento por requisitos
+
+Terminar capítulos não concede personagens automaticamente. Uma nova conta tem somente **Scarlet (Chapeuzinho Vermelho)**. Entre os encontros aparecem três upgrades: quando há uma heroína elegível, um deles é um convite para lutar até o fim daquela run. O primeiro convite da primeira run é da Branca de Neve; os seguintes variam entre as outras heroínas disponíveis.
+
+| Heroína | Requisito de desbloqueio permanente |
+| --- | --- |
+| Branca de Neve | Vencer três runs distintas após escolhê-la como convite |
+| Rapunzel | Restaurar 60 PV reais com sua cura; vida excedente e relíquias não contam |
+| Mulan | Acertar oito golpes do combo Terceiro corte |
+| Ariel | Vencer dois capítulos diferentes com ela viva na formação final |
+
+A convidada entra imediatamente na arena e ataca junto com a equipe. Se os três espaços estiverem ocupados, escolha quem substituir apenas naquela run; a formação permanente fica preservada. Relíquias já escolhidas também beneficiam a nova integrante. Uma heroína não pode ser convocada duas vezes na mesma run.
+
+O vínculo acumula entre runs e é registrado ao vencer ou perder. Abandonar registra o que estava salvo nos encontros já concluídos. Só vitórias contam para Branca de Neve e Ariel; cura e combos também contam em derrotas. Sair para o início mantém o checkpoint, sem encerrar ou contar outra run. A retomada preserva convidadas, vida, contadores, relíquias e as mesmas ofertas. Recarregar não duplica o crédito de uma run.
+
+**Heróis → Ver requisito** mostra a descrição e o progresso. Ao completar a missão, a heroína fica disponível para começar futuras runs e evoluir permanentemente; ela entra na formação automaticamente se houver espaço. Princesas já desbloqueadas em saves antigos permanecem disponíveis. Uma heroína permanente fora da formação também pode aparecer como reforço temporário.
 
 ## Heroínas e evolução
 
@@ -48,8 +65,8 @@ O perfil possui nome e retrato editáveis, nível de conta, estatísticas e seis
 ## Ciclo idle
 
 - **Baú de provisões:** liberado após concluir o capítulo 1; acumula até oito horas, com o jogo aberto ou fechado. A renda aumenta com os capítulos concluídos. Ouro vai à carteira; EXP vai à conta e às heroínas da formação presente no resgate.
-- **Patrulha automática:** opção nas configurações para repetir capítulos já concluídos. Pula os diálogos vistos, escolhe a primeira relíquia oferecida e reinicia após a vitória. Para ao sair ou na derrota.
-- **Progresso permanente:** níveis, habilidades, memórias e recrutamentos sobrevivem às derrotas. Relíquias pertencem à expedição atual.
+- **Patrulha automática:** opção nas configurações para repetir capítulos já concluídos. Pula os diálogos vistos, escolhe o primeiro upgrade oferecido (incluindo convites; com a formação cheia, substitui o terceiro espaço) e reinicia após a vitória. Para ao sair ou na derrota.
+- **Progresso permanente:** níveis, habilidades, memórias e recrutamentos sobrevivem às derrotas. Relíquias e convites pertencem à expedição atual.
 
 O relógio local determina o acúmulo offline; um relógio que retrocede não concede tempo adicional. Não há servidor, conta online, compras ou anúncios.
 
@@ -57,7 +74,7 @@ O relógio local determina o acúmulo offline; um relógio que retrocede não co
 
 - Início com continuação, baú de provisões e acesso à formação.
 - Mapa dos oito capítulos, apresentação, diálogos e escolhas de memória.
-- Coleção de heróis, detalhes, níveis, habilidades e ordem de vanguarda.
+- Coleção de heróis, requisitos de desbloqueio, detalhes, níveis, habilidades e ordem de vanguarda.
 - Combate, pausa, relíquias, vitória, derrota, recrutamento e epílogo.
 - Diário, perfil, edição de perfil, conquistas, ajuda e créditos.
 - Configurações de música, efeitos, qualidade visual, limite de 30/60 FPS, velocidade do texto, movimento reduzido, combate 1×/2× e patrulha automática.
@@ -70,11 +87,11 @@ A trilha em loop e os efeitos sintetizados são originais deste projeto. Os cont
 
 ## Salvamento e migração
 
-O save continua em `user://campaign_v1.json`, agora com **schema 2**, para preservar instalações anteriores. A gravação usa arquivo temporário e cópia `.bak`; um save inválido tenta recuperar o backup. Não existe sincronização na nuvem.
+O save continua em `user://campaign_v1.json`, agora com **schema 3**, para preservar instalações anteriores. A gravação usa arquivo temporário e cópia `.bak`; um save inválido tenta recuperar o backup. Não existe sincronização na nuvem.
 
 Saves antigos da campanha mantêm capítulos, ouro, equipe sobrevivente, habilidades e memórias. **Cinderela foi removida**: suas habilidades compradas são reembolsadas uma única vez na migração. Se ela estava na formação de uma expedição salva, essa expedição retorna ao acampamento para evitar associar sua vida a outra heroína. A versão antiga de três fases é independente e não concede capítulos automaticamente.
 
-Ao continuar uma expedição, o jogo retorna **ao início do encontro atual**, com a vida e as relíquias registradas naquele ponto. Uma escolha de relíquia pendente mantém as mesmas opções ao sair e voltar. Encontros concluídos não concedem recompensas duplicadas. O desfecho pendente também pode ser retomado após fechar o jogo.
+Ao continuar uma expedição, o jogo retorna **ao início do encontro atual**, com a formação daquela run (incluindo convidadas), vida, contadores de requisitos e relíquias registrados naquele ponto. Uma escolha de relíquia pendente mantém as mesmas opções ao sair e voltar. Encontros concluídos não concedem recompensas duplicadas. O desfecho pendente também pode ser retomado após fechar o jogo.
 
 ## Animações editáveis
 
@@ -93,8 +110,8 @@ Abra uma cena em `scenes/heroes/`, selecione o `AnimatedSprite2D` e edite **Spri
 
 | Arquivo | Responsabilidade |
 | --- | --- |
-| `scripts/catalog.gd` | Capítulos, diálogos, heroínas e balanceamento |
-| `scripts/campaign.gd` | Formação, evolução, idle, conquistas e persistência |
+| `scripts/catalog.gd` | Capítulos, diálogos, heroínas, requisitos e balanceamento |
+| `scripts/campaign.gd` | Formação, evolução, desbloqueios por run, idle, conquistas e persistência |
 | `scripts/run.gd` | Vida, dano, cura, veneno, queimadura e relíquias |
 | `scripts/arena.gd` | Formação visual, dash, projéteis, efeitos e ambientes |
 | `scripts/hero.gd` | Idle, ombros e posicionamento temporal dos quadros |
@@ -104,6 +121,7 @@ Abra uma cena em `scenes/heroes/`, selecione o `AnimatedSprite2D` e edite **Spri
 | `tools/make_audio.py` | Geração reproduzível da trilha original |
 | `tests/smoke.gd` | Campanha completa, regras, saves e debug |
 | `tests/idle.gd` | Migração, idle, evolução, telas, patrulha e ataques |
+| `tests/recruitment.gd` | Convites, quatro requisitos, saves com convidadas e desbloqueio após três vitórias reais |
 
 ## Verificação
 
@@ -111,8 +129,11 @@ Abra uma cena em `scenes/heroes/`, selecione o `AnimatedSprite2D` e edite **Spri
 godot --headless --path . --editor --quit
 godot --headless --path . --script tests/smoke.gd
 godot --headless --path . --script tests/idle.gd
+godot --headless --path . --script tests/recruitment.gd
 ```
 
-Os testes usam saves isolados. Cobrem os oito capítulos com renda da campanha, cinco recrutamentos, formação de três, habilidades, relíquias, recuperação de save, pausa, velocidade, impacto único, derrota, replay, epílogo e proteção do debug por Ctrl+B. A suíte idle cobre o reembolso da personagem removida, limite offline, resgates únicos, relógio regressivo, níveis, conquistas, perfil, preferências, repetição automática, trajetória reta da maçã e dash/retorno das duas atacantes corpo a corpo.
+Os testes usam saves isolados. Cobrem os oito capítulos com renda da campanha e repetições para evoluir, recrutamento temporário, formação de três, habilidades, relíquias, recuperação de save, pausa, velocidade, impacto único, derrota, replay, epílogo e proteção do debug por Ctrl+B. A suíte idle cobre o reembolso da personagem removida, limite offline, resgates únicos, relógio regressivo, níveis, conquistas, perfil, preferências, repetição automática, trajetória reta da maçã e dash/retorno das duas atacantes corpo a corpo.
+
+A suíte de recrutamento verifica os quatro requisitos, crédito único por run, cura efetiva, combos, sobrevivência de Ariel em capítulos distintos, substituição com equipe cheia, herança de relíquias, migração e persistência. Também joga combates reais até a terceira vitória com convite da Branca de Neve e confirma sua presença na próxima formação inicial.
 
 Abra com F5 para jogar no computador. Para um APK, configure o SDK Android e os templates de exportação na Godot; nenhum APK está incluído.
