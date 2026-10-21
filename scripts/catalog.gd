@@ -253,7 +253,7 @@ const STAGES = [
 	{
 		"name": "Santuário das Marés",
 		"short": "Uma voz de volta",
-		"enemy": "Afogado de tinta",
+		"enemy": "Caranguejo de tinta",
 		"boss": "O Leviatã Silencioso",
 		"hp": 350.0,
 		"damage": 32.0,

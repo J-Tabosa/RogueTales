@@ -29,6 +29,7 @@ var idle_event_elapsed := 0.0
 var idle_phase := 0.0
 var idle_weight := 0.0
 var walk_weight := 0.0
+var motion_sleeping := false
 var idle_rng := RandomNumberGenerator.new()
 
 
@@ -127,6 +128,23 @@ func _process(delta: float) -> void:
 				idle_phase = progress * TAU
 				# A single gentle gesture, with zero movement at both ends.
 				sway_target = sin(progress * PI)
+	# Long resting idles only tick their gesture timer, without submitting unchanged uniforms.
+	if (
+		sway_target == 0.0
+		and animation != &"walk"
+		and idle_weight < 0.0001
+		and walk_weight < 0.0001
+	):
+		if not motion_sleeping:
+			idle_weight = 0.0
+			walk_weight = 0.0
+			var resting_material := material as ShaderMaterial
+			if resting_material != null:
+				resting_material.set_shader_parameter("idle_weight", 0.0)
+				resting_material.set_shader_parameter("walk_weight", 0.0)
+			motion_sleeping = true
+		return
+	motion_sleeping = false
 	var blend := 1.0 - exp(-dt * 14.0)
 	idle_weight = lerpf(idle_weight, sway_target, blend)
 	var walk_target := 1.0 if animation == &"walk" and walk_shoulders_enabled else 0.0

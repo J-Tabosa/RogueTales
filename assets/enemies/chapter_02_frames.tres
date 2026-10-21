@@ -1,0 +1,147 @@
+[gd_resource type="SpriteFrames" load_steps=18 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/enemies/chapter_02_tower.png" id="1"]
+
+[sub_resource type="AtlasTexture" id="Frame_0_0"]
+atlas = ExtResource("1")
+region = Rect2(0, 0, 313, 306)
+margin = Rect2(43.5, 94, 87, 94)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_0_1"]
+atlas = ExtResource("1")
+region = Rect2(313, 0, 314, 306)
+margin = Rect2(43, 94, 86, 94)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_0_2"]
+atlas = ExtResource("1")
+region = Rect2(627, 0, 313, 306)
+margin = Rect2(43.5, 94, 87, 94)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_0_3"]
+atlas = ExtResource("1")
+region = Rect2(940, 0, 314, 306)
+margin = Rect2(43, 94, 86, 94)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_1_0"]
+atlas = ExtResource("1")
+region = Rect2(0, 306, 313, 296)
+margin = Rect2(43.5, 104, 87, 104)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_1_1"]
+atlas = ExtResource("1")
+region = Rect2(313, 306, 291, 296)
+margin = Rect2(54.5, 104, 109, 104)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_1_2"]
+atlas = ExtResource("1")
+region = Rect2(604, 306, 336, 296)
+margin = Rect2(32, 104, 64, 104)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_1_3"]
+atlas = ExtResource("1")
+region = Rect2(940, 306, 314, 296)
+margin = Rect2(43, 104, 86, 104)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_2_0"]
+atlas = ExtResource("1")
+region = Rect2(0, 602, 313, 326)
+margin = Rect2(43.5, 74, 87, 74)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_2_1"]
+atlas = ExtResource("1")
+region = Rect2(313, 602, 314, 326)
+margin = Rect2(43, 74, 86, 74)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_2_2"]
+atlas = ExtResource("1")
+region = Rect2(627, 602, 313, 326)
+margin = Rect2(43.5, 74, 87, 74)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_2_3"]
+atlas = ExtResource("1")
+region = Rect2(940, 602, 314, 326)
+margin = Rect2(43, 74, 86, 74)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_3_0"]
+atlas = ExtResource("1")
+region = Rect2(0, 928, 309, 326)
+margin = Rect2(45.5, 74, 91, 74)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_3_1"]
+atlas = ExtResource("1")
+region = Rect2(309, 928, 335, 326)
+margin = Rect2(32.5, 74, 65, 74)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_3_2"]
+atlas = ExtResource("1")
+region = Rect2(644, 928, 307, 326)
+margin = Rect2(46.5, 74, 93, 74)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_3_3"]
+atlas = ExtResource("1")
+region = Rect2(951, 928, 303, 326)
+margin = Rect2(48.5, 74, 97, 74)
+filter_clip = true
+
+[resource]
+animations = [
+{
+"frames": [
+{ "duration": 4, "texture": SubResource("Frame_0_0") },
+{ "duration": 1, "texture": SubResource("Frame_0_1") },
+{ "duration": 0.35, "texture": SubResource("Frame_0_2") },
+{ "duration": 1.5, "texture": SubResource("Frame_0_3") }
+],
+"loop": true,
+"name": &"idle",
+"speed": 4.0
+},
+{
+"frames": [
+{ "duration": 1, "texture": SubResource("Frame_1_0") },
+{ "duration": 1, "texture": SubResource("Frame_1_1") },
+{ "duration": 1, "texture": SubResource("Frame_1_2") },
+{ "duration": 1, "texture": SubResource("Frame_1_3") }
+],
+"loop": false,
+"name": &"attack",
+"speed": 8.0
+},
+{
+"frames": [
+{ "duration": 4, "texture": SubResource("Frame_2_0") },
+{ "duration": 1, "texture": SubResource("Frame_2_1") },
+{ "duration": 0.35, "texture": SubResource("Frame_2_2") },
+{ "duration": 1.5, "texture": SubResource("Frame_2_3") }
+],
+"loop": true,
+"name": &"boss_idle",
+"speed": 4.0
+},
+{
+"frames": [
+{ "duration": 1, "texture": SubResource("Frame_3_0") },
+{ "duration": 1, "texture": SubResource("Frame_3_1") },
+{ "duration": 1, "texture": SubResource("Frame_3_2") },
+{ "duration": 1, "texture": SubResource("Frame_3_3") }
+],
+"loop": false,
+"name": &"boss_attack",
+"speed": 8.0
+}
+]

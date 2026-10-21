@@ -155,6 +155,8 @@ func checks() -> void:
 	assert(game.arena.heroes[1].hero_name == "Ariel" and game.arena.heroes.size() == 3)
 	game.leave_battle()
 	game.resume_checkpoint()
+	for step in 4:
+		game._process(0.1)
 	assert(game.run.actor_ids()[1] == "ariel" and game.arena.heroes[1].hero_name == "Ariel")
 	game.abandon_expedition()
 	assert(game.campaign.party == ["scarlet", "snow_white", "rapunzel"])

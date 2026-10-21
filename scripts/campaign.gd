@@ -31,6 +31,7 @@ var idle_seconds := 0
 var claimed: Array[String] = []
 var music_volume := 0.45
 var effects_volume := 0.65
+var voice_volume := 0.5
 var high_quality := true
 var fps_limit := 60
 var text_speed := 36
@@ -186,6 +187,7 @@ func to_dict() -> Dictionary:
 		"claimed": claimed,
 		"music_volume": music_volume,
 		"effects_volume": effects_volume,
+		"voice_volume": voice_volume,
 		"high_quality": high_quality,
 		"fps_limit": fps_limit,
 		"text_speed": text_speed,
@@ -291,6 +293,7 @@ func load_data(data: Dictionary) -> void:
 				claimed.append(item.id)
 	music_volume = clampf(float(data.get("music_volume", 0.45)), 0, 1)
 	effects_volume = clampf(float(data.get("effects_volume", 0.65)), 0, 1)
+	voice_volume = clampf(float(data.get("voice_volume", 0.5)), 0, 1)
 	high_quality = bool(data.get("high_quality", true))
 	fps_limit = 30 if int(data.get("fps_limit", 60)) == 30 else 60
 	text_speed = int(data.get("text_speed", 36))

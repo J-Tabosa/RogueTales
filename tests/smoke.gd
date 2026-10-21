@@ -173,6 +173,8 @@ func checks() -> void:
 		game.start_stage(chapter)
 		assert(game.state == "story")
 		game.finish_story()
+		assert(game.state == "loading")
+		finish_loading()
 		assert(game.state == "travel")
 		assert(game.arena.heroes.size() == game.campaign.party.size())
 		if chapter == 0:
@@ -274,6 +276,7 @@ func drive_combat(seed_value: int, check_resume: bool = false) -> void:
 				var offered: Array = game.run.offers.duplicate()
 				game.leave_battle()
 				game.resume_checkpoint()
+				finish_loading()
 				game.arena.set_process(false)
 				assert(game.run.offers == offered and game.state == "choice")
 			game.select_relic(game.run.offers[0])
@@ -289,3 +292,11 @@ func drive_combat(seed_value: int, check_resume: bool = false) -> void:
 		if game.state in ["result", "defeat"]:
 			return
 	assert(false, "Combat stalled in state: " + game.state)
+
+
+func finish_loading() -> void:
+	for step in 8:
+		if game.state != "loading":
+			return
+		game._process(0.1)
+	assert(false, "Mission transition did not finish")

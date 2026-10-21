@@ -1,0 +1,35 @@
+{
+  "generator": "Built-in image_gen",
+  "assets": [
+    {
+      "key": "wood_panel",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: production-ready single 9-slice UI panel texture for a portrait mobile fairy-tale idle RPG, RogueTales. Generate ONLY ONE square panel, front-facing orthographic, centered, filling a square 1024x1024 canvas. Thick rounded hand-carved warm walnut wooden frame with delicate golden inlay, a few small emerald ivy leaves hugging the four corners, restrained magical mint glints. The frame is confined to the outer 12 percent on each side; the central 76 percent is a very quiet flat deep midnight teal inset, opaque, subtle paper-like grain, suitable behind lots of cream text. The edges between the corners must be straight and uniform so the texture can be nine-slice stretched to wide cards without distortions. Whimsical hand-painted classic animated fairy-tale storybook aesthetic, soft dimensional shading, clean readable shapes, polished cozy mobile game UI, original design. Outside the rounded outer silhouette is genuinely transparent alpha; the dark center is opaque. No lettering, no numerals, no icons, no characters, no checkerboard printed into image, no extra panels, no mockup, no drop shadows beyond a small neat rim. Keep decoration away from the text region."
+    },
+    {
+      "key": "gold_wallet",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: single HUD gold counter plaque for RogueTales portrait mobile fairy-tale RPG. One horizontal rounded carved walnut wood plaque, aspect ratio about 4:1, centered with transparent background. Small cluster of three chunky shiny gold coins and one emerald ivy sprig attached at far left; a wide empty deep teal recessed area across the remaining 75 percent for a runtime gold number. Warm honey-gold rim/inlay, a few soft mint magic sparks, clean hand-painted animated storybook fairy-tale style, polished cozy mobile RPG UI. Front-facing orthographic, not tilted. The central counter area must be empty and legible, no text or numbers of any kind. One isolated asset, no additional icons or panels, no watermark, true transparent alpha outside the plaque. Leave minimal transparent margin around the complete object."
+    },
+    {
+      "key": "world_map",
+      "transparent": false,
+      "prompt": "Use case: illustration-story. Asset type: vertical in-game campaign map background for RogueTales, portrait 1024x1536. Original hand-painted magical fairy-tale realm map, top-down oblique view, clean readable mobile game art, cozy classic animated storybook atmosphere. A winding ivory-gold walking trail travels from the upper left toward the lower right through eight tiny distinctive environments spread along the vertical journey: whispering emerald woodland, tall ivy-covered tower, pink apple orchard and mirror pool, jade mountain pass with a red pavilion, moonlit lavender palace, turquoise seaside shrine, amber volcanic forge, and a luminous violet ancient library. The regions blend beautifully into one enchanted land surrounded by deep teal forest and golden fireflies. Leave several generous calm clearings alongside the route where interactive mission markers and labels can be placed by the game. Soft moss green, warm walnut browns, honey gold, luminous turquoise, dusty lavender. Crisp attractive painted shapes, subtle parchment paper texture. Full-bleed edge-to-edge artwork, no frame, no text, no numbers, no labels, no UI buttons, no characters, no giant foreground objects, no watermark."
+    },
+    {
+      "key": "logo",
+      "transparent": true,
+      "prompt": "Use case: logo-brand. Asset type: finished game title wordmark on transparent background for a portrait fantasy idle RPG loading screen. Text exactly and only: \"RogueTales\". Spell it R-o-g-u-e-T-a-l-e-s, case exactly RogueTales, one word. Large wonderfully chunky inflated bubble lettering with playful rounded forms, polished hand-painted animated storybook fairy-tale aesthetic. Rich colorful letters alternating honey gold, peach coral, mint jade and lavender, cream highlights, deep forest green contour and subtle dimensional walnut shadow. Small ivy leaves around the first and last letters and three tiny magical stars, restrained enough to keep every letter perfectly readable at mobile size. Original custom typography, not an imitation of an existing brand logo. Horizontal composition approximately 2.5:1 with compact margins, full word visible, no clipped lettering. Truly transparent alpha background. No extra words, no tagline, no characters, no additional logo variations, no watermark. This must be a single ready-to-use game logo asset, not a presentation."
+    },
+    {
+      "key": "enchanted_forest",
+      "transparent": false,
+      "prompt": "Use case: illustration-story. Asset type: portrait 1024x1536 full-screen background illustration for RogueTales mobile game menus and loading transitions. An enchanting moonlit forest archway made of old warm brown twisted trees, emerald ivy leaves, a few glowing mint flowers, golden fireflies, distant fairy-tale tower silhouettes. A soft luminous forest trail recedes toward a tiny open storybook-shaped portal in the distance. Hand-painted polished animated fairy-tale storybook art, mystical, welcoming and cozy, deep forest teal palette with touches of honey gold and dusty lavender. Composition is a decorative border of foliage along the left and right edges and lower corners, with a broad very quiet dark teal center and upper-middle negative space for a colorful game title and runtime loading message. Restrained detail in the center for excellent text contrast. Full bleed, no framing card, no text, no logo, no lettering, no numbers, no characters, no watermark."
+    },
+    {
+      "key": "wood_button",
+      "transparent": true,
+      "prompt": "Use case: stylized-concept. Asset type: one blank reusable nine-slice BUTTON texture for the RogueTales mobile fairy-tale RPG, matching a warm walnut wood, emerald ivy and honey gold UI. Generate ONLY ONE horizontal button, front-facing orthographic, about 4:1 wide rectangle, rounded corners, compact transparent margin. Thin elegantly carved warm golden-brown wooden rim, small restrained ivy leaves confined to far left and far right rounded ends. Large calm deep emerald teal inset with very subtle grain, completely empty. Keep the middle of the horizontal top and bottom borders uniform and straight so it can be stretched horizontally as a native nine-slice button. Polished hand-painted animated storybook aesthetic, attractive tactile bevel and soft golden highlight, clean simple shapes legible at small mobile size. Border thickness about 8 percent of the button's height; leaves must not extend into the central 75 percent text area. No coins, no icons, no letters, no text, no numerals, no mockup, no additional buttons or sheets, no watermark. Genuine transparent alpha outside the rounded button silhouette. Single asset only."
+    }
+  ]
+}

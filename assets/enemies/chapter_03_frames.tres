@@ -1,0 +1,147 @@
+[gd_resource type="SpriteFrames" load_steps=18 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/enemies/chapter_03_orchard.png" id="1"]
+
+[sub_resource type="AtlasTexture" id="Frame_0_0"]
+atlas = ExtResource("1")
+region = Rect2(0, 0, 313, 313)
+margin = Rect2(43.5, 87, 87, 87)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_0_1"]
+atlas = ExtResource("1")
+region = Rect2(313, 0, 314, 313)
+margin = Rect2(43, 87, 86, 87)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_0_2"]
+atlas = ExtResource("1")
+region = Rect2(627, 0, 313, 313)
+margin = Rect2(43.5, 87, 87, 87)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_0_3"]
+atlas = ExtResource("1")
+region = Rect2(940, 0, 314, 313)
+margin = Rect2(43, 87, 86, 87)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_1_0"]
+atlas = ExtResource("1")
+region = Rect2(0, 313, 313, 309)
+margin = Rect2(43.5, 91, 87, 91)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_1_1"]
+atlas = ExtResource("1")
+region = Rect2(313, 313, 290, 309)
+margin = Rect2(55, 91, 110, 91)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_1_2"]
+atlas = ExtResource("1")
+region = Rect2(603, 313, 337, 309)
+margin = Rect2(31.5, 91, 63, 91)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_1_3"]
+atlas = ExtResource("1")
+region = Rect2(940, 313, 314, 309)
+margin = Rect2(43, 91, 86, 91)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_2_0"]
+atlas = ExtResource("1")
+region = Rect2(0, 622, 313, 318)
+margin = Rect2(43.5, 82, 87, 82)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_2_1"]
+atlas = ExtResource("1")
+region = Rect2(313, 622, 314, 318)
+margin = Rect2(43, 82, 86, 82)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_2_2"]
+atlas = ExtResource("1")
+region = Rect2(627, 622, 313, 318)
+margin = Rect2(43.5, 82, 87, 82)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_2_3"]
+atlas = ExtResource("1")
+region = Rect2(940, 622, 314, 318)
+margin = Rect2(43, 82, 86, 82)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_3_0"]
+atlas = ExtResource("1")
+region = Rect2(0, 940, 313, 314)
+margin = Rect2(43.5, 86, 87, 86)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_3_1"]
+atlas = ExtResource("1")
+region = Rect2(313, 940, 314, 314)
+margin = Rect2(43, 86, 86, 86)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_3_2"]
+atlas = ExtResource("1")
+region = Rect2(627, 940, 326, 314)
+margin = Rect2(37, 86, 74, 86)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Frame_3_3"]
+atlas = ExtResource("1")
+region = Rect2(953, 940, 301, 314)
+margin = Rect2(49.5, 86, 99, 86)
+filter_clip = true
+
+[resource]
+animations = [
+{
+"frames": [
+{ "duration": 4, "texture": SubResource("Frame_0_0") },
+{ "duration": 1, "texture": SubResource("Frame_0_1") },
+{ "duration": 0.35, "texture": SubResource("Frame_0_2") },
+{ "duration": 1.5, "texture": SubResource("Frame_0_3") }
+],
+"loop": true,
+"name": &"idle",
+"speed": 4.0
+},
+{
+"frames": [
+{ "duration": 1, "texture": SubResource("Frame_1_0") },
+{ "duration": 1, "texture": SubResource("Frame_1_1") },
+{ "duration": 1, "texture": SubResource("Frame_1_2") },
+{ "duration": 1, "texture": SubResource("Frame_1_3") }
+],
+"loop": false,
+"name": &"attack",
+"speed": 8.0
+},
+{
+"frames": [
+{ "duration": 4, "texture": SubResource("Frame_2_0") },
+{ "duration": 1, "texture": SubResource("Frame_2_1") },
+{ "duration": 0.35, "texture": SubResource("Frame_2_2") },
+{ "duration": 1.5, "texture": SubResource("Frame_2_3") }
+],
+"loop": true,
+"name": &"boss_idle",
+"speed": 4.0
+},
+{
+"frames": [
+{ "duration": 1, "texture": SubResource("Frame_3_0") },
+{ "duration": 1, "texture": SubResource("Frame_3_1") },
+{ "duration": 1, "texture": SubResource("Frame_3_2") },
+{ "duration": 1, "texture": SubResource("Frame_3_3") }
+],
+"loop": false,
+"name": &"boss_attack",
+"speed": 8.0
+}
+]

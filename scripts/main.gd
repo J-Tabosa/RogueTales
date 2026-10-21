@@ -1,11 +1,12 @@
 extends Control
 ## Screens and orchestration. Rules: run.gd; progression: campaign.gd; content: catalog.gd.
 const GameAudio = preload("res://scripts/audio.gd")
+const UISkin = preload("res://scripts/ui_skin.gd")
 const Arena = preload("res://scripts/arena.gd")
 const HERO_SCENES = TaleCatalog.HERO_SCENES
-const GOLD := Color("e9c488")
-const MUTED := Color("96a4b4")
-const INK := Color("101823")
+const GOLD := Color("f2d28e")
+const MUTED := Color("b0c9b9")
+const INK := Color("0b2927")
 @export var save_path := TaleCampaign.SAVE_PATH
 var campaign: TaleCampaign
 var run: IdleRun
@@ -51,18 +52,29 @@ var profile_name: LineEdit
 var profile_avatar := "scarlet"
 var profile_avatar_label: Label
 var profile_avatar_buttons: Dictionary = {}
+var logical_height := 960.0
+var static_portraits: Dictionary = {}
+var shared_boxes: Dictionary = {}
+var loading_callback: Callable
+var loading_elapsed := 0.0
+var loading_frames := 0
+var loading_stage := 0
+var loading_bar: ProgressBar
 
 
 func _ready() -> void:
 	campaign = TaleCampaign.new()
 	campaign.load_from(save_path)
 	campaign.settle_idle(int(Time.get_unix_time_from_system()))
+	install_controls_theme()
 	audio = Node.new()
 	audio.set_script(GameAudio)
 	add_child(audio)
 	apply_preferences()
 	persist()
 	game_speed = campaign.speed
+	var background := UISkin.picture(self, UISkin.FOREST, Rect2(Vector2.ZERO, size), true)
+	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	content = Control.new()
 	content.size = Vector2(540, 960)
 	add_child(content)
@@ -77,17 +89,42 @@ func _notification(what: int) -> void:
 		campaign.settle_idle(int(Time.get_unix_time_from_system()))
 		campaign.save_to(save_path)
 		get_tree().quit()
+	elif what == NOTIFICATION_APPLICATION_PAUSED and campaign != null:
+		persist()
+		Engine.max_fps = 5
+		if is_instance_valid(audio) and is_instance_valid(audio.music):
+			audio.music.stream_paused = true
+	elif what == NOTIFICATION_APPLICATION_RESUMED and campaign != null:
+		campaign.settle_idle(int(Time.get_unix_time_from_system()))
+		apply_preferences()
 
 
-func center_content() -> void:
+func center_content(usable_override: Rect2 = Rect2()) -> void:
 	if content == null:
 		return
-	var factor := minf(size.x / 540.0, size.y / 960.0)
+	var usable := Rect2(Vector2.ZERO, size)
+	if OS.has_feature("mobile"):
+		var safe := DisplayServer.get_display_safe_area()
+		var window_size := Vector2(DisplayServer.window_get_size())
+		if safe.size.x > 0 and safe.size.y > 0 and window_size.x > 0 and window_size.y > 0:
+			var ratio := size / window_size
+			usable = usable.intersection(
+				Rect2(Vector2(safe.position) * ratio, Vector2(safe.size) * ratio)
+			)
+	if usable_override.has_area():
+		usable = usable.intersection(usable_override)
+	var factor := maxf(0.01, minf(usable.size.x / 540.0, usable.size.y / 960.0))
+	logical_height = clampf(usable.size.y / factor, 960.0, 1280.0)
+	content.size = Vector2(540, logical_height)
 	content.scale = Vector2.ONE * factor
-	content.position = (size - Vector2(540, 960) * factor) * 0.5
+	content.position = usable.position + (usable.size - content.size * factor) * 0.5
+	relayout_page()
 
 
 func box(color: Color, border := Color("34404f"), radius := 16) -> StyleBoxFlat:
+	var key := "%s:%s:%d" % [color.to_html(), border.to_html(), radius]
+	if shared_boxes.has(key):
+		return shared_boxes[key]
 	var result := StyleBoxFlat.new()
 	result.bg_color = color
 	result.border_color = border
@@ -95,6 +132,7 @@ func box(color: Color, border := Color("34404f"), radius := 16) -> StyleBoxFlat:
 	result.set_corner_radius_all(radius)
 	result.content_margin_left = 14
 	result.content_margin_right = 14
+	shared_boxes[key] = result
 	return result
 
 
@@ -102,9 +140,11 @@ func panel(parent: Node, rect: Rect2, color := INK) -> Panel:
 	var node := Panel.new()
 	node.position = rect.position
 	node.size = rect.size
-	node.add_theme_stylebox_override("panel", box(color))
+	node.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	node.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(node)
+	UISkin.decorate(node)
+	register_layout(node)
 	return node
 
 
@@ -114,6 +154,8 @@ func label(
 	var node := Label.new()
 	node.add_theme_font_size_override("font_size", font_size)
 	node.add_theme_color_override("font_color", color)
+	node.add_theme_color_override("font_shadow_color", Color(0.01, 0.04, 0.03, 0.9))
+	node.add_theme_constant_override("shadow_offset_y", 1)
 	node.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	node.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	node.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -122,6 +164,7 @@ func label(
 	node.size = rect.size
 	node.text = text
 	parent.add_child(node)
+	register_layout(node)
 	return node
 
 
@@ -130,19 +173,25 @@ func button(
 ) -> Button:
 	var node := Button.new()
 	node.clip_text = true
+	node.custom_minimum_size.y = 44
 	node.text = text
 	node.position = rect.position
-	node.size = rect.size
+	node.size = Vector2(rect.size.x, maxf(44, rect.size.y))
 	node.add_theme_font_size_override("font_size", 19)
-	node.add_theme_color_override("font_color", Color("191a22") if primary else Color("eeeae2"))
-	node.add_theme_color_override("font_hover_color", Color("191a22") if primary else Color.WHITE)
-	node.add_theme_color_override("font_pressed_color", Color("191a22") if primary else Color.WHITE)
-	node.add_theme_stylebox_override("normal", box(GOLD if primary else Color("1b2735")))
+	node.add_theme_color_override("font_color", GOLD if primary else Color("fff1d5"))
+	node.add_theme_color_override("font_hover_color", Color.WHITE)
+	node.add_theme_color_override("font_pressed_color", GOLD)
+	node.add_theme_color_override("font_disabled_color", Color("7c998c"))
+	node.add_theme_color_override("font_shadow_color", Color("051714"))
+	node.add_theme_constant_override("shadow_offset_y", 1)
 	node.add_theme_stylebox_override(
-		"hover", box(Color("f5d69e") if primary else Color("2d3b4d"), GOLD)
+		"normal",
+		box(Color(1.0, 0.75, 0.3, 0.16) if primary else Color(0, 0, 0, 0), Color(0, 0, 0, 0), 8)
 	)
+	node.add_theme_stylebox_override("hover", box(Color(0.8, 1.0, 0.7, 0.12), GOLD, 8))
+	node.add_theme_stylebox_override("pressed", box(Color(0.0, 0.06, 0.04, 0.3), GOLD, 8))
 	node.add_theme_stylebox_override(
-		"pressed", box(Color("c4a16a") if primary else Color("121c29"), GOLD)
+		"disabled", box(Color(0.01, 0.04, 0.03, 0.65), Color(0, 0, 0, 0), 8)
 	)
 	node.add_theme_stylebox_override("focus", box(Color(0, 0, 0, 0), GOLD))
 	node.pressed.connect(
@@ -152,6 +201,8 @@ func button(
 			callback.call()
 	)
 	parent.add_child(node)
+	UISkin.decorate(node, true)
+	register_layout(node)
 	return node
 
 
@@ -163,6 +214,7 @@ func bar(parent: Node, rect: Rect2, color: Color) -> ProgressBar:
 	parent.add_child(node)
 	node.position = rect.position
 	node.size = rect.size
+	register_layout(node)
 	return node
 
 
@@ -174,20 +226,25 @@ func clear_page() -> void:
 		content.remove_child(node)
 		node.queue_free()
 	page = Control.new()
-	page.size = Vector2(540, 960)
+	page.size = Vector2(540, logical_height)
+	page.clip_contents = true
 	content.add_child(page)
+	if state != "loading":
+		loading_callback = Callable()
 	overlay = null
 	arena = null
 	var bg := ColorRect.new()
-	bg.color = Color("090f18")
+	bg.color = Color("041d1b", 0.77)
 	bg.size = Vector2(540, 960)
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	page.add_child(bg)
-	panel(page, Rect2(-70, -100, 650, 255), Color("111e2a"))
+	register_layout(bg, "fill")
 
 
 func header(title: String, subtitle: String) -> void:
-	label(page, "ROGUETALES / O ÚLTIMO FIO", Rect2(24, 24, 390, 28), 14, GOLD)
+	UISkin.picture(page, UISkin.artwork("logo"), Rect2(24, 15, 183, 51))
+	UISkin.picture(page, UISkin.artwork("wallet"), Rect2(225, 17, 188, 50))
+	label(page, format_gold(campaign.gold), Rect2(282, 28, 113, 25), 17, GOLD).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button(page, "Opções", Rect2(423, 22, 93, 40), show_settings).add_theme_font_size_override(
 		"font_size", 15
 	)
@@ -227,16 +284,34 @@ func make_arena(y: float, ids: Array = [], target_stage: int = 0) -> void:
 	viewport.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	page.add_child(viewport)
 	viewport.add_child(arena)
+	var rim := UISkin.decorate(viewport, false, true)
+	rim.z_index = 800
 	arena.attack_hit.connect(on_attack_hit)
+	arena.attack_started.connect(on_attack_started)
 
 
 func portrait(parent: Node, id: String, at: Vector2, factor: float = 0.68) -> void:
-	var actor: AnimatedSprite2D = HERO_SCENES[id].instantiate()
+	if not static_portraits.has(id):
+		var model: AnimatedSprite2D = HERO_SCENES[id].instantiate()
+		static_portraits[id] = {
+			"texture": model.sprite_frames.get_frame_texture("idle", 0),
+			"scale": model.scale,
+			"offset": model.offset,
+			"centered": model.centered
+		}
+		model.free()
+	var data: Dictionary = static_portraits[id]
+	var actor := Sprite2D.new()
+	actor.texture = data.texture
+	actor.offset = data.offset
+	actor.centered = data.centered
+	actor.scale = data.scale * factor
 	actor.position = at
-	actor.scale *= factor
-	parent.add_child(actor)
 	actor.texture_filter = texture_filter
-	actor.idle_sway_amplitude = 0 if campaign.reduced_motion else 2
+	parent.add_child(actor)
+	if parent == overlay:
+		actor.set_meta("portrait_base", at)
+		actor.position.y += (logical_height - 960.0) * 0.5
 
 
 func scroll_area(y: float, height: float, total: float) -> Control:
@@ -246,6 +321,7 @@ func scroll_area(y: float, height: float, total: float) -> Control:
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.scroll_deadzone = 12
 	page.add_child(scroll)
+	register_layout(scroll, "scroll")
 	var inner := Control.new()
 	inner.custom_minimum_size = Vector2(476, total)
 	scroll.add_child(inner)
@@ -313,45 +389,57 @@ func continue_journey() -> void:
 func show_map() -> void:
 	state = "map"
 	clear_page()
-	header(
-		"Os oito reinos",
-		"%d de 8 agulhas desfeitas • escolha um capítulo" % campaign.cleared.size()
-	)
+	header("Os oito reinos", "%d de 8 agulhas desfeitas • siga o caminho" % campaign.cleared.size())
+	var inner := scroll_area(184, 684, 1000)
+	var art := UISkin.picture(inner, UISkin.MAP, Rect2(0, 0, 476, 1000))
+	art.stretch_mode = TextureRect.STRETCH_SCALE
+	var route := Curve2D.new()
+	for index in 8:
+		route.add_point(
+			Vector2(63 if index % 2 == 0 else 421, 65 + index * 120),
+			Vector2(0, -54),
+			Vector2(0, 54)
+		)
+	var line := Line2D.new()
+	line.points = route.tessellate()
+	line.width = 5
+	line.default_color = Color("f7df9e", 0.8)
+	line.antialiased = true
+	inner.add_child(line)
 	for index in 8:
 		var data: Dictionary = TaleCatalog.STAGES[index]
-		var x: float = 24 + (index % 2) * 252
-		var y: float = 190 + floori(index / 2.0) * 164
+		var y := 18 + index * 120.0
 		var open := campaign.can_play(index)
-		panel(page, Rect2(x, y, 240, 150), Color(data.sky) if open else Color("111721"))
+		var done := campaign.cleared.has(index)
+		var x := 107.0 if index % 2 == 0 else 14.0
+		var card := button(
+			inner, "", Rect2(x, y, 355, 103), show_chapter.bind(index), open and not done
+		)
+		card.disabled = not open
+		label(card, data.name, Rect2(25, 11, 305, 52), 20, Color("fff2d3") if open else MUTED)
 		label(
-			page,
+			card,
 			(
-				"%02d  /  %s"
-				% [
-					index + 1,
-					(
-						"CONCLUÍDO"
-						if campaign.cleared.has(index)
-						else ("DISPONÍVEL" if open else "BLOQUEADO")
-					)
-				]
+				"Concluído • revisitar"
+				if done
+				else ("Entrar no capítulo  →" if open else "Conclua o capítulo anterior")
 			),
-			Rect2(x + 14, y + 9, 212, 24),
-			12,
-			data.color if open else MUTED
+			Rect2(25, 70, 305, 23),
+			14,
+			GOLD if open else MUTED
 		)
-		label(
-			page, data.name, Rect2(x + 14, y + 38, 212, 55), 20, Color("eeeae2") if open else MUTED
-		)
-		var node := button(
-			page,
-			"Revisitar" if campaign.cleared.has(index) else "Entrar  →",
-			Rect2(x + 14, y + 103, 212, 36),
+		var badge := button(
+			inner,
+			"%02d" % (index + 1),
+			Rect2(34 if index % 2 == 0 else 392, y + 20, 58, 58),
 			show_chapter.bind(index),
-			open and not campaign.cleared.has(index)
+			open
 		)
-		node.add_theme_font_size_override("font_size", 15)
-		node.disabled = not open
+		badge.disabled = not open
+		badge.add_theme_font_size_override("font_size", 19)
+	inner.get_parent().set_deferred(
+		"scroll_vertical", int(maxf(0, mini(campaign.cleared.size(), 7) * 120 - 95))
+	)
 	navigation("map")
 
 
@@ -392,7 +480,7 @@ func start_stage(index: int) -> void:
 		return
 	viewed_stage = index
 	if campaign.auto_repeat and campaign.cleared.has(index):
-		begin_chapter_combat(index)
+		load_chapter(index)
 	else:
 		show_story(index, "intro")
 
@@ -431,9 +519,11 @@ func show_story(index: int, mode: String, line: int = 0, archive: bool = false) 
 	make_arena(180, actors, index)
 	if actors.size() == 1:
 		arena.set_home(0, Vector2(246, arena.heroes[0].position.y))
-	panel(page, Rect2(24, 540, 492, 257))
+	var dialogue_panel := panel(page, Rect2(24, 540, 492, 257))
+	register_layout(dialogue_panel, "grow")
 	label(page, speaker, Rect2(44, 558, 452, 35), 21, GOLD)
 	story_body = label(page, story_lines[line][1], Rect2(44, 605, 452, 166), 23)
+	register_layout(story_body, "grow")
 	story_visible = 0.0
 	story_body.visible_characters = -1 if campaign.text_speed == 0 else 0
 	button(
@@ -482,7 +572,7 @@ func finish_story() -> void:
 	if story_archive:
 		show_journal()
 	elif story_mode == "intro":
-		begin_chapter_combat(story_stage)
+		load_chapter(story_stage)
 	elif campaign.choices.has(str(story_stage)):
 		if story_stage == 7:
 			show_ending()
@@ -683,7 +773,7 @@ func show_settings() -> void:
 	state = "settings"
 	clear_page()
 	header("Configurações", "Áudio, imagem e preferências salvas neste dispositivo.")
-	var inner := scroll_area(184, 686, 1300)
+	var inner := scroll_area(184, 686, 1440)
 	setting_slider(inner, "Volume da música", 0, campaign.music_volume, set_music_volume)
 	setting_slider(inner, "Volume dos efeitos", 133, campaign.effects_volume, set_effects_volume)
 	panel(inner, Rect2(0, 266, 476, 134))
@@ -773,6 +863,7 @@ func show_settings() -> void:
 	button(inner, "Como jogar", Rect2(0, 1090, 476, 50), show_help)
 	button(inner, "Diário e história", Rect2(0, 1153, 476, 50), show_journal)
 	button(inner, "Créditos", Rect2(0, 1216, 476, 50), show_credits)
+	setting_slider(inner, "Vozes de ataque", 1283, campaign.voice_volume, set_voice_volume)
 	navigation("profile")
 
 
@@ -846,6 +937,13 @@ func begin_chapter_combat(index: int) -> void:
 
 
 func resume_checkpoint() -> void:
+	if campaign.checkpoint.is_empty():
+		show_map()
+		return
+	show_loading(restore_checkpoint_now, int(campaign.checkpoint.stage))
+
+
+func restore_checkpoint_now() -> void:
 	if campaign.checkpoint.is_empty():
 		show_map()
 		return
@@ -943,6 +1041,9 @@ func _process(delta: float) -> void:
 	if auto_save_tick <= 0:
 		auto_save_tick = 30.0
 		persist()
+	if state == "loading":
+		advance_loading(delta)
+		return
 	if state == "story" and is_instance_valid(story_body) and campaign.text_speed > 0:
 		story_visible += delta * campaign.text_speed
 		story_body.visible_characters = int(story_visible)
@@ -950,7 +1051,7 @@ func _process(delta: float) -> void:
 		farm_timer -= delta
 		if farm_timer <= 0:
 			farm_timer = -1
-			begin_chapter_combat(farm_stage)
+			load_chapter(farm_stage)
 		return
 	if state == "preview":
 		update_preview()
@@ -963,7 +1064,10 @@ func _process(delta: float) -> void:
 		if travel_timer <= 0:
 			spawn_enemy()
 	elif state == "battle":
+		var previous_hp: float = run.enemy_hp
 		run.tick_status(dt)
+		if run.enemy_hp < previous_hp:
+			arena.enemy.hurt(true)
 		if run.enemy_hp <= 0:
 			resolve_enemy()
 			return
@@ -975,12 +1079,15 @@ func _process(delta: float) -> void:
 				var duration: float = arena.heroes[index].get_animation_duration("attack")
 				cooldowns[index] = maxf(float(run.actors[index].interval), duration + 0.06)
 		enemy_timer -= dt
+		arena.enemy_interval = run.enemy_interval()
 		arena.enemy_windup = 1.0 - enemy_timer / run.enemy_interval()
 		if enemy_timer <= 0:
 			enemy_timer += run.enemy_interval()
+			arena.enemy.begin_strike(arena.boss)
 			var hit := run.hit_party()
 			if not hit.is_empty():
-				arena.hurt(hit.target)
+				if hit.damage > 0:
+					arena.hurt(hit.target)
 				float_text(
 					"−%d" % int(hit.damage) if hit.damage > 0 else "ESCUDO",
 					Vector2(160, 407),
@@ -996,12 +1103,18 @@ func _process(delta: float) -> void:
 		hud_timer = 0.08
 
 
+func on_attack_started(index: int) -> void:
+	if state == "battle" and not paused and run != null:
+		audio.play_attack(run.actors[index].id)
+
+
 func on_attack_hit(index: int) -> void:
 	if state != "battle" or paused or run == null:
 		return
 	var hit := run.hit_enemy(index)
 	if not hit.is_empty():
-		audio.play_effect("hit")
+		arena.enemy.hurt()
+		audio.play_effect("explosion" if run.actors[index].id == "scarlet" else "hit")
 	if hit.is_empty():
 		return
 	float_text(
@@ -1103,12 +1216,13 @@ func modal(title: String, subtitle: String) -> void:
 		overlay.queue_free()
 	overlay = Control.new()
 	overlay.z_index = 1000
-	overlay.size = Vector2(540, 960)
+	overlay.size = Vector2(540, logical_height)
 	content.add_child(overlay)
 	var shade := ColorRect.new()
 	shade.color = Color(0.02, 0.03, 0.05, 0.96)
 	shade.size = Vector2(540, 960)
 	overlay.add_child(shade)
+	register_layout(shade, "fill")
 	label(overlay, title, Rect2(32, 166, 476, 98), 32, GOLD)
 	label(overlay, subtitle, Rect2(32, 278, 476, 100), 19, MUTED)
 
@@ -1361,7 +1475,7 @@ func _input(event: InputEvent) -> void:
 			toggle_pause()
 		elif state == "replacement":
 			show_relics()
-		elif state not in ["choice", "memory", "story", "result"]:
+		elif state not in ["choice", "memory", "story", "result", "loading"]:
 			show_menu()
 		get_viewport().set_input_as_handled()
 
@@ -1407,7 +1521,8 @@ func show_debug_panel() -> void:
 		debug_panel, "Laboratório de animações", Rect2(40, 245, 460, 56), show_preview, true
 	)
 	lab.disabled = (
-		state in ["battle", "travel", "choice", "replacement", "story", "memory", "result"]
+		state
+		in ["battle", "travel", "choice", "replacement", "story", "memory", "result", "loading"]
 	)
 
 
@@ -1500,14 +1615,14 @@ func show_heroes() -> void:
 		button(page, "Evoluir heroína", Rect2(280, 180, 236, 48), show_upgrades)
 		. add_theme_font_size_override("font_size", 17)
 	)
-	var inner := scroll_area(247, 620, TaleCatalog.HEROES.size() * 221)
+	var inner := scroll_area(247, 620, TaleCatalog.HEROES.size() * 237)
 	var row := 0
 	for id in TaleCatalog.HEROES:
 		var data: Dictionary = TaleCatalog.HEROES[id]
 		var owned := campaign.unlocked.has(id)
-		var y := row * 221.0
-		panel(inner, Rect2(0, y, 476, 207))
-		portrait(inner, id, Vector2(75, y + 176), 0.64)
+		var y := row * 237.0
+		panel(inner, Rect2(0, y, 476, 224))
+		portrait(inner, id, Vector2(75, y + 190), 0.64)
 		label(inner, data.name, Rect2(136, y + 12, 325, 32), 22, data.color)
 		label(inner, data.role, Rect2(136, y + 49, 325, 30), 15, MUTED)
 		if owned:
@@ -1753,7 +1868,10 @@ func edit_profile() -> void:
 	profile_name.max_length = 20
 	profile_name.text = campaign.player_name
 	profile_name.add_theme_font_size_override("font_size", 23)
+	profile_name.add_theme_stylebox_override("normal", box(Color("092a25"), GOLD, 9))
+	profile_name.add_theme_stylebox_override("focus", box(Color("10392f"), GOLD, 9))
 	overlay.add_child(profile_name)
+	register_layout(profile_name)
 	var index := 0
 	for id in campaign.unlocked:
 		var choice := button(
@@ -1777,7 +1895,7 @@ func select_avatar(id: String) -> void:
 	for candidate in profile_avatar_buttons:
 		var choice: Button = profile_avatar_buttons[candidate]
 		choice.add_theme_stylebox_override(
-			"normal", box(Color("1b2735"), GOLD if candidate == id else Color("34404f"))
+			"normal", box(Color("123d32"), GOLD if candidate == id else Color("426957"))
 		)
 		choice.add_theme_color_override("font_color", GOLD if candidate == id else Color("eeeae2"))
 	if is_instance_valid(profile_avatar_label):
@@ -1805,7 +1923,7 @@ func save_profile() -> void:
 
 func claim_milestone(id: String) -> void:
 	if campaign.claim_achievement(id):
-		audio.play_effect("upgrade")
+		audio.play_effect("achievement")
 		persist()
 		show_profile()
 
@@ -1859,13 +1977,13 @@ func setting_slider(
 
 func set_music_volume(value: float) -> void:
 	campaign.music_volume = value
-	audio.apply_volume(value, campaign.effects_volume)
+	audio.apply_volume(value, campaign.effects_volume, campaign.voice_volume)
 	persist()
 
 
 func set_effects_volume(value: float) -> void:
 	campaign.effects_volume = value
-	audio.apply_volume(campaign.music_volume, value)
+	audio.apply_volume(campaign.music_volume, value, campaign.voice_volume)
 	persist()
 
 
@@ -1908,7 +2026,7 @@ func apply_preferences() -> void:
 	if is_instance_valid(arena):
 		arena.high_quality = campaign.high_quality
 	if is_instance_valid(audio):
-		audio.apply_volume(campaign.music_volume, campaign.effects_volume)
+		audio.apply_volume(campaign.music_volume, campaign.effects_volume, campaign.voice_volume)
 
 
 func update_idle_display() -> void:
@@ -1925,3 +2043,137 @@ func update_idle_display() -> void:
 	)
 	if is_instance_valid(idle_button):
 		idle_button.disabled = reward.gold <= 0
+
+
+func format_gold(amount: int) -> String:
+	if amount >= 1000000:
+		return "%.1f M" % (amount / 1000000.0)
+	if amount >= 10000:
+		return "%.1f mil" % (amount / 1000.0)
+	return str(amount)
+
+
+func register_layout(node: Control, kind := "auto") -> void:
+	var parent := node.get_parent()
+	if parent != page and parent != overlay:
+		return
+	if not node.has_meta("base_rect"):
+		node.set_meta("base_rect", Rect2(node.position, node.size))
+	if kind == "auto":
+		kind = "center" if parent == overlay else ("bottom" if node.position.y >= 780 else "fixed")
+	node.set_meta("layout_kind", kind)
+	place_control(node)
+
+
+func place_control(node: Control) -> void:
+	if not node.has_meta("base_rect"):
+		return
+	var base: Rect2 = node.get_meta("base_rect")
+	var extra := logical_height - 960.0
+	node.position = base.position
+	node.size = base.size
+	match str(node.get_meta("layout_kind", "fixed")):
+		"fill":
+			node.size = Vector2(540, logical_height)
+		"bottom":
+			node.position.y += extra
+		"center":
+			node.position.y += extra * 0.5
+		"scroll", "grow":
+			node.size.y += extra
+
+
+func relayout_page() -> void:
+	if not is_instance_valid(page):
+		return
+	page.size = Vector2(540, logical_height)
+	for child in page.get_children():
+		if child is Control:
+			place_control(child)
+	if is_instance_valid(overlay):
+		overlay.size = Vector2(540, logical_height)
+		for child in overlay.get_children():
+			if child is Control:
+				place_control(child)
+			elif child is Sprite2D and child.has_meta("portrait_base"):
+				child.position = (
+					child.get_meta("portrait_base") + Vector2(0, (logical_height - 960.0) * 0.5)
+				)
+
+
+func load_chapter(index: int) -> void:
+	if not campaign.can_play(index) or not campaign.checkpoint.is_empty():
+		return
+	show_loading(begin_chapter_combat.bind(index), index)
+
+
+func show_loading(callback: Callable, index: int) -> void:
+	if state == "loading":
+		return
+	state = "loading"
+	paused = false
+	clear_page()
+	loading_callback = callback
+	loading_elapsed = 0.0
+	loading_frames = 0
+	loading_stage = index
+	var veil := page.get_child(0) as ColorRect
+	veil.color = Color("041d1b", 0.24)
+	var logo := UISkin.picture(page, UISkin.artwork("logo"), Rect2(30, 245, 480, 164))
+	register_layout(logo, "center")
+	var subtitle := label(page, "O ÚLTIMO FIO", Rect2(32, 414, 476, 37), 23, GOLD)
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	register_layout(subtitle, "center")
+	var title := label(
+		page,
+		"%02d  •  %s" % [index + 1, TaleCatalog.STAGES[index].name],
+		Rect2(48, 518, 444, 72),
+		25
+	)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	register_layout(title, "center")
+	var frame := panel(page, Rect2(48, 622, 444, 46))
+	register_layout(frame, "center")
+	loading_bar = bar(page, Rect2(72, 639, 396, 12), GOLD)
+	register_layout(loading_bar, "center")
+	loading_bar.max_value = 100
+	loading_bar.value = 10
+	var caption := label(
+		page, "Abrindo caminho entre os contos…", Rect2(32, 690, 476, 40), 17, MUTED
+	)
+	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	register_layout(caption, "center")
+
+
+func advance_loading(delta: float) -> void:
+	loading_elapsed += minf(delta, 0.25)
+	loading_frames += 1
+	if loading_frames == 2:
+		Arena.Enemy.warm(loading_stage)
+	if is_instance_valid(loading_bar):
+		loading_bar.value = minf(95, 15 + loading_elapsed * 250)
+	# A short transition yields presentation frames; it never pretends to download data.
+	var duration := 0.12 if campaign.reduced_motion else 0.3
+	if loading_frames >= 2 and loading_elapsed >= duration:
+		var callback := loading_callback
+		loading_callback = Callable()
+		if callback.is_valid():
+			callback.call()
+
+
+func install_controls_theme() -> void:
+	theme = Theme.new()
+	for control in ["VScrollBar", "HScrollBar"]:
+		theme.set_stylebox("scroll", control, box(Color("07241e"), Color("214b3a"), 5))
+		theme.set_stylebox("grabber", control, box(Color("b8a465"), Color("526b42"), 5))
+		theme.set_stylebox("grabber_highlight", control, box(GOLD, GOLD, 5))
+		theme.set_stylebox("grabber_pressed", control, box(Color("90c393"), GOLD, 5))
+	theme.set_stylebox("slider", "HSlider", box(Color("07241e"), Color("426957"), 4))
+	theme.set_stylebox("grabber_area", "HSlider", box(Color("7bba8a"), GOLD, 4))
+	theme.set_stylebox("grabber_area_highlight", "HSlider", box(GOLD, GOLD, 4))
+
+
+func set_voice_volume(value: float) -> void:
+	campaign.voice_volume = value
+	audio.apply_volume(campaign.music_volume, campaign.effects_volume, value)
+	persist()

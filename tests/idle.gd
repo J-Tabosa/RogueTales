@@ -139,6 +139,9 @@ func checks() -> void:
 	assert(game.content.scale.x >= 1.9, "HD viewport must scale the logical interface")
 	game.campaign.auto_repeat = true
 	game.start_stage(0)
+	assert(game.state == "loading")
+	for step in 4:
+		game._process(0.1)
 	assert(game.state == "travel")
 	assert(not game.arena.high_quality)
 	for tick in 4000:

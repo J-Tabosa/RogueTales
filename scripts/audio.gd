@@ -1,11 +1,28 @@
 extends Node
-## Small original synthesized loop and interface/combat cues; no network or external samples.
+## Cached original effects and synthetic calls; fixed player pools cap overlapping audio.
 var music: AudioStreamPlayer
 var voices: Array[AudioStreamPlayer] = []
 var effects: Dictionary = {}
 var music_gain := 0.45
 var effects_gain := 0.65
 var voice_cursor := 0
+var attack_players: Array[AudioStreamPlayer] = []
+var calls: Dictionary = {}
+var call_next: Dictionary = {}
+var global_call_next := 0.0
+var attack_gain := 0.5
+const COMBAT_CUES = {
+	"explosion": preload("res://assets/audio/explosion.wav"),
+	"win": preload("res://assets/audio/victory.wav"),
+	"achievement": preload("res://assets/audio/achievement.wav")
+}
+const ATTACK_CALLS = {
+	"scarlet": preload("res://assets/audio/attack_scarlet.wav"),
+	"rapunzel": preload("res://assets/audio/attack_rapunzel.wav"),
+	"snow_white": preload("res://assets/audio/attack_snow_white.wav"),
+	"mulan": preload("res://assets/audio/attack_mulan.wav"),
+	"ariel": preload("res://assets/audio/attack_ariel.wav")
+}
 
 
 func _ready() -> void:
@@ -22,12 +39,27 @@ func _ready() -> void:
 		voices.append(player)
 	for id in ["click", "hit", "upgrade", "win", "loss"]:
 		effects[id] = make_tone(id)
-	apply_volume(music_gain, effects_gain)
+	effects.merge(COMBAT_CUES, true)
+	calls = ATTACK_CALLS.duplicate()
+	for index in 2:
+		var player := AudioStreamPlayer.new()
+		add_child(player)
+		attack_players.append(player)
+	apply_volume(music_gain, effects_gain, attack_gain)
 
 
-func apply_volume(music_value: float, effects_value: float) -> void:
+func apply_volume(music_value: float, effects_value: float, voice_value: float = 0.5) -> void:
 	music_gain = clampf(music_value, 0, 1)
 	effects_gain = clampf(effects_value, 0, 1)
+	attack_gain = clampf(voice_value, 0, 1)
+	for player in attack_players:
+		player.volume_db = linear_to_db(maxf(0.0001, attack_gain * 0.65))
+		if attack_gain <= 0:
+			player.stop()
+	for player in voices:
+		player.volume_db = linear_to_db(maxf(0.0001, effects_gain * 0.3))
+		if effects_gain <= 0:
+			player.stop()
 	if music != null:
 		music.volume_db = linear_to_db(maxf(0.0001, music_gain * 0.5))
 		music.stream_paused = music_gain <= 0
@@ -48,6 +80,30 @@ func play_effect(id: String) -> void:
 	player.stream = effects[id]
 	player.volume_db = linear_to_db(maxf(0.0001, effects_gain * 0.3))
 	player.play()
+
+
+func reserve_call(id: String, now: float) -> bool:
+	# Each heroine calls at most once every 4 seconds; a global gap avoids a chorus.
+	if not calls.has(id) or now < global_call_next or now < float(call_next.get(id, 0)):
+		return false
+	global_call_next = now + 0.45
+	call_next[id] = now + 4.0
+	return true
+
+
+func play_attack(id: String) -> void:
+	if AudioServer.get_driver_name() == "Dummy" or attack_gain <= 0:
+		return
+	var available: AudioStreamPlayer
+	for player in attack_players:
+		if not player.playing:
+			available = player
+			break
+	if available == null or not reserve_call(id, Time.get_ticks_msec() / 1000.0):
+		return
+	available.stream = calls[id]
+	available.volume_db = linear_to_db(maxf(0.0001, attack_gain * 0.65))
+	available.play()
 
 
 func make_tone(id: String) -> AudioStreamWAV:
@@ -79,8 +135,9 @@ func _exit_tree() -> void:
 	if is_instance_valid(music):
 		music.stop()
 		music.stream = null
-	for player in voices:
+	for player in voices + attack_players:
 		if is_instance_valid(player):
 			player.stop()
 			player.stream = null
 	effects.clear()
+	calls.clear()

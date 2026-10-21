@@ -1,6 +1,9 @@
 extends Node2D
 ## Visuals only; each party member has an independent, duration-aware attack clock.
 signal attack_hit(index: int)
+signal attack_started(index: int)
+const Enemy = preload("res://scripts/enemy.gd")
+const Backdrop = preload("res://scripts/backdrop.gd")
 const HeroScript = preload("res://scripts/hero.gd")
 @export var hero_scene: PackedScene = preload("res://scenes/heroes/scarlet.tscn")
 var party_scenes: Array[PackedScene] = []
@@ -18,13 +21,25 @@ var preview := false
 var reduced_motion := false
 var high_quality := true
 var enemy_windup := 0.0
+var enemy_interval := 2.4
+var enemy: AnimatedSprite2D
 # Temporary drawing context, set separately for each track.
 var attack_time := -1.0
 var attack_duration := 1.0
 var flash := 0.0
+var backdrop: Node2D
+var applied_preferences := Vector4(-1, -1, -1, -1)
+var stone_boxes: Dictionary = {}
+var redraw_timer := 0.0
 
 
 func _ready() -> void:
+	backdrop = Node2D.new()
+	backdrop.set_script(Backdrop)
+	backdrop.stage = stage
+	backdrop.high_quality = high_quality
+	backdrop.show_behind_parent = true
+	add_child(backdrop)
 	if party_scenes.is_empty():
 		party_scenes.append(hero_scene)
 	for index in party_scenes.size():
@@ -55,6 +70,10 @@ func _ready() -> void:
 			}
 		)
 	hero = heroes[0]
+	enemy = Enemy.warm(stage).instantiate()
+	add_child(enemy)
+	enemy.visible = enemy_visible
+	enemy.advance(0.0, boss, enemy_windup, enemy_interval)
 
 
 func set_animation(anim: String) -> void:
@@ -77,6 +96,7 @@ func attack(index: int = 0) -> bool:
 	tracks[index].hit = false
 	actor.show_animation("attack")
 	actor.seek_animation("attack", 0)
+	attack_started.emit(index)
 	return true
 
 
@@ -84,6 +104,8 @@ func reset_effects() -> void:
 	walking = false
 	preview = false
 	flash = 0.0
+	if is_instance_valid(enemy):
+		enemy.reset_damage()
 	for index in heroes.size():
 		if heroes[index].position.distance_to(tracks[index].home) > 0.1:
 			tracks[index].return_from = heroes[index].position
@@ -105,18 +127,25 @@ func sync_health(actors: Array[Dictionary]) -> void:
 			heroes[index].speed_scale = 0
 			heroes[index].modulate = Color(0.42, 0.42, 0.48, 0.6)
 
+	apply_visual_preferences(true)
+	queue_redraw()
+
 
 func hurt(index: int) -> void:
 	if index >= 0 and index < tracks.size():
-		tracks[index].hurt = 0.2
+		tracks[index].hurt = 0.24
+		heroes[index].modulate = Enemy.hurt_color(0.24)
 
 
 func _process(delta: float) -> void:
-	for index in heroes.size():
-		heroes[index].texture_filter = hero_filter()
-		heroes[index].speed_scale = 0.0 if frozen or not tracks[index].alive else speed
-		heroes[index].walk_shoulders_enabled = tracks[index].shoulders and not reduced_motion
-		heroes[index].idle_sway_amplitude = 0.0 if reduced_motion else tracks[index].sway
+	apply_visual_preferences()
+	backdrop.walking = walking
+	backdrop.frozen = frozen
+	backdrop.high_quality = high_quality
+	backdrop.speed = speed
+	enemy.visible = enemy_visible
+	enemy.texture_filter = hero_filter()
+	enemy.advance(0.0 if frozen else minf(delta, 0.25) * speed, boss, enemy_windup, enemy_interval)
 	if frozen:
 		return
 	var dt := minf(delta, 0.25) * speed
@@ -132,7 +161,7 @@ func _process(delta: float) -> void:
 				track.home, smoothstep(0.0, 1.0, 1.0 - track.return_left / 0.18)
 			)
 		if track.alive:
-			heroes[index].modulate = Color("f2acac") if track.hurt > 0 else Color.WHITE
+			heroes[index].modulate = Enemy.hurt_color(track.hurt)
 		if track.time >= 0:
 			track.time += dt
 			update_attack_position(index, track.time / track.duration)
@@ -144,6 +173,8 @@ func _process(delta: float) -> void:
 				track.hit = true
 				track.impact = 0.28
 				flash = 0.16
+				if preview:
+					enemy.hurt()
 			if track.time >= track.duration:
 				track.time = -1.0
 				heroes[index].position = track.home
@@ -152,7 +183,25 @@ func _process(delta: float) -> void:
 				attack_hit.emit(index)
 	if preview and tracks[0].time < 0:
 		attack()
-	queue_redraw()
+	redraw_timer -= delta
+	var moving := enemy_visible or preview or walking or flash > 0
+	for track in tracks:
+		moving = moving or track.time >= 0 or track.return_left > 0 or track.impact > 0
+	if moving and redraw_timer <= 0:
+		redraw_timer = 1.0 / (60.0 if high_quality else 30.0)
+		queue_redraw()
+
+
+func apply_visual_preferences(force := false) -> void:
+	var preferences := Vector4(speed, float(frozen), float(reduced_motion), float(high_quality))
+	if not force and preferences == applied_preferences:
+		return
+	applied_preferences = preferences
+	for index in heroes.size():
+		heroes[index].texture_filter = hero_filter()
+		heroes[index].speed_scale = 0.0 if frozen or not tracks[index].alive else speed
+		heroes[index].walk_shoulders_enabled = tracks[index].shoulders and not reduced_motion
+		heroes[index].idle_sway_amplitude = 0.0 if reduced_motion else tracks[index].sway
 
 
 func hero_filter() -> CanvasItem.TextureFilter:
@@ -170,81 +219,14 @@ func smooth_circle(at: Vector2, radius: float, color: Color) -> void:
 func _draw() -> void:
 	if heroes.is_empty():
 		return
-	var data: Dictionary = TaleCatalog.STAGES[clampi(stage, 0, 7)]
-	var biome: int = data.biome
-	draw_rect(Rect2(0, 0, 492, 340), data.sky)
-	smooth_circle(Vector2(395, 68), 32, Color(data.color, 0.15))
-	for index in 9:
-		var x := index * 68.0 - 30.0 - (fmod(clock * 32.0, 68.0) if walking else 0.0)
-		var tint: Color = data.sky.darkened(0.32)
-		match biome:
-			0, 2:
-				draw_rect(Rect2(x + 25, 30, 12, 240), tint)
-				smooth_circle(Vector2(x + 30, 55 + (index % 2) * 25), 64, tint)
-				if biome == 2:
-					smooth_circle(Vector2(x + 14, 104), 5, Color("b85b7e"))
-			1, 4, 7:
-				draw_rect(Rect2(x + 22, 40, 30, 225), tint)
-				draw_rect(Rect2(x + 16, 36, 42, 10), Color(data.color, 0.17))
-				if biome == 7:
-					for shelf in 4:
-						draw_line(
-							Vector2(x, 92 + shelf * 38),
-							Vector2(x + 64, 92 + shelf * 38),
-							Color(data.color, 0.16),
-							3
-						)
-						for book in 5:
-							draw_rect(
-								Rect2(x + book * 11, 69 + shelf * 38, 7, 20),
-								Color(data.color, 0.08 + book * 0.03)
-							)
-			3, 6:
-				draw_colored_polygon(
-					PackedVector2Array(
-						[
-							Vector2(x, 265),
-							Vector2(x + 50, 50 + (index % 2) * 55),
-							Vector2(x + 114, 265)
-						]
-					),
-					tint
-				)
-			5:
-				for band in 4:
-					draw_arc(
-						Vector2(x + 20, 55 + band * 55),
-						40,
-						0.1,
-						2.9,
-						16,
-						Color(data.color, 0.09),
-						2,
-						true
-					)
-				draw_line(
-					Vector2(x + 20, 280),
-					Vector2(x + 14 + sin(clock + index) * 8, 180),
-					Color(data.color, 0.24),
-					4,
-					true
-				)
-	draw_rect(Rect2(0, 268, 492, 72), data.sky.darkened(0.35))
-	draw_line(Vector2(0, 268), Vector2(492, 268), Color(data.color, 0.35), 2)
-	for index in 15:
-		var x := fposmod(index * 39.0 - (clock * 58 if walking else 0), 520)
-		draw_line(
-			Vector2(x, 290 + index % 3 * 12),
-			Vector2(x + 14, 290 + index % 3 * 12),
-			Color(data.color, 0.16),
-			2
-		)
 	for index in heroes.size():
 		draw_set_transform(heroes[index].position, 0, Vector2(1, 0.22))
 		smooth_circle(Vector2.ZERO, 42 if heroes.size() > 1 else 55, Color(0.02, 0.03, 0.04, 0.45))
 	draw_set_transform(Vector2.ZERO)
 	if enemy_visible:
-		draw_enemy(Vector2(402, 296), boss)
+		draw_set_transform(Vector2(402, 296), 0, Vector2(1, 0.22))
+		smooth_circle(Vector2.ZERO, 55 if boss else 42, Color(0.02, 0.03, 0.04, 0.45))
+		draw_set_transform(Vector2.ZERO)
 		if enemy_windup > 0.72:
 			draw_arc(Vector2(402, 302), 52, -PI, PI * enemy_windup, 24, Color("dd8997"), 3, true)
 	for index in heroes.size():
@@ -364,130 +346,6 @@ func draw_water_attack() -> void:
 	draw_polyline(wave, Color(0.18, 0.7, 0.78, 0.4), 15, true)
 	draw_polyline(wave, Color("8be5e1"), 5, true)
 	draw_arc(end, 13, -PI * 0.8, PI * 0.6, 20, Color("d3ffff"), 3, true)
-
-
-func draw_enemy(at: Vector2, is_boss: bool) -> void:
-	var s := 1.3 if is_boss else 1.0
-	var bob := sin(clock * 3) * 3
-	var color: Color = TaleCatalog.STAGES[stage].color
-	if flash > 0:
-		color = Color.WHITE
-	draw_set_transform(at + Vector2(0, bob), 0.0, Vector2.ONE * s)
-	draw_set_transform(at, 0.0, Vector2(s, s * 0.22))
-	smooth_circle(Vector2.ZERO, 47, Color(0.02, 0.03, 0.04, 0.45))
-	draw_set_transform(at + Vector2(0, bob), 0.0, Vector2.ONE * s)
-	match stage:
-		0:
-			draw_colored_polygon(
-				PackedVector2Array(
-					[
-						Vector2(-40, -12),
-						Vector2(-33, -64),
-						Vector2(-24, -90),
-						Vector2(-9, -71),
-						Vector2(12, -74),
-						Vector2(29, -96),
-						Vector2(37, -54),
-						Vector2(43, -12)
-					]
-				),
-				color
-			)
-			draw_line(Vector2(-25, -14), Vector2(27, -14), color.lightened(0.25), 5)
-		1:
-			draw_line(Vector2(0, -118), Vector2(0, -71), Color("c9b8a0"), 2)
-			smooth_circle(Vector2(0, -67), 22, color)
-			draw_rect(Rect2(-21, -45, 42, 43), color.darkened(0.2))
-			draw_line(Vector2(-22, -43), Vector2(-40, -7), color, 9)
-			draw_line(Vector2(22, -43), Vector2(40, -7), color, 9)
-		2:
-			draw_style_box(stone_box(color.darkened(0.2)), Rect2(-36, -100, 72, 91))
-			draw_style_box(stone_box(color.lightened(0.25)), Rect2(-26, -90, 52, 67))
-			for thorn in 3:
-				draw_line(Vector2(-47 + thorn * 43, 0), Vector2(-38 + thorn * 39, -50), color, 4)
-		3:
-			draw_rect(Rect2(-26, -67, 52, 62), color)
-			draw_colored_polygon(
-				PackedVector2Array([Vector2(-41, -68), Vector2(0, -103), Vector2(41, -68)]),
-				color.darkened(0.15)
-			)
-			draw_line(Vector2(33, -15), Vector2(46, -99), Color("e9c488"), 4)
-		4:
-			smooth_circle(Vector2.ZERO, 35, color.darkened(0.3))
-			draw_colored_polygon(
-				PackedVector2Array(
-					[Vector2(0, -108), Vector2(-37, -53), Vector2(0, -7), Vector2(37, -53)]
-				),
-				color
-			)
-			draw_line(Vector2(0, -101), Vector2(0, -14), Color.WHITE, 2)
-		5:
-			smooth_circle(Vector2(0, -36), 36, color.darkened(0.2))
-			for fin in 3:
-				draw_arc(Vector2(-30 + fin * 30, -2), 26, PI, TAU, 14, color, 10, true)
-			draw_colored_polygon(
-				PackedVector2Array([Vector2(-27, -48), Vector2(-48, -73), Vector2(-20, -66)]), color
-			)
-		6:
-			draw_colored_polygon(
-				PackedVector2Array(
-					[
-						Vector2(-39, -10),
-						Vector2(-29, -48),
-						Vector2(-13, -38),
-						Vector2(0, -98),
-						Vector2(18, -48),
-						Vector2(35, -61),
-						Vector2(42, -10)
-					]
-				),
-				color
-			)
-			smooth_circle(Vector2(1, -28), 21, Color("ffc77b"))
-		7:
-			draw_colored_polygon(
-				PackedVector2Array(
-					[
-						Vector2(-44, -4),
-						Vector2(-24, -75),
-						Vector2(0, -116),
-						Vector2(24, -75),
-						Vector2(44, -4)
-					]
-				),
-				color.darkened(0.4)
-			)
-			smooth_circle(Vector2(0, -74), 21, color)
-			draw_line(Vector2(-38, -28), Vector2(48, -120), Color("e9c488"), 3)
-			for thread in 3:
-				draw_arc(Vector2(8, -55), 45 + thread * 8, -2, 1.5, 22, Color(color, 0.4), 1, true)
-
-	smooth_circle(Vector2(-13, -34), 5, Color("101923"))
-	smooth_circle(Vector2(12, -34), 5, Color("101923"))
-	draw_line(Vector2(-6, -19), Vector2(7, -19), Color("101923"), 3)
-	if is_boss:
-		draw_colored_polygon(
-			PackedVector2Array(
-				[
-					Vector2(-25, -90),
-					Vector2(-27, -112),
-					Vector2(-10, -101),
-					Vector2(0, -119),
-					Vector2(10, -101),
-					Vector2(27, -112),
-					Vector2(25, -90)
-				]
-			),
-			Color("eec578")
-		)
-	draw_set_transform(Vector2.ZERO)
-
-
-func stone_box(color: Color) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.bg_color = color
-	box.set_corner_radius_all(7)
-	return box
 
 
 func set_home(index: int, at: Vector2) -> void:
