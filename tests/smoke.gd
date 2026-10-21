@@ -145,9 +145,58 @@ func run_checks() -> void:
 	game.choose_hero("scarlet")
 	assert(game.arena.hero.hero_name == "Scarlet")
 	assert(not game.arena.hero.is_hair_attack())
+	# The four new profiles have isolated resources, editable timing and one hit per attack.
+	for profile in [
+		["snow_white", "Branca de Neve", HeroScript.AttackStyle.APPLE],
+		["mulan", "Mulan", HeroScript.AttackStyle.SWORD],
+		["cinderella", "Cinderela", HeroScript.AttackStyle.CRYSTAL],
+		["ariel", "Ariel", HeroScript.AttackStyle.TIDE],
+	]:
+		game.choose_hero(profile[0])
+		assert(game.arena.hero.hero_name == profile[1])
+		assert(game.arena.hero.attack_style == profile[2])
+		assert(not game.arena.hero.is_hair_attack())
+		game.show_preview()
+		var hero: AnimatedSprite2D = game.arena.hero
+		var other: AnimatedSprite2D = game.HERO_SCENES[profile[0]].instantiate()
+		assert(other.sprite_frames != hero.sprite_frames)
+		assert(other.material != hero.material)
+		other.free()
+		for anim in ["idle", "idle_blink", "walk", "attack"]:
+			assert(hero.sprite_frames.get_frame_count(anim) == 4)
+		assert(hero.is_idle_resting() and hero.frame == 0)
+		hero.sprite_frames.set_animation_speed("attack", 3.0)
+		var new_hits := [0]
+		game.arena.attack_hit.connect(func(): new_hits[0] += 1)
+		game.arena.set_process(false)
+		game.preview_anim("attack")
+		assert(is_equal_approx(game.arena.attack_duration, 4.0 / 3.0))
+		var impact: float = game.arena.attack_duration * hero.impact_ratio
+		game.arena._process(impact - 0.01)
+		assert(new_hits[0] == 0)
+		game.arena.frozen = true
+		game.arena._process(1.0)
+		assert(new_hits[0] == 0)
+		game.arena.frozen = false
+		game.arena._process(0.02)
+		assert(new_hits[0] == 1)
+		game.arena._process(0.2)
+		assert(new_hits[0] == 1)
+		seed(42)
+		game.start_run()
+		game.arena.set_process(false)
+		for tick in 4000:
+			game._process(0.05)
+			game.arena._process(0.05)
+			if game.state == "choice":
+				game.select_relic("power")
+			if game.state == "result":
+				break
+		assert(game.state == "result" and game.run.kills == 9)
+		game.show_menu()
 	game.queue_free()
 	await process_frame
 	print(
-		"PASS: editable hero scene, isolated resources, saved FPS/scale, idle waits/blink/sway, paused timers, stride-synced shoulders, 16-frame walk, sheets, pause, speed, three stages, relics, victory, defeat and menu; Rapunzel selection, hair hit timing and three-stage victory"
+		"PASS: editable hero scene, isolated resources, saved FPS/scale, idle waits/blink/sway, paused timers, stride-synced shoulders, 16-frame walk, sheets, pause, speed, three stages, relics, victory, defeat and menu; all six heroines, isolated profiles, editable hit timing, one hit per attack and three-stage victories"
 	)
 	quit()

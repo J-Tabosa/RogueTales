@@ -3,7 +3,7 @@ extends AnimatedSprite2D
 ## Idle holds frame 0, then occasionally plays a blink or a short sway once.
 
 enum IdleState { REST, BLINK, SWAY }
-enum AttackStyle { BOMB, HAIR }
+enum AttackStyle { BOMB, HAIR, APPLE, SWORD, CRYSTAL, TIDE }
 
 @export_group("Heroína")
 @export var hero_name := "Scarlet"
@@ -75,6 +75,21 @@ func is_idle_animation() -> bool:
 
 func is_hair_attack() -> bool:
 	return attack_style == AttackStyle.HAIR
+
+
+func get_weapon_label() -> String:
+	match attack_style:
+		AttackStyle.HAIR:
+			return "Chicote de cabelo dourado"
+		AttackStyle.APPLE:
+			return "Maçãs encantadas"
+		AttackStyle.SWORD:
+			return "Lâmina da guerreira"
+		AttackStyle.CRYSTAL:
+			return "Estilhaços de cristal"
+		AttackStyle.TIDE:
+			return "Tridente das marés"
+	return "Bombas à distância"
 
 
 func is_idle_resting() -> bool:

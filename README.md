@@ -11,7 +11,7 @@ Base de idle RPG com elementos roguelike, em **Godot 4.7 / GDScript**.
 ## Protótipo
 
 - Tela inicial e interface vertical 540 × 960, com mouse ou toque.
-- Combate automático, bombas animadas, dano crítico e vida.
+- Combate automático, ataques próprios de cada heroína, dano crítico e vida.
 - Três fases: Bosque dos Sussurros, Ruínas da Lua e Caldeira Carmesim.
 - Cada fase tem dois encontros e um chefe provisório.
 - Escolha uma entre três relíquias sorteadas após as fases 1 e 2.
@@ -22,16 +22,24 @@ Base de idle RPG com elementos roguelike, em **Godot 4.7 / GDScript**.
 
 ## Heroínas
 
-Na tela inicial, escolha **Scarlet** ou **Rapunzel** antes de começar. A seleção também fica disponível no laboratório de sprites.
+Na tela inicial, escolha **Scarlet**, **Rapunzel**, **Branca de Neve**, **Mulan**, **Cinderela** ou **Ariel** antes de começar. A seleção também fica disponível no laboratório de sprites.
 
 | Heroína | Cena editável | Ataque |
 | --- | --- | --- |
 | Scarlet | `scenes/heroes/scarlet.tscn` | Bomba com trajetória e explosão |
 | Rapunzel | `scenes/heroes/rapunzel.tscn` | Chicote de cabelo dourado com impacto próprio |
+| Branca de Neve | `scenes/heroes/snow_white.tscn` | Maçã encantada arremessada |
+| Mulan | `scenes/heroes/mulan.tscn` | Corte de espada com rastro de lâmina |
+| Cinderela | `scenes/heroes/cinderella.tscn` | Estilhaço de cristal com rastro mágico |
+| Ariel | `scenes/heroes/ariel.tscn` | Tridente com onda de água |
 
 Rapunzel tem idle com quatro quadros, piscada eventual, caminhada com oito quadros e ataque com oito quadros. A arte foi gerada a partir da referência fornecida, com vestido roxo, botas pretas e cabelo dourado longo; os PNGs ficam em `assets/rapunzel/` e as animações editáveis em `rapunzel_frames.tres`. Os recortes nativos isolam cada desenho e alinham os pés, sem modificar os PNGs.
 
-Abra a cena da Rapunzel e ajuste o SpriteFrames, escala, offset e propriedades **Heroína** no Inspector. `Impact Ratio` determina em que fração do ataque o golpe acerta; o intervalo respeita a duração da animação. O mesmo sistema de idle com pausas, piscadas e balanço é compartilhado pelas duas heroínas. O ataque de cabelo causa dano uma única vez por animação, sem criar uma bomba.
+Branca de Neve e Mulan têm quatro quadros de idle, quatro de piscada, quatro de caminhada (6 FPS) e quatro de ataque (6 FPS). As folhas ficam em `assets/snow_white/` e `assets/mulan/`, com recursos `*_frames.tres` editáveis. As duas usam a referência visual enviada: vestido amarelo, capa e maçã para Branca de Neve; armadura preta/dourada, faixa vermelha e espada para Mulan. Os pés são alinhados nos recortes nativos, e os ombros acompanham os passos.
+
+Cinderela e Ariel seguem a mesma base de quatro quadros por animação, com recursos em `assets/cinderella/` e `assets/ariel/`. A Cinderela mantém vestido azul e sapatos de cristal; a Ariel mantém cabelo vermelho, cauda e tridente. A Ariel usa túnica roxa adaptada. **Cinderela é provisória:** a geração da spritesheet foi bloqueada; a cena usa a referência original inalterada, recortada por geometria nativa e com poses de caminhada/ataque deformadas na malha. A piscada automática dela fica desativada até você fornecer desenhos de olhos fechados. Os quadros estão preparados para substituição no SpriteFrames. A animação `walk` da Ariel representa deslocamento flutuando com a cauda. As seis opções aparecem em duas linhas no menu e no laboratório.
+
+Abra a cena da heroína e ajuste o SpriteFrames, escala, offset e propriedades **Heroína** no Inspector. `Impact Ratio` determina em que fração do ataque o golpe acerta; o intervalo respeita a duração da animação. O mesmo sistema de idle com pausas, piscadas e balanço é compartilhado pelas seis heroínas. O ataque de cabelo causa dano uma única vez por animação, sem criar uma bomba.
 
 ## Sprites fornecidas
 
@@ -78,7 +86,7 @@ Para trocar o modelo, substitua os quadros no painel SpriteFrames. Para adiciona
 - `scripts/arena.gd`: cenários e inimigos provisórios desenhados por código, trajetória da bomba e efeitos.
 - `scenes/main.tscn`: ponto de entrada.
 
-O ataque causa dano no impacto da bomba. A caminhada aparece entre encontros. Idle aparece no menu e nos intervalos dos ataques. Para trocar inimigos por sprites, substitua `draw_enemy()` em `arena.gd` por um `AnimatedSprite2D`.
+Cada ataque causa dano uma única vez, no ponto de impacto configurado na cena. A caminhada aparece entre encontros. Idle aparece no menu e nos intervalos dos ataques. Para trocar inimigos por sprites, substitua `draw_enemy()` em `arena.gd` por um `AnimatedSprite2D`.
 
 ## Verificação
 
@@ -87,8 +95,8 @@ godot --headless --path . --editor --quit
 godot --headless --path . --script tests/smoke.gd
 ```
 
-O teste cobre contagem de quadros, pausa, velocidade, três fases, escolhas de relíquias, vitória, derrota e retorno ao menu.
+O teste cobre as seis heroínas, recursos isolados, contagem de quadros, idle, ombros, pausa, velocidade, impacto único com FPS editado, três fases, escolhas de relíquias, vitória, derrota e retorno ao menu.
 
 Esta é uma base pequena para testar gameplay e animações. Não inclui progresso offline, loja, equipamento, áudio ou APK exportado. Android requer os templates de exportação e configuração do SDK na Godot.
 
-As sprites da Scarlet foram fornecidas pelo autor do projeto. As sprites da Rapunzel foram geradas com ImageGen a partir da referência fornecida; os detalhes de geração estão em `assets/rapunzel/ART_NOTES.md`. Nenhuma licença adicional sobre referências ou marcas é presumida.
+As sprites da Scarlet foram fornecidas pelo autor do projeto. As sprites de Rapunzel, Branca de Neve, Mulan e Ariel foram geradas com ImageGen a partir das referências fornecidas; Cinderela usa a referência original como placeholder nativo; os detalhes e prompts estão em `ART_NOTES.md` nas respectivas pastas de assets. Nenhuma licença adicional sobre referências ou marcas é presumida.

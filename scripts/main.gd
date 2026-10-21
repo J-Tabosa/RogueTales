@@ -4,6 +4,10 @@ const Arena = preload("res://scripts/arena.gd")
 const HERO_SCENES = {
 	"scarlet": preload("res://scenes/heroes/scarlet.tscn"),
 	"rapunzel": preload("res://scenes/heroes/rapunzel.tscn"),
+	"snow_white": preload("res://scenes/heroes/snow_white.tscn"),
+	"mulan": preload("res://scenes/heroes/mulan.tscn"),
+	"cinderella": preload("res://scenes/heroes/cinderella.tscn"),
+	"ariel": preload("res://scenes/heroes/ariel.tscn"),
 }
 const GOLD := Color("e9c488")
 const MUTED := Color("96a4b4")
@@ -160,26 +164,26 @@ func show_menu() -> void:
 		page, (arena.hero.hero_name + " · " + arena.hero.hero_title).to_upper(),
 		Rect2(40, 255, 450, 25), 14, arena.hero.accent_color
 	)
-	add_hero_selector(610)
-	panel(page, Rect2(24, 678, 492, 91))
-	var weapon := "Chicote de cabelo dourado" if arena.hero.is_hair_attack() else "Bombas à distância"
-	label(page, weapon, Rect2(42, 689, 456, 28), 22, arena.hero.accent_color)
-	label(page, "3 fases • chefes • relíquias aleatórias", Rect2(42, 727, 456, 26), 17, MUTED)
+	add_hero_selector(600)
+	panel(page, Rect2(24, 708, 492, 84))
+	var weapon: String = arena.hero.get_weapon_label()
+	label(page, weapon, Rect2(42, 719, 456, 28), 22, arena.hero.accent_color)
+	label(page, "3 fases • chefes • relíquias aleatórias", Rect2(42, 755, 456, 26), 17, MUTED)
 	label(page, "RECORDE %d / 9       EXPEDIÇÕES VENCIDAS %d" % [best, wins],
-		Rect2(24, 779, 492, 25), 14, GOLD)
-	button(page, "Começar expedição   →", Rect2(24, 815, 492, 60), start_run, true)
-	button(page, "Testar sprites", Rect2(24, 891, 492, 50), show_preview)
+		Rect2(24, 800, 492, 25), 14, GOLD)
+	button(page, "Começar expedição   →", Rect2(24, 838, 492, 54), start_run, true)
+	button(page, "Testar sprites", Rect2(24, 904, 492, 44), show_preview)
 
 
 func add_hero_selector(y: float) -> void:
-	button(
-		page, "Scarlet", Rect2(24, y, 236, 52),
-		choose_hero.bind("scarlet"), selected_hero == "scarlet"
-	)
-	button(
-		page, "Rapunzel", Rect2(280, y, 236, 52),
-		choose_hero.bind("rapunzel"), selected_hero == "rapunzel"
-	)
+	var names := ["Scarlet", "Rapunzel", "Branca de Neve", "Mulan", "Cinderela", "Ariel"]
+	var ids := HERO_SCENES.keys()
+	for index in ids.size():
+		var choice := button(
+			page, names[index], Rect2(24 + (index % 3) * 168, y + floori(index / 3.0) * 52, 156, 44),
+			choose_hero.bind(ids[index]), selected_hero == ids[index]
+		)
+		choice.add_theme_font_size_override("font_size", 15)
 
 
 func choose_hero(id: String) -> void:
@@ -434,12 +438,12 @@ func _unhandled_key_input(event: InputEvent) -> void:
 func show_preview() -> void:
 	clear_page()
 	state = "preview"
-	make_arena(200)
+	make_arena(240)
 	label(page, "LABORATÓRIO DE SPRITES", Rect2(24, 30, 492, 35), 23, GOLD)
 	label(page, arena.hero.hero_name + " · teste de animações", Rect2(24, 81, 492, 36), 19, MUTED)
 	add_hero_selector(129)
 	arena.hero.position.x = 246
-	frame_label = label(page, "", Rect2(24, 558, 492, 40), 20, GOLD)
+	frame_label = label(page, "", Rect2(24, 590, 492, 40), 20, GOLD)
 	var animations := ["idle", "walk", "attack"]
 	var titles := ["Idle", "Walk", "Ataque"]
 	for index in animations.size():
@@ -448,7 +452,7 @@ func show_preview() -> void:
 		button(
 			page,
 			"%s · %d" % [titles[index], count],
-			Rect2(24 + index * 171, 624, 150, 58),
+			Rect2(24 + index * 171, 646, 150, 44),
 			preview_anim.bind(anim)
 		)
 	var slider := HSlider.new()

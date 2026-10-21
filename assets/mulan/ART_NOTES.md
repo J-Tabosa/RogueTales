@@ -1,0 +1,14 @@
+# Arte da Mulan
+
+Modo: ImageGen integrado, derivação da referência enviada pelo usuário. O PNG foi preservado sem alterar pixels.
+
+- `mulan_sheet.png`: 1254 × 1254, três colunas por quatro linhas, 12 desenhos.
+- Ordem: idle aberto, balanço, olhos semicerrados e fechados; quatro passos; quatro poses de ataque de espada.
+- `mulan_frames.tres`: MeshTexture nativo isola os contornos, tamanho visual normalizado, origem nos pés (360, 580), canvas 1000 × 600. O pivô horizontal é estabilizado sob a cabeça para evitar saltos laterais entre passos.
+- Idle e piscada: quatro quadros a 2 e 12 FPS. Walk e ataque: quatro quadros a 6 FPS. Cena: `scenes/heroes/mulan.tscn`; impacto em 48% da duração do ataque.
+
+O oitavo desenho da folha tem um artefato de espada duplicada e não é usado. A caminhada usa os desenhos 5, 6, 7 e 6, repetindo a pose intermediária no retorno.
+
+## Prompt
+
+Create a clean production 2D game animation spritesheet matching the supplied angular cel-shaded anime/cartoon reference. Transparent RGBA background, NO scenery, NO floor, NO cast shadows, NO text or grid. EXACTLY 3 columns and 4 rows, twelve isolated full-body drawings, reading order left-to-right then top-to-bottom. Every cell has the SAME character size, same feet baseline, same body pivot at 42% cell width, facing RIGHT in 3/4 side-view for a side-scrolling mobile RPG. Body height about 75% cell height, with wide transparent gutters so NO sprites or weapons touch neighboring drawings or cell edges. Preserve outfit consistently. First row: frame1 calm standing eyes open, frame2 subtle weight shift eyes open, frame3 eyes half closed. Second row: frame4 standing eyes CLOSED for a blink, frame5 walking right left foot forward, frame6 walking passing pose. Third row: frame7 walking right right foot forward, frame8 walking opposite passing pose, frame9 attack windup. Fourth row: frame10 attack release/slash toward RIGHT, frame11 attack follow-through, frame12 return to ready. Exactly ONE character per cell, both boots fully visible. Attack weapon stays entirely inside its wide cell. Consistent head/body proportions, face, costume and colors, crisp readable silhouettes. Sheet aspect ratio 1:1 (3 wide columns, 4 shorter rows), preferably high resolution 2048x2048. Use ONLY MULAN on RIGHT of reference: adult East Asian woman, long BLACK high ponytail tied RED ribbon, dark TEAL tunic and trousers, loose WHITE sleeves, RED sash and embroidered red hanging panels, BLACK and GOLD segmented shoulder/hip armor, chunky BLACK strapped boots. Chinese curved SWORD with ornate GOLD guard. Attack winds sword back then slashes strongly to RIGHT with sword, followed by recovery. Ponytail trails left during walk; shoulders and arms counter-rotate with each step. Keep sword tip fully inside every cell. Do not include Snow White.

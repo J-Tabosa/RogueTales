@@ -1,6 +1,7 @@
 extends Node2D
 ## Provisional enemies and scenery are deliberately drawn with simple shapes.
 signal attack_hit
+const HeroScript = preload("res://scripts/hero.gd")
 
 @export var hero_scene: PackedScene = preload("res://scenes/heroes/scarlet.tscn")
 var hero: AnimatedSprite2D
@@ -107,25 +108,106 @@ func _draw() -> void:
 	draw_set_transform(Vector2.ZERO)
 	if enemy_visible:
 		draw_enemy(Vector2(369, 292), boss)
-	if hero.is_hair_attack() and attack_time >= 0.0:
-		draw_hair_attack()
-	elif attack_time > attack_duration * 0.5:
-		var t := clampf((attack_time / attack_duration - 0.5) / 0.42, 0.0, 1.0)
-		var p := Vector2(210, 217).lerp(Vector2(369, 260), t)
-		p.y -= sin(t * PI) * 60
-		draw_circle(p, 10, Color("11151f"))
-		draw_arc(p, 8, 3.6, 5.6, 12, Color("677286"), 2)
-		draw_circle(p + Vector2(1, -14), 4, Color("ffd38a"))
+	if attack_time >= 0.0:
+		match hero.attack_style:
+			HeroScript.AttackStyle.HAIR:
+				draw_hair_attack()
+			HeroScript.AttackStyle.APPLE:
+				draw_projectile(HeroScript.AttackStyle.APPLE)
+			HeroScript.AttackStyle.SWORD:
+				draw_sword_attack()
+			HeroScript.AttackStyle.CRYSTAL:
+				draw_projectile(HeroScript.AttackStyle.CRYSTAL)
+			HeroScript.AttackStyle.TIDE:
+				draw_water_attack()
+			_:
+				draw_projectile(HeroScript.AttackStyle.BOMB)
 	if impact_effect > 0:
 		var radius := (1.0 - impact_effect / 0.28) * 56 + 8
-		if hero.is_hair_attack():
-			for index in 8:
-				var direction := Vector2.from_angle(index * TAU / 8.0)
-				draw_line(Vector2(369, 255) + direction * radius * 0.3,
-					Vector2(369, 255) + direction * radius, Color("ffe3a0"), 3, true)
-		else:
-			draw_circle(Vector2(369, 255), radius, Color(1, 0.65, 0.3, impact_effect * 2))
-			draw_arc(Vector2(369, 255), radius + 6, 0, TAU, 28, Color("fcd9a0"), 3)
+		match hero.attack_style:
+			HeroScript.AttackStyle.HAIR, HeroScript.AttackStyle.SWORD:
+				var color := Color("ffe3a0") if hero.is_hair_attack() else Color("bcebe5")
+				for index in 8:
+					var direction := Vector2.from_angle(index * TAU / 8.0)
+					draw_line(Vector2(369, 255) + direction * radius * 0.3,
+						Vector2(369, 255) + direction * radius, color, 3, true)
+			HeroScript.AttackStyle.CRYSTAL, HeroScript.AttackStyle.TIDE:
+				var tint := Color("cdeaff") if hero.attack_style == HeroScript.AttackStyle.CRYSTAL else Color("75ded9")
+				for index in 6:
+					var point := Vector2(369, 255) + Vector2.from_angle(index * TAU / 6.0) * radius * 0.7
+					draw_arc(point, 4, 0, TAU, 8, tint, 2, true)
+				draw_arc(Vector2(369, 255), radius, -PI, 0.4, 24, tint, 3, true)
+			HeroScript.AttackStyle.APPLE:
+				for index in 7:
+					var direction := Vector2.from_angle(index * TAU / 7.0)
+					draw_circle(Vector2(369, 255) + direction * radius * 0.7,
+						4, Color(0.82, 0.3, 0.5, impact_effect / 0.28))
+				draw_arc(Vector2(369, 255), radius, 0, TAU, 28, Color("efacba"), 2, true)
+			_:
+				draw_circle(Vector2(369, 255), radius, Color(1, 0.65, 0.3, impact_effect * 2))
+				draw_arc(Vector2(369, 255), radius + 6, 0, TAU, 28, Color("fcd9a0"), 3)
+
+
+func draw_projectile(style: int) -> void:
+	# Release and arrival follow each scene's editable impact ratio.
+	var release: float = hero.impact_ratio * 0.52
+	var phase := attack_time / attack_duration
+	if phase < release:
+		return
+	var t := clampf((phase - release) / (hero.impact_ratio - release), 0.0, 1.0)
+	var point := (hero.position + Vector2(45, -91)).lerp(Vector2(369, 255), t)
+	point.y -= sin(t * PI) * 60
+	if style == HeroScript.AttackStyle.CRYSTAL:
+		draw_line(point - Vector2(27, -4), point, Color(0.65, 0.85, 1, 0.5), 4, true)
+		draw_colored_polygon(PackedVector2Array([
+			point + Vector2(14, 0), point + Vector2(-2, -9),
+			point + Vector2(-10, 0), point + Vector2(-2, 9)
+		]), Color("b4d9f5"))
+		draw_line(point + Vector2(-10, 0), point + Vector2(14, 0), Color.WHITE, 2, true)
+	elif style == HeroScript.AttackStyle.APPLE:
+		draw_circle(point + Vector2(-4, 0), 8, Color("b32349"))
+		draw_circle(point + Vector2(4, 0), 8, Color("df3951"))
+		draw_line(point + Vector2(0, -6), point + Vector2(1, -13), Color("97683e"), 3)
+		draw_colored_polygon(PackedVector2Array([
+			point + Vector2(1, -11), point + Vector2(12, -15), point + Vector2(8, -7)
+		]), Color("8ec686"))
+		draw_circle(point + Vector2(5, -3), 2, Color("ffd0bd"))
+	else:
+		draw_circle(point, 10, Color("11151f"))
+		draw_arc(point, 8, 3.6, 5.6, 12, Color("677286"), 2)
+		draw_circle(point + Vector2(1, -14), 4, Color("ffd38a"))
+
+
+func draw_sword_attack() -> void:
+	var phase := attack_time / attack_duration
+	var windup: float = hero.impact_ratio * 0.35
+	if phase < windup:
+		return
+	var progress := clampf((phase - windup) / (hero.impact_ratio - windup), 0.0, 1.0)
+	var center := hero.position + Vector2(10, -63)
+	var radius := 88.0 + progress * 142.0
+	var angle := lerpf(-1.1, 0.25, progress)
+	draw_arc(center, radius, angle - 0.65, angle, 24, Color(0.6, 0.9, 0.88, 0.28), 13, true)
+	draw_arc(center, radius, angle - 0.55, angle, 24, Color("d5fff4"), 3, true)
+
+
+func draw_water_attack() -> void:
+	var phase := attack_time / attack_duration
+	var windup: float = hero.impact_ratio * 0.35
+	if phase < windup:
+		return
+	var progress := clampf((phase - windup) / (hero.impact_ratio - windup), 0.0, 1.0)
+	var start := hero.position + Vector2(32, -83)
+	var end := start.lerp(Vector2(369, 255), progress)
+	var wave := PackedVector2Array()
+	for index in 25:
+		var t := index / 24.0
+		var point := start.lerp(end, t)
+		point.y += sin(t * TAU * 1.5 - phase * 10.0) * 12.0 * sin(t * PI)
+		wave.append(point)
+	draw_polyline(wave, Color(0.18, 0.7, 0.78, 0.4), 15, true)
+	draw_polyline(wave, Color("8be5e1"), 5, true)
+	draw_arc(end, 13, -PI * 0.8, PI * 0.6, 20, Color("d3ffff"), 3, true)
 
 
 func draw_hair_attack() -> void:

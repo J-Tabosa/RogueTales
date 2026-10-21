@@ -1,0 +1,27 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/hero.gd" id="1_hero"]
+[ext_resource type="SpriteFrames" path="res://assets/mulan/mulan_frames.tres" id="2_frames"]
+[ext_resource type="Shader" path="res://assets/hero/shaders/idle_motion.gdshader" id="3_motion"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_mulan"]
+resource_local_to_scene = true
+shader = ExtResource("3_motion")
+
+[node name="Mulan" type="AnimatedSprite2D"]
+material = SubResource("ShaderMaterial_mulan")
+position = Vector2(270, 520)
+scale = Vector2(0.4, 0.4)
+sprite_frames = ExtResource("2_frames")
+animation = &"idle"
+autoplay = "idle"
+centered = false
+offset = Vector2(-360, -580)
+script = ExtResource("1_hero")
+hero_name = "Mulan"
+hero_title = "A Lâmina do Amanhecer"
+attack_style = 3
+impact_ratio = 0.48
+accent_color = Color(0.55, 0.85, 0.78, 1)
+shoulder_swing = 3.0
+shoulder_roll = 2.0
