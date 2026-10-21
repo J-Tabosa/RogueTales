@@ -1,8 +1,8 @@
 extends Node2D
 ## Provisional enemies and scenery are deliberately drawn with simple shapes.
-signal bomb_hit
+signal attack_hit
 
-const Hero = preload("res://scenes/heroes/scarlet.tscn")
+@export var hero_scene: PackedScene = preload("res://scenes/heroes/scarlet.tscn")
 var hero: AnimatedSprite2D
 var stage := 0
 var boss := false
@@ -11,7 +11,7 @@ var walking := false
 var clock := 0.0
 var attack_time := -1.0
 var attack_duration := 1.0
-var explosion := 0.0
+var impact_effect := 0.0
 var flash := 0.0
 var speed := 1.0
 var frozen := false
@@ -19,7 +19,7 @@ var preview := false
 
 
 func _ready() -> void:
-	hero = Hero.instantiate()
+	hero = hero_scene.instantiate()
 	add_child(hero)
 	hero.position = Vector2(135, 308)
 	hero.show_animation("idle")
@@ -38,9 +38,10 @@ func attack() -> void:
 
 func reset_effects() -> void:
 	attack_time = -1.0
-	explosion = 0.0
+	impact_effect = 0.0
 	flash = 0.0
 	walking = false
+	preview = false
 	hero.modulate = Color.WHITE
 	hero.stop()
 	hero.show_animation("idle")
@@ -53,16 +54,18 @@ func _process(delta: float) -> void:
 	var dt := delta * speed
 	clock += dt
 	flash = maxf(0.0, flash - dt)
-	explosion = maxf(0.0, explosion - dt)
+	impact_effect = maxf(0.0, impact_effect - dt)
 	if attack_time >= 0.0:
 		attack_time += dt
-		if attack_time >= attack_duration * 0.92:
+		if attack_time >= attack_duration * hero.impact_ratio:
 			attack_time = -1.0
-			explosion = 0.28
+			impact_effect = 0.28
 			flash = 0.16
-			bomb_hit.emit()
+			attack_hit.emit()
 	if preview and hero.animation == "attack" and not hero.is_playing():
-		hero.show_animation("attack")
+		attack()
+	elif preview and hero.is_idle_animation():
+		attack()
 	queue_redraw()
 
 
@@ -99,22 +102,50 @@ func _draw() -> void:
 	for i in 15:
 		var p := Vector2(fmod(i * 67.0 + sin(clock + i) * 5, 492), fmod(i * 41.0 - clock * 9, 240))
 		draw_circle(p, 1.5, Color(0.95, 0.78, 0.49, 0.25))
-	draw_set_transform(Vector2(135, 308), 0.0, Vector2(1, 0.22))
+	draw_set_transform(hero.position, 0.0, Vector2(1, 0.22))
 	draw_circle(Vector2.ZERO, 57, Color(0.02, 0.03, 0.04, 0.45))
 	draw_set_transform(Vector2.ZERO)
 	if enemy_visible:
 		draw_enemy(Vector2(369, 292), boss)
-	if attack_time > attack_duration * 0.5:
+	if hero.is_hair_attack() and attack_time >= 0.0:
+		draw_hair_attack()
+	elif attack_time > attack_duration * 0.5:
 		var t := clampf((attack_time / attack_duration - 0.5) / 0.42, 0.0, 1.0)
 		var p := Vector2(210, 217).lerp(Vector2(369, 260), t)
 		p.y -= sin(t * PI) * 60
 		draw_circle(p, 10, Color("11151f"))
 		draw_arc(p, 8, 3.6, 5.6, 12, Color("677286"), 2)
 		draw_circle(p + Vector2(1, -14), 4, Color("ffd38a"))
-	if explosion > 0:
-		var radius := (1.0 - explosion / 0.28) * 56 + 8
-		draw_circle(Vector2(369, 255), radius, Color(1, 0.65, 0.3, explosion * 2))
-		draw_arc(Vector2(369, 255), radius + 6, 0, TAU, 28, Color("fcd9a0"), 3)
+	if impact_effect > 0:
+		var radius := (1.0 - impact_effect / 0.28) * 56 + 8
+		if hero.is_hair_attack():
+			for index in 8:
+				var direction := Vector2.from_angle(index * TAU / 8.0)
+				draw_line(Vector2(369, 255) + direction * radius * 0.3,
+					Vector2(369, 255) + direction * radius, Color("ffe3a0"), 3, true)
+		else:
+			draw_circle(Vector2(369, 255), radius, Color(1, 0.65, 0.3, impact_effect * 2))
+			draw_arc(Vector2(369, 255), radius + 6, 0, TAU, 28, Color("fcd9a0"), 3)
+
+
+func draw_hair_attack() -> void:
+	var phase := attack_time / attack_duration
+	var windup := minf(0.18, hero.impact_ratio * 0.3)
+	if phase < windup:
+		return
+	var progress := clampf((phase - windup) / (hero.impact_ratio - windup), 0.0, 1.0)
+	var start := hero.position + Vector2(-4, -84)
+	var end := start.lerp(Vector2(369, 255), sin(progress * PI * 0.5))
+	var strand := PackedVector2Array()
+	for index in 25:
+		var t := index / 24.0
+		var point := start.lerp(end, t)
+		point.y -= sin(t * PI) * (34.0 + sin(phase * TAU) * 18.0)
+		point.y += sin(t * TAU - phase * 9.0) * 10.0 * sin(t * PI)
+		strand.append(point)
+	draw_polyline(strand, Color("936020"), 13, true)
+	draw_polyline(strand, Color("f4c454"), 9, true)
+	draw_polyline(strand, Color("fff0a9"), 3, true)
 
 
 func draw_enemy(at: Vector2, is_boss: bool) -> void:

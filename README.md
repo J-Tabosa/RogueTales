@@ -20,6 +20,19 @@ Base de idle RPG com elementos roguelike, em **Godot 4.7 / GDScript**.
 - Recorde e vitórias salvos localmente em `user://progress.cfg`.
 - Laboratório de sprites: idle, caminhada e ataque com ajuste de velocidade.
 
+## Heroínas
+
+Na tela inicial, escolha **Scarlet** ou **Rapunzel** antes de começar. A seleção também fica disponível no laboratório de sprites.
+
+| Heroína | Cena editável | Ataque |
+| --- | --- | --- |
+| Scarlet | `scenes/heroes/scarlet.tscn` | Bomba com trajetória e explosão |
+| Rapunzel | `scenes/heroes/rapunzel.tscn` | Chicote de cabelo dourado com impacto próprio |
+
+Rapunzel tem idle com quatro quadros, piscada eventual, caminhada com oito quadros e ataque com oito quadros. A arte foi gerada a partir da referência fornecida, com vestido roxo, botas pretas e cabelo dourado longo; os PNGs ficam em `assets/rapunzel/` e as animações editáveis em `rapunzel_frames.tres`. Os recortes nativos isolam cada desenho e alinham os pés, sem modificar os PNGs.
+
+Abra a cena da Rapunzel e ajuste o SpriteFrames, escala, offset e propriedades **Heroína** no Inspector. `Impact Ratio` determina em que fração do ataque o golpe acerta; o intervalo respeita a duração da animação. O mesmo sistema de idle com pausas, piscadas e balanço é compartilhado pelas duas heroínas. O ataque de cabelo causa dano uma única vez por animação, sem criar uma bomba.
+
 ## Sprites fornecidas
 
 Abra **`scenes/heroes/scarlet.tscn`** para editar a heroína. Ela já é a cena usada nas batalhas, no menu e no laboratório.
@@ -53,7 +66,7 @@ A caminhada tem movimento discreto dos ombros e do tronco, sincronizado com `fra
 
 As folhas originais estão em `assets/hero/`. Elas não têm células uniformes: alguns desenhos ultrapassam a divisão em colunas. Os quadros usam `MeshTexture` nativo da Godot para mostrar apenas o contorno de cada desenho, preservando os PNGs e evitando pedaços dos sprites vizinhos. Todos usam uma área de 720 × 600, com os pés alinhados em (360, 580); a caminhada foi normalizada para o mesmo tamanho visual, com um pivô fixo em todas as células. A arte ainda pode ter pequenas variações de pose entre quadros.
 
-Para trocar o modelo, substitua os quadros no painel SpriteFrames. Para adicionar outro herói, duplique a cena, torne o recurso SpriteFrames único e aponte `Hero` em `arena.gd` para a nova cena. O intervalo de ataques respeita a duração da animação, inclusive após ajustes de FPS.
+Para trocar o modelo, substitua os quadros no painel SpriteFrames. Para adicionar outro herói, duplique uma cena, torne o recurso SpriteFrames único e adicione a cena a `HERO_SCENES` em `main.gd`. O intervalo de ataques respeita a duração da animação, inclusive após ajustes de FPS.
 
 ## Onde alterar
 
@@ -78,4 +91,4 @@ O teste cobre contagem de quadros, pausa, velocidade, três fases, escolhas de r
 
 Esta é uma base pequena para testar gameplay e animações. Não inclui progresso offline, loja, equipamento, áudio ou APK exportado. Android requer os templates de exportação e configuração do SDK na Godot.
 
-As sprites foram fornecidas pelo autor do projeto; nenhuma licença adicional sobre essas imagens é presumida.
+As sprites da Scarlet foram fornecidas pelo autor do projeto. As sprites da Rapunzel foram geradas com ImageGen a partir da referência fornecida; os detalhes de geração estão em `assets/rapunzel/ART_NOTES.md`. Nenhuma licença adicional sobre referências ou marcas é presumida.

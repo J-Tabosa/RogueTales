@@ -1,9 +1,14 @@
 extends Control
 ## Small prototype: UI and battle orchestration. Run data lives in run.gd.
 const Arena = preload("res://scripts/arena.gd")
+const HERO_SCENES = {
+	"scarlet": preload("res://scenes/heroes/scarlet.tscn"),
+	"rapunzel": preload("res://scenes/heroes/rapunzel.tscn"),
+}
 const GOLD := Color("e9c488")
 const MUTED := Color("96a4b4")
 const INK := Color("101823")
+var selected_hero := "scarlet"
 var run: IdleRun
 var state := "menu"
 var paused := false
@@ -131,6 +136,7 @@ func clear_page() -> void:
 func make_arena(y: float) -> void:
 	arena = Node2D.new()
 	arena.set_script(Arena)
+	arena.hero_scene = HERO_SCENES[selected_hero]
 	var viewport := Control.new()
 	viewport.position = Vector2(24, y)
 	viewport.size = Vector2(492, 340)
@@ -138,7 +144,7 @@ func make_arena(y: float) -> void:
 	viewport.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	page.add_child(viewport)
 	viewport.add_child(arena)
-	arena.bomb_hit.connect(on_bomb_hit)
+	arena.attack_hit.connect(on_attack_hit)
 
 
 func show_menu() -> void:
@@ -146,29 +152,45 @@ func show_menu() -> void:
 	paused = false
 	clear_page()
 	label(page, "ROGUETALES", Rect2(24, 26, 492, 30), 17, GOLD)
-	label(page, "Era uma vez…\numa explosão.", Rect2(24, 65, 492, 117), 42)
+	label(page, "Era uma vez…\num novo conto.", Rect2(24, 65, 492, 117), 42)
 	label(page, "IDLE RPG  /  UMA NOVA JORNADA A CADA RUN", Rect2(24, 193, 492, 28), 14, MUTED)
 	make_arena(247)
 	arena.enemy_visible = true
-	label(page, "SCARLET · A BOMBARDEIRA", Rect2(40, 255, 420, 25), 14, GOLD)
-	panel(page, Rect2(24, 610, 492, 102))
-	label(page, "Você escolhe. Ela luta.", Rect2(42, 624, 456, 29), 22)
 	label(
-		page,
-		"3 fases • chefes • relíquias aleatórias\nCombate automático, escolhas entre as fases.",
-		Rect2(42, 658, 456, 45),
-		17,
-		MUTED
+		page, (arena.hero.hero_name + " · " + arena.hero.hero_title).to_upper(),
+		Rect2(40, 255, 450, 25), 14, arena.hero.accent_color
 	)
-	label(
-		page,
-		"RECORDE  %d / 9       EXPEDIÇÕES VENCIDAS  %d" % [best, wins],
-		Rect2(24, 738, 492, 30),
-		15,
-		GOLD
+	add_hero_selector(610)
+	panel(page, Rect2(24, 678, 492, 91))
+	var weapon := "Chicote de cabelo dourado" if arena.hero.is_hair_attack() else "Bombas à distância"
+	label(page, weapon, Rect2(42, 689, 456, 28), 22, arena.hero.accent_color)
+	label(page, "3 fases • chefes • relíquias aleatórias", Rect2(42, 727, 456, 26), 17, MUTED)
+	label(page, "RECORDE %d / 9       EXPEDIÇÕES VENCIDAS %d" % [best, wins],
+		Rect2(24, 779, 492, 25), 14, GOLD)
+	button(page, "Começar expedição   →", Rect2(24, 815, 492, 60), start_run, true)
+	button(page, "Testar sprites", Rect2(24, 891, 492, 50), show_preview)
+
+
+func add_hero_selector(y: float) -> void:
+	button(
+		page, "Scarlet", Rect2(24, y, 236, 52),
+		choose_hero.bind("scarlet"), selected_hero == "scarlet"
 	)
-	button(page, "Começar expedição   →", Rect2(24, 791, 492, 62), start_run, true)
-	button(page, "Testar sprites", Rect2(24, 867, 492, 52), show_preview)
+	button(
+		page, "Rapunzel", Rect2(280, y, 236, 52),
+		choose_hero.bind("rapunzel"), selected_hero == "rapunzel"
+	)
+
+
+func choose_hero(id: String) -> void:
+	if not HERO_SCENES.has(id) or id == selected_hero:
+		return
+	selected_hero = id
+	if state == "preview":
+		show_preview()
+	else:
+		show_menu()
+
 
 
 func start_run() -> void:
@@ -184,7 +206,7 @@ func start_run() -> void:
 	enemy_hp = bar(page, Rect2(24, 197, 492, 10), Color("d27583"))
 	make_arena(221)
 	panel(page, Rect2(24, 582, 492, 137))
-	label(page, "SCARLET", Rect2(42, 595, 245, 26), 20, GOLD)
+	label(page, arena.hero.hero_name.to_upper(), Rect2(42, 595, 245, 26), 20, arena.hero.accent_color)
 	life_label = label(page, "", Rect2(320, 595, 175, 26), 17)
 	hero_hp = bar(page, Rect2(42, 633, 456, 12), Color("78c5a5"))
 	stats_label = label(page, "", Rect2(42, 660, 456, 42), 16, MUTED)
@@ -217,7 +239,7 @@ func spawn_enemy() -> void:
 	state = "battle"
 	hero_timer = 0.25
 	enemy_timer = 2.0
-	log_label.text = "Chefe à vista!" if run.wave == 2 else "Scarlet encontrou um inimigo."
+	log_label.text = "Chefe à vista!" if run.wave == 2 else arena.hero.hero_name + " encontrou um inimigo."
 	update_hud()
 
 
@@ -262,7 +284,7 @@ func _process(delta: float) -> void:
 				finish_run(false)
 
 
-func on_bomb_hit() -> void:
+func on_attack_hit() -> void:
 	if state != "battle":
 		return
 	var hit := run.hit_enemy()
@@ -367,11 +389,11 @@ func finish_run(victory: bool) -> void:
 	config.set_value("progress", "wins", wins)
 	config.save("user://progress.cfg")
 	modal(
-		"Fim do conto." if victory else "A cesta ficou vazia.",
+		"Fim do conto." if victory else "O conto foi interrompido.",
 		(
 			"Três fases vencidas!"
 			if victory
-			else "Scarlet caiu. Uma nova tentativa traz novas escolhas."
+			else arena.hero.hero_name + " caiu.\nUma nova tentativa traz novas escolhas."
 		)
 	)
 	label(
@@ -412,9 +434,10 @@ func _unhandled_key_input(event: InputEvent) -> void:
 func show_preview() -> void:
 	clear_page()
 	state = "preview"
-	label(page, "LABORATÓRIO DE SPRITES", Rect2(24, 30, 492, 35), 23, GOLD)
-	label(page, "Veja os quadros dentro da própria Godot.", Rect2(24, 81, 492, 36), 19, MUTED)
 	make_arena(200)
+	label(page, "LABORATÓRIO DE SPRITES", Rect2(24, 30, 492, 35), 23, GOLD)
+	label(page, arena.hero.hero_name + " · teste de animações", Rect2(24, 81, 492, 36), 19, MUTED)
+	add_hero_selector(129)
 	arena.hero.position.x = 246
 	frame_label = label(page, "", Rect2(24, 558, 492, 40), 20, GOLD)
 	var animations := ["idle", "walk", "attack"]
@@ -443,7 +466,8 @@ func show_preview() -> void:
 
 func preview_anim(anim: String) -> void:
 	arena.reset_effects()
-	arena.preview = false
-	arena.set_animation(anim)
-	# Loop attack only here, without dealing damage.
-	arena.hero.sprite_frames.set_animation_loop("attack", anim == "attack")
+	if anim == "attack":
+		arena.preview = true
+		arena.attack()
+	else:
+		arena.set_animation(anim)

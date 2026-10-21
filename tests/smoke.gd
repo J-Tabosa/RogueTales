@@ -112,9 +112,42 @@ func run_checks() -> void:
 	assert(game.state == "result" and game.run.hp == 0.0)
 	game.show_menu()
 	assert(game.state == "menu")
+	# Rapunzel is selectable, uses hair and completes the same three-stage loop.
+	game.choose_hero("rapunzel")
+	assert(game.selected_hero == "rapunzel")
+	assert(game.arena.hero.hero_name == "Rapunzel")
+	assert(game.arena.hero.is_hair_attack())
+	game.show_preview()
+	assert(game.arena.hero.sprite_frames.get_frame_count("walk") == 8)
+	assert(game.arena.hero.sprite_frames.get_frame_count("attack") == 8)
+	var hits := [0]
+	game.arena.attack_hit.connect(func(): hits[0] += 1)
+	game.arena.set_process(false)
+	game.preview_anim("attack")
+	game.arena._process(0.4)
+	assert(hits[0] == 0)
+	game.arena._process(0.16)
+	assert(hits[0] == 1)
+	game.arena._process(0.1)
+	assert(hits[0] == 1, "A hair strike must deal damage only once")
+	seed(42)
+	game.start_run()
+	game.arena.set_process(false)
+	for tick in 4000:
+		game._process(0.05)
+		game.arena._process(0.05)
+		if game.state == "choice":
+			game.select_relic("power")
+		if game.state == "result":
+			break
+	assert(game.state == "result" and game.run.kills == 9)
+	game.show_menu()
+	game.choose_hero("scarlet")
+	assert(game.arena.hero.hero_name == "Scarlet")
+	assert(not game.arena.hero.is_hair_attack())
 	game.queue_free()
 	await process_frame
 	print(
-		"PASS: editable hero scene, isolated resources, saved FPS/scale, idle waits/blink/sway, paused timers, stride-synced shoulders, 16-frame walk, sheets, pause, speed, three stages, relics, victory, defeat and menu"
+		"PASS: editable hero scene, isolated resources, saved FPS/scale, idle waits/blink/sway, paused timers, stride-synced shoulders, 16-frame walk, sheets, pause, speed, three stages, relics, victory, defeat and menu; Rapunzel selection, hair hit timing and three-stage victory"
 	)
 	quit()

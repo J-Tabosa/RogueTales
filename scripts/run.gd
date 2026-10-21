@@ -29,12 +29,12 @@ const STAGES = [
 	},
 ]
 const RELICS = [
-	{"id": "power", "title": "Pavio longo", "detail": "+30% de dano das bombas"},
+	{"id": "power", "title": "Golpe certeiro", "detail": "+30% de dano dos ataques"},
 	{"id": "heart", "title": "Coração do bosque", "detail": "+40 de vida máxima e cura 40"},
 	{"id": "haste", "title": "Mãos ligeiras", "detail": "Ataques 20% mais rápidos"},
-	{"id": "critical", "title": "Pólvora instável", "detail": "+20% de chance crítica (dano ×2)"},
-	{"id": "leech", "title": "Cesta encantada", "detail": "Recupera 4 de vida a cada acerto"},
-	{"id": "armor", "title": "Capa reforçada", "detail": "Reduz dano recebido em 2"},
+	{"id": "critical", "title": "Foco afiado", "detail": "+20% de chance crítica (dano ×2)"},
+	{"id": "leech", "title": "Talismã encantado", "detail": "Recupera 4 de vida a cada acerto"},
+	{"id": "armor", "title": "Traje reforçado", "detail": "Reduz dano recebido em 2"},
 ]
 var stage := 0
 var wave := 0

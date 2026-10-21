@@ -1,5 +1,5 @@
 shader_type canvas_item;
-// Saved frame canvas: 720 × 600. The feet stay at (360, 580).
+// Normalized frame canvas. The feet stay at (360, 580).
 uniform float idle_weight : hint_range(0.0, 1.0) = 0.0;
 uniform float idle_phase = 0.0;
 uniform float idle_sway_amplitude : hint_range(0.0, 8.0) = 2.0;
