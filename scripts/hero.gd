@@ -149,6 +149,8 @@ func _process(delta: float) -> void:
 
 
 func show_animation(anim: String) -> void:
+	if animation == StringName(anim) and is_playing() and anim == "walk":
+		return
 	if not sprite_frames.has_animation(anim):
 		return
 	if anim == "idle":
@@ -169,3 +171,21 @@ func get_animation_duration(anim: String) -> float:
 	for index in sprite_frames.get_frame_count(anim):
 		duration += sprite_frames.get_frame_duration(anim, index) / fps
 	return duration
+
+
+func seek_animation(anim: String, elapsed: float) -> void:
+	# The arena owns attack time: visual frames, hit and recovery share one clock.
+	if not sprite_frames.has_animation(anim):
+		return
+	if animation != StringName(anim):
+		show_animation(anim)
+	pause()
+	var fps := sprite_frames.get_animation_speed(anim)
+	var count := sprite_frames.get_frame_count(anim)
+	var remaining := maxf(0.0, elapsed) * fps
+	for index in count:
+		var duration := sprite_frames.get_frame_duration(anim, index)
+		if remaining < duration or index == count - 1:
+			set_frame_and_progress(index, clampf(remaining / duration, 0, 0.999))
+			return
+		remaining -= duration

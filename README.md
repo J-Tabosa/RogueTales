@@ -1,92 +1,91 @@
-# RogueTales
+# RogueTales: O Último Fio
 
-Base de idle RPG com elementos roguelike, em **Godot 4.7 / GDScript**.
+Idle RPG de fantasia em **Godot 4.7 / GDScript**, com uma campanha completa de oito capítulos, seis heroínas recrutáveis e formação de até três integrantes. Interface vertical de 540 × 960, controlada por mouse ou toque.
 
-## Abrir
+## Jogar
 
-1. Baixe ou clone este repositório.
-2. Na Godot 4.7, importe `project.godot`.
-3. Pressione **F6** na cena principal ou **F5** para jogar.
+1. Clone o repositório e importe `project.godot` na **Godot 4.7**.
+2. Pressione **F5**. Abra o mapa e entre no primeiro capítulo.
+3. Scarlet começa a jornada; as outras heroínas são recrutadas na história.
+4. Monte sua equipe, escolha a vanguarda e invista o ouro em melhorias.
 
-## Protótipo
+O combate é automático. Cada capítulo contém dois encontros e um chefe. Entre encontros, escolha uma relíquia que dura apenas durante aquela expedição. A derrota mantém o ouro conquistado, os recrutamentos e as melhorias permanentes. Capítulos concluídos podem ser repetidos para conseguir mais ouro.
 
-- Tela inicial e interface vertical 540 × 960, com mouse ou toque.
-- Combate automático, ataques próprios de cada heroína, dano crítico e vida.
-- Três fases: Bosque dos Sussurros, Ruínas da Lua e Caldeira Carmesim.
-- Cada fase tem dois encontros e um chefe provisório.
-- Escolha uma entre três relíquias sorteadas após as fases 1 e 2.
-- Relíquias duram uma expedição; ao perder ou vencer, é possível recomeçar.
-- Pausa, velocidade 1×/2×, vitória, derrota e retorno ao menu.
-- Recorde e vitórias salvos localmente em `user://progress.cfg`.
-- Laboratório de sprites: idle, caminhada e ataque com ajuste de velocidade.
+## Campanha
 
-## Heroínas
+A Costureira roubou os finais dos contos e prendeu os reinos com oito agulhas. As princesas precisam recuperar suas vozes e decidir o que escrever depois.
 
-Na tela inicial, escolha **Scarlet**, **Rapunzel**, **Branca de Neve**, **Mulan**, **Cinderela** ou **Ariel** antes de começar. A seleção também fica disponível no laboratório de sprites.
-
-| Heroína | Cena editável | Ataque |
-| --- | --- | --- |
-| Scarlet | `scenes/heroes/scarlet.tscn` | Bomba com trajetória e explosão |
-| Rapunzel | `scenes/heroes/rapunzel.tscn` | Chicote de cabelo dourado com impacto próprio |
-| Branca de Neve | `scenes/heroes/snow_white.tscn` | Maçã encantada arremessada |
-| Mulan | `scenes/heroes/mulan.tscn` | Corte de espada com rastro de lâmina |
-| Cinderela | `scenes/heroes/cinderella.tscn` | Estilhaço de cristal com rastro mágico |
-| Ariel | `scenes/heroes/ariel.tscn` | Tridente com onda de água |
-
-Rapunzel tem idle com quatro quadros, piscada eventual, caminhada com oito quadros e ataque com oito quadros. A arte foi gerada a partir da referência fornecida, com vestido roxo, botas pretas e cabelo dourado longo; os PNGs ficam em `assets/rapunzel/` e as animações editáveis em `rapunzel_frames.tres`. Os recortes nativos isolam cada desenho e alinham os pés, sem modificar os PNGs.
-
-Branca de Neve e Mulan têm quatro quadros de idle, quatro de piscada, quatro de caminhada (6 FPS) e quatro de ataque (6 FPS). As folhas ficam em `assets/snow_white/` e `assets/mulan/`, com recursos `*_frames.tres` editáveis. As duas usam a referência visual enviada: vestido amarelo, capa e maçã para Branca de Neve; armadura preta/dourada, faixa vermelha e espada para Mulan. Os pés são alinhados nos recortes nativos, e os ombros acompanham os passos.
-
-Cinderela e Ariel seguem a mesma base de quatro quadros por animação, com recursos em `assets/cinderella/` e `assets/ariel/`. A Cinderela mantém vestido azul e sapatos de cristal; a Ariel mantém cabelo vermelho, cauda e tridente. A Ariel usa túnica roxa adaptada. **Cinderela é provisória:** a geração da spritesheet foi bloqueada; a cena usa a referência original inalterada, recortada por geometria nativa e com poses de caminhada/ataque deformadas na malha. A piscada automática dela fica desativada até você fornecer desenhos de olhos fechados. Os quadros estão preparados para substituição no SpriteFrames. A animação `walk` da Ariel representa deslocamento flutuando com a cauda. As seis opções aparecem em duas linhas no menu e no laboratório.
-
-Abra a cena da heroína e ajuste o SpriteFrames, escala, offset e propriedades **Heroína** no Inspector. `Impact Ratio` determina em que fração do ataque o golpe acerta; o intervalo respeita a duração da animação. O mesmo sistema de idle com pausas, piscadas e balanço é compartilhado pelas seis heroínas. O ataque de cabelo causa dano uma única vez por animação, sem criar uma bomba.
-
-## Sprites fornecidas
-
-Abra **`scenes/heroes/scarlet.tscn`** para editar a heroína. Ela já é a cena usada nas batalhas, no menu e no laboratório.
-
-1. Selecione o nó **Scarlet** (`AnimatedSprite2D`).
-2. No Inspector, clique no recurso **Sprite Frames** para abrir o painel inferior.
-3. Escolha `idle`, `walk` ou `attack`. Ajuste **FPS**, ordem dos quadros, duração de cada quadro ou substitua as texturas.
-4. Ajuste **Transform > Scale** para mudar o tamanho e **Offset** para mudar o pivô. O ponto de origem fica nos pés.
-5. Salve a cena e o recurso. Use **F6** para conferir Scarlet sozinha e **F5** para testar no jogo.
-
-| Animação | Quadros | FPS inicial | Loop |
+| Capítulo | Local | Chefe | Recrutamento ao concluir |
 | --- | --- | --- | --- |
-| Idle / balanço eventual | 4 | 2 | Não |
-| Piscada (`idle_blink`) | 4 | 12 | Não |
-| Caminhada | 16 | 12 | Sim |
-| Ataque | 10 | 10 | Não |
+| 1 | Bosque dos Sussurros | O Devorador de Trilhas | Rapunzel |
+| 2 | Torre dos Ecos | A Guardiã da Janela | Branca de Neve |
+| 3 | Pomar do Espelho | O Espelho Faminto | Mulan |
+| 4 | Desfiladeiro de Jade | O General Sem Nome | Cinderela |
+| 5 | Palácio da Meia-noite | O Relógio Partido | Ariel |
+| 6 | Santuário das Marés | O Leviatã Silencioso | — |
+| 7 | Forja das Cinzas | O Ferreiro de Destinos | — |
+| 8 | Biblioteca do Último Fio | A Costureira dos Finais | Epílogo |
 
-As animações ficam salvas em `assets/hero/animations/scarlet_frames.tres`. O script **não** recria os frames, muda os FPS ou substitui a escala configurada na cena ao iniciar.
+Cada capítulo tem introdução, desfecho e uma memória permanente: **esperança** concede +5 PV máximos a cada princesa; **coragem** concede +1 de dano a cada princesa. O epílogo varia de acordo com as escolhas. O diário permite rever diálogos sem conceder recompensas novamente.
 
-A caminhada usa **`assets/hero/walk_16.png`**, a nova folha de 2048 × 2048 com 16 quadros em 4 × 4. Cada célula mede 512 × 512 e é lida da esquerda para a direita, de cima para baixo. Todos os quadros mantêm o mesmo pivô; o movimento natural dos pés não desloca o corpo inteiro.
+## Equipe e melhorias
 
-O idle usa **quatro quadros**, a 2 FPS, e não fica repetindo em loop. O comportamento em `hero.gd` alterna entre:
+Até três princesas lutam simultaneamente, com vida, escudo, intervalo e animação independentes. A primeira da formação recebe os ataques; quando cai, a próxima assume. Curas não revivem integrantes caídas durante o capítulo. Uma nova expedição restaura a formação.
 
-- **Parada:** segura o primeiro quadro imóvel por 4 a 8 segundos, sem respiração ou balanço contínuo.
-- **Piscando:** executa `idle_blink` uma vez, usando os desenhos de olhos abertos, semicerrados e fechados da folha original; dura cerca de 0,33 s.
-- **Balançando:** executa os quatro quadros de idle uma vez, com um pequeno movimento de capa e tronco; dura 2 s nos FPS iniciais.
+| Heroína | Função e habilidade inicial | Três melhorias exclusivas |
+| --- | --- | --- |
+| Scarlet | Bombas e queimadura | Dano de pólvora, queimadura, crítico |
+| Rapunzel | Cura coletiva a cada terceiro golpe | Cura, vitalidade, redução de dano inimigo |
+| Branca de Neve | Veneno e autocura por acerto | Veneno, dano de maçãs, drenagem |
+| Mulan | Armadura e terceiro golpe fortalecido | Armadura, combo, velocidade |
+| Cinderela | Escudo para a equipe a cada encontro | Barreira, dano de cristal, crítico |
+| Ariel | Cura coletiva e lentidão dos inimigos | Cura das marés, lentidão, dano do tridente |
 
-Após cada gesto, volta à pose parada e sorteia uma nova espera. A chance inicial é de 70% para piscada e 30% para balanço. Andar ou atacar interrompe o gesto imediatamente. No Inspector da Scarlet, ajuste **Idle — pausas e variações**: intervalos mínimo/máximo, probabilidade de piscar, intensidade do balanço e ativação das variações. Os FPS e a duração de cada quadro continuam editáveis no SpriteFrames.
+Cada melhoria tem cinco níveis. O custo começa em 35 ouro e cresce em 30 por nível. Formação e melhorias ficam bloqueadas enquanto existir uma expedição ativa; conclua-a ou abandone-a pelo menu de pausa para alterar a equipe.
 
-A caminhada tem movimento discreto dos ombros e do tronco, sincronizado com `frame + frame_progress` dos 16 quadros. O shader usa uma malha subdividida para movimentar a parte superior sem deformar as pernas. Em **Walk — movimento dos ombros**, ajuste `Walk Shoulders Enabled`, `Shoulder Swing` e `Shoulder Roll`. Pausa e velocidade 1×/2× respeitam tanto os gestos de idle quanto o movimento da caminhada.
+## Telas e controles
 
-As folhas originais estão em `assets/hero/`. Elas não têm células uniformes: alguns desenhos ultrapassam a divisão em colunas. Os quadros usam `MeshTexture` nativo da Godot para mostrar apenas o contorno de cada desenho, preservando os PNGs e evitando pedaços dos sprites vizinhos. Todos usam uma área de 720 × 600, com os pés alinhados em (360, 580); a caminhada foi normalizada para o mesmo tamanho visual, com um pivô fixo em todas as células. A arte ainda pode ter pequenas variações de pose entre quadros.
+- Início e continuação da jornada.
+- Mapa com oito capítulos e bloqueio por progressão.
+- Apresentação do capítulo, diálogos e escolhas de memória.
+- Equipe com recrutamentos e ordem de vanguarda.
+- Melhorias individuais, com custos e níveis.
+- Combate com três barras de vida, escudos, preparação dos ataques, pausa e 1×/2×.
+- Escolha de relíquias, vitória, derrota, recrutamento e epílogo.
+- Diário, opções de movimento reduzido/velocidade, ajuda e créditos.
 
-Para trocar o modelo, substitua os quadros no painel SpriteFrames. Para adicionar outro herói, duplique uma cena, torne o recurso SpriteFrames único e adicione a cena a `HERO_SCENES` em `main.gd`. O intervalo de ataques respeita a duração da animação, inclusive após ajustes de FPS.
+**ESC** pausa o combate. As ferramentas de desenvolvimento começam **desativadas em toda inicialização**. **Ctrl+B** ativa/desativa o painel de debug; o laboratório de animações só pode ser aberto depois dessa ativação e fora de uma expedição em combate. Desativar o debug fecha o laboratório. Nenhum botão de teste aparece no menu normal.
 
-## Onde alterar
+## Salvamento
 
-- `scripts/run.gd`: vida, dano, inimigos, fases e relíquias.
-- `scripts/main.gd`: telas e fluxo de combate.
-- `scenes/heroes/scarlet.tscn`: modelo, escala e origem da heroína.
-- `assets/hero/animations/scarlet_frames.tres`: quadros e FPS editáveis.
-- `scripts/hero.gd`: reprodução e retorno do ataque para idle.
-- `scripts/arena.gd`: cenários e inimigos provisórios desenhados por código, trajetória da bomba e efeitos.
-- `scenes/main.tscn`: ponto de entrada.
+Progresso, ouro, equipe, níveis, escolhas e opções ficam em `user://campaign_v1.json`, com gravação temporária e cópia de segurança `.bak`. Um save inválido tenta recuperar o backup. A versão anterior de três fases é independente desta campanha e não concede capítulos concluídos automaticamente.
 
-Cada ataque causa dano uma única vez, no ponto de impacto configurado na cena. A caminhada aparece entre encontros. Idle aparece no menu e nos intervalos dos ataques. Para trocar inimigos por sprites, substitua `draw_enemy()` em `arena.gd` por um `AnimatedSprite2D`.
+Ao continuar uma expedição, o jogo retorna **ao início do encontro atual**, com a vida registrada naquele ponto e as relíquias já escolhidas. Uma escolha de relíquia pendente mantém as mesmas opções ao sair e voltar. Recompensas de um encontro já concluído não são concedidas novamente. O desfecho pendente também pode ser retomado depois de fechar o jogo.
+
+## Animações editáveis
+
+Abra uma cena em `scenes/heroes/`, selecione o `AnimatedSprite2D` e edite **Sprite Frames**, FPS, duração, ordem, escala e offset. Cada instância possui recursos próprios. O código não substitui os FPS configurados.
+
+- Idle permanece imóvel por 4–8 segundos, com piscada ou balanço eventual de quatro quadros. Não há respiração contínua exagerada.
+- Os ombros acompanham o progresso real da caminhada, com origem nos pés.
+- Cada ataque possui um relógio próprio: preparação, acerto único e recuperação. Alterar os FPS também altera o instante do impacto.
+- Acertar não encerra a animação no meio. Pausa e velocidade 2× afetam os mesmos relógios; mudar de encontro cancela golpes pendentes.
+- Cada integrante mantém a posição na formação durante caminhada e ataque. Ariel utiliza `walk` para nadar/flutuar com a cauda.
+
+**Limitação de arte:** Cinderela ainda usa a referência original com recorte e poses por malha nativa, pois a geração de sua spritesheet foi bloqueada. Não possui piscada desenhada; a chance de piscada fica em zero até esses quadros serem substituídos. As outras folhas também são arte de teste, com poucos quadros em algumas heroínas. Cenários e inimigos usam formas vetoriais desenhadas por código. Os PNGs originais permanecem inalterados; detalhes de procedência estão nos arquivos `assets/*/ART_NOTES.md`.
+
+## Estrutura
+
+| Arquivo | Responsabilidade |
+| --- | --- |
+| `scripts/catalog.gd` | Oito capítulos, diálogos, heroínas, habilidades e números de balanceamento |
+| `scripts/campaign.gd` | Recrutamento, formação, upgrades, escolhas e persistência |
+| `scripts/run.gd` | Vida individual, dano, cura, veneno, queimadura, escudos e relíquias |
+| `scripts/arena.gd` | Formação visual, animações, efeitos e oito ambientes/inimigos |
+| `scripts/hero.gd` | Idle, ombros e posicionamento temporal dos quadros |
+| `scripts/main.gd` | Telas, navegação e fluxo de história/combate |
+| `scenes/heroes/*.tscn` | Modelos editáveis das seis princesas |
+| `tests/smoke.gd` | Campanha completa, regras, saves, regressões e debug |
 
 ## Verificação
 
@@ -95,8 +94,6 @@ godot --headless --path . --editor --quit
 godot --headless --path . --script tests/smoke.gd
 ```
 
-O teste cobre as seis heroínas, recursos isolados, contagem de quadros, idle, ombros, pausa, velocidade, impacto único com FPS editado, três fases, escolhas de relíquias, vitória, derrota e retorno ao menu.
+Os testes usam um save isolado e completam os oito capítulos com a renda obtida na campanha. Cobrem recrutamentos, formação de três, habilidades exclusivas, relíquias, recuperação de save, pausa, velocidade, impacto único/recuperação da animação, derrota, replay, epílogo e proteção do debug por Ctrl+B.
 
-Esta é uma base pequena para testar gameplay e animações. Não inclui progresso offline, loja, equipamento, áudio ou APK exportado. Android requer os templates de exportação e configuração do SDK na Godot.
-
-As sprites da Scarlet foram fornecidas pelo autor do projeto. As sprites de Rapunzel, Branca de Neve, Mulan e Ariel foram geradas com ImageGen a partir das referências fornecidas; Cinderela usa a referência original como placeholder nativo; os detalhes e prompts estão em `ART_NOTES.md` nas respectivas pastas de assets. Nenhuma licença adicional sobre referências ou marcas é presumida.
+Esta versão fecha o ciclo jogável da campanha. Ainda não inclui áudio, progresso offline, loja, monetização, sprites finais de inimigos ou um APK exportado. Para Android, configure o SDK e os templates de exportação na Godot.
