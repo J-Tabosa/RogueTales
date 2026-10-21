@@ -1,5 +1,6 @@
 extends Control
 ## Screens and orchestration. Rules: run.gd; progression: campaign.gd; content: catalog.gd.
+const GameAudio = preload("res://scripts/audio.gd")
 const Arena = preload("res://scripts/arena.gd")
 const HERO_SCENES = TaleCatalog.HERO_SCENES
 const GOLD := Color("e9c488")
@@ -37,11 +38,30 @@ var story_mode := "intro"
 var story_line := 0
 var story_archive := false
 var story_lines: Array = []
+var audio: Node
+var idle_label: Label
+var idle_button: Button
+var idle_tick := 0.0
+var auto_save_tick := 0.0
+var farm_timer := -1.0
+var farm_stage := -1
+var story_body: Label
+var story_visible := 0.0
+var profile_name: LineEdit
+var profile_avatar := "scarlet"
+var profile_avatar_label: Label
+var profile_avatar_buttons: Dictionary = {}
 
 
 func _ready() -> void:
 	campaign = TaleCampaign.new()
 	campaign.load_from(save_path)
+	campaign.settle_idle(int(Time.get_unix_time_from_system()))
+	audio = Node.new()
+	audio.set_script(GameAudio)
+	add_child(audio)
+	apply_preferences()
+	persist()
 	game_speed = campaign.speed
 	content = Control.new()
 	content.size = Vector2(540, 960)
@@ -54,13 +74,17 @@ func _ready() -> void:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST and campaign != null:
+		campaign.settle_idle(int(Time.get_unix_time_from_system()))
 		campaign.save_to(save_path)
 		get_tree().quit()
 
 
 func center_content() -> void:
-	if content != null:
-		content.position = (size - Vector2(540, 960)) * 0.5
+	if content == null:
+		return
+	var factor := minf(size.x / 540.0, size.y / 960.0)
+	content.scale = Vector2.ONE * factor
+	content.position = (size - Vector2(540, 960) * factor) * 0.5
 
 
 func box(color: Color, border := Color("34404f"), radius := 16) -> StyleBoxFlat:
@@ -121,7 +145,12 @@ func button(
 		"pressed", box(Color("c4a16a") if primary else Color("121c29"), GOLD)
 	)
 	node.add_theme_stylebox_override("focus", box(Color(0, 0, 0, 0), GOLD))
-	node.pressed.connect(callback)
+	node.pressed.connect(
+		func():
+			if is_instance_valid(audio):
+				audio.play_effect("click")
+			callback.call()
+	)
 	parent.add_child(node)
 	return node
 
@@ -170,9 +199,9 @@ func navigation(active: String) -> void:
 	var entries: Array = [
 		["menu", "Início", show_menu],
 		["map", "Mapa", show_map],
-		["party", "Equipe", show_party],
-		["upgrade", "Melhorias", show_upgrades],
-		["journal", "Diário", show_journal]
+		["heroes", "Heróis", show_heroes],
+		["journal", "Diário", show_journal],
+		["profile", "Perfil", show_profile]
 	]
 	for index in entries.size():
 		var item: Array = entries[index]
@@ -190,6 +219,7 @@ func make_arena(y: float, ids: Array = [], target_stage: int = 0) -> void:
 		arena.party_scenes.append(HERO_SCENES[id])
 	arena.stage = target_stage
 	arena.reduced_motion = campaign.reduced_motion
+	arena.high_quality = campaign.high_quality
 	var viewport := Control.new()
 	viewport.position = Vector2(24, y)
 	viewport.size = Vector2(492, 340)
@@ -205,6 +235,7 @@ func portrait(parent: Node, id: String, at: Vector2, factor: float = 0.68) -> vo
 	actor.position = at
 	actor.scale *= factor
 	parent.add_child(actor)
+	actor.texture_filter = texture_filter
 	actor.idle_sway_amplitude = 0 if campaign.reduced_motion else 2
 
 
@@ -222,12 +253,14 @@ func scroll_area(y: float, height: float, total: float) -> Control:
 
 
 func persist() -> void:
+	campaign.settle_idle(int(Time.get_unix_time_from_system()))
 	campaign.save_to(save_path)
 
 
 func show_menu() -> void:
 	state = "menu"
 	paused = false
+	farm_timer = -1.0
 	clear_page()
 	header(
 		"O próximo capítulo é seu.",
@@ -238,12 +271,13 @@ func show_menu() -> void:
 	label(
 		page, "FORMAÇÃO ATIVA  ·  %d / 3" % campaign.party.size(), Rect2(40, 200, 440, 24), 14, GOLD
 	)
-	label(
-		page,
-		"Oito agulhas prendem os reinos.\nSeis vozes podem reescrever o fim.",
-		Rect2(24, 543, 492, 64),
-		22
-	)
+	label(page, "Cinco vozes. Um novo destino.", Rect2(24, 543, 492, 48), 27)
+	panel(page, Rect2(24, 607, 492, 101))
+	label(page, "BAÚ DO ACAMPAMENTO", Rect2(40, 615, 295, 24), 14, GOLD)
+	idle_label = label(page, "", Rect2(40, 646, 295, 51), 16, MUTED)
+	idle_button = button(page, "Coletar", Rect2(352, 637, 148, 49), show_idle_rewards, true)
+	idle_button.add_theme_font_size_override("font_size", 17)
+	update_idle_display()
 	var title := (
 		"Continuar história  →"
 		if campaign.pending_story >= 0
@@ -253,18 +287,16 @@ func show_menu() -> void:
 			else "Abrir mapa da campanha  →"
 		)
 	)
-	button(page, title, Rect2(24, 629, 492, 62), continue_journey, true)
-	button(page, "Organizar equipe", Rect2(24, 709, 236, 54), show_party)
-	button(page, "Melhorar princesas", Rect2(280, 709, 236, 54), show_upgrades)
-	label(
-		page,
-		"%d princesas recrutadas  •  progresso automático" % campaign.unlocked.size(),
-		Rect2(24, 789, 492, 33),
-		16,
-		MUTED
+	button(page, title, Rect2(24, 731, 492, 58), continue_journey, true)
+	(
+		button(page, "Heróis e evolução", Rect2(24, 808, 236, 48), show_heroes)
+		. add_theme_font_size_override("font_size", 16)
+	)
+	button(page, "Formação", Rect2(280, 808, 236, 48), show_party).add_theme_font_size_override(
+		"font_size", 16
 	)
 	if not campaign.save_error.is_empty():
-		label(page, campaign.save_error, Rect2(24, 827, 492, 36), 15, Color("ed9a9c"))
+		label(page, campaign.save_error, Rect2(24, 855, 492, 26), 13, Color("ed9a9c"))
 	navigation("menu")
 
 
@@ -361,7 +393,10 @@ func start_stage(index: int) -> void:
 		show_story(campaign.pending_story, "outro")
 		return
 	viewed_stage = index
-	show_story(index, "intro")
+	if campaign.auto_repeat and campaign.cleared.has(index):
+		begin_chapter_combat(index)
+	else:
+		show_story(index, "intro")
 
 
 func show_story(index: int, mode: String, line: int = 0, archive: bool = false) -> void:
@@ -397,10 +432,12 @@ func show_story(index: int, mode: String, line: int = 0, archive: bool = false) 
 			actors = [id]
 	make_arena(180, actors, index)
 	if actors.size() == 1:
-		arena.heroes[0].position.x = 246
+		arena.set_home(0, Vector2(246, arena.heroes[0].position.y))
 	panel(page, Rect2(24, 540, 492, 257))
 	label(page, speaker, Rect2(44, 558, 452, 35), 21, GOLD)
-	label(page, story_lines[line][1], Rect2(44, 605, 452, 166), 23)
+	story_body = label(page, story_lines[line][1], Rect2(44, 605, 452, 166), 23)
+	story_visible = 0.0
+	story_body.visible_characters = -1 if campaign.text_speed == 0 else 0
 	button(
 		page,
 		(
@@ -429,6 +466,14 @@ func show_story(index: int, mode: String, line: int = 0, archive: bool = false) 
 
 
 func advance_story() -> void:
+	if (
+		is_instance_valid(story_body)
+		and story_body.visible_characters >= 0
+		and story_body.visible_characters < story_body.get_total_character_count()
+	):
+		story_visible = story_body.get_total_character_count()
+		story_body.visible_characters = -1
+		return
 	if story_line < story_lines.size() - 1:
 		show_story(story_stage, story_mode, story_line + 1, story_archive)
 	else:
@@ -488,7 +533,7 @@ func show_party() -> void:
 	for id in campaign.party:
 		names.append(TaleCatalog.HEROES[id].name)
 	label(page, "ORDEM: " + "  /  ".join(names), Rect2(24, 178, 492, 46), 16, GOLD)
-	var inner := scroll_area(238, 630, 6 * 181)
+	var inner := scroll_area(238, 630, TaleCatalog.HEROES.size() * 181)
 	var index := 0
 	for id in TaleCatalog.HEROES:
 		var data: Dictionary = TaleCatalog.HEROES[id]
@@ -500,7 +545,11 @@ func show_party() -> void:
 		label(inner, data.name, Rect2(133, y + 12, 325, 32), 22, data.color if owned else MUTED)
 		label(
 			inner,
-			data.role if owned else "Recrutada ao concluir o capítulo %d" % index,
+			(
+				data.role
+				if owned
+				else "Recrutada ao concluir o capítulo %d" % TaleCatalog.recruit_chapter(id)
+			),
 			Rect2(133, y + 48, 325, 38),
 			16,
 			MUTED
@@ -538,7 +587,7 @@ func show_party() -> void:
 			14,
 			Color("dfb48a")
 		)
-	navigation("party")
+	navigation("heroes")
 
 
 func toggle_member(id: String) -> void:
@@ -554,71 +603,9 @@ func promote_member(id: String) -> void:
 
 
 func show_upgrades() -> void:
-	state = "upgrade"
-	clear_page()
 	if not campaign.unlocked.has(selected_hero):
 		selected_hero = "scarlet"
-	header(
-		"Poderes de cada conto",
-		"OURO  %d  •  melhorias permanentes  •  máximo nível 5" % campaign.gold
-	)
-	var i := 0
-	for id in TaleCatalog.HEROES:
-		var node := button(
-			page,
-			TaleCatalog.HEROES[id].name,
-			Rect2(24 + (i % 3) * 168, 180 + floori(i / 3.0) * 49, 156, 42),
-			select_upgrade_hero.bind(id),
-			id == selected_hero
-		)
-		node.add_theme_font_size_override("font_size", 14)
-		node.disabled = not campaign.unlocked.has(id)
-		i += 1
-	var data: Dictionary = TaleCatalog.HEROES[selected_hero]
-	portrait(page, selected_hero, Vector2(108, 430), 0.90)
-	label(page, data.name, Rect2(210, 294, 306, 39), 26, data.color)
-	label(page, data.role, Rect2(210, 337, 306, 45), 17, MUTED)
-	var stats := TaleCatalog.hero_stats(
-		selected_hero, campaign.levels[selected_hero], campaign.choices
-	)
-	label(
-		page,
-		(
-			"%d PV  •  %d dano\n%.2fs por ataque"
-			% [int(stats.max_hp), int(stats.damage), stats.interval]
-		),
-		Rect2(210, 389, 306, 58),
-		17
-	)
-	label(
-		page,
-		(
-			"Conclua ou abandone a expedição para melhorar."
-			if not campaign.checkpoint.is_empty()
-			else data.bio
-		),
-		Rect2(24, 451, 492, 57),
-		15,
-		MUTED
-	)
-	for branch in 3:
-		var y := 521 + branch * 114
-		var rank: int = campaign.levels[selected_hero][branch]
-		panel(page, Rect2(24, y, 492, 103))
-		label(page, data.skills[branch][0], Rect2(40, y + 9, 306, 27), 19, data.color)
-		label(page, data.skills[branch][1], Rect2(40, y + 39, 295, 47), 15, MUTED)
-		var cost := campaign.upgrade_cost(selected_hero, branch)
-		label(page, "NV %d / 5" % rank, Rect2(363, y + 10, 139, 26), 14, GOLD)
-		var buy := button(
-			page,
-			"Máximo" if rank == 5 else "%d ouro  +" % cost,
-			Rect2(350, y + 46, 150, 44),
-			buy_upgrade.bind(branch),
-			true
-		)
-		buy.add_theme_font_size_override("font_size", 16)
-		buy.disabled = rank >= 5 or campaign.gold < cost or not campaign.checkpoint.is_empty()
-	navigation("upgrade")
+	show_hero_details(selected_hero)
 
 
 func select_upgrade_hero(id: String) -> void:
@@ -630,8 +617,9 @@ func select_upgrade_hero(id: String) -> void:
 
 func buy_upgrade(branch: int) -> void:
 	if campaign.buy_upgrade(selected_hero, branch):
+		audio.play_effect("upgrade")
 		persist()
-		show_upgrades()
+		show_hero_details(selected_hero)
 
 
 func show_journal() -> void:
@@ -687,51 +675,103 @@ func show_journal() -> void:
 
 
 func show_settings() -> void:
-	# Entered from navigation screens; combat has a separate pause menu.
 	if state in ["battle", "travel", "choice"]:
 		toggle_pause()
 		return
 	state = "settings"
 	clear_page()
-	header("Seu jeito de jogar", "As preferências também são salvas automaticamente.")
-	panel(page, Rect2(24, 201, 492, 177))
-	label(page, "Movimento reduzido", Rect2(42, 217, 456, 34), 23)
+	header("Configurações", "Áudio, imagem e preferências salvas neste dispositivo.")
+	var inner := scroll_area(184, 686, 1300)
+	setting_slider(inner, "Volume da música", 0, campaign.music_volume, set_music_volume)
+	setting_slider(inner, "Volume dos efeitos", 133, campaign.effects_volume, set_effects_volume)
+	panel(inner, Rect2(0, 266, 476, 134))
+	label(inner, "Qualidade de imagem", Rect2(17, 278, 442, 31), 22)
+	label(inner, "1080 × 1920 • sprites com filtragem suave", Rect2(17, 314, 442, 27), 14, MUTED)
+	(
+		button(
+			inner, "Alta", Rect2(17, 352, 212, 38), set_quality.bind(true), campaign.high_quality
+		)
+		. add_theme_font_size_override("font_size", 16)
+	)
+	(
+		button(
+			inner,
+			"Leve",
+			Rect2(247, 352, 212, 38),
+			set_quality.bind(false),
+			not campaign.high_quality
+		)
+		. add_theme_font_size_override("font_size", 16)
+	)
+	panel(inner, Rect2(0, 415, 476, 113))
+	label(inner, "Fluidez / bateria", Rect2(17, 427, 442, 31), 21)
+	(
+		button(inner, "60 FPS", Rect2(17, 475, 212, 40), set_fps.bind(60), campaign.fps_limit == 60)
+		. add_theme_font_size_override("font_size", 16)
+	)
+	(
+		button(
+			inner, "30 FPS", Rect2(247, 475, 212, 40), set_fps.bind(30), campaign.fps_limit == 30
+		)
+		. add_theme_font_size_override("font_size", 16)
+	)
+	panel(inner, Rect2(0, 542, 476, 114))
+	label(inner, "Velocidade dos diálogos", Rect2(17, 554, 442, 31), 21)
+	for index in 3:
+		var value: int = [0, 24, 48][index]
+		(
+			button(
+				inner,
+				["Instantâneo", "Calmo", "Rápido"][index],
+				Rect2(17 + index * 150, 604, 142, 40),
+				set_text_speed.bind(value),
+				campaign.text_speed == value
+			)
+			. add_theme_font_size_override("font_size", 14)
+		)
+	panel(inner, Rect2(0, 670, 476, 112))
+	label(inner, "Movimento reduzido", Rect2(17, 682, 442, 31), 21)
+	(
+		button(
+			inner,
+			"Ativado" if campaign.reduced_motion else "Desativado",
+			Rect2(17, 730, 442, 40),
+			toggle_motion,
+			campaign.reduced_motion
+		)
+		. add_theme_font_size_override("font_size", 16)
+	)
+	panel(inner, Rect2(0, 796, 476, 112))
+	label(inner, "Velocidade de combate", Rect2(17, 808, 442, 31), 21)
+	(
+		button(
+			inner, "%d×" % int(campaign.speed), Rect2(17, 856, 442, 40), change_default_speed, true
+		)
+		. add_theme_font_size_override("font_size", 16)
+	)
+	panel(inner, Rect2(0, 922, 476, 145))
+	label(inner, "Patrulha automática", Rect2(17, 934, 442, 31), 21)
 	label(
-		page,
-		"Diminui balanços, ombros e textos flutuantes.\nOs quadros essenciais de ataque continuam visíveis.",
-		Rect2(42, 263, 456, 59),
-		17,
+		inner,
+		"Repete capítulos concluídos e escolhe relíquias.\nPara ao perder ou ao sair do combate.",
+		Rect2(17, 974, 442, 43),
+		14,
 		MUTED
 	)
 	(
 		button(
-			page,
-			"Ativado" if campaign.reduced_motion else "Desativado",
-			Rect2(320, 326, 178, 40),
-			toggle_motion
+			inner,
+			"Ativada" if campaign.auto_repeat else "Desativada",
+			Rect2(17, 1021, 442, 36),
+			toggle_auto_repeat,
+			campaign.auto_repeat
 		)
 		. add_theme_font_size_override("font_size", 16)
 	)
-	panel(page, Rect2(24, 402, 492, 154))
-	label(page, "Velocidade de combate", Rect2(42, 419, 456, 34), 23)
-	label(
-		page,
-		"Acelera o combate e respeita o tempo das animações.",
-		Rect2(42, 462, 285, 68),
-		17,
-		MUTED
-	)
-	button(page, "%d×" % int(campaign.speed), Rect2(352, 479, 146, 50), change_default_speed, true)
-	button(page, "Como jogar", Rect2(24, 590, 492, 56), show_help)
-	button(page, "Créditos", Rect2(24, 664, 492, 56), show_credits)
-	label(
-		page,
-		"Progresso salvo neste dispositivo.\nUma expedição é retomada no início do encontro atual.",
-		Rect2(24, 759, 492, 70),
-		17,
-		MUTED
-	)
-	navigation("")
+	button(inner, "Como jogar", Rect2(0, 1090, 476, 50), show_help)
+	button(inner, "Diário e história", Rect2(0, 1153, 476, 50), show_journal)
+	button(inner, "Créditos", Rect2(0, 1216, 476, 50), show_credits)
+	navigation("profile")
 
 
 func toggle_motion() -> void:
@@ -749,10 +789,11 @@ func change_default_speed() -> void:
 func show_help() -> void:
 	state = "help"
 	clear_page()
-	header("Como jogar", "Você escolhe o caminho. Elas conduzem o combate.")
-	var text := "1. Avance no mapa e conclua os três encontros de cada capítulo. O último é um chefe.\n\n2. Recrute princesas na história e leve até três. A primeira da lista é a vanguarda: ela recebe os ataques até cair.\n\n3. Gaste ouro em melhorias próprias de cada heroína. Repita capítulos para conseguir mais ouro.\n\n4. Entre encontros, escolha uma relíquia. Ela dura só até o fim da expedição atual.\n\n5. No desfecho, guarde uma memória: esperança dá vida; coragem aumenta dano.\n\nESC pausa o combate. Mouse ou toque controlam os botões. O progresso é salvo automaticamente."
-	label(page, text, Rect2(30, 195, 480, 610), 20)
-	button(page, "Voltar às opções", Rect2(24, 843, 492, 62), show_settings, true)
+	header("Como jogar", "Um conto para progredir no seu ritmo.")
+	var inner := scroll_area(186, 646, 1000)
+	var text := "1. CAMPANHA\nAvance pelos oito capítulos. Cada um tem dois encontros e um chefe.\n\n2. FORMAÇÃO\nRecrute cinco heroínas e leve até três. A primeira recebe os ataques até cair.\n\n3. EVOLUÇÃO\nGanhe ouro e EXP nos combates. Na tela Heróis, treine níveis até 30 e melhore três habilidades por princesa.\n\n4. ACAMPAMENTO\nDepois do capítulo 1, recursos acumulam mesmo com o jogo fechado, por até oito horas. Colete no baú da tela inicial.\n\n5. PATRULHA AUTOMÁTICA\nAtive nas configurações para repetir capítulos concluídos e escolher relíquias automaticamente. A patrulha para ao perder ou sair.\n\n6. MEMÓRIAS\nEntre encontros, escolha relíquias temporárias. No desfecho, esperança aumenta vida; coragem aumenta dano permanentemente.\n\nCONTROLES\nMouse ou toque usam os botões. ESC pausa o combate. Progresso e preferências são salvos automaticamente."
+	label(inner, text, Rect2(18, 10, 440, 980), 19)
+	button(page, "Voltar às configurações", Rect2(24, 843, 492, 62), show_settings, true)
 
 
 func show_credits() -> void:
@@ -761,7 +802,7 @@ func show_credits() -> void:
 	header("Quem escreve este conto", "ROGUETALES • O ÚLTIMO FIO")
 	label(
 		page,
-		"Criação e direção\nJoão Victor Tabosa\n\nDesenvolvimento\nGodot 4.7 • GDScript\n\nArte das heroínas\nReferências fornecidas pelo autor; sprites de teste geradas com ImageGen. Cinderela usa poses provisórias da referência.\n\nHistória\nUm encontro original inspirado nos contos clássicos.\n\nObrigado por chegar até esta página.",
+		"Criação e direção\nJoão Victor Tabosa\n\nDesenvolvimento\nGodot 4.7 • GDScript\n\nArte das heroínas\nReferências fornecidas pelo autor; sprites de teste geradas com ImageGen.\n\nHistória\nUm encontro original inspirado nos contos clássicos.\n\nObrigado por chegar até esta página.",
 		Rect2(36, 194, 468, 590),
 		22
 	)
@@ -885,6 +926,28 @@ func spawn_enemy() -> void:
 
 
 func _process(delta: float) -> void:
+	if campaign == null:
+		return
+	campaign.play_seconds += minf(delta, 1.0)
+	idle_tick -= delta
+	auto_save_tick -= delta
+	if idle_tick <= 0:
+		idle_tick = 1.0
+		campaign.settle_idle(int(Time.get_unix_time_from_system()))
+		if state == "menu":
+			update_idle_display()
+	if auto_save_tick <= 0:
+		auto_save_tick = 30.0
+		persist()
+	if state == "story" and is_instance_valid(story_body) and campaign.text_speed > 0:
+		story_visible += delta * campaign.text_speed
+		story_body.visible_characters = int(story_visible)
+	if state == "result" and farm_timer >= 0:
+		farm_timer -= delta
+		if farm_timer <= 0:
+			farm_timer = -1
+			begin_chapter_combat(farm_stage)
+		return
 	if state == "preview":
 		update_preview()
 		return
@@ -933,9 +996,15 @@ func on_attack_hit(index: int) -> void:
 	if state != "battle" or paused or run == null:
 		return
 	var hit := run.hit_enemy(index)
+	if not hit.is_empty():
+		audio.play_effect("hit")
 	if hit.is_empty():
 		return
-	float_text(("CRIT " if hit.critical else "") + str(int(hit.damage)), Vector2(343, 389), GOLD)
+	float_text(
+		("CRIT " if hit.critical else "") + str(int(hit.damage)),
+		Vector2(343, 389 - index * 27),
+		GOLD
+	)
 	if not str(hit.message).is_empty():
 		log_label.text = TaleCatalog.HEROES[run.actors[index].id].name + " · " + str(hit.message)
 	if run.enemy_hp <= 0:
@@ -951,7 +1020,7 @@ func resolve_enemy() -> void:
 	run.kills += 1
 	arena.reset_effects()
 	arena.enemy_visible = false
-	campaign.gold += 3 + run.stage * 2
+	campaign.record_enemy(run.stage)
 	if run.wave == 2:
 		var result := campaign.complete_stage(run.stage)
 		persist()
@@ -1036,6 +1105,9 @@ func modal(title: String, subtitle: String) -> void:
 
 func show_relics() -> void:
 	state = "choice"
+	if campaign.auto_repeat and campaign.cleared.has(run.stage):
+		select_relic(run.offers[0])
+		return
 	arena.reset_effects()
 	arena.frozen = true
 	modal(
@@ -1143,13 +1215,16 @@ func toggle_speed() -> void:
 
 func show_victory(result: Dictionary) -> void:
 	state = "result"
+	audio.play_effect("win")
+	farm_timer = 2.0 if not result.first and campaign.auto_repeat else -1.0
+	farm_stage = run.stage
 	clear_page()
 	label(page, "CAPÍTULO CONCLUÍDO", Rect2(24, 34, 492, 40), 17, GOLD)
 	label(page, TaleCatalog.STAGES[run.stage].name, Rect2(24, 98, 492, 104), 34)
 	var recruited: String = result.get("recruit", "")
 	make_arena(239, [recruited] if not recruited.is_empty() else [], run.stage)
 	if not recruited.is_empty():
-		arena.heroes[0].position.x = 246
+		arena.set_home(0, Vector2(246, arena.heroes[0].position.y))
 	label(
 		page,
 		(
@@ -1170,7 +1245,11 @@ func show_victory(result: Dictionary) -> void:
 	)
 	button(
 		page,
-		"Ler o desfecho  →" if result.first else "Voltar ao mapa",
+		(
+			"Ler o desfecho  →"
+			if result.first
+			else ("Parar patrulha e voltar" if campaign.auto_repeat else "Voltar ao mapa")
+		),
 		Rect2(24, 791, 492, 62),
 		show_story.bind(run.stage, "outro") if result.first else show_map,
 		true
@@ -1182,6 +1261,8 @@ func finish_defeat() -> void:
 	arena.reset_effects()
 	arena.frozen = true
 	campaign.checkpoint.clear()
+	campaign.total_defeats += 1
+	audio.play_effect("loss")
 	persist()
 	modal(
 		"O conto ainda não acabou.",
@@ -1276,7 +1357,7 @@ func show_preview() -> void:
 		node.add_theme_font_size_override("font_size", 14)
 		index += 1
 	make_arena(295, [selected_hero])
-	arena.heroes[0].position.x = 246
+	arena.set_home(0, Vector2(246, arena.heroes[0].position.y))
 	frame_label = label(page, "", Rect2(24, 649, 492, 43), 18, GOLD)
 	for i in 3:
 		var anim: String = ["idle", "walk", "attack"][i]
@@ -1327,3 +1408,405 @@ func update_preview() -> void:
 			actor.sprite_frames.get_frame_count(actor.animation)
 		]
 	)
+
+
+func show_heroes() -> void:
+	state = "heroes"
+	clear_page()
+	header("Heróis", "%d / 5 recrutadas  •  %d ouro" % [campaign.unlocked.size(), campaign.gold])
+	(
+		button(
+			page,
+			"Formação · %d / 3" % campaign.party.size(),
+			Rect2(24, 180, 236, 48),
+			show_party,
+			true
+		)
+		. add_theme_font_size_override("font_size", 17)
+	)
+	(
+		button(page, "Evoluir heroína", Rect2(280, 180, 236, 48), show_upgrades)
+		. add_theme_font_size_override("font_size", 17)
+	)
+	var inner := scroll_area(247, 620, TaleCatalog.HEROES.size() * 181)
+	var row := 0
+	for id in TaleCatalog.HEROES:
+		var data: Dictionary = TaleCatalog.HEROES[id]
+		var owned := campaign.unlocked.has(id)
+		var y := row * 181.0
+		panel(inner, Rect2(0, y, 476, 168))
+		if owned:
+			portrait(inner, id, Vector2(75, y + 150), 0.66)
+		label(inner, data.name, Rect2(136, y + 12, 325, 32), 22, data.color if owned else MUTED)
+		label(inner, data.role, Rect2(136, y + 49, 325, 30), 15, MUTED)
+		if owned:
+			label(
+				inner,
+				(
+					"NÍVEL %d / 30%s"
+					% [
+						campaign.hero_levels[id],
+						"  •  na formação" if campaign.party.has(id) else ""
+					]
+				),
+				Rect2(136, y + 83, 325, 26),
+				14,
+				GOLD
+			)
+			(
+				button(
+					inner,
+					"Ver atributos e evoluir  →",
+					Rect2(136, y + 117, 325, 39),
+					show_hero_details.bind(id)
+				)
+				. add_theme_font_size_override("font_size", 16)
+			)
+		else:
+			var chapter: int = TaleCatalog.recruit_chapter(id)
+			label(inner, "Recrutada no capítulo %d" % chapter, Rect2(136, y + 92, 325, 43), 17)
+		row += 1
+	navigation("heroes")
+
+
+func show_hero_details(id: String) -> void:
+	if not campaign.unlocked.has(id):
+		return
+	selected_hero = id
+	state = "hero"
+	clear_page()
+	var data: Dictionary = TaleCatalog.HEROES[id]
+	header(data.name, "HERÓIS  /  %s  •  %d ouro" % [data.role, campaign.gold])
+	portrait(page, id, Vector2(118, 399), 1.0)
+	label(
+		page, "NÍVEL %d / 30" % campaign.hero_levels[id], Rect2(253, 180, 263, 33), 23, data.color
+	)
+	var stats := TaleCatalog.hero_stats(
+		id, campaign.levels[id], campaign.choices, campaign.hero_levels[id]
+	)
+	label(
+		page,
+		(
+			"%d PV  •  %d dano\n%.2fs entre ataques"
+			% [int(stats.max_hp), int(stats.damage), stats.interval]
+		),
+		Rect2(253, 225, 263, 62),
+		18
+	)
+	var xp_bar := bar(page, Rect2(253, 304, 263, 10), data.color)
+	xp_bar.max_value = campaign.hero_next_xp(id)
+	xp_bar.value = campaign.hero_xp[id]
+	label(
+		page,
+		"EXP %d / %d" % [campaign.hero_xp[id], campaign.hero_next_xp(id)],
+		Rect2(253, 318, 263, 26),
+		14,
+		MUTED
+	)
+	var train := button(
+		page,
+		(
+			"Nível máximo"
+			if campaign.hero_levels[id] >= 30
+			else "Subir nível · %d ouro" % campaign.hero_level_cost(id)
+		),
+		Rect2(253, 354, 263, 49),
+		train_hero,
+		true
+	)
+	train.add_theme_font_size_override("font_size", 16)
+	train.disabled = not campaign.can_level_hero(id)
+	label(
+		page,
+		"Conclua a expedição para treinar." if not campaign.checkpoint.is_empty() else data.bio,
+		Rect2(24, 422, 492, 56),
+		15,
+		MUTED
+	)
+	for branch in 3:
+		var y := 493 + branch * 112
+		var rank: int = campaign.levels[id][branch]
+		panel(page, Rect2(24, y, 492, 102))
+		label(page, data.skills[branch][0], Rect2(40, y + 9, 295, 28), 19, data.color)
+		label(page, data.skills[branch][1], Rect2(40, y + 42, 290, 47), 14, MUTED)
+		label(page, "HABILIDADE %d / 5" % rank, Rect2(349, y + 8, 152, 28), 12, GOLD)
+		var buy := button(
+			page,
+			"Máximo" if rank >= 5 else "%d ouro  +" % campaign.upgrade_cost(id, branch),
+			Rect2(350, y + 47, 150, 44),
+			buy_upgrade.bind(branch),
+			true
+		)
+		buy.add_theme_font_size_override("font_size", 16)
+		buy.disabled = (
+			rank >= 5
+			or campaign.gold < campaign.upgrade_cost(id, branch)
+			or not campaign.checkpoint.is_empty()
+		)
+	button(page, "← Coleção", Rect2(24, 838, 236, 38), show_heroes).add_theme_font_size_override(
+		"font_size", 16
+	)
+	button(page, "Formação", Rect2(280, 838, 236, 38), show_party).add_theme_font_size_override(
+		"font_size", 16
+	)
+	navigation("heroes")
+
+
+func train_hero() -> void:
+	if campaign.level_hero(selected_hero):
+		audio.play_effect("upgrade")
+		persist()
+		show_hero_details(selected_hero)
+
+
+func show_profile() -> void:
+	state = "profile"
+	clear_page()
+	header("Perfil", "Sua jornada, suas conquistas e suas companheiras.")
+	panel(page, Rect2(24, 181, 492, 223))
+	portrait(page, campaign.avatar, Vector2(103, 384), 0.83)
+	label(page, campaign.player_name, Rect2(207, 198, 294, 37), 27, GOLD)
+	label(page, "AVENTUREIRO · NÍVEL %d" % campaign.player_level, Rect2(207, 242, 294, 30), 16)
+	var xp_bar := bar(page, Rect2(207, 281, 291, 9), GOLD)
+	xp_bar.max_value = campaign.player_next_xp()
+	xp_bar.value = campaign.player_xp
+	label(
+		page,
+		"EXP %d / %d" % [campaign.player_xp, campaign.player_next_xp()],
+		Rect2(207, 299, 291, 28),
+		14,
+		MUTED
+	)
+	(
+		button(page, "Editar perfil", Rect2(207, 341, 291, 43), edit_profile)
+		. add_theme_font_size_override("font_size", 16)
+	)
+	label(
+		page,
+		(
+			"%d VITÓRIAS   %d INIMIGOS   %d / 8 CAPÍTULOS"
+			% [campaign.total_wins, campaign.total_kills, campaign.cleared.size()]
+		),
+		Rect2(24, 420, 492, 35),
+		15,
+		GOLD
+	)
+	var inner := scroll_area(469, 397, TaleCampaign.ACHIEVEMENTS.size() * 128 + 100)
+	for index in TaleCampaign.ACHIEVEMENTS.size():
+		var item: Dictionary = TaleCampaign.ACHIEVEMENTS[index]
+		var y := index * 128.0
+		panel(inner, Rect2(0, y, 476, 115))
+		label(inner, item.title, Rect2(14, y + 9, 448, 31), 21)
+		label(inner, item.detail, Rect2(14, y + 48, 287, 52), 15, MUTED)
+		var done := campaign.claimed.has(item.id)
+		var collect := button(
+			inner,
+			"Coletado" if done else "+%d ouro" % item.reward,
+			Rect2(319, y + 55, 142, 43),
+			claim_milestone.bind(str(item.id)),
+			not done
+		)
+		collect.add_theme_font_size_override("font_size", 16)
+		collect.disabled = done or not campaign.achievement_ready(item.id)
+	label(
+		inner,
+		(
+			"OURO GANHO %d  •  OURO INVESTIDO %d\nTEMPO EM JOGO %dh %02dmin  •  DERROTAS %d"
+			% [
+				campaign.total_gold,
+				campaign.total_spent,
+				int(campaign.play_seconds / 3600),
+				int(campaign.play_seconds / 60) % 60,
+				campaign.total_defeats
+			]
+		),
+		Rect2(14, TaleCampaign.ACHIEVEMENTS.size() * 128, 448, 75),
+		14,
+		MUTED
+	)
+	navigation("profile")
+
+
+func edit_profile() -> void:
+	profile_avatar = campaign.avatar
+	profile_avatar_label = null
+	profile_avatar_buttons.clear()
+	modal("Seu nome no conto.", "Escolha seu nome e uma heroína recrutada para o retrato.")
+	profile_name = LineEdit.new()
+	profile_name.position = Vector2(32, 395)
+	profile_name.size = Vector2(476, 58)
+	profile_name.max_length = 20
+	profile_name.text = campaign.player_name
+	profile_name.add_theme_font_size_override("font_size", 23)
+	overlay.add_child(profile_name)
+	var index := 0
+	for id in campaign.unlocked:
+		var choice := button(
+			overlay,
+			TaleCatalog.HEROES[id].name,
+			Rect2(32 + (index % 2) * 244, 477 + floori(index / 2.0) * 57, 232, 46),
+			select_avatar.bind(id)
+		)
+		choice.add_theme_font_size_override("font_size", 16)
+		profile_avatar_buttons[id] = choice
+		index += 1
+	select_avatar(profile_avatar)
+	button(overlay, "Salvar perfil", Rect2(32, 713, 476, 58), save_profile, true)
+	button(overlay, "Cancelar", Rect2(32, 788, 476, 46), show_profile)
+
+
+func select_avatar(id: String) -> void:
+	if not campaign.unlocked.has(id):
+		return
+	profile_avatar = id
+	for candidate in profile_avatar_buttons:
+		var choice: Button = profile_avatar_buttons[candidate]
+		choice.add_theme_stylebox_override(
+			"normal", box(Color("1b2735"), GOLD if candidate == id else Color("34404f"))
+		)
+		choice.add_theme_color_override("font_color", GOLD if candidate == id else Color("eeeae2"))
+	if is_instance_valid(profile_avatar_label):
+		profile_avatar_label.text = "Retrato: " + str(TaleCatalog.HEROES[id].name)
+	else:
+		profile_avatar_label = label(
+			overlay,
+			"Retrato: " + str(TaleCatalog.HEROES[id].name),
+			Rect2(32, 654, 476, 33),
+			17,
+			GOLD
+		)
+
+
+func save_profile() -> void:
+	var nickname := profile_name.text.strip_edges()
+	if nickname.is_empty():
+		nickname = "Viajante"
+	campaign.player_name = nickname.substr(0, 20)
+	if campaign.unlocked.has(profile_avatar):
+		campaign.avatar = profile_avatar
+	persist()
+	show_profile()
+
+
+func claim_milestone(id: String) -> void:
+	if campaign.claim_achievement(id):
+		audio.play_effect("upgrade")
+		persist()
+		show_profile()
+
+
+func show_idle_rewards() -> void:
+	campaign.settle_idle(int(Time.get_unix_time_from_system()))
+	var reward := campaign.idle_reward()
+	if reward.gold <= 0:
+		return
+	modal(
+		"O acampamento prosperou.",
+		(
+			"Recursos acumulados em %dh %02dmin.\nA experiência vai para as integrantes da formação."
+			% [int(reward.seconds / 3600), int(reward.seconds / 60) % 60]
+		)
+	)
+	label(
+		overlay,
+		"+%d OURO\n+%d EXP PARA A FORMAÇÃO" % [reward.gold, reward.xp],
+		Rect2(32, 410, 476, 132),
+		28,
+		GOLD
+	)
+	button(overlay, "Coletar recursos", Rect2(32, 594, 476, 62), claim_idle_rewards, true)
+	button(overlay, "Guardar para depois", Rect2(32, 680, 476, 52), show_menu)
+
+
+func claim_idle_rewards() -> void:
+	var reward := campaign.claim_idle(int(Time.get_unix_time_from_system()))
+	if not reward.is_empty():
+		audio.play_effect("upgrade")
+		persist()
+	show_menu()
+
+
+func setting_slider(
+	parent: Node, title: String, y: float, value: float, callback: Callable
+) -> void:
+	panel(parent, Rect2(0, y, 476, 119))
+	label(parent, title, Rect2(17, y + 12, 442, 30), 21)
+	var slider := HSlider.new()
+	slider.position = Vector2(17, y + 65)
+	slider.size = Vector2(442, 36)
+	slider.min_value = 0
+	slider.max_value = 1
+	slider.step = 0.05
+	slider.value = value
+	slider.value_changed.connect(callback)
+	parent.add_child(slider)
+
+
+func set_music_volume(value: float) -> void:
+	campaign.music_volume = value
+	audio.apply_volume(value, campaign.effects_volume)
+	persist()
+
+
+func set_effects_volume(value: float) -> void:
+	campaign.effects_volume = value
+	audio.apply_volume(campaign.music_volume, value)
+	persist()
+
+
+func set_quality(value: bool) -> void:
+	campaign.high_quality = value
+	apply_preferences()
+	persist()
+	show_settings()
+
+
+func set_fps(value: int) -> void:
+	campaign.fps_limit = value
+	apply_preferences()
+	persist()
+	show_settings()
+
+
+func set_text_speed(value: int) -> void:
+	campaign.text_speed = value
+	persist()
+	show_settings()
+
+
+func toggle_auto_repeat() -> void:
+	campaign.auto_repeat = not campaign.auto_repeat
+	persist()
+	if state == "chapter":
+		show_chapter(viewed_stage)
+	else:
+		show_settings()
+
+
+func apply_preferences() -> void:
+	Engine.max_fps = campaign.fps_limit
+	texture_filter = (
+		CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		if campaign.high_quality
+		else CanvasItem.TEXTURE_FILTER_LINEAR
+	)
+	if is_instance_valid(arena):
+		arena.high_quality = campaign.high_quality
+	if is_instance_valid(audio):
+		audio.apply_volume(campaign.music_volume, campaign.effects_volume)
+
+
+func update_idle_display() -> void:
+	if not is_instance_valid(idle_label):
+		return
+	var reward := campaign.idle_reward()
+	idle_label.text = (
+		"%d ouro  •  %d EXP\n%s"
+		% [
+			reward.gold,
+			reward.xp,
+			"Até 8h de acúmulo" if campaign.idle_rate() > 0 else "Libere concluindo o capítulo 1"
+		]
+	)
+	if is_instance_valid(idle_button):
+		idle_button.disabled = reward.gold <= 0

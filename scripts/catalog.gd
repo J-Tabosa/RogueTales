@@ -6,7 +6,6 @@ const HERO_SCENES = {
 	"rapunzel": preload("res://scenes/heroes/rapunzel.tscn"),
 	"snow_white": preload("res://scenes/heroes/snow_white.tscn"),
 	"mulan": preload("res://scenes/heroes/mulan.tscn"),
-	"cinderella": preload("res://scenes/heroes/cinderella.tscn"),
 	"ariel": preload("res://scenes/heroes/ariel.tscn"),
 }
 const HEROES = {
@@ -75,23 +74,6 @@ const HEROES = {
 			["Passos da garça", "Intervalo de ataque −6% por nível"]
 		]
 	},
-	"cinderella":
-	{
-		"name": "Cinderela",
-		"role": "Barreira • crítico",
-		"hp": 175.0,
-		"damage": 25.0,
-		"interval": 1.8,
-		"color": Color("b6d8f2"),
-		"bio":
-		"O relógio já não decide quando ela deve partir. Seus cristais protegem as novas companheiras.",
-		"skills":
-		[
-			["Carruagem de cristal", "+8 de escudo a cada aliada por encontro"],
-			["Prisma afiado", "+18% de dano por nível"],
-			["Meia-noite", "+4% de chance crítica por nível"]
-		]
-	},
 	"ariel":
 	{
 		"name": "Ariel",
@@ -104,7 +86,7 @@ const HEROES = {
 		"skills":
 		[
 			["Canção das marés", "+4 de cura ao grupo a cada 3 golpes"],
-			["Corrente contrária", "Inimigos atacam 6% mais devagar por nível"],
+			["Corrente contrária", "Intervalo inimigo +6% por nível"],
 			["Tridente abissal", "+16% de dano por nível"]
 		]
 	},
@@ -135,7 +117,7 @@ const STAGES = [
 		],
 		"outro":
 		[
-			["Rapunzel", "Minha torre era a primeira agulha. Há outras sete prendendo os reinos."],
+			["Rapunzel", "O bosque era a primeira agulha. Há outras sete prendendo os reinos."],
 			["Scarlet", "Então derrubamos uma por uma. Vem comigo?"],
 			["Rapunzel", "Com uma condição: ninguém fica preso no próprio conto de novo."]
 		]
@@ -204,7 +186,7 @@ const STAGES = [
 		"color": Color("99c3b1"),
 		"sky": Color("1c3036"),
 		"biome": 3,
-		"recruit": "cinderella",
+		"recruit": "",
 		"intro":
 		[
 			[
@@ -217,11 +199,11 @@ const STAGES = [
 		"outro":
 		[
 			[
-				"Cinderela",
-				"Os sinos pararam à meia-noite. Meu reino está preso entre dois segundos."
+				"Branca de Neve",
+				"Os sinos pararam à meia-noite. O palácio está preso entre dois segundos."
 			],
-			["Mulan", "Seu escudo de cristal segurou a ponte. Você vem conosco."],
-			["Cinderela", "Dessa vez, eu escolho a hora de partir."]
+			["Mulan", "A ponte está segura. Seguimos juntas até o palácio."],
+			["Branca de Neve", "Dessa vez, eu escolho a hora de partir."]
 		]
 	},
 	{
@@ -238,7 +220,7 @@ const STAGES = [
 		"intro":
 		[
 			[
-				"Cinderela",
+				"Branca de Neve",
 				"O relógio conta arrependimentos, não horas. Quanto mais esperamos, mais forte ele fica."
 			],
 			["Scarlet", "Por mim, já deu meia-noite faz tempo."],
@@ -247,7 +229,7 @@ const STAGES = [
 		"outro":
 		[
 			["Ariel", "Minha voz abriu um caminho até aqui. O mar não consegue respirar."],
-			["Cinderela", "Nos leve até ele. Ainda temos tempo."],
+			["Branca de Neve", "Nos leve até ele. Ainda temos tempo."],
 			["Ariel", "Então sigam a corrente. Eu seguro a maré."]
 		]
 	},
@@ -296,7 +278,7 @@ const STAGES = [
 				"Ela só queria proteger os finais. Um conto que nunca termina não perde ninguém."
 			],
 			["Branca de Neve", "E ninguém vive nele."],
-			["Cinderela", "A última porta está aberta. Vamos terminar isso juntas."]
+			["Branca de Neve", "A última porta está aberta. Vamos terminar isso juntas."]
 		],
 		"outro":
 		[
@@ -346,7 +328,9 @@ const RELICS = [
 ]
 
 
-static func hero_stats(id: String, levels: Array, choices: Dictionary) -> Dictionary:
+static func hero_stats(
+	id: String, levels: Array, choices: Dictionary, hero_level: int = 1
+) -> Dictionary:
 	var data: Dictionary = HEROES[id]
 	var result := {
 		"id": id,
@@ -377,10 +361,18 @@ static func hero_stats(id: String, levels: Array, choices: Dictionary) -> Dictio
 		"mulan":
 			result.armor = 2.0 + levels[0] * 2
 			result.interval *= pow(0.94, levels[2])
-		"cinderella":
-			result.damage *= 1.0 + levels[1] * 0.18
-			result.crit += levels[2] * 0.04
 		"ariel":
 			result.damage *= 1.0 + levels[2] * 0.16
+	result.max_hp *= 1.0 + 0.06 * (clampi(hero_level, 1, 30) - 1)
+	result.damage *= 1.0 + 0.04 * (clampi(hero_level, 1, 30) - 1)
 	result["hp"] = result.max_hp
 	return result
+
+
+static func recruit_chapter(id: String) -> int:
+	if id == "scarlet":
+		return 0
+	for index in STAGES.size():
+		if STAGES[index].recruit == id:
+			return index + 1
+	return 0

@@ -70,7 +70,7 @@ func checks() -> void:
 			and invalid.checkpoint.is_empty()
 		)
 	)
-	# All six innate/upgrade effects operate on combat, including shields and healing.
+	# The five profiles retain their damage, healing and unique upgrades.
 	var all := TaleCampaign.new()
 	all.unlocked.assign(TaleCatalog.HEROES.keys())
 	all.party.assign(["scarlet", "snow_white", "mulan"])
@@ -87,12 +87,12 @@ func checks() -> void:
 	rules.hit_enemy(2)
 	var combo := rules.hit_enemy(2)
 	assert(combo.message == "Terceiro corte")
-	all.party.assign(["mulan", "cinderella", "ariel"])
+	all.party.assign(["mulan", "rapunzel", "ariel"])
 	rules.setup(all, 5)
 	rules.spawn_enemy()
-	assert(rules.actors[0].shield == 8 and rules.enemy_interval() > 2.5)
+	assert(rules.actors[0].shield == 0 and rules.enemy_interval() > 2.5)
 	var hit := rules.hit_party()
-	assert(hit.target == 0 and hit.absorbed == 8)
+	assert(hit.target == 0 and hit.absorbed == 0 and hit.damage > 0)
 	rules.actors[0].hp = 100
 	rules.hit_enemy(2)
 	rules.hit_enemy(2)
@@ -221,7 +221,7 @@ func checks() -> void:
 		assert(game.state == "memory")
 		game.save_memory("hope")
 		assert(game.campaign.checkpoint.is_empty())
-	assert(game.campaign.unlocked.size() == 6 and game.campaign.cleared.size() == 8)
+	assert(game.campaign.unlocked.size() == 5 and game.campaign.cleared.size() == 8)
 	assert(game.state == "ending" and game.campaign.choices.size() == 8)
 	var saved := TaleCampaign.new()
 	assert(saved.load_from(test_path))
@@ -245,7 +245,7 @@ func checks() -> void:
 	game._process(0.05)
 	assert(game.state == "defeat" and game.campaign.checkpoint.is_empty())
 	game.show_upgrades()
-	assert(game.state == "upgrade")
+	assert(game.state == "hero")
 	game.show_party()
 	game.show_map()
 	game.show_settings()
@@ -257,6 +257,6 @@ func checks() -> void:
 		if FileAccess.file_exists(path):
 			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	print(
-		"PASS: 8 chapters + ending; six recruits; 3-member formation; unique skills/upgrades; earned-income balance; relics/checkpoint; atomic saves/backup; pause/2x; attack recovery/one hit; idle; debug Ctrl+B guard; all screens; defeat and replay"
+		"PASS: 8 chapters + ending; five recruits; 3-member formation; unique skills/upgrades; earned-income balance; relics/checkpoint; atomic saves/backup; pause/2x; attack recovery/one hit; idle; debug Ctrl+B guard; all screens; defeat and replay"
 	)
 	quit()

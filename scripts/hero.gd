@@ -3,7 +3,7 @@ extends AnimatedSprite2D
 ## Idle holds frame 0, then occasionally plays a blink or a short sway once.
 
 enum IdleState { REST, BLINK, SWAY }
-enum AttackStyle { BOMB, HAIR, APPLE, SWORD, CRYSTAL, TIDE }
+enum AttackStyle { BOMB, HAIR, APPLE, SWORD, TIDE }
 
 @export_group("Heroína")
 @export var hero_name := "Scarlet"
@@ -33,6 +33,7 @@ var idle_rng := RandomNumberGenerator.new()
 
 
 func _ready() -> void:
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	idle_rng.randomize()
 	animation_finished.connect(_on_animation_finished)
 	show_animation(String(animation))
@@ -85,8 +86,6 @@ func get_weapon_label() -> String:
 			return "Maçãs encantadas"
 		AttackStyle.SWORD:
 			return "Lâmina da guerreira"
-		AttackStyle.CRYSTAL:
-			return "Estilhaços de cristal"
 		AttackStyle.TIDE:
 			return "Tridente das marés"
 	return "Bombas à distância"

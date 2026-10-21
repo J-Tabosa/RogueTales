@@ -16,6 +16,7 @@ var speed := 1.0
 var frozen := false
 var preview := false
 var reduced_motion := false
+var high_quality := true
 var enemy_windup := 0.0
 # Temporary drawing context, set separately for each track.
 var attack_time := -1.0
@@ -29,6 +30,7 @@ func _ready() -> void:
 	for index in party_scenes.size():
 		var actor: AnimatedSprite2D = party_scenes[index].instantiate()
 		add_child(actor)
+		actor.texture_filter = hero_filter()
 		heroes.append(actor)
 		if party_scenes.size() == 1:
 			actor.position = Vector2(140, 314)
@@ -46,7 +48,10 @@ func _ready() -> void:
 				"hurt": 0.0,
 				"alive": true,
 				"shoulders": actor.walk_shoulders_enabled,
-				"sway": actor.idle_sway_amplitude
+				"sway": actor.idle_sway_amplitude,
+				"home": actor.position,
+				"return_left": 0.0,
+				"return_from": actor.position
 			}
 		)
 	hero = heroes[0]
@@ -65,6 +70,8 @@ func attack(index: int = 0) -> bool:
 	var duration: float = actor.get_animation_duration("attack")
 	if not is_finite(duration) or duration <= 0:
 		return false
+	tracks[index].return_left = 0.0
+	actor.position = tracks[index].home
 	tracks[index].time = 0.0
 	tracks[index].duration = duration
 	tracks[index].hit = false
@@ -78,6 +85,9 @@ func reset_effects() -> void:
 	preview = false
 	flash = 0.0
 	for index in heroes.size():
+		if heroes[index].position.distance_to(tracks[index].home) > 0.1:
+			tracks[index].return_from = heroes[index].position
+			tracks[index].return_left = 0.18
 		tracks[index].time = -1.0
 		tracks[index].impact = 0.0
 		tracks[index].hurt = 0.0
@@ -103,6 +113,7 @@ func hurt(index: int) -> void:
 
 func _process(delta: float) -> void:
 	for index in heroes.size():
+		heroes[index].texture_filter = hero_filter()
 		heroes[index].speed_scale = 0.0 if frozen or not tracks[index].alive else speed
 		heroes[index].walk_shoulders_enabled = tracks[index].shoulders and not reduced_motion
 		heroes[index].idle_sway_amplitude = 0.0 if reduced_motion else tracks[index].sway
@@ -115,10 +126,16 @@ func _process(delta: float) -> void:
 		var track: Dictionary = tracks[index]
 		track.impact = maxf(0, track.impact - dt)
 		track.hurt = maxf(0, track.hurt - dt)
+		if track.return_left > 0.0:
+			track.return_left = maxf(0.0, track.return_left - dt)
+			heroes[index].position = track.return_from.lerp(
+				track.home, smoothstep(0.0, 1.0, 1.0 - track.return_left / 0.18)
+			)
 		if track.alive:
 			heroes[index].modulate = Color("f2acac") if track.hurt > 0 else Color.WHITE
 		if track.time >= 0:
 			track.time += dt
+			update_attack_position(index, track.time / track.duration)
 			heroes[index].seek_animation("attack", track.time)
 			var landed: bool = (
 				not track.hit and track.time >= track.duration * heroes[index].impact_ratio
@@ -129,6 +146,7 @@ func _process(delta: float) -> void:
 				flash = 0.16
 			if track.time >= track.duration:
 				track.time = -1.0
+				heroes[index].position = track.home
 				heroes[index].show_animation("idle")
 			if landed:
 				attack_hit.emit(index)
@@ -137,22 +155,34 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
+func hero_filter() -> CanvasItem.TextureFilter:
+	return (
+		CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		if high_quality
+		else CanvasItem.TEXTURE_FILTER_LINEAR
+	)
+
+
+func smooth_circle(at: Vector2, radius: float, color: Color) -> void:
+	draw_circle(at, radius, color, true, -1.0, high_quality)
+
+
 func _draw() -> void:
 	if heroes.is_empty():
 		return
 	var data: Dictionary = TaleCatalog.STAGES[clampi(stage, 0, 7)]
 	var biome: int = data.biome
 	draw_rect(Rect2(0, 0, 492, 340), data.sky)
-	draw_circle(Vector2(395, 68), 32, Color(data.color, 0.15))
+	smooth_circle(Vector2(395, 68), 32, Color(data.color, 0.15))
 	for index in 9:
 		var x := index * 68.0 - 30.0 - (fmod(clock * 32.0, 68.0) if walking else 0.0)
 		var tint: Color = data.sky.darkened(0.32)
 		match biome:
 			0, 2:
 				draw_rect(Rect2(x + 25, 30, 12, 240), tint)
-				draw_circle(Vector2(x + 30, 55 + (index % 2) * 25), 64, tint)
+				smooth_circle(Vector2(x + 30, 55 + (index % 2) * 25), 64, tint)
 				if biome == 2:
-					draw_circle(Vector2(x + 14, 104), 5, Color("b85b7e"))
+					smooth_circle(Vector2(x + 14, 104), 5, Color("b85b7e"))
 			1, 4, 7:
 				draw_rect(Rect2(x + 22, 40, 30, 225), tint)
 				draw_rect(Rect2(x + 16, 36, 42, 10), Color(data.color, 0.17))
@@ -211,7 +241,7 @@ func _draw() -> void:
 		)
 	for index in heroes.size():
 		draw_set_transform(heroes[index].position, 0, Vector2(1, 0.22))
-		draw_circle(Vector2.ZERO, 42 if heroes.size() > 1 else 55, Color(0.02, 0.03, 0.04, 0.45))
+		smooth_circle(Vector2.ZERO, 42 if heroes.size() > 1 else 55, Color(0.02, 0.03, 0.04, 0.45))
 	draw_set_transform(Vector2.ZERO)
 	if enemy_visible:
 		draw_enemy(Vector2(402, 296), boss)
@@ -224,15 +254,17 @@ func _draw() -> void:
 		if attack_time >= 0 and not tracks[index].hit:
 			match hero.attack_style:
 				HeroScript.AttackStyle.HAIR:
-					draw_hair_attack()
+					draw_melee_contact()
 				HeroScript.AttackStyle.SWORD:
-					draw_sword_attack()
+					draw_melee_contact()
 				HeroScript.AttackStyle.TIDE:
 					draw_water_attack()
 				_:
 					draw_projectile(hero.attack_style)
 		if tracks[index].impact > 0:
-			var radius: float = (1.0 - tracks[index].impact / 0.28) * 44 + 8
+			var radius: float = (
+				(1.0 - tracks[index].impact / 0.28) * (16 if is_melee(index) else 38) + 5
+			)
 			var tint: Color = hero.accent_color
 			for spark in 7:
 				var direction := Vector2.from_angle(spark * TAU / 7.0)
@@ -246,6 +278,14 @@ func _draw() -> void:
 	hero = heroes[0]
 
 
+func projectile_point(style: int, origin: Vector2, progress: float) -> Vector2:
+	var t := clampf(progress, 0, 1)
+	var point := origin.lerp(Vector2(402, 253), t)
+	if style == HeroScript.AttackStyle.BOMB:
+		point.y -= sin(t * PI) * 60
+	return point
+
+
 func draw_projectile(style: int) -> void:
 	# Release and arrival follow each scene's editable impact ratio.
 	var release: float = hero.impact_ratio * 0.52
@@ -253,25 +293,14 @@ func draw_projectile(style: int) -> void:
 	if phase < release:
 		return
 	var t := clampf((phase - release) / (hero.impact_ratio - release), 0.0, 1.0)
-	var point := (hero.position + Vector2(45, -91)).lerp(Vector2(402, 253), t)
-	point.y -= sin(t * PI) * 60
-	if style == HeroScript.AttackStyle.CRYSTAL:
-		draw_line(point - Vector2(27, -4), point, Color(0.65, 0.85, 1, 0.5), 4, true)
-		draw_colored_polygon(
-			PackedVector2Array(
-				[
-					point + Vector2(14, 0),
-					point + Vector2(-2, -9),
-					point + Vector2(-10, 0),
-					point + Vector2(-2, 9)
-				]
-			),
-			Color("b4d9f5")
+	var point := projectile_point(style, hero.position + Vector2(45, -85), t)
+	if style == HeroScript.AttackStyle.APPLE:
+		var direction := (Vector2(402, 253) - (hero.position + Vector2(45, -85))).normalized()
+		draw_line(
+			point - direction * 30, point - direction * 11, Color(0.95, 0.45, 0.5, 0.45), 2, true
 		)
-		draw_line(point + Vector2(-10, 0), point + Vector2(14, 0), Color.WHITE, 2, true)
-	elif style == HeroScript.AttackStyle.APPLE:
-		draw_circle(point + Vector2(-4, 0), 8, Color("b32349"))
-		draw_circle(point + Vector2(4, 0), 8, Color("df3951"))
+		smooth_circle(point + Vector2(-4, 0), 8, Color("b32349"))
+		smooth_circle(point + Vector2(4, 0), 8, Color("df3951"))
 		draw_line(point + Vector2(0, -6), point + Vector2(1, -13), Color("97683e"), 3)
 		draw_colored_polygon(
 			PackedVector2Array(
@@ -279,24 +308,43 @@ func draw_projectile(style: int) -> void:
 			),
 			Color("8ec686")
 		)
-		draw_circle(point + Vector2(5, -3), 2, Color("ffd0bd"))
+		smooth_circle(point + Vector2(5, -3), 2, Color("ffd0bd"))
 	else:
-		draw_circle(point, 10, Color("11151f"))
+		smooth_circle(point, 10, Color("11151f"))
 		draw_arc(point, 8, 3.6, 5.6, 12, Color("677286"), 2)
-		draw_circle(point + Vector2(1, -14), 4, Color("ffd38a"))
+		smooth_circle(point + Vector2(1, -14), 4, Color("ffd38a"))
 
 
-func draw_sword_attack() -> void:
-	var phase := attack_time / attack_duration
-	var windup: float = hero.impact_ratio * 0.35
-	if phase < windup:
+func is_melee(index: int) -> bool:
+	return heroes[index].attack_style in [HeroScript.AttackStyle.SWORD, HeroScript.AttackStyle.HAIR]
+
+
+func update_attack_position(index: int, phase: float) -> void:
+	if not is_melee(index):
 		return
-	var progress := clampf((phase - windup) / (hero.impact_ratio - windup), 0.0, 1.0)
-	var center := hero.position + Vector2(10, -63)
-	var radius := 70.0 + progress * (Vector2(402, 253).distance_to(center) - 70.0)
-	var angle := lerpf(-1.1, 0.25, progress)
-	draw_arc(center, radius, angle - 0.65, angle, 24, Color(0.6, 0.9, 0.88, 0.28), 13, true)
-	draw_arc(center, radius, angle - 0.55, angle, 24, Color("d5fff4"), 3, true)
+	var actor: AnimatedSprite2D = heroes[index]
+	var home: Vector2 = tracks[index].home
+	var target := Vector2(334 + index * 3, 306 + (index % 2) * 8)
+	var contact: float = actor.impact_ratio
+	var arrival := contact * 0.78
+	var depart := minf(0.86, contact + 0.13)
+	if phase < arrival:
+		actor.position = home.lerp(target, smoothstep(0.0, arrival, phase))
+	elif phase <= depart:
+		actor.position = target
+	else:
+		actor.position = target.lerp(home, smoothstep(depart, 1.0, phase))
+	actor.z_index = int(actor.position.y)
+
+
+func draw_melee_contact() -> void:
+	# The sprite's real sword/hair makes contact. Only a small local glint is added.
+	var phase := attack_time / attack_duration
+	if phase < hero.impact_ratio * 0.88:
+		return
+	var tint := Color("fff0b3") if hero.is_hair_attack() else Color("e9fff8")
+	draw_line(Vector2(385, 241), Vector2(400, 260), tint, 2.5, true)
+	draw_line(Vector2(390, 261), Vector2(402, 246), tint, 2, true)
 
 
 func draw_water_attack() -> void:
@@ -318,26 +366,6 @@ func draw_water_attack() -> void:
 	draw_arc(end, 13, -PI * 0.8, PI * 0.6, 20, Color("d3ffff"), 3, true)
 
 
-func draw_hair_attack() -> void:
-	var phase := attack_time / attack_duration
-	var windup := minf(0.18, hero.impact_ratio * 0.3)
-	if phase < windup:
-		return
-	var progress := clampf((phase - windup) / (hero.impact_ratio - windup), 0.0, 1.0)
-	var start := hero.position + Vector2(-4, -84)
-	var end := start.lerp(Vector2(402, 253), sin(progress * PI * 0.5))
-	var strand := PackedVector2Array()
-	for index in 25:
-		var t := index / 24.0
-		var point := start.lerp(end, t)
-		point.y -= sin(t * PI) * (34.0 + sin(phase * TAU) * 18.0)
-		point.y += sin(t * TAU - phase * 9.0) * 10.0 * sin(t * PI)
-		strand.append(point)
-	draw_polyline(strand, Color("936020"), 13, true)
-	draw_polyline(strand, Color("f4c454"), 9, true)
-	draw_polyline(strand, Color("fff0a9"), 3, true)
-
-
 func draw_enemy(at: Vector2, is_boss: bool) -> void:
 	var s := 1.3 if is_boss else 1.0
 	var bob := sin(clock * 3) * 3
@@ -346,7 +374,7 @@ func draw_enemy(at: Vector2, is_boss: bool) -> void:
 		color = Color.WHITE
 	draw_set_transform(at + Vector2(0, bob), 0.0, Vector2.ONE * s)
 	draw_set_transform(at, 0.0, Vector2(s, s * 0.22))
-	draw_circle(Vector2.ZERO, 47, Color(0.02, 0.03, 0.04, 0.45))
+	smooth_circle(Vector2.ZERO, 47, Color(0.02, 0.03, 0.04, 0.45))
 	draw_set_transform(at + Vector2(0, bob), 0.0, Vector2.ONE * s)
 	match stage:
 		0:
@@ -368,7 +396,7 @@ func draw_enemy(at: Vector2, is_boss: bool) -> void:
 			draw_line(Vector2(-25, -14), Vector2(27, -14), color.lightened(0.25), 5)
 		1:
 			draw_line(Vector2(0, -118), Vector2(0, -71), Color("c9b8a0"), 2)
-			draw_circle(Vector2(0, -67), 22, color)
+			smooth_circle(Vector2(0, -67), 22, color)
 			draw_rect(Rect2(-21, -45, 42, 43), color.darkened(0.2))
 			draw_line(Vector2(-22, -43), Vector2(-40, -7), color, 9)
 			draw_line(Vector2(22, -43), Vector2(40, -7), color, 9)
@@ -385,7 +413,7 @@ func draw_enemy(at: Vector2, is_boss: bool) -> void:
 			)
 			draw_line(Vector2(33, -15), Vector2(46, -99), Color("e9c488"), 4)
 		4:
-			draw_circle(Vector2.ZERO, 35, color.darkened(0.3))
+			smooth_circle(Vector2.ZERO, 35, color.darkened(0.3))
 			draw_colored_polygon(
 				PackedVector2Array(
 					[Vector2(0, -108), Vector2(-37, -53), Vector2(0, -7), Vector2(37, -53)]
@@ -394,7 +422,7 @@ func draw_enemy(at: Vector2, is_boss: bool) -> void:
 			)
 			draw_line(Vector2(0, -101), Vector2(0, -14), Color.WHITE, 2)
 		5:
-			draw_circle(Vector2(0, -36), 36, color.darkened(0.2))
+			smooth_circle(Vector2(0, -36), 36, color.darkened(0.2))
 			for fin in 3:
 				draw_arc(Vector2(-30 + fin * 30, -2), 26, PI, TAU, 14, color, 10, true)
 			draw_colored_polygon(
@@ -415,7 +443,7 @@ func draw_enemy(at: Vector2, is_boss: bool) -> void:
 				),
 				color
 			)
-			draw_circle(Vector2(1, -28), 21, Color("ffc77b"))
+			smooth_circle(Vector2(1, -28), 21, Color("ffc77b"))
 		7:
 			draw_colored_polygon(
 				PackedVector2Array(
@@ -429,13 +457,13 @@ func draw_enemy(at: Vector2, is_boss: bool) -> void:
 				),
 				color.darkened(0.4)
 			)
-			draw_circle(Vector2(0, -74), 21, color)
+			smooth_circle(Vector2(0, -74), 21, color)
 			draw_line(Vector2(-38, -28), Vector2(48, -120), Color("e9c488"), 3)
 			for thread in 3:
 				draw_arc(Vector2(8, -55), 45 + thread * 8, -2, 1.5, 22, Color(color, 0.4), 1, true)
 
-	draw_circle(Vector2(-13, -34), 5, Color("101923"))
-	draw_circle(Vector2(12, -34), 5, Color("101923"))
+	smooth_circle(Vector2(-13, -34), 5, Color("101923"))
+	smooth_circle(Vector2(12, -34), 5, Color("101923"))
 	draw_line(Vector2(-6, -19), Vector2(7, -19), Color("101923"), 3)
 	if is_boss:
 		draw_colored_polygon(
@@ -460,3 +488,11 @@ func stone_box(color: Color) -> StyleBoxFlat:
 	box.bg_color = color
 	box.set_corner_radius_all(7)
 	return box
+
+
+func set_home(index: int, at: Vector2) -> void:
+	if index < 0 or index >= tracks.size():
+		return
+	tracks[index].home = at
+	tracks[index].return_left = 0.0
+	heroes[index].position = at

@@ -24,7 +24,11 @@ func setup(campaign: TaleCampaign, index: int) -> void:
 	rng.randomize()
 	actors.clear()
 	for id in campaign.party:
-		actors.append(TaleCatalog.hero_stats(id, campaign.levels[id], campaign.choices))
+		actors.append(
+			TaleCatalog.hero_stats(
+				id, campaign.levels[id], campaign.choices, campaign.hero_levels[id]
+			)
+		)
 
 
 func spawn_enemy() -> void:
@@ -34,12 +38,8 @@ func spawn_enemy() -> void:
 	poison_left = 0.0
 	burn = 0.0
 	poison = 0.0
-	var barrier := 0.0
 	for actor in actors:
-		if actor.id == "cinderella" and actor.hp > 0:
-			barrier += 8.0 + actor.ranks[0] * 8
-	for actor in actors:
-		actor.shield = barrier if actor.hp > 0 else 0.0
+		actor.shield = 0.0
 
 
 func alive() -> bool:

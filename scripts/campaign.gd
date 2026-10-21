@@ -14,11 +14,73 @@ var pending_story := -1
 var reduced_motion := false
 var speed := 1.0
 var save_error := ""
+var hero_levels: Dictionary = {}
+var hero_xp: Dictionary = {}
+var player_name := "Viajante"
+var avatar := "scarlet"
+var player_level := 1
+var player_xp := 0
+var total_kills := 0
+var total_wins := 0
+var total_defeats := 0
+var total_gold := 80
+var total_spent := 0
+var play_seconds := 0.0
+var idle_anchor := 0
+var idle_seconds := 0
+var claimed: Array[String] = []
+var music_volume := 0.45
+var effects_volume := 0.65
+var high_quality := true
+var fps_limit := 60
+var text_speed := 36
+var auto_repeat := false
+const IDLE_CAP := 8 * 3600
+const ACHIEVEMENTS := [
+	{
+		"id": "first",
+		"title": "O primeiro fio",
+		"detail": "Conclua o primeiro capítulo.",
+		"reward": 60
+	},
+	{
+		"id": "friends",
+		"title": "Companheiras de conto",
+		"detail": "Recrute três heroínas.",
+		"reward": 90
+	},
+	{
+		"id": "team",
+		"title": "Uma formação completa",
+		"detail": "Tenha três integrantes na formação.",
+		"reward": 50
+	},
+	{
+		"id": "training",
+		"title": "Além da primeira página",
+		"detail": "Leve uma heroína ao nível 5.",
+		"reward": 100
+	},
+	{
+		"id": "voices",
+		"title": "As cinco vozes",
+		"detail": "Recrute todas as cinco heroínas.",
+		"reward": 200
+	},
+	{
+		"id": "ending",
+		"title": "Autoras do amanhã",
+		"detail": "Conclua os oito capítulos.",
+		"reward": 350
+	},
+]
 
 
 func _init() -> void:
 	for id in TaleCatalog.HEROES:
 		levels[id] = [0, 0, 0]
+		hero_levels[id] = 1
+		hero_xp[id] = 0
 
 
 func can_play(index: int) -> bool:
@@ -38,6 +100,7 @@ func buy_upgrade(id: String, branch: int) -> bool:
 	if gold < cost:
 		return false
 	gold -= cost
+	total_spent += cost
 	levels[id][branch] += 1
 	return true
 
@@ -69,7 +132,9 @@ func complete_stage(index: int) -> Dictionary:
 		return {}
 	var first := not cleared.has(index)
 	var reward := 100 + index * 35 if first else 35 + index * 12
-	gold += reward
+	earn_gold(reward)
+	total_wins += 1
+	grant_xp(30 + index * 10)
 	checkpoint.clear()
 	var recruit: String = TaleCatalog.STAGES[index].recruit
 	if first:
@@ -94,7 +159,7 @@ func choose_memory(index: int, choice: String) -> bool:
 
 func to_dict() -> Dictionary:
 	return {
-		"version": 1,
+		"version": 2,
 		"gold": gold,
 		"unlocked": unlocked,
 		"party": party,
@@ -105,12 +170,40 @@ func to_dict() -> Dictionary:
 		"checkpoint": checkpoint,
 		"pending_story": pending_story,
 		"reduced_motion": reduced_motion,
-		"speed": speed
+		"speed": speed,
+		"hero_levels": hero_levels,
+		"hero_xp": hero_xp,
+		"player_name": player_name,
+		"avatar": avatar,
+		"player_level": player_level,
+		"player_xp": player_xp,
+		"total_kills": total_kills,
+		"total_wins": total_wins,
+		"total_defeats": total_defeats,
+		"total_gold": total_gold,
+		"total_spent": total_spent,
+		"play_seconds": play_seconds,
+		"idle_anchor": idle_anchor,
+		"idle_seconds": idle_seconds,
+		"claimed": claimed,
+		"music_volume": music_volume,
+		"effects_volume": effects_volume,
+		"high_quality": high_quality,
+		"fps_limit": fps_limit,
+		"text_speed": text_speed,
+		"auto_repeat": auto_repeat
 	}
 
 
 func load_data(data: Dictionary) -> void:
 	gold = clampi(int(data.get("gold", 80)), 0, 9999999)
+	# Version 1 contained a removed heroine. Refund her purchased skill ranks exactly once.
+	if int(data.get("version", 1)) == 1:
+		var old_levels: Variant = data.get("levels", {})
+		if old_levels is Dictionary and old_levels.get("cinderella") is Array:
+			for rank in old_levels.cinderella:
+				var count := clampi(int(rank), 0, 5)
+				gold += count * 35 + 15 * count * (count - 1)
 	unlocked.assign(["scarlet"])
 	if data.get("unlocked") is Array:
 		for id in data.unlocked:
@@ -163,6 +256,49 @@ func load_data(data: Dictionary) -> void:
 			and candidate.health.size() == party.size()
 		):
 			checkpoint = candidate.duplicate(true)
+	for id in TaleCatalog.HEROES:
+		var saved_hero_levels: Variant = data.get("hero_levels", {})
+		var saved_hero_xp: Variant = data.get("hero_xp", {})
+		hero_levels[id] = (
+			clampi(int(saved_hero_levels.get(id, 1)), 1, 30)
+			if saved_hero_levels is Dictionary
+			else 1
+		)
+		hero_xp[id] = (
+			clampi(int(saved_hero_xp.get(id, 0)), 0, 9999999) if saved_hero_xp is Dictionary else 0
+		)
+	player_name = str(data.get("player_name", "Viajante")).strip_edges().substr(0, 20)
+	if player_name.is_empty():
+		player_name = "Viajante"
+	avatar = str(data.get("avatar", "scarlet"))
+	if not unlocked.has(avatar):
+		avatar = "scarlet"
+	player_level = clampi(int(data.get("player_level", 1)), 1, 100)
+	player_xp = clampi(int(data.get("player_xp", 0)), 0, 9999999)
+	total_kills = maxi(0, int(data.get("total_kills", 0)))
+	total_wins = maxi(0, int(data.get("total_wins", cleared.size())))
+	total_defeats = maxi(0, int(data.get("total_defeats", 0)))
+	total_gold = maxi(gold, int(data.get("total_gold", gold)))
+	total_spent = maxi(0, int(data.get("total_spent", 0)))
+	play_seconds = maxf(0, float(data.get("play_seconds", 0)))
+	idle_anchor = maxi(0, int(data.get("idle_anchor", 0)))
+	idle_seconds = clampi(int(data.get("idle_seconds", 0)), 0, IDLE_CAP)
+	claimed.clear()
+	if data.get("claimed") is Array:
+		for item in ACHIEVEMENTS:
+			if data.claimed.has(item.id):
+				claimed.append(item.id)
+	music_volume = clampf(float(data.get("music_volume", 0.45)), 0, 1)
+	effects_volume = clampf(float(data.get("effects_volume", 0.65)), 0, 1)
+	high_quality = bool(data.get("high_quality", true))
+	fps_limit = 30 if int(data.get("fps_limit", 60)) == 30 else 60
+	text_speed = int(data.get("text_speed", 36))
+	if text_speed not in [0, 24, 48, 36]:
+		text_speed = 36
+	auto_repeat = bool(data.get("auto_repeat", false))
+	# Returning to camp avoids associating an old party member's health with a different heroine.
+	if data.get("party") is Array and data.party.has("cinderella"):
+		checkpoint.clear()
 
 
 func save_to(path: String = SAVE_PATH) -> bool:
@@ -194,7 +330,132 @@ func load_from(path: String = SAVE_PATH) -> bool:
 			parser.parse(FileAccess.get_file_as_string(candidate)) == OK
 			and parser.data is Dictionary
 		):
-			if int(parser.data.get("version", 0)) == 1:
+			if int(parser.data.get("version", 0)) in [1, 2]:
 				load_data(parser.data)
 				return true
+	return false
+
+
+func earn_gold(amount: int) -> void:
+	if amount <= 0:
+		return
+	gold = mini(9999999, gold + amount)
+	total_gold += amount
+
+
+func player_next_xp() -> int:
+	return 75 + player_level * 50
+
+
+func hero_next_xp(id: String) -> int:
+	return 40 + int(hero_levels[id]) * 25
+
+
+func hero_level_cost(id: String) -> int:
+	return 25 + int(hero_levels[id]) * 12
+
+
+func can_level_hero(id: String) -> bool:
+	return (
+		unlocked.has(id)
+		and checkpoint.is_empty()
+		and hero_levels[id] < 30
+		and hero_xp[id] >= hero_next_xp(id)
+		and gold >= hero_level_cost(id)
+	)
+
+
+func level_hero(id: String) -> bool:
+	if not TaleCatalog.HEROES.has(id) or not can_level_hero(id):
+		return false
+	var cost := hero_level_cost(id)
+	hero_xp[id] -= hero_next_xp(id)
+	gold -= cost
+	total_spent += cost
+	hero_levels[id] += 1
+	return true
+
+
+func grant_xp(amount: int) -> void:
+	if amount <= 0:
+		return
+	for id in party:
+		hero_xp[id] = mini(9999999, int(hero_xp[id]) + amount)
+	player_xp += amount
+	while player_level < 100 and player_xp >= player_next_xp():
+		player_xp -= player_next_xp()
+		player_level += 1
+	if player_level == 100:
+		player_xp = 0
+
+
+func record_enemy(stage: int) -> void:
+	total_kills += 1
+	earn_gold(3 + stage * 2)
+	grant_xp(25 + stage * 10)
+
+
+func idle_rate() -> int:
+	return 6 + cleared.size() * 4 if not cleared.is_empty() else 0
+
+
+func settle_idle(now: int) -> void:
+	if idle_anchor <= 0:
+		idle_anchor = now
+		return
+	# A backwards clock never grants resources and never replaces a future anchor.
+	if now < idle_anchor:
+		return
+	if not cleared.is_empty():
+		idle_seconds = mini(IDLE_CAP, idle_seconds + now - idle_anchor)
+	idle_anchor = now
+
+
+func idle_reward() -> Dictionary:
+	var minutes := int(idle_seconds / 60.0)
+	return {
+		"gold": minutes * idle_rate(),
+		"xp": minutes * (2 + cleared.size() * 2) if idle_rate() > 0 else 0,
+		"seconds": idle_seconds
+	}
+
+
+func claim_idle(now: int) -> Dictionary:
+	settle_idle(now)
+	var reward := idle_reward()
+	if reward.gold <= 0:
+		return {}
+	earn_gold(int(reward.gold))
+	grant_xp(int(reward.xp))
+	idle_seconds = idle_seconds % 60
+	return reward
+
+
+func achievement_ready(id: String) -> bool:
+	match id:
+		"first":
+			return not cleared.is_empty()
+		"friends":
+			return unlocked.size() >= 3
+		"team":
+			return party.size() == 3
+		"voices":
+			return unlocked.size() == TaleCatalog.HEROES.size()
+		"ending":
+			return cleared.size() == 8
+		"training":
+			for level in hero_levels.values():
+				if int(level) >= 5:
+					return true
+	return false
+
+
+func claim_achievement(id: String) -> bool:
+	if claimed.has(id) or not achievement_ready(id):
+		return false
+	for item in ACHIEVEMENTS:
+		if item.id == id:
+			claimed.append(id)
+			earn_gold(int(item.reward))
+			return true
 	return false
