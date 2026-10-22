@@ -237,7 +237,7 @@ func _draw() -> void:
 			match hero.attack_style:
 				HeroScript.AttackStyle.HAIR:
 					draw_melee_contact()
-				HeroScript.AttackStyle.SWORD:
+				HeroScript.AttackStyle.SWORD, HeroScript.AttackStyle.DAGGER, HeroScript.AttackStyle.GREATSWORD, HeroScript.AttackStyle.SPIRIT:
 					draw_melee_contact()
 				HeroScript.AttackStyle.TIDE:
 					draw_water_attack()
@@ -291,6 +291,16 @@ func draw_projectile(style: int) -> void:
 			Color("8ec686")
 		)
 		smooth_circle(point + Vector2(5, -3), 2, Color("ffd0bd"))
+	elif style == HeroScript.AttackStyle.CROSSBOW:
+		draw_line(point - Vector2(28, 0), point, Color("eee5cf"), 3, true)
+	elif style == HeroScript.AttackStyle.CARDS:
+		draw_rect(Rect2(point - Vector2(6, 9), Vector2(12, 18)), Color("f9edce"))
+		smooth_circle(point, 3, Color("d94764"))
+	elif style == HeroScript.AttackStyle.MATCH:
+		draw_line(point - Vector2(22, 0), point, Color("ed6f3b"), 7, true)
+		smooth_circle(point, 5, Color("ffe2a0"))
+	elif style == HeroScript.AttackStyle.LAMP:
+		draw_arc(point, 10, 0, TAU, 20, hero.accent_color, 3, true)
 	else:
 		smooth_circle(point, 10, Color("11151f"))
 		draw_arc(point, 8, 3.6, 5.6, 12, Color("677286"), 2)
@@ -298,7 +308,7 @@ func draw_projectile(style: int) -> void:
 
 
 func is_melee(index: int) -> bool:
-	return heroes[index].attack_style in [HeroScript.AttackStyle.SWORD, HeroScript.AttackStyle.HAIR]
+	return heroes[index].is_melee_attack()
 
 
 func update_attack_position(index: int, phase: float) -> void:

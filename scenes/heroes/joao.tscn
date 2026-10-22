@@ -1,0 +1,25 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/hero.gd" id="1_hero"]
+[ext_resource type="SpriteFrames" path="res://assets/joao/frames.tres" id="2_frames"]
+[ext_resource type="Shader" path="res://assets/hero/shaders/idle_motion.gdshader" id="3_idle"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_idle"]
+resource_local_to_scene = true
+shader = ExtResource("3_idle")
+
+[node name="Joao" type="AnimatedSprite2D"]
+material = SubResource("ShaderMaterial_idle")
+position = Vector2(270, 520)
+scale = Vector2(1, 1)
+sprite_frames = ExtResource("2_frames")
+animation = &"idle"
+autoplay = "idle"
+centered = false
+offset = Vector2(-360, -580)
+script = ExtResource("1_hero")
+hero_name = "João"
+hero_title = "Caçador de bruxas"
+attack_style = 5
+impact_ratio = 0.65
+accent_color = Color(0.55294, 0.72941, 0.5451, 1)

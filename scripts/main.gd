@@ -5,7 +5,7 @@ const UISkin = preload("res://scripts/ui_skin.gd")
 const Arena = preload("res://scripts/arena.gd")
 const HERO_SCENES = TaleCatalog.HERO_SCENES
 const GOLD := Color("f2d28e")
-const MUTED := Color("b0c9b9")
+const MUTED := Color("aab3ca")
 const INK := Color("0b2927")
 @export var save_path := TaleCampaign.SAVE_PATH
 var campaign: TaleCampaign
@@ -19,6 +19,7 @@ var cooldowns: Array[float] = []
 var enemy_timer := 0.0
 var travel_timer := 0.0
 var hud_timer := 0.0
+var combat_flow: RefCounted
 var debug_enabled := false
 var debug_panel: Control
 var content: Control
@@ -290,16 +291,28 @@ func make_arena(y: float, ids: Array = [], target_stage: int = 0) -> void:
 	arena.attack_started.connect(on_attack_started)
 
 
-func portrait(parent: Node, id: String, at: Vector2, factor: float = 0.68) -> void:
+func cache_portrait(id: String) -> void:
 	if not static_portraits.has(id):
 		var model: AnimatedSprite2D = HERO_SCENES[id].instantiate()
+		var texture: Texture2D = model.sprite_frames.get_frame_texture("idle",0)
+		var bounds := Rect2(Vector2.ZERO,texture.get_size())
+		if texture is MeshTexture:
+			var volume: AABB = texture.mesh.get_aabb()
+			bounds = Rect2(Vector2(volume.position.x,volume.position.y),Vector2(volume.size.x,volume.size.y))
+		elif texture is AtlasTexture:
+			bounds = Rect2(texture.margin.position,texture.region.size)
 		static_portraits[id] = {
 			"texture": model.sprite_frames.get_frame_texture("idle", 0),
 			"scale": model.scale,
 			"offset": model.offset,
-			"centered": model.centered
+			"centered": model.centered,
+			"bounds": bounds
 		}
 		model.free()
+
+
+func portrait(parent: Node, id: String, at: Vector2, factor: float = 0.68) -> void:
+	cache_portrait(id)
 	var data: Dictionary = static_portraits[id]
 	var actor := Sprite2D.new()
 	actor.texture = data.texture
@@ -1019,6 +1032,8 @@ func begin_travel() -> void:
 func spawn_enemy() -> void:
 	run.spawn_enemy()
 	if run.tactics != null:
+		combat_flow = preload("res://scripts/battle_flow.gd").new()
+		combat_flow.bind(run)
 		arena.sync_enemies()
 	state = "battle"
 	arena.walking = false
@@ -1101,6 +1116,8 @@ func on_attack_hit(index: int) -> void:
 			arena.enemy.hurt()
 	if hit.is_empty():
 		return
+	if run.tactics != null:
+		arena.present_result(hit, false, index)
 	audio.play_effect("explosion" if run.actors[index].id == "scarlet" else "hit")
 	if not str(hit.message).is_empty():
 		log_label.text = TaleCatalog.HEROES[run.actors[index].id].name + " · " + str(hit.message)
@@ -1512,12 +1529,13 @@ func show_preview() -> void:
 	state = "preview"
 	clear_page()
 	header("Laboratório de animações", "FERRAMENTAS ATIVAS • CTRL+B PARA DESATIVAR")
+	var chooser := scroll_area(180, 100, ceili(HERO_SCENES.size() / 3.0) * 49)
 	var index := 0
 	for id in HERO_SCENES:
 		var node := button(
-			page,
+			chooser,
 			TaleCatalog.HEROES[id].name,
-			Rect2(24 + (index % 3) * 168, 183 + floori(index / 3.0) * 49, 156, 42),
+			Rect2((index % 3) * 160, floori(index / 3.0) * 49, 150, 42),
 			choose_preview.bind(id),
 			selected_hero == id
 		)
@@ -1526,10 +1544,10 @@ func show_preview() -> void:
 	make_arena(295, [selected_hero])
 	arena.set_home(0, Vector2(246, arena.heroes[0].position.y))
 	frame_label = label(page, "", Rect2(24, 649, 492, 43), 18, GOLD)
-	for i in 3:
-		var anim: String = ["idle", "walk", "attack"][i]
+	for i in 4:
+		var anim: String = ["idle", "idle_blink", "walk", "attack"][i]
 		(
-			button(page, anim, Rect2(24 + i * 168, 711, 156, 48), preview_anim.bind(anim))
+			button(page, anim, Rect2(24 + i * 126, 711, 114, 48), preview_anim.bind(anim))
 			. add_theme_font_size_override("font_size", 17)
 		)
 	var slider := HSlider.new()
@@ -1580,7 +1598,7 @@ func update_preview() -> void:
 func show_heroes() -> void:
 	state = "heroes"
 	clear_page()
-	header("Heróis", "%d / 5 permanentes  •  %d ouro" % [campaign.unlocked.size(), campaign.gold])
+	header("Heróis", "%d / %d permanentes  •  %d ouro" % [campaign.unlocked.size(), TaleCatalog.HEROES.size(), campaign.gold])
 	(
 		button(
 			page,
@@ -1592,7 +1610,7 @@ func show_heroes() -> void:
 		. add_theme_font_size_override("font_size", 17)
 	)
 	(
-		button(page, "Evoluir heroína", Rect2(280, 180, 236, 48), show_upgrades)
+		button(page, "Evoluir personagem", Rect2(280, 180, 236, 48), show_upgrades)
 		. add_theme_font_size_override("font_size", 17)
 	)
 	var inner := scroll_area(247, 620, TaleCatalog.HEROES.size() * 237)
@@ -1651,7 +1669,7 @@ func show_unlock_details(id: String) -> void:
 	portrait(overlay, id, Vector2(143, 681), 0.9)
 	label(
 		overlay,
-		"Convocada como upgrade entre encontros.\n\nUma run tem dois encontros e um chefe. O vínculo é salvo ao encerrar a run.\n\nApós desbloquear, pode começar na sua formação.",
+		"Convocação como upgrade entre encontros.\n\nUma run tem dois encontros e um chefe. O vínculo é salvo ao encerrar a run.\n\nApós desbloquear, pode começar na sua formação.",
 		Rect2(266, 400, 242, 279),
 		17,
 		MUTED
@@ -1841,7 +1859,7 @@ func edit_profile() -> void:
 	profile_avatar = campaign.avatar
 	profile_avatar_label = null
 	profile_avatar_buttons.clear()
-	modal("Seu nome no conto.", "Escolha seu nome e uma heroína recrutada para o retrato.")
+	modal("Seu nome no conto.", "Escolha seu nome e um personagem recrutado para o retrato.")
 	profile_name = LineEdit.new()
 	profile_name.position = Vector2(32, 395)
 	profile_name.size = Vector2(476, 58)
@@ -1852,12 +1870,21 @@ func edit_profile() -> void:
 	profile_name.add_theme_stylebox_override("focus", box(Color("10392f"), GOLD, 9))
 	overlay.add_child(profile_name)
 	register_layout(profile_name)
+	var avatar_scroll := ScrollContainer.new()
+	avatar_scroll.position = Vector2(32, 477)
+	avatar_scroll.size = Vector2(476, 165)
+	avatar_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	overlay.add_child(avatar_scroll)
+	register_layout(avatar_scroll)
+	var avatar_grid := Control.new()
+	avatar_grid.custom_minimum_size = Vector2(456, ceili(campaign.unlocked.size() / 2.0) * 57)
+	avatar_scroll.add_child(avatar_grid)
 	var index := 0
 	for id in campaign.unlocked:
 		var choice := button(
-			overlay,
+			avatar_grid,
 			TaleCatalog.HEROES[id].name,
-			Rect2(32 + (index % 2) * 244, 477 + floori(index / 2.0) * 57, 232, 46),
+			Rect2((index % 2) * 233, floori(index / 2.0) * 57, 220, 46),
 			select_avatar.bind(id)
 		)
 		choice.add_theme_font_size_override("font_size", 16)
@@ -1916,7 +1943,7 @@ func show_idle_rewards() -> void:
 	modal(
 		"O acampamento prosperou.",
 		(
-			"Recursos acumulados em %dh %02dmin.\nA experiência vai para as integrantes da formação."
+			"Recursos acumulados em %dh %02dmin.\nA experiência vai para os integrantes da formação."
 			% [int(reward.seconds / 3600), int(reward.seconds / 60) % 60]
 		)
 	)
@@ -2169,47 +2196,76 @@ func process_tactical_combat(dt: float) -> void:
 	if run.enemy_hp <= 0:
 		resolve_enemy()
 		return
-	for index in run.actors.size():
-		if run.actors[index].hp <= 0:
-			continue
-		cooldowns[index] -= dt
-		if campaign.auto_ult and try_ultimate(index):
-			continue
-		if cooldowns[index] <= 0 and arena.attack(index, run.tactics.target_for(index)):
-			var duration: float = arena.heroes[index].get_animation_duration("attack")
-			cooldowns[index] = maxf(float(run.actors[index].interval), duration + 0.06)
-	for index in run.tactics.enemies.size():
-		var foe: Dictionary = run.tactics.enemies[index]
-		if foe.hp <= 0:
-			continue
-		foe.timer -= dt
-		if foe.timer <= 0:
-			foe.timer += run.tactics.interval_for(index)
-			var hit: Dictionary = run.hit_party(index)
-			if not hit.is_empty():
-				arena.enemy_strike(index, hit.target)
-				if hit.damage > 0:
-					arena.hurt(hit.target)
-				log_label.text = "%s · %s" % [TaleCatalog.HEROES[run.actors[hit.target].id].name, "Esquiva" if hit.evaded else ("−%d PV" % int(hit.damage))]
-				arena.sync_health(run.actors)
-			if not run.alive():
-				finish_defeat()
+	if combat_flow == null:
+		return
+	if not combat_flow.active.is_empty():
+		if not arena.is_action_busy():
+			combat_flow.complete()
+		return
+	if arena.is_action_busy():
+		return
+	combat_flow.waiting -= dt
+	if combat_flow.waiting > 0:
+		return
+	var entry: Dictionary = combat_flow.next_action()
+	if entry.is_empty():
+		return
+	var index: int = entry.index
+	if entry.side == "ally":
+		var ultimate: bool = entry.get("ultimate", false) or (campaign.auto_ult and run.actors[index].energy >= 100)
+		var target: int = run.tactics.target_for(index)
+		if arena.attack(index, target, ultimate):
+			if ultimate and not run.tactics.reserve_ultimate(index):
+				arena.reset_effects()
 				return
+			entry["ultimate"] = ultimate
+			combat_flow.begin(entry)
+			log_label.text = "%s · %s" % [TaleCatalog.HEROES[run.actors[index].id].name, TaleCatalog.HERO_TACTICS[run.actors[index].id].ult if ultimate else arena.heroes[index].get_weapon_label()]
+	else:
+		var target: int = run.tactics.choose_target(run.tactics.enemies[index], run.actors)
+		if arena.begin_enemy_attack(index, target):
+			combat_flow.begin(entry)
+			log_label.text = str(run.tactics.enemies[index].name) + " · Ataque"
+	update_hud()
+
+
+func on_enemy_attack_hit(index: int) -> void:
+	if state != "battle" or paused or run == null:
+		return
+	var hit: Dictionary = run.hit_party(index)
+	if hit.is_empty():
+		return
+	arena.enemy_strike(index, hit.target)
+	if hit.damage > 0:
+		arena.hurt(hit.target)
+	arena.present_result(hit, true, index)
+	log_label.text = "%s · %s" % [TaleCatalog.HEROES[run.actors[hit.target].id].name, "Esquiva" if hit.evaded else ("Guarda · −%d PV" % int(hit.damage) if hit.get("guarded", false) else "−%d PV" % int(hit.damage))]
+	arena.sync_health(run.actors)
+	if not run.alive():
+		finish_defeat()
+	else:
+		update_hud()
 
 
 func try_ultimate(index: int) -> bool:
 	if state != "battle" or paused or run == null or run.tactics == null or index < 0 or index >= run.actors.size():
 		return false
 	var actor: Dictionary = run.actors[index]
-	if actor.hp <= 0 or actor.energy < 100 or actor.ult_pending or arena.tracks[index].time >= 0:
+	if actor.hp <= 0 or actor.energy < 100 or actor.ult_pending or actor.get("ult_queued", false) or arena.tracks[index].time >= 0:
 		return false
+	if arena.is_action_busy():
+		if combat_flow == null or not combat_flow.queue_ultimate(index):
+			return false
+		update_hud()
+		return true
 	var target: int = run.tactics.target_for(index)
 	if not arena.attack(index, target, true):
 		return false
 	if not run.tactics.reserve_ultimate(index):
 		arena.tracks[index].time = -1.0
 		return false
-	cooldowns[index] = maxf(float(actor.interval), arena.tracks[index].duration + 0.06)
+	if combat_flow != null:
+		combat_flow.begin({"side": "ally", "index": index, "manual": true, "ultimate": true})
 	log_label.text = str(TaleCatalog.HEROES[actor.id].name) + " · " + str(TaleCatalog.HERO_TACTICS[actor.id].ult)
 	update_hud()
 	return true

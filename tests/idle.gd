@@ -8,7 +8,7 @@ func _initialize() -> void:
 
 
 func checks() -> void:
-	assert(TaleCatalog.HEROES.size() == 5 and not TaleCatalog.HERO_SCENES.has("cinderella"))
+	assert(TaleCatalog.HEROES.size() == 12 and not TaleCatalog.HERO_SCENES.has("cinderella"))
 	assert(not FileAccess.file_exists("res://scenes/heroes/cinderella.tscn"))
 	# Old saves retain progress and refund the removed heroine once, without a broken party.
 	var migrated := TaleCampaign.new()

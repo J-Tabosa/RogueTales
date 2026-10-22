@@ -23,9 +23,14 @@ func configure_actor(actor: Dictionary, row: String) -> void:
 	var profile: Dictionary = TaleCatalog.HERO_TACTICS[actor.id]
 	actor["class"] = profile["class"]
 	actor.row = row
-	actor.evasion = TaleCatalog.CLASSES[profile["class"]].evasion
+	actor.evasion = float(actor.get("evasion", TaleCatalog.CLASSES[profile["class"]].evasion))
+	actor.base_evasion = actor.evasion
+	actor.evasion_left = 0.0
 	actor.energy = clampf(float(actor.get("energy", 0.0)), 0, 100)
 	actor["ult_pending"] = false
+	actor["ult_queued"] = false
+	actor["ap"] = 0
+	actor["pp"] = 0
 
 
 func ensure_front() -> void:
@@ -64,6 +69,7 @@ func spawn() -> void:
 		})
 	for actor in owner.actors:
 		actor.ult_pending = false
+		actor.ult_queued = false
 		actor.shield = 0.0
 	sync_totals()
 
@@ -112,13 +118,17 @@ func deal(target: Dictionary, amount: float, magical: bool, certain := false) ->
 	var evaded: bool = not certain and owner.rng.randf() < float(target.evasion)
 	if evaded:
 		return {"damage": 0.0, "evaded": true, "absorbed": 0.0}
+	var guarded: bool = not magical and not certain and target.get("class", "") == "vanguard" and int(target.get("pp", 0)) > 0
+	if guarded:
+		target.pp -= 1
+		amount *= 0.65
 	var raw := maxf(1, amount - float(target.armor) * (0.35 if magical else 1.0))
 	var absorbed := minf(float(target.get("shield", 0.0)), raw)
 	if target.has("shield"):
 		target.shield -= absorbed
 	var actual := minf(float(target.hp), raw - absorbed)
 	target.hp = maxf(0, target.hp - actual)
-	return {"damage": actual, "evaded": false, "absorbed": absorbed}
+	return {"damage": actual, "evaded": false, "absorbed": absorbed, "guarded": guarded}
 
 
 func hit_enemy(index: int, requested := -1) -> Dictionary:
@@ -135,11 +145,28 @@ func hit_enemy(index: int, requested := -1) -> Dictionary:
 	var combo: bool = actor.id == "mulan" and (int(actor.hits) + 1) % 3 == 0
 	if combo:
 		amount *= 1.3 + actor.ranks[1] * 0.2
+	var focused: bool = actor["class"] in ["mage", "artificer"] and int(actor.get("pp", 0)) > 0
+	if focused:
+		actor.pp -= 1
+		amount *= 1.20
 	var hit := deal(enemies[target], amount, actor["class"] in ["mage", "artificer"])
+	if hit.evaded and enemies[target]["class"] == "assassin" and int(enemies[target].get("pp", 0)) > 0:
+		enemies[target].pp -= 1
+		hit["counter"] = deal(actor, float(enemies[target].damage) * 0.6, false, true).damage
+	elif not hit.evaded and actor["class"] == "ranger" and int(actor.get("pp", 0)) > 0 and enemies[target].hp > 0:
+		actor.pp -= 1
+		hit.damage += deal(enemies[target], actor.damage * 0.25, false, true).damage
+		hit["followup"] = true
+	if focused:
+		hit["focused"] = true
 	hit.merge({"target": target, "critical": critical, "message": "Esquiva" if hit.evaded else "", "targets": [target]})
-	actor.energy = minf(100, actor.energy + (8.0 if hit.evaded else 18.0))
+	actor.energy = minf(100, actor.energy + (8.0 if hit.evaded else 18.0 + actor.get("energy_bonus", 0.0)))
 	if not hit.evaded:
 		actor.hits += 1
+		if TaleCatalog.NEW_HERO_IDS.has(actor.id):
+			if not owner.unlock_stats.has("new_hits"):
+				owner.unlock_stats["new_hits"] = {}
+			owner.unlock_stats.new_hits[actor.id] = int(owner.unlock_stats.new_hits.get(actor.id, 0)) + 1
 		match str(actor.id):
 			"scarlet":
 				enemies[target].burn = 2.0 + actor.ranks[1] * 2
@@ -157,6 +184,17 @@ func hit_enemy(index: int, requested := -1) -> Dictionary:
 			"ariel":
 				if int(actor.hits) % 3 == 0:
 					owner.heal_group(3.0 + actor.ranks[0] * 4)
+			"maria":
+				enemies[target].poison = 2.0 + actor.ranks[2] * 2
+				enemies[target].poison_left = 4.0
+			"matches":
+				enemies[target].burn = 2.0 + actor.ranks[0] * 2
+				enemies[target].burn_left = 3.0
+			"aladin":
+				if int(actor.hits) % 3 == 0:
+					for ally in owner.actors:
+						if ally.hp > 0:
+							ally.shield = minf(ally.max_hp, ally.shield + 3.0 + actor.ranks[0] * 2)
 		actor.hp = minf(actor.max_hp, actor.hp + actor.leech)
 	sync_totals()
 	return hit
@@ -175,7 +213,32 @@ func hit_party(enemy_index := 0) -> Dictionary:
 		if ally.id == "rapunzel" and ally.hp > 0:
 			weakness = ally.ranks[2] * 0.03
 	var actor: Dictionary = owner.actors[target]
-	var hit := deal(actor, float(enemy.damage) * (1.0 - weakness), enemy["class"] == "mage")
+	var amount: float = float(enemy.damage) * (1.0 - weakness)
+	var focused: bool = enemy["class"] in ["mage","artificer"] and int(enemy.get("pp",0)) > 0
+	if focused:
+		enemy.pp -= 1
+		amount *= 1.20
+	var hit := deal(actor, amount, enemy["class"] == "mage")
+	if focused:
+		hit["focused"] = true
+	if not hit.evaded and actor.hp > 0 and enemy["class"] == "ranger" and int(enemy.get("pp",0)) > 0:
+		enemy.pp -= 1
+		hit.damage += deal(actor, float(enemy.damage) * 0.25, false, true).damage
+		hit["followup"] = true
+	if hit.evaded and actor["class"] == "assassin" and int(actor.get("pp", 0)) > 0:
+		actor.pp -= 1
+		hit["counter"] = deal(enemy, actor.damage * 0.6, false, true).damage
+		sync_totals()
+	if actor.hp > 0 and actor.hp < actor.max_hp * 0.5:
+		for support in owner.actors:
+			if support.id in ["rapunzel", "ariel"] and support.hp > 0 and int(support.get("pp", 0)) > 0:
+				support.pp -= 1
+				var healed := minf(actor.max_hp - actor.hp, actor.max_hp * 0.08)
+				actor.hp += healed
+				hit["support_heal"] = healed
+				if support.id == "rapunzel":
+					owner.unlock_stats.healing += healed
+				break
 	actor.energy = minf(100, actor.energy + hit.damage / actor.max_hp * 80.0)
 	hit["target"] = target
 	hit["enemy"] = enemy_index
@@ -205,6 +268,10 @@ func tick(delta: float) -> void:
 		if damage > 0:
 			last_dot_targets.append(index)
 	for actor in run().actors:
+		if actor.get("evasion_left", 0.0) > 0:
+			actor.evasion_left = maxf(0, actor.evasion_left - delta)
+			if actor.evasion_left == 0:
+				actor.evasion = actor.base_evasion
 		if actor.hp > 0 and not actor.ult_pending:
 			actor.energy = minf(100, actor.energy + delta * 3.0)
 	sync_totals()
@@ -250,16 +317,23 @@ func ultimate(index: int, requested := -1) -> Dictionary:
 	var targets: Array[int] = []
 	var amount := 0.0
 	var healed := 0.0
+	var per_target := {}
 	match str(actor.id):
-		"scarlet", "ariel":
+		"scarlet", "ariel", "alice", "aladin":
 			for at in enemies.size():
 				if enemies[at].hp > 0:
 					targets.append(at)
 		"mulan":
 			targets = eligible({"class": "vanguard"}, enemies)
 			actor.shield += actor.max_hp * 0.35
-		"snow_white":
+		"snow_white", "joao", "maria", "peter", "matches":
 			targets.append(target)
+			if actor.id == "peter":
+				actor.evasion = minf(0.80, actor.base_evasion + 0.25)
+				actor.evasion_left = 5.0
+		"puss":
+			targets = eligible({"class": "vanguard"}, enemies)
+			actor.shield = minf(actor.max_hp, actor.shield + actor.max_hp * 0.25)
 		"rapunzel":
 			for ally in owner.actors:
 				if ally.hp > 0:
@@ -269,21 +343,36 @@ func ultimate(index: int, requested := -1) -> Dictionary:
 					ally.shield += ally.max_hp * 0.20
 			owner.unlock_stats.healing += healed
 	for at in targets:
-		var multiplier: float = {"scarlet": 2.0, "snow_white": 4.0, "mulan": 3.2, "ariel": 1.6}.get(actor.id, 1.0)
-		amount += deal(enemies[at], actor.damage * multiplier, actor.id in ["scarlet", "ariel"], true).damage
+		var multiplier: float = {"scarlet": 2.0, "snow_white": 4.0, "mulan": 3.2, "ariel": 1.6, "joao": 4.2, "maria": 2.8, "alice": 2.0, "puss": 3.6, "peter": 3.0, "matches": 4.0, "aladin": 2.0}.get(actor.id, 1.0)
+		var dealt: float = deal(enemies[at], actor.damage * multiplier, actor["class"] in ["mage", "artificer"], true).damage
+		per_target[at] = dealt
+		amount += dealt
 		if actor.id == "scarlet":
 			enemies[at].burn = 6.0 + actor.ranks[1] * 2
 			enemies[at].burn_left = 4.0
 		elif actor.id == "snow_white":
 			enemies[at].poison = 8.0 + actor.ranks[0] * 2
 			enemies[at].poison_left = 6.0
+		elif actor.id == "maria":
+			enemies[at].poison = 8.0 + actor.ranks[2] * 2
+			enemies[at].poison_left = 6.0
+		elif actor.id == "matches":
+			enemies[at].burn = 8.0 + actor.ranks[0] * 2
+			enemies[at].burn_left = 5.0
+	if actor.id == "aladin":
+		for ally in owner.actors:
+			if ally.hp > 0:
+				var before: float = ally.hp
+				ally.hp = minf(ally.max_hp, ally.hp + ally.max_hp * 0.15)
+				healed += ally.hp - before
+				ally.shield = minf(ally.max_hp, ally.shield + ally.max_hp * 0.15)
 	if actor.id == "ariel":
 		slow_left = 5.0
 		for ally in owner.actors:
 			if ally.hp > 0:
 				ally.hp = minf(ally.max_hp, ally.hp + ally.max_hp * 0.2)
 	sync_totals()
-	return {"damage": amount, "targets": targets, "target": target, "critical": false, "evaded": false, "message": TaleCatalog.HERO_TACTICS[actor.id].ult, "healed": healed, "ultimate": true}
+	return {"damage": amount, "target_damage": per_target, "targets": targets, "target": target, "critical": false, "evaded": false, "message": TaleCatalog.HERO_TACTICS[actor.id].ult, "healed": healed, "ultimate": true}
 
 
 func snapshot() -> Dictionary:

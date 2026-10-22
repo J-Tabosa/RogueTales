@@ -1,10 +1,10 @@
 # RogueTales: O Último Fio
 
-Idle RPG tático em **Godot 4.7 / GDScript**, com **12 capítulos**, cinco heroínas, recrutamento por requisitos e formação de até três aliadas em duas linhas. A interface é minimalista: campo de batalha amplo, vida/carga junto às unidades e retratos para ativar as ULTs. No PC, os controles ficam na lateral; no celular, na base.
+Idle RPG tático em **Godot 4.7 / GDScript**, com **12 capítulos**, 12 personagens, recrutamento por requisitos e formação de até três integrantes em duas linhas. A interface segue um RPG mobile de contos: início ilustrado, coleção em cartões, filtros de recrutamento, navegação inferior com ícones, fila de iniciativa e retratos para ativar as ULTs. No PC, os controles ficam na lateral; no celular, na base.
 
 ## Jogar
 
-Importe `project.godot` na Godot 4.7 e pressione **F5**. Partidas novas começam só com Scarlet, a Chapeuzinho Vermelho. No mapa, abra um capítulo e entre na batalha automática. Cada run contém dois encontros e um chefe. Entre encontros, escolha uma relíquia ou uma princesa temporária.
+Importe `project.godot` na Godot 4.7 e pressione **F5**. Partidas novas começam só com Scarlet, a Chapeuzinho Vermelho. No mapa, abra um capítulo e entre na batalha automática. Cada run contém dois encontros e um chefe. Entre encontros, escolha uma relíquia ou um personagem temporário.
 
 A tela **Heróis** reúne níveis, atributos, habilidades e a descrição de classe/ULT. Em **Formação**, adicione até três heroínas e escolha vanguarda ou retaguarda; sempre é necessário manter ao menos uma integrante na frente. Clicar em **Frente → Fundo** move uma heroína para trás quando outra já protege a frente. O posicionamento fica bloqueado durante uma run.
 
@@ -20,28 +20,47 @@ A tela **Heróis** reúne níveis, atributos, habilidades e a descrição de cla
 
 As regras também valem para os inimigos, que agora lutam em esquadrões de até três unidades, com classe, linha, vida, armadura, esquiva e relógio de ataque próprios. A morte de um alvo permite escolher outro elegível, incluindo durante a preparação do golpe. Cada acerto pertence a uma única animação. Mulan e Rapunzel avançam ao alvo; as maçãs de Branca de Neve viajam em linha reta.
 
-## Heroínas e ULTs
+## Combates por iniciativa
 
-| Heroína | Classe | ULT |
+A inspiração é a sequência de ações e reações de [Unicorn Overlord](https://unicorn-overlord.com/system/stage-battle/). A adaptação mantém os encontros do RPG idle: quando todos gastam AP, uma nova rodada começa automaticamente até um lado cair.
+
+- **Iniciativa:** derivada do intervalo de ataque, define a ordem de cada rodada. Uma ação termina sua animação antes de outra começar; inimigos também têm antecipação, impacto e recuperação.
+- **AP:** cada aliado recebe 2 ataques por rodada; inimigos comuns recebem 1, chefes recebem 2.
+- **PP:** cada unidade tem 1 reação por rodada; chefes têm 2. Vanguarda reduz um golpe físico em 35%; assassinos contra-atacam após esquivar; atiradores dão um disparo extra de 25%; magos e artilheiros reforçam um ataque em 20%. Rapunzel e Ariel podem gastar PP para socorrer um aliado abaixo de metade dos PV com 8% dos PV máximos.
+- **ULT:** a automática substitui uma ação normal. Ao tocar manualmente enquanto outro personagem age, a ULT aguarda o fim dessa ação; a carga é consumida quando a animação começa. Cliques repetidos não duplicam a reserva.
+- **Leitura:** a fila mostra os próximos atores, as unidades exibem AP/PP e o impacto mostra dano real, crítico, guarda, esquiva, contra-ataque e cura. Pausa, 2× e movimento reduzido afetam os efeitos.
+
+## Personagens e ULTs
+
+| Personagem | Classe | ULT |
 | --- | --- | --- |
 | Scarlet | Artilheira | **Final explosivo**: 200% de dano a todos e queimadura. |
 | Rapunzel | Assassina / suporte | **Coroa de fios**: cura 35% dos PV máximos e concede 20% de escudo às aliadas vivas. |
 | Branca de Neve | Atiradora | **Maçã da sentença**: 400% de dano na retaguarda e veneno fortalecido. |
 | Mulan | Vanguarda | **Dragão de jade**: 320% de dano à frente e escudo de 35% para si. |
 | Ariel | Maga | **Sinfonia abissal**: 160% em todos, cura coletiva de 20% e lentidão por cinco segundos. |
+| João | Assassino | **Caçada cruzada**: rajada de 420% na retaguarda. |
+| Maria | Assassina | **Receita da bruxa**: 280% na retaguarda e veneno fortalecido por 6 s. |
+| Alice | Maga | **Cortejo dos naipes**: magia de 200% em todos. |
+| Gato de Botas | Vanguarda | **Nove vidas, um corte**: 360% na frente e escudo de 25% para si. |
+| Vendedora de Fósforos | Atiradora | **Último fósforo**: 400% na retaguarda e queimadura por 5 s. |
+| Peter Pan | Assassino | **Passo do outro lado**: 300% na retaguarda e +25 pontos de esquiva por 5 s. |
+| Aladin | Mago | **Três desejos**: 200% em todos, cura e escudo coletivos de 15%. |
 
 A carga sobe com o tempo de combate, acertos e dano recebido. Ao chegar a 100%, clique no retrato ou use 1–3 no PC. **ULT automática** pode ser alternada na batalha e nas configurações. A reserva impede gastar a mesma carga duas vezes; o efeito ocorre no impacto da animação. Pausa e 2× controlam simulação, dash, carga e efeitos juntos. Gestos de idle e flashes vermelhos de dano continuam ativos.
 
-Cada heroína evolui até o nível 30 com ouro/EXP e possui três habilidades de cinco níveis. Relíquias pertencem à run; melhorias e desbloqueios são permanentes.
+Cada personagem evolui até o nível 30 com ouro/EXP e possui três habilidades de cinco níveis. Relíquias pertencem à run; melhorias e desbloqueios são permanentes.
 
 ## Recrutamento
 
-| Heroína | Desbloqueio permanente |
+| Personagem | Desbloqueio permanente |
 | --- | --- |
 | Branca de Neve | Vencer três runs distintas após convocá-la. |
 | Rapunzel | Restaurar 60 PV reais como convidada. A ULT também conta; excesso de cura não conta. |
 | Mulan | Acertar oito Terceiros cortes como convidada. |
 | Ariel | Vencer dois capítulos diferentes com ela viva na equipe final. |
+
+Os sete novos personagens exigem **20 ataques básicos acertados como convidados**, acumulados entre runs. João e Maria são unidades separadas.
 
 Convites entram imediatamente na formação e herdam as relíquias. Se os três espaços estiverem ocupados, escolha uma substituição temporária. Recarregar a mesma run não duplica créditos. O progresso está em **Heróis → Ver requisito**.
 
@@ -97,9 +116,24 @@ godot --headless --path . --export-release "Linux PC" build/linux/RogueTales.x86
 
 No Windows, crie as duas pastas pelo Explorador ou com `New-Item -ItemType Directory -Force build/windows, build/linux` no PowerShell. O executável incorpora o pacote do jogo; não exige instalar Godot para jogar. Não há assinatura digital ou instalador. A exportação Android requer SDK/templates e configuração de assinatura; nenhum APK está incluído.
 
+## Animações dos novos personagens
+
+João, Maria, Alice, Gato de Botas, Vendedora de Fósforos, Peter Pan e Aladin possuem a mesma contagem da Scarlet, com poses próprias:
+
+| Animação | Quadros | FPS |
+| --- | --- | --- |
+| `idle` | 4 | 2 |
+| `idle_blink` | 4 | 12 |
+| `walk` | 16 | 12 |
+| `attack` | 10 | 10 |
+
+São **34 quadros por personagem, 238 novos quadros**. A ULT usa a animação de ataque e aplica seu efeito próprio uma vez no impacto. Aladin flutua em seu tapete durante o deslocamento. As cenas editáveis ficam em `scenes/heroes/`; cada personagem tem `frames.tres`, duas folhas originais e dois atlas preparados em `assets/<id>/`. A preparação nativa Godot isola as poses e acrescenta margem transparente para evitar recortes ou partes do quadro vizinho. O laboratório (Ctrl+B) permite escolher os 12 personagens e as quatro animações com controle de velocidade.
+
+Para refazer os atlas após trocar a arte: instale Pillow, NumPy e SciPy, configure `GODOT` para a Godot 4.7 e execute `python tools/prepare_roster.py`. As folhas originais não são modificadas. O export usa apenas os atlas preparados. As vozes sintéticas existentes continuam disponíveis para os cinco personagens anteriores; os sete novos usam os efeitos de combate compartilhados.
+
 ## Arte e desempenho
 
-A arena de ruínas foi gerada com a ferramenta integrada ImageGen, preservada em `assets/ui/ruins_arena.png`; o prompt completo está em `assets/ui/ruins_arena_prompt.json`. UI, texto, botões e barras são nativos da Godot. As artes de madeira anteriores continuam disponíveis, mas as telas principais usam cartões lisos e decoração reduzida.
+A nova arena lateral foi criada com ImageGen e está em `assets/ui/storybook_battle.png`; o prompt completo está em `assets/ui/storybook_battle_prompt.json`. A arte anterior permanece em `assets/ui/ruins_arena.png`. UI, texto, botões e barras são nativos da Godot. As artes de madeira anteriores continuam disponíveis, mas as telas principais usam cartões lisos e decoração reduzida.
 
 Oito folhas de monstros editáveis estão em `scenes/enemies/`. Os quatro novos capítulos reutilizam as folhas dos temas de pomar, torre, palácio e biblioteca; classes/atributos e esquadrões variam. Os fundos e sprites não mudam a cada capítulo para doze artes exclusivas. Procedência em `assets/*/ART_NOTES.md`.
 
@@ -109,6 +143,8 @@ Texturas, retratos, estilos e cenas usam cache; a arena tem até seis unidades e
 
 - `scripts/interface.gd`: interface minimalista, layouts PC/celular, formação, ULTs e reset.
 - `scripts/main.gd`: navegação, história, progressão e orquestração das batalhas.
+- `scripts/battle_flow.gd`: iniciativa, AP/PP, rodadas e fila de ULT.
+- `scripts/mobile_icon.gd`: ícones vetoriais nativos para navegação por toque.
 - `scripts/tactics.gd`: classes, alvos, esquadrões, esquiva, status e ULTs.
 - `scripts/tactical_arena.gd`: posicionamento, animações, dash, projéteis e barras junto às unidades.
 - `scripts/run.gd`, `campaign.gd`, `catalog.gd`: run, persistência e conteúdo.
@@ -116,6 +152,8 @@ Texturas, retratos, estilos e cenas usam cache; a arena tem até seis unidades e
 
 ```sh
 godot --headless --path . --editor --quit
+godot --headless --path . --script tests/battle_flow.gd
+godot --headless --path . --script tests/new_roster.gd
 godot --headless --path . --script tests/tactics.gd
 godot --headless --path . --script tests/smoke.gd
 godot --headless --path . --script tests/idle.gd
@@ -124,4 +162,4 @@ godot --headless --path . --script tests/presentation.gd
 godot --headless --path . --script tests/combat_presentation.gd
 ```
 
-As suítes usam saves isolados. Cobrem campanha completa de doze capítulos com renda obtida no jogo, targeting/fallback por classe, esquiva, cinco ULTs distintas, consumo único, pausa, mudanças de proporção durante o combate, migração, reset/cancelamento/backup, desbloqueios, derrota, patrulha e epílogo. Capturas gráficas verificam telas de PC e retrato. O executável Linux é iniciado no ambiente de validação; o export Windows é gerado e sua estrutura é verificada, mas não é executado neste ambiente Linux.
+As suítes usam saves isolados. Cobrem campanha completa de doze capítulos com renda obtida no jogo, targeting/fallback por classe, esquiva, 12 ULTs distintas, consumo único, pausa, mudanças de proporção durante o combate, migração, reset/cancelamento/backup, desbloqueios, derrota, patrulha e epílogo. Capturas gráficas verificam telas de PC e retrato. O executável Linux é iniciado no ambiente de validação; o export Windows é gerado e sua estrutura é verificada, mas não é executado neste ambiente Linux.

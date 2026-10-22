@@ -143,5 +143,5 @@ func checks() -> void:
 	for path in [SAVE, SAVE + ".bak", SAVE + ".tmp"]:
 		if FileAccess.file_exists(path):
 			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
-	print("TACTICS PASS: 12 chapters, class targeting/fallback, evasion, five unique ultimates, atomic ULT reservation, formation/save migration, pause, PC/mobile live resize and irreversible local reset/backup replacement")
+	print("TACTICS PASS: 12 chapters, class targeting/fallback, evasion, twelve unique ultimates, atomic ULT reservation, formation/save migration, pause, PC/mobile live resize and irreversible local reset/backup replacement")
 	quit()

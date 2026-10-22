@@ -3,9 +3,9 @@ extends AnimatedSprite2D
 ## Idle holds frame 0, then occasionally plays a blink or a short sway once.
 
 enum IdleState { REST, BLINK, SWAY }
-enum AttackStyle { BOMB, HAIR, APPLE, SWORD, TIDE }
+enum AttackStyle { BOMB, HAIR, APPLE, SWORD, TIDE, CROSSBOW, DAGGER, CARDS, GREATSWORD, MATCH, SPIRIT, LAMP }
 
-@export_group("Heroína")
+@export_group("Personagem")
 @export var hero_name := "Scarlet"
 @export var hero_title := "A Bombardeira"
 @export var attack_style: AttackStyle = AttackStyle.BOMB
@@ -79,6 +79,10 @@ func is_hair_attack() -> bool:
 	return attack_style == AttackStyle.HAIR
 
 
+func is_melee_attack() -> bool:
+	return attack_style in [AttackStyle.HAIR, AttackStyle.SWORD, AttackStyle.DAGGER, AttackStyle.GREATSWORD, AttackStyle.SPIRIT]
+
+
 func get_weapon_label() -> String:
 	match attack_style:
 		AttackStyle.HAIR:
@@ -89,6 +93,20 @@ func get_weapon_label() -> String:
 			return "Lâmina da guerreira"
 		AttackStyle.TIDE:
 			return "Tridente das marés"
+		AttackStyle.CROSSBOW:
+			return "Besta de caçador"
+		AttackStyle.DAGGER:
+			return "Adaga envenenada"
+		AttackStyle.CARDS:
+			return "Cartas do País das Maravilhas"
+		AttackStyle.GREATSWORD:
+			return "Espada do crepúsculo"
+		AttackStyle.MATCH:
+			return "Fósforos encantados"
+		AttackStyle.SPIRIT:
+			return "Adaga espectral"
+		AttackStyle.LAMP:
+			return "Lâmpada dos três desejos"
 	return "Bombas à distância"
 
 

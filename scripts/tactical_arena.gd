@@ -2,7 +2,8 @@ extends Node2D
 ## Combat view. Every effect follows the target selected by the formation rules.
 signal attack_hit(index: int)
 signal attack_started(index: int)
-const FLOOR = preload("res://assets/ui/ruins_arena.png")
+signal enemy_attack_hit(index: int)
+const FLOOR = preload("res://assets/ui/storybook_battle.png")
 const Enemy = preload("res://scripts/enemy.gd")
 var party_scenes: Array = []
 var simulation
@@ -31,6 +32,9 @@ var effects: Array[Dictionary] = []
 var field_height := 550.0
 var field_width := 492.0
 var backdrop: TextureRect
+var enemy_track := {"time": -1.0, "duration": 0.9, "index": -1, "target": -1, "hit": false}
+var numbers: Array[Dictionary] = []
+var hit_stop := 0.0
 
 
 func _ready() -> void:
@@ -46,7 +50,8 @@ func _ready() -> void:
 	for index in party_scenes.size():
 		var actor: AnimatedSprite2D = party_scenes[index].instantiate()
 		actor.return_to_idle = false
-		actor.scale *= 0.58
+		actor.scale *= 0.68
+		actor.set_meta("battle_scale", actor.scale)
 		actor.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		add_child(actor)
 		heroes.append(actor)
@@ -55,7 +60,7 @@ func _ready() -> void:
 		actor.z_index = int(home.y)
 		actor.show_animation("idle")
 		tracks.append({"home": home, "time": -1.0, "duration": 1.0, "hit": false, "hurt": 0.0, "alive": true, "target": -1, "ultimate": false})
-		unit_widgets.append(widget(home, str(TaleCatalog.CLASSES[simulation.actors[index]["class"]].name), Color("a3d9c3")))
+		unit_widgets.append(widget(home, TaleCatalog.hero_class_name(simulation.actors[index].id), Color("a3d9c3")))
 	if not heroes.is_empty():
 		hero = heroes[0]
 	queue_redraw()
@@ -68,8 +73,9 @@ func home_for(row: String, index: int, hostile: bool) -> Vector2:
 		if units[at].row == row:
 			same.append(at)
 	var order := maxi(0, same.find(index))
-	var y := field_height * 0.52 + (order - (same.size() - 1) * 0.5) * 156.0
-	var x := (325.0 if row == "front" else 430.0) if hostile else (167.0 if row == "front" else 62.0)
+	var spacing := minf(125.0, field_height * 0.27)
+	var y := field_height * 0.70 + (order - (same.size() - 1) * 0.5) * spacing
+	var x := (332.0 if row == "front" else 422.0) if hostile else (196.0 if row == "front" else 80.0)
 	return Vector2(x * field_width / 492.0, y + (19.0 if row == "back" else 0.0))
 
 
@@ -80,8 +86,8 @@ func widget(at: Vector2, title: String, tint: Color) -> Dictionary:
 	add_child(group)
 	var text := Label.new()
 	text.text = title
-	text.position = Vector2(-5, -3)
-	text.size = Vector2(96, 20)
+	text.position = Vector2(-21, -3)
+	text.size = Vector2(128, 20)
 	text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	text.add_theme_font_size_override("font_size", 11)
 	text.add_theme_color_override("font_color", Color("e9e8dd"))
@@ -121,8 +127,8 @@ func sync_enemies() -> void:
 	for index in simulation.tactics.enemies.size():
 		var data: Dictionary = simulation.tactics.enemies[index]
 		var model: AnimatedSprite2D = Enemy.warm(stage).instantiate()
-		model.regular_height = 158
-		model.boss_height = 193
+		model.regular_height = 182
+		model.boss_height = 210
 		add_child(model)
 		var home := home_for(str(data.row), index, true)
 		model.advance(0, data.boss, 0, data.interval)
@@ -137,6 +143,8 @@ func sync_enemies() -> void:
 
 
 func attack(index: int = 0, target: int = -1, ultimate := false) -> bool:
+	if is_action_busy():
+		return false
 	if index < 0 or index >= tracks.size() or not tracks[index].alive or tracks[index].time >= 0 or target < 0 or target >= foes.size():
 		return false
 	var actor: AnimatedSprite2D = heroes[index]
@@ -159,6 +167,11 @@ func set_animation(id: String) -> void:
 
 func reset_effects() -> void:
 	walking = false
+	enemy_track.time = -1.0
+	hit_stop = 0.0
+	for item in numbers:
+		item.node.queue_free()
+	numbers.clear()
 	effects.clear()
 	for index in tracks.size():
 		if simulation.actors[index].ult_pending:
@@ -182,13 +195,15 @@ func sync_health(actors: Array[Dictionary]) -> void:
 		unit_widgets[index].health.max_value = actors[index].max_hp
 		unit_widgets[index].health.value = actors[index].hp
 		unit_widgets[index].energy.value = actors[index].energy
+		unit_widgets[index].text.text = "%s  %dAP %dPP" % [TaleCatalog.hero_class_name(actors[index].id), actors[index].get("ap", 0), actors[index].get("pp", 0)]
 	for index in foes.size():
 		var data: Dictionary = simulation.tactics.enemies[index]
 		foes[index].visible = enemy_visible and data.hp > 0
 		foe_widgets[index].root.visible = enemy_visible and data.hp > 0
 		foe_widgets[index].health.max_value = data.max_hp
 		foe_widgets[index].health.value = data.hp
-		foe_widgets[index].energy.value = (1.0 - data.timer / simulation.tactics.interval_for(index)) * 100
+		foe_widgets[index].energy.value = float(data.get("ap", 0)) * 50.0
+		foe_widgets[index].text.text = "%s  %dAP %dPP" % [TaleCatalog.CLASSES[data["class"]].name, data.get("ap", 0), data.get("pp", 0)]
 
 
 func hurt(index: int) -> void:
@@ -210,13 +225,15 @@ func enemy_strike(index: int, target: int) -> void:
 
 
 func _process(delta: float) -> void:
-	var dt := 0.0 if frozen else minf(delta, 0.25) * speed
+	var dt := 0.0 if frozen or hit_stop > 0 else minf(delta, 0.25) * speed
+	if not frozen:
+		hit_stop = maxf(0, hit_stop - delta * speed)
 	clock += dt
 	for index in heroes.size():
 		var actor: AnimatedSprite2D = heroes[index]
 		actor.z_index = int(actor.position.y)
 		var track: Dictionary = tracks[index]
-		actor.speed_scale = 0.0 if frozen or not track.alive else speed
+		actor.speed_scale = 0.0 if frozen or hit_stop > 0 or not track.alive else speed
 		track.hurt = maxf(0, track.hurt - dt)
 		if track.alive:
 			actor.modulate = Enemy.hurt_color(track.hurt)
@@ -230,7 +247,7 @@ func _process(delta: float) -> void:
 			target = track.target
 		var impact: float = actor.impact_ratio
 		actor.seek_animation("attack", phase * actor.get_animation_duration("attack"))
-		if (actor.is_hair_attack() and not track.ultimate) or actor.attack_style == 3:
+		if actor.is_melee_attack() and not (actor.is_hair_attack() and track.ultimate):
 			if target >= 0:
 				var contact := foe_homes[target] + Vector2(-62, 8)
 				var dash := smoothstep(0, 1, phase / maxf(0.1, impact * 0.65)) if phase < impact else (1.0 - smoothstep(impact, 1, phase))
@@ -246,10 +263,39 @@ func _process(delta: float) -> void:
 			actor.position = track.home
 			if track.alive:
 				actor.show_animation("idle")
+	if enemy_track.time >= 0 and dt > 0:
+		var index: int = enemy_track.index
+		if simulation.tactics.enemies[index].hp <= 0:
+			enemy_track.time = -1.0
+		else:
+			enemy_track.time += dt
+			if not enemy_track.hit and enemy_track.time >= enemy_track.duration * 0.55:
+				enemy_track.hit = true
+				enemy_attack_hit.emit(index)
+			if enemy_track.time >= enemy_track.duration:
+				enemy_track.time = -1.0
 	for index in foes.size():
 		var data: Dictionary = simulation.tactics.enemies[index]
-		foes[index].advance(dt, data.boss, clampf(1.0 - data.timer / simulation.tactics.interval_for(index), 0, 1), simulation.tactics.interval_for(index))
+		foes[index].advance(dt, data.boss, 0, simulation.tactics.interval_for(index))
 		foes[index].position = foe_homes[index]
+		if enemy_track.time >= 0 and enemy_track.index == index:
+			var phase: float = clampf(enemy_track.time / enemy_track.duration, 0, 0.999)
+			var anim := "boss_attack" if data.boss else "attack"
+			foes[index].seek(anim, phase * foes[index].animation_duration(anim))
+			if data["class"] in ["vanguard", "assassin"] and enemy_track.target >= 0:
+				var dash := sin(phase * PI)
+				var to: Vector2 = tracks[enemy_track.target].home + Vector2(60, 0)
+				foes[index].position = foe_homes[index].lerp(to, dash)
+			foes[index].z_index = 950
+		else:
+			foes[index].z_index = int(foe_homes[index].y)
+	for item in numbers:
+		item.left -= dt
+		item.node.position.y -= dt * 30
+		item.node.modulate.a = minf(1, item.left * 3)
+		if item.left <= 0:
+			item.node.queue_free()
+	numbers = numbers.filter(func(item): return item.left > 0)
 	for item in effects:
 		item.time -= dt
 	effects = effects.filter(func(item): return item.time > 0)
@@ -265,12 +311,10 @@ func _draw() -> void:
 	for track in tracks:
 		draw_set_transform(track.home, 0, Vector2(1, 0.23))
 		draw_circle(Vector2.ZERO, 36, Color("0a151b", 0.5), true, -1, true)
-		draw_arc(Vector2.ZERO, 38, 0, TAU, 32, Color("7bb79f", 0.45), 2, true)
 	draw_set_transform(Vector2.ZERO)
 	for at in foe_homes:
 		draw_set_transform(at, 0, Vector2(1, 0.23))
 		draw_circle(Vector2.ZERO, 38, Color("0a151b", 0.5), true, -1, true)
-		draw_arc(Vector2.ZERO, 40, 0, TAU, 32, Color("b58e96", 0.4), 2, true)
 	draw_set_transform(Vector2.ZERO)
 	for index in tracks.size():
 		var track: Dictionary = tracks[index]
@@ -284,7 +328,7 @@ func _draw() -> void:
 		var from := heroes[index].position + Vector2(15, -65)
 		var to := foe_homes[track.target] + Vector2(0, -60)
 		var tint: Color = TaleCatalog.HEROES[simulation.actors[index].id].color
-		if heroes[index].attack_style in [1, 3]:
+		if heroes[index].is_melee_attack():
 			if phase > heroes[index].impact_ratio * 0.65:
 				draw_arc(to, 25 if not track.ultimate else 48, -1.8, 1.2, 18, tint, 3, true)
 		else:
@@ -297,6 +341,22 @@ func _draw() -> void:
 				draw_circle(point - Vector2(3, 0), 6, Color("dc3f56"), true, -1, true)
 				draw_circle(point + Vector2(3, 0), 6, Color("e95062"), true, -1, true)
 				draw_line(point + Vector2(0, -5), point + Vector2(2, -10), Color("b4c793"), 2)
+			elif heroes[index].attack_style == 5:
+				var direction := (to - from).normalized()
+				for bolt in (3 if track.ultimate else 1):
+					var at := point + Vector2(0, (bolt - (1 if track.ultimate else 0)) * 9)
+					draw_line(at - direction * 24, at, Color("eee5cf"), 3, true)
+			elif heroes[index].attack_style == 7:
+				draw_set_transform(point, t * TAU, Vector2.ONE)
+				draw_rect(Rect2(-6, -9, 12, 18), Color("f9edce"))
+				draw_circle(Vector2.ZERO, 3, Color("d94764"))
+				draw_set_transform(Vector2.ZERO)
+			elif heroes[index].attack_style == 9:
+				draw_line(from.lerp(to, maxf(0, t - 0.12)), point, Color("ed6f3b"), 7, true)
+				draw_circle(point, 5, Color("ffe2a0"), true, -1, true)
+			elif heroes[index].attack_style == 11:
+				draw_arc(point, 9, 0, TAU, 20, tint, 3, true)
+				draw_circle(point, 4, Color("e7fff5"), true, -1, true)
 			else:
 				draw_line(from.lerp(to, maxf(0, t - 0.18)), point, tint, 6, true)
 		if track.ultimate:
@@ -325,5 +385,56 @@ func fit_field(dimensions: Vector2) -> void:
 		unit_widgets[index].root.position = tracks[index].home + Vector2(-43, 12)
 	for index in foes.size():
 		foe_homes[index] = home_for(simulation.tactics.enemies[index].row, index, true)
+		foes[index].position = foe_homes[index]
 		foe_widgets[index].root.position = foe_homes[index] + Vector2(-43, 12)
 	queue_redraw()
+
+
+func is_action_busy() -> bool:
+	if enemy_track.time >= 0:
+		return true
+	for track in tracks:
+		if track.time >= 0:
+			return true
+	return false
+
+
+func begin_enemy_attack(index: int, target: int) -> bool:
+	if is_action_busy() or index < 0 or index >= foes.size() or target < 0 or target >= heroes.size():
+		return false
+	enemy_track = {"time": 0.0, "duration": 0.9, "index": index, "target": target, "hit": false}
+	return true
+
+
+func damage_number(message: String, at: Vector2, tint: Color) -> void:
+	var text := Label.new()
+	text.text = message
+	text.position = at + Vector2(-45, -155)
+	text.size = Vector2(160, 36)
+	text.add_theme_font_size_override("font_size", 22)
+	text.add_theme_color_override("font_color", tint)
+	text.add_theme_color_override("font_outline_color", Color("101321"))
+	text.add_theme_constant_override("outline_size", 5)
+	text.z_index = 1500
+	add_child(text)
+	numbers.append({"node": text, "left": 0.95})
+
+
+func present_result(result: Dictionary, hostile: bool, attacker: int) -> void:
+	var targets: Array = [result.target] if hostile else result.get("targets", [result.target])
+	for target in targets:
+		var at: Vector2 = tracks[target].home if hostile else foe_homes[target]
+		var amount: float = float(result.get("target_damage", {}).get(target, result.damage))
+		var text := "ESQUIVA" if result.evaded else ("CRÍTICO  %d" % int(amount) if result.get("critical", false) else str(int(amount)))
+		damage_number(text, at, Color("f8d38c") if not hostile else Color("ffb5b4"))
+		if result.get("guarded", false):
+			damage_number("GUARDA", at + Vector2(0, 32), Color("8bcce4"))
+		if result.get("support_heal", 0) > 0:
+			damage_number("+%d PV" % int(result.support_heal), at + Vector2(0, 50), Color("9ce5b3"))
+	if result.get("counter", 0) > 0:
+		var at: Vector2 = foe_homes[attacker] if hostile else tracks[attacker].home
+		damage_number("CONTRA %d" % int(result.counter), at, Color("bca8f6"))
+	if result.get("followup", false) or result.get("focused", false):
+		damage_number("DISPARO EXTRA" if result.get("followup", false) else "CONCENTRAÇÃO", (foe_homes[attacker] if hostile else tracks[attacker].home) + Vector2(-10, 50), Color("a9c6ff"))
+	if not reduced_motion and not result.evaded:
+		hit_stop = 0.045

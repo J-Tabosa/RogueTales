@@ -1,0 +1,9 @@
+{
+  "tool": "built-in ImageGen",
+  "reference": "PeterPan.png",
+  "identity_specification": "Adult spirit/yokai Peter Pan: auburn hair, pointed ears, mint eyes, green leaf tunic and pointed cap with red feather, brown belt/boots, dark trousers, pale mint skin and geometric spirit markings, dagger and small mint wisps.",
+  "actions_specification": "Transparent side-view cel-shaded illustrated sheet, 5 columns x 4 rows. Row 1: idle 4 then blank. Row 2: blink open, half-closed, closed, open then blank. Rows 3-4: ten consecutive attack poses: Crouch, ghost dash right, stab with the dagger, leave a compact spirit trail and recover. Same identity, outfit and camera in every full-body right-facing pose. Transparent gutters; no text, scenery, shadows or grid.",
+  "walk_specification": "Transparent 4 x 4 sheet, sixteen consecutive in-place right-facing walk poses, alternating legs/arms, matching frame 16 to frame 1. Aladin instead bobs and floats on his carpet. Preserve character design; no grid or text.",
+  "preparation": "Source PNGs retained. Godot separates silhouettes and packs padded runtime atlases. This JSON records the production prompt specifications.",
+  "cleanup_specification": "Remove only the horizontal/vertical grid lines and replace them with transparent alpha while preserving all poses and layout."
+}

@@ -4,11 +4,12 @@ extends RefCounted
 const CHAPTER_COUNT := 12
 const FINAL_CHAPTER := CHAPTER_COUNT - 1
 const PARTY_LIMIT := 3
+const NEW_HERO_IDS = ["joao", "maria", "alice", "puss", "matches", "peter", "aladin"]
 const CLASSES = {
 	"vanguard": {"name": "Vanguarda", "rule": "Ataca a frente; alcança a retaguarda quando a frente cai.", "evasion": 0.04},
-	"ranger": {"name": "Atiradora", "rule": "Prioriza a retaguarda; usa a frente se ela estiver vazia.", "evasion": 0.10},
-	"mage": {"name": "Maga", "rule": "Alcança ambas as linhas; magia ignora 65% da armadura.", "evasion": 0.04},
-	"assassin": {"name": "Assassina", "rule": "Avança à retaguarda mais ferida; 35% de esquiva.", "evasion": 0.35},
+	"ranger": {"name": "Atirador", "rule": "Prioriza a retaguarda; usa a frente se ela estiver vazia.", "evasion": 0.10},
+	"mage": {"name": "Mago", "rule": "Alcança ambas as linhas; magia ignora 65% da armadura.", "evasion": 0.04},
+	"assassin": {"name": "Assassino", "rule": "Avança à retaguarda mais ferida; 35% de esquiva.", "evasion": 0.35},
 	"artificer": {"name": "Artilheira", "rule": "Alcança ambas as linhas e prioriza a menor armadura.", "evasion": 0.08}
 }
 const HERO_TACTICS = {
@@ -16,7 +17,14 @@ const HERO_TACTICS = {
 	"rapunzel": {"class": "assassin", "row": "front", "ult": "Coroa de fios", "detail": "Cura 35% dos PV e concede 20% de escudo a todas as aliadas vivas."},
 	"snow_white": {"class": "ranger", "row": "back", "ult": "Maçã da sentença", "detail": "Disparo de 400% na retaguarda e veneno fortalecido."},
 	"mulan": {"class": "vanguard", "row": "front", "ult": "Dragão de jade", "detail": "Corte de 320% na linha de frente e escudo de 35% para si."},
-	"ariel": {"class": "mage", "row": "back", "ult": "Sinfonia abissal", "detail": "Maré de 160% em todos; cura 20% do grupo e desacelera por 5 s."}
+	"ariel": {"class": "mage", "row": "back", "ult": "Sinfonia abissal", "detail": "Maré de 160% em todos; cura 20% do grupo e desacelera por 5 s."},
+	"joao": {"class": "assassin", "row": "back", "ult": "Caçada cruzada", "detail": "Rajada de 420% no alvo da retaguarda."},
+	"maria": {"class": "assassin", "row": "front", "ult": "Receita da bruxa", "detail": "Estocada de 280% e veneno fortalecido por 6 s."},
+	"alice": {"class": "mage", "row": "back", "ult": "Cortejo dos naipes", "detail": "Cartas mágicas atingem todos os inimigos (200%)."},
+	"puss": {"class": "vanguard", "row": "front", "ult": "Nove vidas, um corte", "detail": "Corte de 360% na vanguarda e escudo de 25% para si."},
+	"matches": {"class": "ranger", "row": "back", "ult": "Último fósforo", "detail": "Disparo de 400% na retaguarda e queimadura por 5 s."},
+	"peter": {"class": "assassin", "row": "front", "ult": "Passo do outro lado", "detail": "Estocada de 300% na retaguarda e +25% de esquiva por 5 s."},
+	"aladin": {"class": "mage", "row": "back", "ult": "Três desejos", "detail": "Magia de 200% em todos; cura e escudo de 15% para o grupo."}
 }
 const HERO_SCENES = {
 	"scarlet": preload("res://scenes/heroes/scarlet.tscn"),
@@ -24,6 +32,13 @@ const HERO_SCENES = {
 	"snow_white": preload("res://scenes/heroes/snow_white.tscn"),
 	"mulan": preload("res://scenes/heroes/mulan.tscn"),
 	"ariel": preload("res://scenes/heroes/ariel.tscn"),
+	"joao": preload("res://scenes/heroes/joao.tscn"),
+	"maria": preload("res://scenes/heroes/maria.tscn"),
+	"alice": preload("res://scenes/heroes/alice.tscn"),
+	"puss": preload("res://scenes/heroes/puss.tscn"),
+	"matches": preload("res://scenes/heroes/matches.tscn"),
+	"peter": preload("res://scenes/heroes/peter.tscn"),
+	"aladin": preload("res://scenes/heroes/aladin.tscn"),
 }
 const HEROES = {
 	"scarlet":
@@ -107,6 +122,77 @@ const HEROES = {
 			["Tridente abissal", "+16% de dano por nível"]
 		]
 	},
+	"joao": {
+		"name": "João",
+		"role": "Caçador de bruxas",
+		"hp": 175.0,
+		"damage": 24.0,
+		"interval": 1.55,
+		"color": Color("8dba8b"),
+		"bio": "Um rastro de migalhas ensinou João a nunca perder a trilha. Agora a besta abre caminho para casa.",
+		"skills": [["Mira de caçador", "+15% de dano por nível"], ["Olho da floresta", "+4% de chance crítica por nível"], ["Recarga ágil", "Intervalo de ataque −5% por nível"]]
+	},
+	"maria": {
+		"name": "Maria",
+		"role": "Lâmina e veneno",
+		"hp": 180.0,
+		"damage": 23.0,
+		"interval": 1.55,
+		"color": Color("dc826f"),
+		"bio": "Maria não voltou da casa de doces de mãos vazias. A receita mudou de dona.",
+		"skills": [["Fio afiado", "+16% de dano por nível"], ["Antídoto roubado", "+2 de autocura por acerto por nível"], ["Gota amarga", "+2 de veneno/s por nível"]]
+	},
+	"alice": {
+		"name": "Alice",
+		"role": "Cartomante do caos",
+		"hp": 165.0,
+		"damage": 25.0,
+		"interval": 1.9,
+		"color": Color("73c8d9"),
+		"bio": "No País das Maravilhas, Alice aprendeu que toda regra pode ser embaralhada.",
+		"skills": [["Ás impossível", "+16% de dano por nível"], ["Mão cheia", "+2 de energia por acerto por nível"], ["Casaco do Chapeleiro", "+16 PV por nível"]]
+	},
+	"puss": {
+		"name": "Gato de Botas",
+		"role": "Espada do crepúsculo",
+		"hp": 250.0,
+		"damage": 26.0,
+		"interval": 1.9,
+		"color": Color("e47b76"),
+		"bio": "A espada parece grande demais. O Gato de Botas considera isso um problema dos inimigos.",
+		"skills": [["Botas de ferro", "+2 de armadura por nível"], ["Nove vidas", "+20 PV por nível"], ["Peso da lâmina", "+18% de dano por nível"]]
+	},
+	"matches": {
+		"name": "Vendedora de Fósforos",
+		"short_name": "Vendedora",
+		"role": "Fogo na retaguarda",
+		"hp": 170.0,
+		"damage": 22.0,
+		"interval": 1.6,
+		"color": Color("f1aa6b"),
+		"bio": "Cada fósforo guarda uma visão. Ela decidiu acender um futuro que ninguém pudesse apagar.",
+		"skills": [["Brasa teimosa", "+2 de queimadura/s por nível"], ["Faísca certeira", "+14% de dano por nível"], ["Caixa inesgotável", "+1 de energia por acerto por nível"]]
+	},
+	"peter": {
+		"name": "Peter Pan",
+		"role": "Assassino espectral",
+		"hp": 175.0,
+		"damage": 23.0,
+		"interval": 1.45,
+		"color": Color("84dbc3"),
+		"bio": "Peter deixou a própria sombra atravessar o véu. Ela voltou com caminhos que só ele consegue seguir.",
+		"skills": [["Sombra voraz", "+4% de chance crítica por nível"], ["Terra do Nunca", "+14 PV por nível"], ["Passo fantasma", "+2% de esquiva por nível"]]
+	},
+	"aladin": {
+		"name": "Aladin",
+		"role": "Desejos e proteção",
+		"hp": 185.0,
+		"damage": 24.0,
+		"interval": 1.95,
+		"color": Color("77d3cf"),
+		"bio": "Aladin não pede um reino. Prefere um tapete, uma saída e companhia para a viagem.",
+		"skills": [["Trama encantada", "A cada 3 acertos, escudo de 3 +2 por nível ao grupo"], ["Lâmpada desperta", "+16% de dano por nível"], ["Vento das dunas", "Intervalo de ataque −5% por nível"]]
+	},
 }
 const UNLOCKS = {
 	"snow_white":
@@ -129,6 +215,13 @@ const UNLOCKS = {
 		"detail": "Vença 2 capítulos diferentes com Ariel viva na equipe.",
 		"unit": "capítulos diferentes"
 	},
+	"joao": {"goal": 20, "detail": "Acerte 20 ataques básicos com João após a convocação nas runs.", "unit": "ataques acertados"},
+	"maria": {"goal": 20, "detail": "Acerte 20 ataques básicos com Maria após a convocação nas runs.", "unit": "ataques acertados"},
+	"alice": {"goal": 20, "detail": "Acerte 20 ataques básicos com Alice após a convocação nas runs.", "unit": "ataques acertados"},
+	"puss": {"goal": 20, "detail": "Acerte 20 ataques básicos com Gato de Botas após a convocação nas runs.", "unit": "ataques acertados"},
+	"matches": {"goal": 20, "detail": "Acerte 20 ataques básicos com Vendedora de Fósforos após a convocação nas runs.", "unit": "ataques acertados"},
+	"peter": {"goal": 20, "detail": "Acerte 20 ataques básicos com Peter Pan após a convocação nas runs.", "unit": "ataques acertados"},
+	"aladin": {"goal": 20, "detail": "Acerte 20 ataques básicos com Aladin após a convocação nas runs.", "unit": "ataques acertados"},
 }
 const STAGES = [
 	{
@@ -509,7 +602,8 @@ static func hero_stats(
 		"class": HERO_TACTICS[id]["class"],
 		"row": HERO_TACTICS[id].row,
 		"evasion": CLASSES[HERO_TACTICS[id]["class"]].evasion,
-		"energy": 0.0
+		"energy": 0.0,
+		"energy_bonus": 0.0
 	}
 	for choice in choices.values():
 		if choice == "hope":
@@ -530,6 +624,31 @@ static func hero_stats(
 			result.interval *= pow(0.94, levels[2])
 		"ariel":
 			result.damage *= 1.0 + levels[2] * 0.16
+		"joao":
+			result.damage *= 1.0 + levels[0] * 0.15
+			result.crit += levels[1] * 0.04
+			result.interval *= pow(0.95, levels[2])
+		"maria":
+			result.damage *= 1.0 + levels[0] * 0.16
+			result.leech = levels[1] * 2.0
+		"alice":
+			result.damage *= 1.0 + levels[0] * 0.16
+			result.energy_bonus = levels[1] * 2.0
+			result.max_hp += levels[2] * 16.0
+		"puss":
+			result.armor = 3.0 + levels[0] * 2.0
+			result.max_hp += levels[1] * 20.0
+			result.damage *= 1.0 + levels[2] * 0.18
+		"matches":
+			result.damage *= 1.0 + levels[1] * 0.14
+			result.energy_bonus = float(levels[2])
+		"peter":
+			result.crit += levels[0] * 0.04
+			result.max_hp += levels[1] * 14.0
+			result.evasion = minf(0.55, result.evasion + levels[2] * 0.02)
+		"aladin":
+			result.damage *= 1.0 + levels[1] * 0.16
+			result.interval *= pow(0.95, levels[2])
 	result.max_hp *= 1.0 + 0.06 * (clampi(hero_level, 1, 30) - 1)
 	result.damage *= 1.0 + 0.04 * (clampi(hero_level, 1, 30) - 1)
 	result["hp"] = result.max_hp
@@ -550,3 +669,12 @@ static func offer_data(id: String) -> Dictionary:
 		if relic.id == id:
 			return relic
 	return {}
+
+
+static func hero_class_name(id: String) -> String:
+	var job: String = HERO_TACTICS[id]["class"]
+	if id not in ["joao","puss","peter","aladin"]:
+		if job == "mage": return "Maga"
+		if job == "assassin": return "Assassina"
+		if job == "ranger": return "Atiradora"
+	return str(CLASSES[job].name)

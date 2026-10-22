@@ -258,6 +258,11 @@ func restore(campaign: TaleCampaign, data: Dictionary) -> void:
 	if metrics is Dictionary:
 		unlock_stats.healing = maxf(0, float(metrics.get("healing", 0)))
 		unlock_stats.combos = maxi(0, int(metrics.get("combos", 0)))
+		var new_hits: Variant = metrics.get("new_hits", {})
+		unlock_stats["new_hits"] = {}
+		if new_hits is Dictionary:
+			for id in TaleCatalog.NEW_HERO_IDS:
+				unlock_stats.new_hits[id] = clampi(int(new_hits.get(id, 0)), 0, 20)
 	wave = clampi(int(data.get("wave", 0)), 0, 2)
 	var saved_relics: Variant = data.get("relics", [])
 	if saved_relics is Array:

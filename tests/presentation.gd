@@ -25,7 +25,7 @@ func checks() -> void:
 	for node in game.find_children("*", "Sprite2D", true, false):
 		assert(not node is AnimatedSprite2D and not node.is_processing())
 		portraits += 1
-	assert(portraits == 5, "Lists use static cached portraits instead of five animation loops")
+	assert(portraits == TaleCatalog.HEROES.size() + 1, "Collection and profile avatar use static cached portraits")
 	assert(game.box(Color.RED) == game.box(Color.RED), "Identical styles must share resources")
 	game.anchor_right = 0
 	game.anchor_bottom = 0
@@ -94,6 +94,6 @@ func checks() -> void:
 		if FileAccess.file_exists(path):
 			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	print(
-		"PASS: six generated textures/import limits; cached atlases/styles; five static portraits; five viewport sizes; safe-area fitting; stable resizing/modals; mission/resume loading with unique run ID; retained scenery; pause and background battery cap"
+		"PASS: six generated textures/import limits; cached atlases/styles; twelve static portraits; five viewport sizes; safe-area fitting; stable resizing/modals; mission/resume loading with unique run ID; retained scenery; pause and background battery cap"
 	)
 	quit()

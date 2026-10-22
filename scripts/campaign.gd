@@ -36,7 +36,7 @@ var high_quality := true
 var fps_limit := 60
 var text_speed := 36
 var auto_repeat := false
-var unlock_progress: Dictionary = {"snow_white": 0, "rapunzel": 0.0, "mulan": 0, "ariel": []}
+var unlock_progress: Dictionary = initial_unlock_progress()
 var formation_rows: Dictionary = {}
 var auto_ult := true
 var window_mode := "windowed"
@@ -70,8 +70,8 @@ const ACHIEVEMENTS := [
 	},
 	{
 		"id": "voices",
-		"title": "As cinco vozes",
-		"detail": "Recrute todas as cinco heroínas.",
+		"title": "Vozes de todos os contos",
+		"detail": "Recrute todos os personagens.",
 		"reward": 200
 	},
 	{
@@ -309,10 +309,12 @@ func load_data(data: Dictionary) -> void:
 	if text_speed not in [0, 24, 48, 36]:
 		text_speed = 36
 	auto_repeat = bool(data.get("auto_repeat", false))
-	unlock_progress = {"snow_white": 0, "rapunzel": 0.0, "mulan": 0, "ariel": []}
+	unlock_progress = initial_unlock_progress()
 	var progress: Variant = data.get("unlock_progress", {})
 	if progress is Dictionary:
-		for id in ["snow_white", "rapunzel", "mulan"]:
+		for id in TaleCatalog.UNLOCKS:
+			if id == "ariel":
+				continue
 			unlock_progress[id] = clampf(
 				float(progress.get(id, 0)), 0, TaleCatalog.UNLOCKS[id].goal
 			)
@@ -535,6 +537,13 @@ func new_run_id() -> int:
 	return run_counter
 
 
+static func initial_unlock_progress() -> Dictionary:
+	var result := {}
+	for id in TaleCatalog.UNLOCKS:
+		result[id] = [] if id == "ariel" else 0.0
+	return result
+
+
 func unlock_amount(id: String) -> float:
 	if id == "ariel":
 		return unlock_progress.ariel.size()
@@ -543,7 +552,7 @@ func unlock_amount(id: String) -> float:
 
 func unlock_text(id: String) -> String:
 	if unlocked.has(id):
-		return "Desbloqueada permanentemente"
+		return "Desbloqueio permanente"
 	if not TaleCatalog.UNLOCKS.has(id):
 		return "Disponível desde o início"
 	var rule: Dictionary = TaleCatalog.UNLOCKS[id]
@@ -582,6 +591,11 @@ func resolve_run(data: Dictionary, won: bool) -> Array[String]:
 			and not unlock_progress.ariel.has(chapter)
 		):
 			unlock_progress.ariel.append(chapter)
+	var new_hits: Variant = metrics.get("new_hits", {})
+	if new_hits is Dictionary:
+		for id in TaleCatalog.NEW_HERO_IDS:
+			if drafted.has(id):
+				unlock_progress[id] = minf(TaleCatalog.UNLOCKS[id].goal, float(unlock_progress.get(id, 0)) + maxf(0, float(new_hits.get(id, 0))))
 	for id in TaleCatalog.UNLOCKS:
 		if not unlocked.has(id) and unlock_amount(id) >= TaleCatalog.UNLOCKS[id].goal:
 			unlocked.append(id)

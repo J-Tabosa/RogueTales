@@ -51,7 +51,7 @@ func checks() -> void:
 	assert(sound.voices.size() == 6 and sound.attack_players.size() == 2)
 	for id in ["explosion", "win", "achievement"]:
 		assert(sound.effects[id].get_length() >= 0.5)
-	for id in TaleCatalog.HEROES:
+	for id in Audio.ATTACK_CALLS:
 		assert(sound.calls[id].get_length() > 0.15)
 	assert(sound.reserve_call("scarlet", 100))
 	assert(not sound.reserve_call("rapunzel", 100.1))
@@ -83,7 +83,11 @@ func checks() -> void:
 	game.arena.speed = 2
 	game.arena._process(0.13)
 	assert(game.arena.heroes[0].modulate == Color.WHITE)
-	game.run.enemy_hp = 10000
+	for foe in game.run.tactics.enemies:
+		foe.hp = 10000
+		foe.max_hp = 10000
+		foe.evasion = 0
+	game.run.tactics.sync_totals()
 	game.on_attack_hit(0)
 	assert(game.arena.enemy.hurt_left > 0)
 	game.arena.enemy.reset_damage()
