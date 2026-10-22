@@ -137,7 +137,8 @@ func checks() -> void:
 	game.show_menu()
 	assert(not game.debug_enabled)
 	game.show_preview()
-	assert(game.state == "menu")
+	assert(game.state == "preview" and not game.debug_enabled, "The owned-only animation lab is available without enabling debug")
+	game.show_menu()
 	var key := InputEventKey.new()
 	key.keycode = KEY_B
 	key.physical_keycode = KEY_B
@@ -233,7 +234,7 @@ func checks() -> void:
 	game._process(0.05)
 	assert(game.state == "defeat" and game.campaign.checkpoint.is_empty())
 	game.show_upgrades()
-	assert(game.state == "hero")
+	assert(game.state == "hero_details")
 	game.show_party()
 	game.show_map()
 	game.show_settings()

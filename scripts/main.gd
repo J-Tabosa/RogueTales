@@ -2220,7 +2220,7 @@ func process_tactical_combat(dt: float) -> void:
 				return
 			entry["ultimate"] = ultimate
 			combat_flow.begin(entry)
-			log_label.text = "%s · %s" % [TaleCatalog.HEROES[run.actors[index].id].name, TaleCatalog.HERO_TACTICS[run.actors[index].id].ult if ultimate else arena.heroes[index].get_weapon_label()]
+			log_label.text = "%s · %s" % [TaleCatalog.HEROES[run.actors[index].id].name, TaleCatalog.HERO_TACTICS[run.actors[index].id].ult if ultimate else (ExpeditionContent.KITS[run.actors[index].id][0] if run.expedition else arena.heroes[index].get_weapon_label())]
 	else:
 		var target: int = run.tactics.choose_target(run.tactics.enemies[index], run.actors)
 		if arena.begin_enemy_attack(index, target):

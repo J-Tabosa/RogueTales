@@ -42,6 +42,9 @@ var auto_ult := true
 var window_mode := "windowed"
 var run_counter := 0
 var last_resolved_run := 0
+var best_depth := 0
+var expedition_wins := 0
+var blessings_unlocked: Array[String] = ["vigor", "fury", "echo"]
 const IDLE_CAP := 8 * 3600
 const ACHIEVEMENTS := [
 	{
@@ -164,7 +167,9 @@ func choose_memory(index: int, choice: String) -> bool:
 
 func to_dict() -> Dictionary:
 	return {
-		"version": 4,
+		"version": 5,
+		"best_depth": best_depth, "expedition_wins": expedition_wins,
+		"blessings_unlocked": blessings_unlocked.duplicate(),
 		"formation_rows": formation_rows,
 		"auto_ult": auto_ult,
 		"window_mode": window_mode,
@@ -208,6 +213,11 @@ func to_dict() -> Dictionary:
 
 
 func load_data(data: Dictionary) -> void:
+	best_depth = clampi(int(data.get("best_depth", 0)), 0, 12)
+	expedition_wins = maxi(0, int(data.get("expedition_wins", 0)))
+	blessings_unlocked.assign(["vigor", "fury", "echo"])
+	for key in data.get("blessings_unlocked", []):
+		if ExpeditionContent.BLESSINGS.has(key) and not blessings_unlocked.has(key): blessings_unlocked.append(key)
 	gold = clampi(int(data.get("gold", 80)), 0, 9999999)
 	# Version 1 contained a removed heroine. Refund her purchased skill ranks exactly once.
 	if int(data.get("version", 1)) == 1:
@@ -261,7 +271,7 @@ func load_data(data: Dictionary) -> void:
 	speed = 2.0 if float(data.get("speed", 1.0)) == 2.0 else 1.0
 	checkpoint = {}
 	var candidate: Variant = data.get("checkpoint", {})
-	if candidate is Dictionary and candidate.has("stage") and can_play(int(candidate.stage)):
+	if candidate is Dictionary and candidate.has("stage") and (int(candidate.stage) in range(12) if candidate.get("expedition", false) else can_play(int(candidate.stage))):
 		if (
 			int(candidate.get("wave", -1)) in [0, 1, 2]
 			and candidate.get("health") is Array
@@ -380,7 +390,7 @@ func load_from(path: String = SAVE_PATH) -> bool:
 			parser.parse(FileAccess.get_file_as_string(candidate)) == OK
 			and parser.data is Dictionary
 		):
-			if int(parser.data.get("version", 0)) in [1, 2, 3, 4]:
+			if int(parser.data.get("version", 0)) in [1, 2, 3, 4, 5]:
 				load_data(parser.data)
 				return true
 	return false
@@ -568,7 +578,11 @@ func resolve_run(data: Dictionary, won: bool) -> Array[String]:
 	last_resolved_run = number
 	var drafted: Array = data.get("drafted", [])
 	var metrics: Dictionary = data.get("unlock_stats", {})
-	if drafted.has("snow_white") and won:
+	var is_expedition := bool(data.get("expedition", false))
+	var bosses: Dictionary = metrics.get("boss_guests", {}) if metrics.get("boss_guests", {}) is Dictionary else {}
+	if is_expedition and drafted.has("snow_white"):
+		unlock_progress.snow_white = mini(3, int(unlock_progress.snow_white) + bosses.get("snow_white", []).size())
+	elif drafted.has("snow_white") and won:
 		unlock_progress.snow_white = mini(3, int(unlock_progress.snow_white) + 1)
 	if drafted.has("rapunzel"):
 		unlock_progress.rapunzel = minf(
@@ -578,7 +592,10 @@ func resolve_run(data: Dictionary, won: bool) -> Array[String]:
 		unlock_progress.mulan = mini(
 			8, int(unlock_progress.mulan) + maxi(0, int(metrics.get("combos", 0)))
 		)
-	if drafted.has("ariel") and won:
+	if is_expedition and drafted.has("ariel"):
+		for chapter in bosses.get("ariel", []):
+			if chapter in ExpeditionContent.BOSSES and not unlock_progress.ariel.has(chapter): unlock_progress.ariel.append(chapter)
+	elif drafted.has("ariel") and won:
 		var ids: Array = data.get("hero_ids", [])
 		var health: Array = data.get("health", [])
 		var slot := ids.find("ariel")
@@ -600,9 +617,43 @@ func resolve_run(data: Dictionary, won: bool) -> Array[String]:
 		if not unlocked.has(id) and unlock_amount(id) >= TaleCatalog.UNLOCKS[id].goal:
 			unlocked.append(id)
 			newly_unlocked.append(id)
-			if party.size() < 3:
+			if not is_expedition and party.size() < 3:
 				party.append(id)
 	return newly_unlocked
+
+
+func finish_expedition(data: Dictionary, won: bool) -> Dictionary:
+	var number := int(data.get("run_id", 0))
+	if not data.get("expedition", false) or number <= last_resolved_run or number > run_counter:
+		return {}
+	var newly_unlocked := resolve_run(data, won)
+	var depth := clampi(int(data.get("rooms_cleared", 0)), 0, 12)
+	best_depth = maxi(best_depth, depth)
+	var fragments := depth * 4 + (30 if won else 0)
+	earn_gold(fragments)
+	grant_xp(depth * 8, []) # Profile experience; starting combat stats always use level 1.
+	if won:
+		expedition_wins += 1
+		total_wins += 1
+	else: total_defeats += 1
+	for chapter in depth:
+		if not cleared.has(chapter):
+			cleared.append(chapter)
+			journal.append({"stage": chapter, "title": TaleCatalog.STAGES[chapter].name})
+	pending_story = -1
+	checkpoint.clear()
+	return {"unlocks": newly_unlocked, "depth": depth, "reward": fragments, "won": won}
+
+
+func unlock_blessing(id: String) -> bool:
+	if not checkpoint.is_empty() or not ExpeditionContent.BLESSINGS.has(id) or blessings_unlocked.has(id): return false
+	var required := 4 if id == "thorns" else 8
+	var cost: int = ExpeditionContent.BLESSINGS[id].cost
+	if best_depth < required or gold < cost: return false
+	gold -= cost
+	total_spent += cost
+	blessings_unlocked.append(id)
+	return true
 
 
 func row_for(id: String) -> String:

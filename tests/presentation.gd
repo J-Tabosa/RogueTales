@@ -25,7 +25,7 @@ func checks() -> void:
 	for node in game.find_children("*", "Sprite2D", true, false):
 		assert(not node is AnimatedSprite2D and not node.is_processing())
 		portraits += 1
-	assert(portraits == TaleCatalog.HEROES.size() + 1, "Collection and profile avatar use static cached portraits")
+	assert(portraits == TaleCatalog.HEROES.size(), "Every collection banner uses a static cached portrait")
 	assert(game.box(Color.RED) == game.box(Color.RED), "Identical styles must share resources")
 	game.anchor_right = 0
 	game.anchor_bottom = 0
@@ -46,7 +46,7 @@ func checks() -> void:
 			if node is Button:
 				assert(node.size.y >= 44 and node.position.y + node.size.y <= game.logical_height)
 			if node is ScrollContainer:
-				assert(is_equal_approx(node.size.y, 620 + game.logical_height - 960))
+				assert(is_equal_approx(node.size.y, 416), "The horizontal banner strip keeps its artwork proportions")
 		game.show_unlock_details("snow_white")
 		var original: float = game.overlay.get_child(1).position.y
 		game.center_content()

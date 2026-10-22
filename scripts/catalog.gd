@@ -656,9 +656,11 @@ static func hero_stats(
 
 
 static func offer_data(id: String) -> Dictionary:
+	if id.begins_with("skill:"):
+		return ExpeditionContent.offer(id)
 	if id.begins_with("ally:"):
 		var hero_id := id.trim_prefix("ally:")
-		if HEROES.has(hero_id) and hero_id != "scarlet":
+		if HEROES.has(hero_id):
 			return {
 				"id": id,
 				"hero": hero_id,

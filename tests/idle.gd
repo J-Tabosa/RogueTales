@@ -121,7 +121,7 @@ func checks() -> void:
 	game.campaign.grant_xp(100)
 	game.show_hero_details("scarlet")
 	game.train_hero()
-	assert(game.state == "hero" and game.campaign.hero_levels.scarlet == 2)
+	assert(game.state == "hero_details" and game.campaign.hero_levels.scarlet == 2)
 	game.show_profile()
 	game.edit_profile()
 	game.profile_name.text = "Milorde"

@@ -215,6 +215,7 @@ func show_tactical_details(id: String) -> void:
 
 
 func build_battle() -> void:
+	combat_flow = null
 	run.enable_tactics(campaign)
 	state = "travel"
 	paused = false

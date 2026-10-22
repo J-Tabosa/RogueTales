@@ -1,12 +1,18 @@
 # RogueTales: O Último Fio
 
-Idle RPG tático em **Godot 4.7 / GDScript**, com **12 capítulos**, 12 personagens, recrutamento por requisitos e formação de até três integrantes em duas linhas. A interface segue um RPG mobile de contos: início ilustrado, coleção em cartões, filtros de recrutamento, navegação inferior com ícones, fila de iniciativa e retratos para ativar as ULTs. No PC, os controles ficam na lateral; no celular, na base.
+Roguelite de combate por esquadrões em **Godot 4.7 / GDScript**. Uma run atravessa **12 fases**, com 12 protagonistas, builds temporárias, encontros raros de companheiros e equipes de até três integrantes em duas linhas. Interface mobile, galeria de silhuetas, habilidades individuais, iniciativa, AP/PP e ULTs. No PC, os controles ficam na lateral; no celular, na base.
 
 ## Jogar
 
-Importe `project.godot` na Godot 4.7 e pressione **F5**. Partidas novas começam só com Scarlet, a Chapeuzinho Vermelho. No mapa, abra um capítulo e entre na batalha automática. Cada run contém dois encontros e um chefe. Entre encontros, escolha uma relíquia ou um personagem temporário.
+Importe `project.godot` na Godot 4.7 e pressione **F5**. Escolha **Nova run**, um protagonista já revelado e uma bênção inicial. As **12 fases formam uma única expedição**, com chefes nas fases **4, 8 e 12**. Vida, energia, equipe e build continuam de uma fase à próxima. O combate é automático por iniciativa; ULTs também podem ser usadas manualmente.
 
-A tela **Heróis** reúne níveis, atributos, habilidades e a descrição de classe/ULT. Em **Formação**, adicione até três heroínas e escolha vanguarda ou retaguarda; sempre é necessário manter ao menos uma integrante na frente. Clicar em **Frente → Fundo** move uma heroína para trás quando outra já protege a frente. O posicionamento fica bloqueado durante uma run.
+Após vencer, escolha uma de três melhorias. Há **10% de chance por tela** de uma carta ser um convite temporário, inclusive na primeira recompensa. Não existe convite garantido. O sorteio é da tela inteira, não de cada uma das três cartas. Recarregar não altera as opções. O grupo comporta três integrantes; com a equipe cheia, um convite exige uma substituição.
+
+Entre fases, escolha cartas de rota: combate comum, elite, fogueira, mercador ou evento. Elites têm +35% de PV e +15% de dano; ao vencê-las, ganhe +25 ouro e +10% de dano na run. A fogueira custa 18 ouro e recupera a equipe; o mercador vende suprimentos e relíquias, com compras salvas individualmente. A página proibida troca PV máximos por dano. Chefes têm uma rota obrigatória.
+
+Derrota, abandono ou vitória na fase 12 encerram a tentativa. **Ouro da run, relíquias, transformações e convidados são temporários**. Desbloqueios, feitos, recordes e memórias são permanentes. As memórias abrem novas bênçãos iniciais; as três primeiras estão disponíveis desde o começo. Bônus de níveis, treinamento e escolhas da campanha antiga não entram nos atributos de novas runs. Uma build forte pode vencer sem receber um convite.
+
+A coleção usa **faixas verticais com artes grandes e pergaminho**: carrossel no celular e uma faixa larga no PC. Personagens bloqueados são silhuetas pretas, com nome **???**, classe e habilidades ocultas. Um convite permite experimentar o viajante no combate, mas a ficha só é revelada com o desbloqueio permanente. Só um protagonista começa a próxima run.
 
 ## Classes e alvos
 
@@ -26,7 +32,7 @@ A inspiração é a sequência de ações e reações de [Unicorn Overlord](http
 
 - **Iniciativa:** derivada do intervalo de ataque, define a ordem de cada rodada. Uma ação termina sua animação antes de outra começar; inimigos também têm antecipação, impacto e recuperação.
 - **AP:** cada aliado recebe 2 ataques por rodada; inimigos comuns recebem 1, chefes recebem 2.
-- **PP:** cada unidade tem 1 reação por rodada; chefes têm 2. Vanguarda reduz um golpe físico em 35%; assassinos contra-atacam após esquivar; atiradores dão um disparo extra de 25%; magos e artilheiros reforçam um ataque em 20%. Rapunzel e Ariel podem gastar PP para socorrer um aliado abaixo de metade dos PV com 8% dos PV máximos.
+- **PP:** cada aliado tem uma reação própria por rodada. Guarda física da vanguarda reduz 35% de um golpe; Mulan aproveita o aparo e Gato pode interceptar um aliado. Peter transforma esquivas em sombras; João reage a marcas; os suportes têm gatilhos distintos. Os inimigos preservam guarda, esquiva/contra-ataque, disparo extra e concentração. Chefes têm 2 PP.
 - **ULT:** a automática substitui uma ação normal. Ao tocar manualmente enquanto outro personagem age, a ULT aguarda o fim dessa ação; a carga é consumida quando a animação começa. Cliques repetidos não duplicam a reserva.
 - **Leitura:** a fila mostra os próximos atores, as unidades exibem AP/PP e o impacto mostra dano real, crítico, guarda, esquiva, contra-ataque e cura. Pausa, 2× e movimento reduzido afetam os efeitos.
 
@@ -49,20 +55,22 @@ A inspiração é a sequência de ações e reações de [Unicorn Overlord](http
 
 A carga sobe com o tempo de combate, acertos e dano recebido. Ao chegar a 100%, clique no retrato ou use 1–3 no PC. **ULT automática** pode ser alternada na batalha e nas configurações. A reserva impede gastar a mesma carga duas vezes; o efeito ocorre no impacto da animação. Pausa e 2× controlam simulação, dash, carga e efeitos juntos. Gestos de idle e flashes vermelhos de dano continuam ativos.
 
-Cada personagem evolui até o nível 30 com ouro/EXP e possui três habilidades de cinco níveis. Relíquias pertencem à run; melhorias e desbloqueios são permanentes.
+Cada personagem possui **uma ativa (1 AP), uma reação (1 PP) e sua ULT**, além de **três transformações exclusivas** oferecidas durante a run (36 opções no total). Exemplos: a pólvora de Scarlet explode e pode proteger a equipe; Maria consome veneno para se curar; Alice alterna quatro naipes; Peter cria e consome sombras; Gato alterna carga e corte; Aladin alterna desejos. As descrições e opções estão em `scripts/expedition_content.gd`; os efeitos reais, em `scripts/hero_abilities.gd`.
+
+Relíquias genéricas podem acumular até três cópias. Uma transformação exclusiva só pode ser escolhida uma vez por personagem na tentativa. O histórico de melhorias e eventos é reaplicado na mesma ordem ao retomar, incluindo eventos que multiplicam PV máximos depois de uma relíquia que soma PV.
 
 ## Recrutamento
 
 | Personagem | Desbloqueio permanente |
 | --- | --- |
-| Branca de Neve | Vencer três runs distintas após convocá-la. |
+| Branca de Neve | Vencer três chefes como convidada, acumulados entre runs. |
 | Rapunzel | Restaurar 60 PV reais como convidada. A ULT também conta; excesso de cura não conta. |
 | Mulan | Acertar oito Terceiros cortes como convidada. |
-| Ariel | Vencer dois capítulos diferentes com ela viva na equipe final. |
+| Ariel | Vencer dois chefes de fases diferentes com ela viva como convidada. |
 
 Os sete novos personagens exigem **20 ataques básicos acertados como convidados**, acumulados entre runs. João e Maria são unidades separadas.
 
-Convites entram imediatamente na formação e herdam as relíquias. Se os três espaços estiverem ocupados, escolha uma substituição temporária. Recarregar a mesma run não duplica créditos. O progresso está em **Heróis → Ver requisito**.
+Convites entram imediatamente na formação e herdam as relíquias. Se os três espaços estiverem ocupados, escolha uma substituição temporária. Recarregar a mesma run não duplica créditos. A coleção só revela a ficha após o desbloqueio. Feitos de convidados contam no encerramento, mesmo se a run terminar depois em derrota. Saves de capítulos antigos ainda podem terminar pelo fluxo compatível da campanha anterior.
 
 ## Os doze capítulos
 
@@ -79,15 +87,15 @@ Convites entram imediatamente na formação e herdam as relíquias. Se os três 
 11. Dunas do Tempo
 12. Coração do Tear
 
-Cada capítulo tem introdução, desfecho, chefe e escolha permanente entre esperança (+5 PV por heroína) e coragem (+1 dano). O epílogo e a conquista final exigem os doze capítulos. O capítulo 8 revela as quatro agulhas ocultas e deixa de encerrar a campanha. O diário permite rever os diálogos sem repetir recompensas.
+As doze áreas fornecem os temas das fases. O diário permite rever os diálogos das páginas já concluídas sem repetir recompensas. Introduções, desfechos e escolhas de esperança/coragem da campanha anterior continuam disponíveis para checkpoints legados; os bônus dessas escolhas não alteram os atributos das novas runs.
 
-## Idle e salvamento
+## Salvamento e compatibilidade
 
-O baú, liberado após o primeiro capítulo, acumula ouro e EXP por até oito horas com o jogo aberto ou fechado. A patrulha automática repete capítulos concluídos, escolhe o primeiro upgrade oferecido e para na derrota ou ao sair.
+Save local em `user://campaign_v1.json`, **schema 5**, com gravação temporária e backup. Contas dos schemas 1–4 preservam personagens, ouro, níveis, capítulos e checkpoints antigos. Estes checkpoints continuam pelo fluxo anterior; novas partidas começam pela expedição de 12 fases. O baú e a patrulha da campanha antiga não aparecem na navegação de novas runs.
 
-Save local em `user://campaign_v1.json`, **schema 4**, com gravação temporária e backup. Saves dos schemas 1–3 preservam ouro, níveis, personagens e capítulos. Um progresso antigo com oito capítulos abre o capítulo 9; a conquista de conclusão passa a exigir os doze. A formação antiga recebe linhas válidas. Checkpoints táticos preservam convidadas, vida, combos, relíquias, ofertas, posições e carga de ULT no início do encontro atual. Não há servidor, login, anúncios ou sincronização entre dispositivos.
+Sair durante um combate retoma no **início daquele encontro**, preservando a mesma tentativa. Nas recompensas, rotas e loja, retoma a tela correspondente com as mesmas opções, histórico, compras, vida, energia, convidados, estados das habilidades e estado do gerador aleatório. Os IDs das runs impedem receber duas vezes feitos ou recompensas terminais.
 
-**Configurações → Resetar conta deste dispositivo** mostra uma confirmação antes de apagar o progresso. Confirmar substitui tanto o save principal quanto o backup por uma conta nova, apaga o checkpoint e reinicia com a Chapeuzinho. Cancelar preserva tudo. O reset também reinicia preferências e estatísticas; não altera arquivos de outros aplicativos.
+**Configurações → Resetar conta deste dispositivo** pede confirmação e substitui save e backup por uma conta nova. Cancelar preserva tudo. Não há servidor, login ou sincronização entre dispositivos.
 
 ## PC e celular
 
@@ -102,7 +110,7 @@ A janela padrão no PC é **1280 × 720**, redimensionável, com tela cheia e co
 | F11 | Tela cheia / janela |
 | Ctrl+B | Ativar/desativar debug; começa desligado |
 
-O laboratório continua acessível só com debug ativado e fora de combates. Música, efeitos e vozes têm volumes independentes. As chamadas são sintéticas. Efeitos/vozes usam pools com limites de repetição. Consulte `assets/audio/COMBAT_AUDIO.md`.
+O laboratório de animações fica nas configurações e só mostra personagens já revelados. Música, efeitos e vozes têm volumes independentes. As chamadas são sintéticas. Efeitos/vozes usam pools com limites de repetição. Consulte `assets/audio/COMBAT_AUDIO.md`.
 
 ## Exportar para PC
 
@@ -141,7 +149,10 @@ Texturas, retratos, estilos e cenas usam cache; a arena tem até seis unidades e
 
 ## Código e verificação
 
-- `scripts/interface.gd`: interface minimalista, layouts PC/celular, formação, ULTs e reset.
+- `scripts/expedition_ui.gd`: início, preparação, recompensas, rotas, loja, galeria de silhuetas e resultados.
+- `scripts/expedition_content.gd`: kits, 36 transformações, bênçãos e eventos.
+- `scripts/hero_abilities.gd`: efeitos das ativas e reações individuais.
+- `scripts/interface.gd`: componentes, layouts de combate PC/celular, ULTs e reset.
 - `scripts/main.gd`: navegação, história, progressão e orquestração das batalhas.
 - `scripts/battle_flow.gd`: iniciativa, AP/PP, rodadas e fila de ULT.
 - `scripts/mobile_icon.gd`: ícones vetoriais nativos para navegação por toque.
@@ -152,6 +163,9 @@ Texturas, retratos, estilos e cenas usam cache; a arena tem até seis unidades e
 
 ```sh
 godot --headless --path . --editor --quit
+godot --headless --path . --script tests/expedition.gd
+godot --headless --path . --script tests/hero_abilities.gd
+godot --headless --path . --script tests/expedition_ui.gd
 godot --headless --path . --script tests/battle_flow.gd
 godot --headless --path . --script tests/new_roster.gd
 godot --headless --path . --script tests/tactics.gd
@@ -162,4 +176,6 @@ godot --headless --path . --script tests/presentation.gd
 godot --headless --path . --script tests/combat_presentation.gd
 ```
 
-As suítes usam saves isolados. Cobrem campanha completa de doze capítulos com renda obtida no jogo, targeting/fallback por classe, esquiva, 12 ULTs distintas, consumo único, pausa, mudanças de proporção durante o combate, migração, reset/cancelamento/backup, desbloqueios, derrota, patrulha e epílogo. Capturas gráficas verificam telas de PC e retrato. O executável Linux é iniciado no ambiente de validação; o export Windows é gerado e sua estrutura é verificada, mas não é executado neste ambiente Linux.
+As suítes usam saves isolados. Os testes de expedição cobrem as 12 fases contínuas, sorteio em 20 mil recompensas, retomada/RNG, ordem das melhorias/eventos, loja sem compras duplicadas, derrota/vitória, desbloqueios e migração. Os testes de habilidades cobrem todos os 12 kits e 36 opções, incluindo efeitos e gatilhos concretos. O teste de interface joga um encontro animado real e verifica os limites das 12 fases, silhuetas e layout de PC/celular. As suítes anteriores mantêm a cobertura do combate, animações, ULTs, áudio e checkpoints legados.
+
+`godot --headless --path . --script tools/simulate_runs.gd` executa uma sondagem determinística de balanceamento com 20 seeds por protagonista. É uma aproximação das durações das animações, sem renderização; não substitui playtests. Esta atualização inclui apenas o projeto-fonte; gere os exports no Godot.
