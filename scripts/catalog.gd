@@ -1,6 +1,23 @@
 class_name TaleCatalog
 extends RefCounted
 ## Campaign content and balance. All text and numbers can be changed here.
+const CHAPTER_COUNT := 12
+const FINAL_CHAPTER := CHAPTER_COUNT - 1
+const PARTY_LIMIT := 3
+const CLASSES = {
+	"vanguard": {"name": "Vanguarda", "rule": "Ataca a frente; alcança a retaguarda quando a frente cai.", "evasion": 0.04},
+	"ranger": {"name": "Atiradora", "rule": "Prioriza a retaguarda; usa a frente se ela estiver vazia.", "evasion": 0.10},
+	"mage": {"name": "Maga", "rule": "Alcança ambas as linhas; magia ignora 65% da armadura.", "evasion": 0.04},
+	"assassin": {"name": "Assassina", "rule": "Avança à retaguarda mais ferida; 35% de esquiva.", "evasion": 0.35},
+	"artificer": {"name": "Artilheira", "rule": "Alcança ambas as linhas e prioriza a menor armadura.", "evasion": 0.08}
+}
+const HERO_TACTICS = {
+	"scarlet": {"class": "artificer", "row": "back", "ult": "Final explosivo", "detail": "Explode todos os inimigos (200%) e aplica queimadura."},
+	"rapunzel": {"class": "assassin", "row": "front", "ult": "Coroa de fios", "detail": "Cura 35% dos PV e concede 20% de escudo a todas as aliadas vivas."},
+	"snow_white": {"class": "ranger", "row": "back", "ult": "Maçã da sentença", "detail": "Disparo de 400% na retaguarda e veneno fortalecido."},
+	"mulan": {"class": "vanguard", "row": "front", "ult": "Dragão de jade", "detail": "Corte de 320% na linha de frente e escudo de 35% para si."},
+	"ariel": {"class": "mage", "row": "back", "ult": "Sinfonia abissal", "detail": "Maré de 160% em todos; cura 20% do grupo e desacelera por 5 s."}
+}
 const HERO_SCENES = {
 	"scarlet": preload("res://scenes/heroes/scarlet.tscn"),
 	"rapunzel": preload("res://scenes/heroes/rapunzel.tscn"),
@@ -138,7 +155,7 @@ const STAGES = [
 		],
 		"outro":
 		[
-			["Rapunzel", "O bosque era a primeira agulha. Há outras sete prendendo os reinos."],
+			["Rapunzel", "O bosque era a primeira agulha. Há outras onze prendendo os reinos."],
 			["Scarlet", "Então derrubamos uma por uma. Vem comigo?"],
 			["Rapunzel", "Com uma condição: ninguém fica preso no próprio conto de novo."]
 		]
@@ -297,16 +314,16 @@ const STAGES = [
 		],
 		"outro":
 		[
-			["Rapunzel", "Sem a forja, os fios começaram a ceder. Só falta o livro original."],
+			["Rapunzel", "Sem a forja, os fios começaram a ceder. O livro original revela quem está puxando os fios."],
 			["Mulan", "A Biblioteca do Último Fio."],
 			["Scarlet", "Guardem um pouco de coragem. O nosso final ainda não foi escrito."]
 		]
 	},
 	{
 		"name": "Biblioteca do Último Fio",
-		"short": "Autoras do amanhã",
+		"short": "O índice roubado",
 		"enemy": "Página sem rosto",
-		"boss": "A Costureira dos Finais",
+		"boss": "A Guardiã do Índice",
 		"hp": 540.0,
 		"damage": 43.0,
 		"color": Color("c7a2e0"),
@@ -327,10 +344,142 @@ const STAGES = [
 			["Rapunzel", "Então ninguém vai precisar lê-la sozinha."],
 			[
 				"Narradora",
-				"As oito agulhas caíram. Pela primeira vez, o livro abriu numa página em branco."
+				"O índice revelou quatro agulhas ocultas. O verdadeiro tear ainda espera além dos reinos."
 			]
 		]
 	},
+{
+	"name": "Pântano dos Reflexos",
+	"short": "Entre duas margens",
+	"enemy": "Sombra do pomar",
+	"boss": "A Rainha das Raízes",
+	"hp": 610.0,
+	"damage": 44.0,
+	"color": Color("7dafa0"),
+	"sky": Color("192d30"),
+	"biome": 2,
+	"intro": [
+		[
+			"Ariel",
+			"Os espelhos desembocam neste pântano. A sombra escolhe quem fica para trás."
+		],
+		[
+			"Mulan",
+			"Arqueiros na retaguarda. Protejam quem está lançando magia."
+		]
+	],
+	"outro": [
+		[
+			"Branca de Neve",
+			"Nem todo reflexo merece uma resposta."
+		],
+		[
+			"Rapunzel",
+			"A trilha continua acima das nuvens."
+		]
+	]
+},
+{
+	"name": "Observatório da Aurora",
+	"short": "Estrelas que escolhem",
+	"enemy": "Vigia celeste",
+	"boss": "O Astrônomo Cego",
+	"hp": 690.0,
+	"damage": 49.0,
+	"color": Color("a9a0d8"),
+	"sky": Color("222d45"),
+	"biome": 1,
+	"intro": [
+		[
+			"Rapunzel",
+			"As estrelas também foram costuradas. Só repetem a mesma noite."
+		],
+		[
+			"Scarlet",
+			"Vamos fazer uma constelação de estilhaços."
+		]
+	],
+	"outro": [
+		[
+			"Ariel",
+			"Há uma passagem onde a luz toca a areia."
+		],
+		[
+			"Mulan",
+			"Sigam a aurora. Eu cubro a frente."
+		]
+	]
+},
+{
+	"name": "Dunas do Tempo",
+	"short": "Nenhum passo perdido",
+	"enemy": "Sentinela de vidro",
+	"boss": "O Último Pêndulo",
+	"hp": 780.0,
+	"damage": 54.0,
+	"color": Color("dbc38e"),
+	"sky": Color("3a3232"),
+	"biome": 4,
+	"intro": [
+		[
+			"Branca de Neve",
+			"A areia devolve todos os caminhos que não escolhemos."
+		],
+		[
+			"Scarlet",
+			"A gente só precisa escolher o próximo."
+		]
+	],
+	"outro": [
+		[
+			"Mulan",
+			"Onze agulhas. Uma porta."
+		],
+		[
+			"Rapunzel",
+			"Não importa o que houver do outro lado: vamos juntas."
+		]
+	]
+},
+{
+	"name": "Coração do Tear",
+	"short": "Autoras do amanhã",
+	"enemy": "Fio sem destino",
+	"boss": "A Costureira dos Finais",
+	"hp": 900.0,
+	"damage": 60.0,
+	"color": Color("d2afd9"),
+	"sky": Color("30263d"),
+	"biome": 7,
+	"intro": [
+		[
+			"Costureira",
+			"Sem meus fios, nada impede a próxima perda."
+		],
+		[
+			"Ariel",
+			"Você pode pedir companhia. Não precisa aprisionar o mundo."
+		],
+		[
+			"Scarlet",
+			"Devolva a página. O final é nosso."
+		]
+	],
+	"outro": [
+		[
+			"Costureira",
+			"E se a próxima página doer?"
+		],
+		[
+			"Rapunzel",
+			"Então ninguém vai precisar lê-la sozinha."
+		],
+		[
+			"Narradora",
+			"As doze agulhas caíram. O livro abriu em branco: havia espaço para todos os amanhãs."
+		]
+	]
+}
 ]
 const RELICS = [
 	{"id": "power", "title": "Pena de rebeldia", "detail": "+20% de dano para a formação"},
@@ -356,7 +505,11 @@ static func hero_stats(
 		"leech": 0.0,
 		"ranks": levels.duplicate(),
 		"hits": 0,
-		"shield": 0.0
+		"shield": 0.0,
+		"class": HERO_TACTICS[id]["class"],
+		"row": HERO_TACTICS[id].row,
+		"evasion": CLASSES[HERO_TACTICS[id]["class"]].evasion,
+		"energy": 0.0
 	}
 	for choice in choices.values():
 		if choice == "hope":

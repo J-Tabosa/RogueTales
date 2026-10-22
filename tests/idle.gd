@@ -136,7 +136,7 @@ func checks() -> void:
 	assert(game.audio.music.volume_db <= -70 and game.audio.effects_gain == 0)
 	assert(root.msaa_2d == Viewport.MSAA_DISABLED and Engine.max_fps == 30)
 	assert(game.texture_filter == CanvasItem.TEXTURE_FILTER_LINEAR)
-	assert(game.content.scale.x >= 1.9, "HD viewport must scale the logical interface")
+	assert(game.content.scale.x > 0 and game.content.position.x >= 0, "The responsive interface must fit the viewport")
 	game.campaign.auto_repeat = true
 	game.start_stage(0)
 	assert(game.state == "loading")

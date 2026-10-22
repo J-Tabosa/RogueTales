@@ -340,9 +340,9 @@ func show_menu() -> void:
 	clear_page()
 	header(
 		"O próximo capítulo é seu.",
-		"CAMPANHA  %d / 8     •     OURO  %d" % [campaign.cleared.size(), campaign.gold]
+		"CAMPANHA  %d / 12     •     OURO  %d" % [campaign.cleared.size(), campaign.gold]
 	)
-	var next := mini(campaign.cleared.size(), 7)
+	var next := mini(campaign.cleared.size(), TaleCatalog.FINAL_CHAPTER)
 	make_arena(188, [], next)
 	label(
 		page, "FORMAÇÃO ATIVA  ·  %d / 3" % campaign.party.size(), Rect2(40, 200, 440, 24), 14, GOLD
@@ -389,12 +389,12 @@ func continue_journey() -> void:
 func show_map() -> void:
 	state = "map"
 	clear_page()
-	header("Os oito reinos", "%d de 8 agulhas desfeitas • siga o caminho" % campaign.cleared.size())
+	header("Os doze reinos", "%d de 12 agulhas desfeitas • siga o caminho" % campaign.cleared.size())
 	var inner := scroll_area(184, 684, 1000)
 	var art := UISkin.picture(inner, UISkin.MAP, Rect2(0, 0, 476, 1000))
 	art.stretch_mode = TextureRect.STRETCH_SCALE
 	var route := Curve2D.new()
-	for index in 8:
+	for index in TaleCatalog.CHAPTER_COUNT:
 		route.add_point(
 			Vector2(63 if index % 2 == 0 else 421, 65 + index * 120),
 			Vector2(0, -54),
@@ -406,7 +406,7 @@ func show_map() -> void:
 	line.default_color = Color("f7df9e", 0.8)
 	line.antialiased = true
 	inner.add_child(line)
-	for index in 8:
+	for index in TaleCatalog.CHAPTER_COUNT:
 		var data: Dictionary = TaleCatalog.STAGES[index]
 		var y := 18 + index * 120.0
 		var open := campaign.can_play(index)
@@ -438,7 +438,7 @@ func show_map() -> void:
 		badge.disabled = not open
 		badge.add_theme_font_size_override("font_size", 19)
 	inner.get_parent().set_deferred(
-		"scroll_vertical", int(maxf(0, mini(campaign.cleared.size(), 7) * 120 - 95))
+		"scroll_vertical", int(maxf(0, mini(campaign.cleared.size(), TaleCatalog.FINAL_CHAPTER) * 120 - 95))
 	)
 	navigation("map")
 
@@ -574,7 +574,7 @@ func finish_story() -> void:
 	elif story_mode == "intro":
 		load_chapter(story_stage)
 	elif campaign.choices.has(str(story_stage)):
-		if story_stage == 7:
+		if story_stage == TaleCatalog.FINAL_CHAPTER:
 			show_ending()
 		else:
 			show_map()
@@ -607,7 +607,7 @@ func save_memory(choice: String) -> void:
 	if state != "memory" or not campaign.choose_memory(story_stage, choice):
 		return
 	persist()
-	if story_stage == 7:
+	if story_stage == TaleCatalog.FINAL_CHAPTER:
 		show_ending()
 	else:
 		show_map()
@@ -718,11 +718,11 @@ func show_journal() -> void:
 	state = "journal"
 	clear_page()
 	header("Páginas recuperadas", "Releia os encontros e as escolhas da campanha.")
-	if campaign.cleared.has(7):
+	if campaign.cleared.has(TaleCatalog.FINAL_CHAPTER):
 		button(page, "Reler o epílogo", Rect2(24, 179, 492, 48), show_ending, true)
 	var inner := scroll_area(
-		241 if campaign.cleared.has(7) else 183,
-		625 if campaign.cleared.has(7) else 683,
+		241 if campaign.cleared.has(TaleCatalog.FINAL_CHAPTER) else 183,
+		625 if campaign.cleared.has(TaleCatalog.FINAL_CHAPTER) else 683,
 		maxf(200, campaign.journal.size() * 139)
 	)
 	if campaign.journal.is_empty():
@@ -884,7 +884,7 @@ func show_help() -> void:
 	clear_page()
 	header("Como jogar", "Um conto para progredir no seu ritmo.")
 	var inner := scroll_area(186, 646, 1250)
-	var text := "1. CAMPANHA\nAvance pelos oito capítulos. Cada um tem dois encontros e um chefe.\n\n2. FORMAÇÃO\nVocê começa só com Scarlet, a Chapeuzinho. Entre encontros, escolha convites temporários de heroínas. Cumpra o requisito de cada uma para desbloqueá-la permanentemente; acompanhe em Heróis. Leve até três; a vanguarda recebe os ataques até cair.\n\n3. EVOLUÇÃO\nGanhe ouro e EXP nos combates. Na tela Heróis, treine níveis até 30 e melhore três habilidades por princesa.\n\n4. ACAMPAMENTO\nDepois do capítulo 1, recursos acumulam mesmo com o jogo fechado, por até oito horas. Colete no baú da tela inicial.\n\n5. PATRULHA AUTOMÁTICA\nAtive nas configurações para repetir capítulos concluídos e escolher upgrades e convites automaticamente. Com a equipe cheia, a convidada substitui o terceiro espaço. A patrulha para ao perder ou sair.\n\n6. MEMÓRIAS\nEntre encontros, escolha relíquias temporárias. No desfecho, esperança aumenta vida; coragem aumenta dano permanentemente.\n\nCONTROLES\nMouse ou toque usam os botões. ESC pausa o combate. Progresso e preferências são salvos automaticamente."
+	var text := "1. CAMPANHA\nAvance pelos doze capítulos. Cada um tem dois encontros e um chefe.\n\n2. FORMAÇÃO\nVocê começa só com Scarlet, a Chapeuzinho. Entre encontros, escolha convites temporários de heroínas. Cumpra o requisito de cada uma para desbloqueá-la permanentemente; acompanhe em Heróis. Leve até três em duas linhas. Vanguarda mira a frente, atiradoras miram o fundo, magia alcança ambas e assassinas têm alta esquiva.\n\n3. EVOLUÇÃO\nGanhe ouro e EXP nos combates. Na tela Heróis, treine níveis até 30 e melhore três habilidades por princesa.\n\n4. ACAMPAMENTO\nDepois do capítulo 1, recursos acumulam mesmo com o jogo fechado, por até oito horas. Colete no baú da tela inicial.\n\n5. PATRULHA AUTOMÁTICA\nAtive nas configurações para repetir capítulos concluídos e escolher upgrades e convites automaticamente. Com a equipe cheia, a convidada substitui o terceiro espaço. A patrulha para ao perder ou sair.\n\n6. MEMÓRIAS\nEntre encontros, escolha relíquias temporárias. No desfecho, esperança aumenta vida; coragem aumenta dano permanentemente.\n\nCONTROLES\nMouse ou toque usam os botões. ESC ou Espaço pausa o combate. ULTs carregam lutando; toque nos retratos ou use 1–3 no PC. A alterna ULT automática e F11 alterna tela cheia. Progresso e preferências são salvos automaticamente."
 	label(inner, text, Rect2(18, 10, 440, 1230), 19)
 	button(page, "Voltar às configurações", Rect2(24, 843, 492, 62), show_settings, true)
 
@@ -903,7 +903,7 @@ func show_credits() -> void:
 
 
 func show_ending() -> void:
-	if not campaign.cleared.has(7):
+	if not campaign.cleared.has(TaleCatalog.FINAL_CHAPTER):
 		show_map()
 		return
 	state = "ending"
@@ -914,7 +914,7 @@ func show_ending() -> void:
 			hope += 1
 	label(page, "EPÍLOGO  /  O ÚLTIMO FIO", Rect2(24, 38, 492, 36), 16, GOLD)
 	label(page, "Uma página em branco.", Rect2(24, 110, 492, 100), 39)
-	make_arena(242, [], 7)
+	make_arena(242, [], TaleCatalog.FINAL_CHAPTER)
 	var ending := (
 		"Elas deixaram um lugar à mesa para a Costureira. O futuro continuava incerto, mas já não precisava ser solitário."
 		if hope >= 4
@@ -930,6 +930,7 @@ func begin_chapter_combat(index: int) -> void:
 		return
 	run = IdleRun.new()
 	run.setup(campaign, index)
+	run.enable_tactics(campaign)
 	campaign.checkpoint = run.to_checkpoint()
 	persist()
 	build_battle()
@@ -949,6 +950,7 @@ func restore_checkpoint_now() -> void:
 		return
 	run = IdleRun.new()
 	run.restore(campaign, campaign.checkpoint)
+	run.enable_tactics(campaign)
 	if not run.alive():
 		campaign.checkpoint.clear()
 		persist()
@@ -974,7 +976,7 @@ func build_battle() -> void:
 	cooldowns.clear()
 	stage_label = label(
 		page,
-		"%02d / 08   %s" % [run.stage + 1, TaleCatalog.STAGES[run.stage].name],
+		"%02d / 12   %s" % [run.stage + 1, TaleCatalog.STAGES[run.stage].name],
 		Rect2(24, 21, 492, 70),
 		25
 	)
@@ -1016,6 +1018,8 @@ func begin_travel() -> void:
 
 func spawn_enemy() -> void:
 	run.spawn_enemy()
+	if run.tactics != null:
+		arena.sync_enemies()
 	state = "battle"
 	arena.walking = false
 	arena.enemy_visible = true
@@ -1064,39 +1068,11 @@ func _process(delta: float) -> void:
 		if travel_timer <= 0:
 			spawn_enemy()
 	elif state == "battle":
-		var previous_hp: float = run.enemy_hp
-		run.tick_status(dt)
-		if run.enemy_hp < previous_hp:
-			arena.enemy.hurt(true)
-		if run.enemy_hp <= 0:
-			resolve_enemy()
-			return
-		for index in run.actors.size():
-			if run.actors[index].hp <= 0:
-				continue
-			cooldowns[index] -= dt
-			if cooldowns[index] <= 0 and arena.attack(index):
-				var duration: float = arena.heroes[index].get_animation_duration("attack")
-				cooldowns[index] = maxf(float(run.actors[index].interval), duration + 0.06)
-		enemy_timer -= dt
-		arena.enemy_interval = run.enemy_interval()
-		arena.enemy_windup = 1.0 - enemy_timer / run.enemy_interval()
-		if enemy_timer <= 0:
-			enemy_timer += run.enemy_interval()
-			arena.enemy.begin_strike(arena.boss)
-			var hit := run.hit_party()
-			if not hit.is_empty():
-				if hit.damage > 0:
-					arena.hurt(hit.target)
-				float_text(
-					"−%d" % int(hit.damage) if hit.damage > 0 else "ESCUDO",
-					Vector2(160, 407),
-					Color("ef9baf")
-				)
-				arena.sync_health(run.actors)
-			if not run.alive():
-				finish_defeat()
-				return
+		if run.tactics != null:
+			process_tactical_combat(dt)
+		else:
+			run.tick_status(dt)
+
 	hud_timer -= delta
 	if hud_timer <= 0:
 		update_hud()
@@ -1111,17 +1087,21 @@ func on_attack_started(index: int) -> void:
 func on_attack_hit(index: int) -> void:
 	if state != "battle" or paused or run == null:
 		return
-	var hit := run.hit_enemy(index)
-	if not hit.is_empty():
-		arena.enemy.hurt()
-		audio.play_effect("explosion" if run.actors[index].id == "scarlet" else "hit")
+	var hit: Dictionary
+	if run.tactics != null:
+		var track: Dictionary = arena.tracks[index]
+		hit = run.tactics.ultimate(index, track.target) if track.ultimate else run.hit_enemy(index, track.target)
+		if not hit.is_empty():
+			for target in hit.get("targets", []):
+				if not hit.get("evaded", false):
+					arena.hurt_enemy(target)
+	else:
+		hit = run.hit_enemy(index)
+		if not hit.is_empty():
+			arena.enemy.hurt()
 	if hit.is_empty():
 		return
-	float_text(
-		("CRIT " if hit.critical else "") + str(int(hit.damage)),
-		Vector2(343, 389 - index * 27),
-		GOLD
-	)
+	audio.play_effect("explosion" if run.actors[index].id == "scarlet" else "hit")
 	if not str(hit.message).is_empty():
 		log_label.text = TaleCatalog.HEROES[run.actors[index].id].name + " · " + str(hit.message)
 	if run.enemy_hp <= 0:
@@ -1410,7 +1390,7 @@ func show_victory(result: Dictionary) -> void:
 	)
 	label(
 		page,
-		"+%d ouro  •  %d / 8 capítulos concluídos" % [int(result.reward), campaign.cleared.size()],
+		"+%d ouro  •  %d / 12 capítulos concluídos" % [int(result.reward), campaign.cleared.size()],
 		Rect2(24, 691, 492, 46),
 		19,
 		MUTED
@@ -1814,7 +1794,7 @@ func show_profile() -> void:
 	label(
 		page,
 		(
-			"%d VITÓRIAS   %d INIMIGOS   %d / 8 CAPÍTULOS"
+			"%d VITÓRIAS   %d INIMIGOS   %d / 12 CAPÍTULOS"
 			% [campaign.total_wins, campaign.total_kills, campaign.cleared.size()]
 		),
 		Rect2(24, 420, 492, 35),
@@ -2177,3 +2157,59 @@ func set_voice_volume(value: float) -> void:
 	campaign.voice_volume = value
 	audio.apply_volume(campaign.music_volume, campaign.effects_volume, value)
 	persist()
+
+
+func process_tactical_combat(dt: float) -> void:
+	if not run.alive():
+		finish_defeat()
+		return
+	run.tick_status(dt)
+	for target in run.tactics.last_dot_targets:
+		arena.hurt_enemy(target, true)
+	if run.enemy_hp <= 0:
+		resolve_enemy()
+		return
+	for index in run.actors.size():
+		if run.actors[index].hp <= 0:
+			continue
+		cooldowns[index] -= dt
+		if campaign.auto_ult and try_ultimate(index):
+			continue
+		if cooldowns[index] <= 0 and arena.attack(index, run.tactics.target_for(index)):
+			var duration: float = arena.heroes[index].get_animation_duration("attack")
+			cooldowns[index] = maxf(float(run.actors[index].interval), duration + 0.06)
+	for index in run.tactics.enemies.size():
+		var foe: Dictionary = run.tactics.enemies[index]
+		if foe.hp <= 0:
+			continue
+		foe.timer -= dt
+		if foe.timer <= 0:
+			foe.timer += run.tactics.interval_for(index)
+			var hit: Dictionary = run.hit_party(index)
+			if not hit.is_empty():
+				arena.enemy_strike(index, hit.target)
+				if hit.damage > 0:
+					arena.hurt(hit.target)
+				log_label.text = "%s · %s" % [TaleCatalog.HEROES[run.actors[hit.target].id].name, "Esquiva" if hit.evaded else ("−%d PV" % int(hit.damage))]
+				arena.sync_health(run.actors)
+			if not run.alive():
+				finish_defeat()
+				return
+
+
+func try_ultimate(index: int) -> bool:
+	if state != "battle" or paused or run == null or run.tactics == null or index < 0 or index >= run.actors.size():
+		return false
+	var actor: Dictionary = run.actors[index]
+	if actor.hp <= 0 or actor.energy < 100 or actor.ult_pending or arena.tracks[index].time >= 0:
+		return false
+	var target: int = run.tactics.target_for(index)
+	if not arena.attack(index, target, true):
+		return false
+	if not run.tactics.reserve_ultimate(index):
+		arena.tracks[index].time = -1.0
+		return false
+	cooldowns[index] = maxf(float(actor.interval), arena.tracks[index].duration + 0.06)
+	log_label.text = str(TaleCatalog.HEROES[actor.id].name) + " · " + str(TaleCatalog.HERO_TACTICS[actor.id].ult)
+	update_hud()
+	return true

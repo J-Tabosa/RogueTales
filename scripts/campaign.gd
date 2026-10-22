@@ -37,6 +37,9 @@ var fps_limit := 60
 var text_speed := 36
 var auto_repeat := false
 var unlock_progress: Dictionary = {"snow_white": 0, "rapunzel": 0.0, "mulan": 0, "ariel": []}
+var formation_rows: Dictionary = {}
+var auto_ult := true
+var window_mode := "windowed"
 var run_counter := 0
 var last_resolved_run := 0
 const IDLE_CAP := 8 * 3600
@@ -74,7 +77,7 @@ const ACHIEVEMENTS := [
 	{
 		"id": "ending",
 		"title": "Autoras do amanhã",
-		"detail": "Conclua os oito capítulos.",
+		"detail": "Conclua os doze capítulos.",
 		"reward": 350
 	},
 ]
@@ -85,10 +88,12 @@ func _init() -> void:
 		levels[id] = [0, 0, 0]
 		hero_levels[id] = 1
 		hero_xp[id] = 0
+		formation_rows[id] = TaleCatalog.HERO_TACTICS[id].row
+	ensure_front()
 
 
 func can_play(index: int) -> bool:
-	return index >= 0 and index < 8 and (index == 0 or cleared.has(index - 1))
+	return index >= 0 and index < TaleCatalog.CHAPTER_COUNT and (index == 0 or cleared.has(index - 1))
 
 
 func upgrade_cost(id: String, branch: int) -> int:
@@ -120,6 +125,7 @@ func toggle_party(id: String) -> bool:
 		if party.size() >= 3:
 			return false
 		party.append(id)
+	ensure_front()
 	return true
 
 
@@ -158,7 +164,10 @@ func choose_memory(index: int, choice: String) -> bool:
 
 func to_dict() -> Dictionary:
 	return {
-		"version": 3,
+		"version": 4,
+		"formation_rows": formation_rows,
+		"auto_ult": auto_ult,
+		"window_mode": window_mode,
 		"gold": gold,
 		"unlocked": unlocked,
 		"party": party,
@@ -225,7 +234,7 @@ func load_data(data: Dictionary) -> void:
 		for value in data.cleared:
 			if typeof(value) in [TYPE_INT, TYPE_FLOAT]:
 				completed.append(int(value))
-		for index in 8:
+		for index in TaleCatalog.CHAPTER_COUNT:
 			if completed.has(index) and (index == 0 or cleared.has(index - 1)):
 				cleared.append(index)
 	var saved_levels: Dictionary = (
@@ -311,11 +320,22 @@ func load_data(data: Dictionary) -> void:
 			for chapter in progress.ariel:
 				if (
 					typeof(chapter) in [TYPE_INT, TYPE_FLOAT]
-					and int(chapter) in range(8)
+					and int(chapter) in range(TaleCatalog.CHAPTER_COUNT)
 					and not unlock_progress.ariel.has(int(chapter))
 				):
 					unlock_progress.ariel.append(int(chapter))
 	run_counter = maxi(0, int(data.get("run_counter", 0)))
+	formation_rows.clear()
+	var saved_rows: Variant = data.get("formation_rows", {})
+	for id in TaleCatalog.HEROES:
+		formation_rows[id] = str(saved_rows.get(id, TaleCatalog.HERO_TACTICS[id].row)) if saved_rows is Dictionary else str(TaleCatalog.HERO_TACTICS[id].row)
+		if formation_rows[id] not in ["front", "back"]:
+			formation_rows[id] = TaleCatalog.HERO_TACTICS[id].row
+	ensure_front()
+	auto_ult = bool(data.get("auto_ult", true))
+	window_mode = "fullscreen" if data.get("window_mode") == "fullscreen" else "windowed"
+	if int(data.get("version", 1)) < 4:
+		claimed.erase("ending")
 	last_resolved_run = clampi(int(data.get("last_resolved_run", 0)), 0, run_counter)
 	if not checkpoint.is_empty():
 		var checkpoint_id := int(checkpoint.get("run_id", 0))
@@ -358,7 +378,7 @@ func load_from(path: String = SAVE_PATH) -> bool:
 			parser.parse(FileAccess.get_file_as_string(candidate)) == OK
 			and parser.data is Dictionary
 		):
-			if int(parser.data.get("version", 0)) in [1, 2, 3]:
+			if int(parser.data.get("version", 0)) in [1, 2, 3, 4]:
 				load_data(parser.data)
 				return true
 	return false
@@ -472,7 +492,7 @@ func achievement_ready(id: String) -> bool:
 		"voices":
 			return unlocked.size() == TaleCatalog.HEROES.size()
 		"ending":
-			return cleared.size() == 8
+			return cleared.size() == TaleCatalog.CHAPTER_COUNT
 		"training":
 			for level in hero_levels.values():
 				if int(level) >= 5:
@@ -558,7 +578,7 @@ func resolve_run(data: Dictionary, won: bool) -> Array[String]:
 			slot >= 0
 			and slot < health.size()
 			and float(health[slot]) > 0
-			and chapter in range(8)
+			and chapter in range(TaleCatalog.CHAPTER_COUNT)
 			and not unlock_progress.ariel.has(chapter)
 		):
 			unlock_progress.ariel.append(chapter)
@@ -569,3 +589,43 @@ func resolve_run(data: Dictionary, won: bool) -> Array[String]:
 			if party.size() < 3:
 				party.append(id)
 	return newly_unlocked
+
+
+func row_for(id: String) -> String:
+	return str(formation_rows.get(id, TaleCatalog.HERO_TACTICS[id].row))
+
+
+func ensure_front() -> void:
+	for id in party:
+		if row_for(id) == "front":
+			return
+	if not party.is_empty():
+		formation_rows[party[0]] = "front"
+
+
+func set_row(id: String, row: String) -> bool:
+	if not party.has(id) or row not in ["front", "back"] or not checkpoint.is_empty():
+		return false
+	if row == "back":
+		var others_front := 0
+		for other in party:
+			if other != id and row_for(other) == "front":
+				others_front += 1
+		if others_front == 0:
+			return false
+	formation_rows[id] = row
+	return true
+
+
+static func reset_account(path: String = SAVE_PATH) -> bool:
+	# Replace the primary save, then replace the backup too: a stale backup must not resurrect progress.
+	var fresh := TaleCampaign.new()
+	fresh.idle_anchor = int(Time.get_unix_time_from_system())
+	if not fresh.save_to(path):
+		return false
+	var error := DirAccess.copy_absolute(ProjectSettings.globalize_path(path), ProjectSettings.globalize_path(path + ".bak"))
+	if error != OK:
+		return false
+	if FileAccess.file_exists(path + ".tmp"):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(path + ".tmp"))
+	return true

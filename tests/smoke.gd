@@ -166,8 +166,8 @@ func checks() -> void:
 	assert(hits[0] == 1 and timeline.time < 0)
 	game._input(key)
 	assert(not game.debug_enabled and game.state == "menu")
-	# Eight chapters with ordinary XP/gold, temporary recruitment and replay farming on defeat.
-	for chapter in 8:
+	# Twelve chapters with ordinary XP/gold, temporary recruitment and replay farming on defeat.
+	for chapter in TaleCatalog.CHAPTER_COUNT:
 		assert(game.campaign.can_play(chapter))
 		train_party()
 		game.start_stage(chapter)
@@ -209,10 +209,10 @@ func checks() -> void:
 		assert(game.state == "memory")
 		game.save_memory("hope")
 		assert(game.campaign.checkpoint.is_empty())
-	assert(game.campaign.cleared.size() == 8)
-	assert(game.state == "ending" and game.campaign.choices.size() == 8)
+	assert(game.campaign.cleared.size() == TaleCatalog.CHAPTER_COUNT)
+	assert(game.state == "ending" and game.campaign.choices.size() == TaleCatalog.CHAPTER_COUNT)
 	var saved := TaleCampaign.new()
-	assert(saved.load_from(test_path) and saved.cleared.size() == 8)
+	assert(saved.load_from(test_path) and saved.cleared.size() == TaleCatalog.CHAPTER_COUNT)
 	var gold: int = game.campaign.gold
 	game.show_story(0, "intro", 0, true)
 	game.finish_story()
@@ -245,7 +245,7 @@ func checks() -> void:
 		if FileAccess.file_exists(path):
 			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	print(
-		"PASS: 8 chapters + ending; temporary recruitment; 3-member formation; unique skills/upgrades; earned-income balance; relics/checkpoint; atomic saves/backup; pause/2x; attack recovery/one hit; idle; debug Ctrl+B guard; all screens; defeat and replay"
+		"PASS: 12 chapters + ending; temporary recruitment; 3-member formation; unique skills/upgrades; earned-income balance; relics/checkpoint; atomic saves/backup; pause/2x; attack recovery/one hit; idle; debug Ctrl+B guard; all screens; defeat and replay"
 	)
 	quit()
 

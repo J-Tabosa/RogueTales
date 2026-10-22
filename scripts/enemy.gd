@@ -20,7 +20,7 @@ var strike_left := 0.0
 
 
 static func warm(chapter: int) -> PackedScene:
-	chapter = clampi(chapter, 0, SCENES.size() - 1)
+	chapter = [0, 1, 2, 3, 4, 5, 6, 7, 2, 1, 4, 7][clampi(chapter, 0, TaleCatalog.FINAL_CHAPTER)]
 	if not scene_cache.has(chapter):
 		if scene_cache.size() >= 2:
 			scene_cache.erase(scene_cache.keys()[0])

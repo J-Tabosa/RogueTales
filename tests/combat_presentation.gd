@@ -87,8 +87,8 @@ func checks() -> void:
 	game.on_attack_hit(0)
 	assert(game.arena.enemy.hurt_left > 0)
 	game.arena.enemy.reset_damage()
-	game.run.burn = 3
-	game.run.burn_left = 2
+	game.run.tactics.enemies[0].burn = 3
+	game.run.tactics.enemies[0].burn_left = 2
 	game._process(0.05)
 	assert(game.arena.enemy.hurt_left > 0)
 	game.abandon_expedition()

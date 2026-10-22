@@ -30,7 +30,7 @@ func smooth_circle(at: Vector2, radius: float, color: Color) -> void:
 
 
 func _draw() -> void:
-	var data: Dictionary = TaleCatalog.STAGES[clampi(stage, 0, 7)]
+	var data: Dictionary = TaleCatalog.STAGES[clampi(stage, 0, TaleCatalog.FINAL_CHAPTER)]
 	var biome: int = data.biome
 	draw_rect(Rect2(0, 0, 492, 340), data.sky)
 	smooth_circle(Vector2(395, 68), 32, Color(data.color, 0.15))

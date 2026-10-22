@@ -1,6 +1,8 @@
 class_name IdleRun
 extends RefCounted
 ## A chapter consists of two encounters and a boss. Permanent upgrades live in Campaign.
+const Tactics = preload("res://scripts/tactics.gd")
+var tactics
 const STAGES = TaleCatalog.STAGES
 const RELICS = TaleCatalog.RELICS
 var stage := 0
@@ -42,6 +44,9 @@ func setup(campaign: TaleCampaign, index: int, fresh: bool = true) -> void:
 
 
 func spawn_enemy() -> void:
+	if tactics != null:
+		tactics.spawn()
+		return
 	enemy_max = float(STAGES[stage].hp) * ([1.0, 1.25, 2.4][wave])
 	enemy_hp = enemy_max
 	burn_left = 0.0
@@ -77,7 +82,9 @@ func heal_group(amount: float) -> float:
 	return restored
 
 
-func hit_enemy(index: int) -> Dictionary:
+func hit_enemy(index: int, target: int = -1) -> Dictionary:
+	if tactics != null:
+		return tactics.hit_enemy(index, target)
 	if index < 0 or index >= actors.size() or actors[index].hp <= 0 or enemy_hp <= 0:
 		return {}
 	var actor: Dictionary = actors[index]
@@ -113,6 +120,9 @@ func hit_enemy(index: int) -> Dictionary:
 
 
 func tick_status(delta: float) -> void:
+	if tactics != null:
+		tactics.tick(delta)
+		return
 	if enemy_hp <= 0:
 		return
 	var amount := burn * minf(delta, burn_left) + poison * minf(delta, poison_left)
@@ -121,7 +131,9 @@ func tick_status(delta: float) -> void:
 	enemy_hp = maxf(0, enemy_hp - amount)
 
 
-func hit_party() -> Dictionary:
+func hit_party(enemy_index: int = 0) -> Dictionary:
+	if tactics != null:
+		return tactics.hit_party(enemy_index)
 	var weakness := 0.0
 	for actor in actors:
 		if actor.id == "rapunzel" and actor.hp > 0:
@@ -207,6 +219,7 @@ func to_checkpoint() -> Dictionary:
 		health.append(float(actor.hp))
 		hits.append(int(actor.hits))
 	return {
+		"tactics": tactics.snapshot() if tactics != null else {},
 		"run_id": run_id,
 		"hero_ids": actor_ids(),
 		"drafted": drafted.duplicate(),
@@ -273,6 +286,10 @@ func restore(campaign: TaleCampaign, data: Dictionary) -> void:
 		rng.seed = int(data.rng_seed)
 		rng.state = int(data.rng_state)
 
+	if data.get("tactics") is Dictionary and not data.tactics.is_empty():
+		enable_tactics(campaign)
+		tactics.restore(data.tactics)
+
 
 func actor_ids() -> Array[String]:
 	var ids: Array[String] = []
@@ -297,7 +314,16 @@ func recruit(campaign: TaleCampaign, id: String, replace_index: int = -1) -> boo
 		actors.append(actor)
 	else:
 		actors[replace_index] = actor
+	if tactics != null:
+		tactics.configure_actor(actor, campaign.row_for(id))
+		tactics.ensure_front()
 	drafted.append(id)
 	pending_choice = false
 	offers.clear()
 	return true
+
+
+func enable_tactics(campaign: TaleCampaign) -> void:
+	if tactics == null:
+		tactics = Tactics.new()
+		tactics.bind(self, campaign)

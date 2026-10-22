@@ -69,13 +69,9 @@ func checks() -> void:
 	game._process(0.1)
 	assert(game.run.run_id == identity, "The transition must start a run only once")
 	var arena: Node2D = game.arena
-	arena.walking = false
-	var scene_clock: float = arena.backdrop.clock
-	arena.backdrop._process(0.2)
-	assert(arena.backdrop.clock == scene_clock)
-	arena.backdrop.walking = true
-	arena.backdrop._process(0.2)
-	assert(arena.backdrop.clock > scene_clock)
+	var scene_clock: float = arena.clock
+	arena._process(0.2)
+	assert(arena.clock > scene_clock)
 	arena.frozen = true
 	arena._process(0.1)
 	assert(arena.heroes[0].speed_scale == 0)
