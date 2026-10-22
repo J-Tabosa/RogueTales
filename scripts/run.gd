@@ -2,6 +2,7 @@ class_name IdleRun
 extends RefCounted
 ## A chapter consists of two encounters and a boss. Permanent upgrades live in Campaign.
 const Tactics = preload("res://scripts/tactics.gd")
+const Endless = preload("res://scripts/endless_rules.gd")
 var tactics
 const STAGES = TaleCatalog.STAGES
 const RELICS = TaleCatalog.RELICS
@@ -36,10 +37,19 @@ var mercy_used := false
 var curse_count := 0
 var elite_bonuses := 0
 var build_history: Array[String] = []
+var synergies_seen: Array[String] = []
+var synergy_activations := 0
+var pending_event := ""
+var seen_events: Array[String] = []
+var events_discovered: Array[String] = []
+var endless := false
+var upgrade_counts: Dictionary = {}
+var team_template: Dictionary = Endless.template()
 
 
 func setup(campaign: TaleCampaign, index: int, fresh: bool = true) -> void:
 	expedition = false
+	endless = false
 	tactics = null
 	stage = index
 	run_id = campaign.new_run_id() if fresh else 0
@@ -253,6 +263,9 @@ func to_checkpoint() -> Dictionary:
 		"shop_stock": shop_stock.duplicate(), "shop_bought": shop_bought.duplicate(),
 		"mercy_used": mercy_used, "curse_count": curse_count, "elite_bonuses": elite_bonuses,
 		"build_history": build_history.duplicate(),
+		"synergies_seen": synergies_seen.duplicate(), "synergy_activations": synergy_activations,
+		"pending_event": pending_event, "seen_events": seen_events.duplicate(), "events_discovered": events_discovered.duplicate(),
+		"endless": endless, "endless_build": Endless.snapshot(self) if endless else {},
 		"ability_state": ability_snapshot(),
 		"tactics": tactics.snapshot() if tactics != null else {},
 		"run_id": run_id,
@@ -274,19 +287,32 @@ func to_checkpoint() -> Dictionary:
 func restore(campaign: TaleCampaign, data: Dictionary) -> void:
 	setup(campaign, int(data.stage), false)
 	expedition = bool(data.get("expedition", false))
+	endless = expedition and bool(data.get("endless", false))
 	if expedition:
-		run_gold = clampi(int(data.get("run_gold", 0)), 0, 99999)
+		run_gold = clampi(int(data.get("run_gold", 0)), 0, 2147483647 if endless else 99999)
 		blessing = str(data.get("blessing", "vigor"))
 		if not ExpeditionContent.BLESSINGS.has(blessing): blessing = "vigor"
 		leader = str(data.get("leader", "scarlet"))
 		interlude = str(data.get("interlude", ""))
-		if interlude not in ["", "reward", "route", "shop"]: interlude = ""
+		if interlude not in ["", "reward", "route", "shop", "event"]: interlude = ""
+		pending_event = str(data.get("pending_event", ""))
+		if not preload("res://scripts/team_events.gd").EVENTS.has(pending_event): pending_event = ""
+		seen_events.clear()
+		events_discovered.clear()
+		for key in data.get("seen_events", []):
+			if preload("res://scripts/team_events.gd").EVENTS.has(key) and not seen_events.has(key): seen_events.append(key)
+		for key in data.get("events_discovered", []):
+			if preload("res://scripts/team_events.gd").EVENTS.has(key) and not events_discovered.has(key): events_discovered.append(key)
 		room_kind = "elite" if data.get("room_kind") == "elite" else "battle"
-		rooms_cleared = clampi(int(data.get("rooms_cleared", 0)), 0, 12)
+		rooms_cleared = clampi(int(data.get("rooms_cleared", 0)), 0, 2147483647 if endless else 12)
 		mercy_used = bool(data.get("mercy_used", false))
-		curse_count = clampi(int(data.get("curse_count", 0)), 0, 12)
-		elite_bonuses = clampi(int(data.get("elite_bonuses", 0)), 0, 12)
+		curse_count = clampi(int(data.get("curse_count", 0)), 0, 2147483647 if endless else 12)
+		elite_bonuses = clampi(int(data.get("elite_bonuses", 0)), 0, 2147483647 if endless else 12)
 		build_history.clear()
+		synergies_seen.clear()
+		for key in data.get("synergies_seen", []):
+			if preload("res://scripts/team_synergies.gd").PAIRS.has(key) and not synergies_seen.has(key): synergies_seen.append(key)
+		synergy_activations = maxi(0, int(data.get("synergy_activations", 0)))
 		for key in data.get("build_history", []):
 			if build_history.size() >= 64: break
 			if key in ["event:curse", "event:elite"] or not TaleCatalog.offer_data(str(key)).is_empty(): build_history.append(str(key))
@@ -325,15 +351,18 @@ func restore(campaign: TaleCampaign, data: Dictionary) -> void:
 	wave = clampi(int(data.get("wave", 0)), 0, 2)
 	var saved_relics: Variant = data.get("relics", [])
 	if saved_relics is Array:
-		for id in saved_relics.slice(0, 32 if expedition else 2):
+		for id in saved_relics.slice(0, (42 if endless else 32) if expedition else 2):
 			if expedition:
 				if not TaleCatalog.offer_data(str(id)).is_empty():
 					relics.append(str(id))
 			else:
 				apply_relic(str(id))
 	if expedition:
-		for event in build_history:
-			for actor in actors: apply_build_event(actor, event)
+		if endless:
+			Endless.restore(self, data.get("endless_build", {}))
+		else:
+			for event in build_history:
+				for actor in actors: apply_build_event(actor, event)
 	var health: Array = data.get("health", [])
 	for index in mini(health.size(), actors.size()):
 		actors[index].hp = clampf(float(health[index]), 0, actors[index].max_hp)
@@ -385,7 +414,9 @@ func recruit(campaign: TaleCampaign, id: String, replace_index: int = -1) -> boo
 		return false
 	var actor := run_actor(id) if expedition else TaleCatalog.hero_stats(id, campaign.levels[id], campaign.choices, campaign.hero_levels[id])
 	if expedition:
-		for event in build_history: apply_build_event(actor, event)
+		if endless: Endless.apply_template(self, actor)
+		else:
+			for event in build_history: apply_build_event(actor, event)
 	else:
 		for relic in relics: apply_relic_to_actor(actor, relic)
 	if actors.size() < 3:
@@ -408,11 +439,14 @@ func enable_tactics(campaign: TaleCampaign) -> void:
 		tactics.bind(self, campaign)
 
 
-func start_expedition(campaign: TaleCampaign, id: String, gift: String) -> bool:
+func start_expedition(campaign: TaleCampaign, id: String, gift: String, infinite := false) -> bool:
 	if not campaign.checkpoint.is_empty() or not campaign.unlocked.has(id) or not campaign.blessings_unlocked.has(gift):
 		return false
 	setup(campaign, 0)
 	expedition = true
+	endless = infinite
+	upgrade_counts.clear()
+	team_template = Endless.template()
 	leader = id
 	blessing = gift
 	run_gold = 35
@@ -426,6 +460,11 @@ func start_expedition(campaign: TaleCampaign, id: String, gift: String) -> bool:
 	curse_count = 0
 	elite_bonuses = 0
 	build_history.clear()
+	synergies_seen.clear()
+	synergy_activations = 0
+	pending_event = ""
+	seen_events.clear()
+	events_discovered.clear()
 	actors.clear()
 	actors.append(run_actor(id))
 	unlock_stats["boss_guests"] = {}
@@ -461,6 +500,12 @@ func ability_snapshot() -> Dictionary:
 
 
 func apply_run_upgrade(id: String) -> bool:
+	if endless:
+		if not Endless.add_upgrade(self, id): return false
+		pending_choice = false
+		offers.clear()
+		interlude = "route"
+		return true
 	var item := TaleCatalog.offer_data(id)
 	if item.is_empty() or item.has("hero"):
 		return false
@@ -497,7 +542,10 @@ func roll_run_offers() -> void:
 		offers.append(candidates[slot])
 		candidates.remove_at(slot)
 	for item in RELICS:
-		if relics.count(item.id) < 3: candidates.append(item.id)
+		if endless or relics.count(item.id) < 3:
+			if endless and item.id == "critical" and actors.all(func(actor): return actor.hp <= 0 or actor.crit >= 0.949): continue
+			if endless and item.id == "haste" and actors.all(func(actor): return actor.hp <= 0 or actor.interval <= 0.651): continue
+			candidates.append(item.id)
 	while offers.size() < 3 and not candidates.is_empty():
 		var slot := rng.randi_range(0, candidates.size() - 1)
 		offers.append(candidates[slot])
@@ -509,21 +557,24 @@ func roll_run_offers() -> void:
 
 func clear_encounter() -> bool:
 	if not expedition: return false
-	rooms_cleared = stage + 1
+	rooms_cleared = rooms_cleared + 1 if endless else stage + 1
 	kills += 1
 	run_gold += 16 + stage * 3 + (25 if room_kind == "elite" else 0)
 	if room_kind == "elite":
 		elite_bonuses += 1
-		build_history.append("event:elite")
-		for actor in actors: actor.damage *= 1.10
+		if endless: Endless.event(self, "elite")
+		else:
+			build_history.append("event:elite")
+			for actor in actors: actor.damage *= 1.10
 	if ExpeditionContent.is_boss(stage):
 		for id in drafted:
 			var slot := actor_ids().find(id)
 			if slot >= 0 and actors[slot].hp > 0:
 				if not unlock_stats.boss_guests.has(id): unlock_stats.boss_guests[id] = []
 				if not unlock_stats.boss_guests[id].has(stage): unlock_stats.boss_guests[id].append(stage)
-	if stage == 11: return true
-	stage += 1
+	if stage == 11 and not endless: return true
+	stage = (stage + 1) % 12 if endless else stage + 1
+	if endless and stage == 0: seen_events.clear()
 	wave = 2 if ExpeditionContent.is_boss(stage) else 0
 	room_kind = "battle"
 	roll_run_offers()
@@ -535,13 +586,14 @@ func roll_routes() -> void:
 	route_offers.assign(["battle"])
 	if ExpeditionContent.is_boss(stage): return
 	var choices := ["elite", "camp", "shop", "spring", "curse", "cache"]
+	if not preload("res://scripts/team_events.gd").available(self).is_empty(): choices.append("team_event")
 	if run_gold < 18: choices.erase("camp")
 	route_offers.append(str(choices[rng.randi_range(0, choices.size() - 1)]))
 	shop_stock.assign(["potion"])
 	shop_bought.clear()
 	var stock: Array[String] = []
 	for relic in RELICS:
-		if relics.count(relic.id) < 3: stock.append(relic.id)
+		if endless or relics.count(relic.id) < 3: stock.append(relic.id)
 	while shop_stock.size() < 3 and not stock.is_empty():
 		var slot := rng.randi_range(0, stock.size() - 1)
 		shop_stock.append(stock[slot])
@@ -551,6 +603,12 @@ func roll_routes() -> void:
 func choose_route(id: String) -> bool:
 	if interlude != "route" or not route_offers.has(id): return false
 	if id == "camp" and run_gold < 18: return false
+	if id == "team_event":
+		var events: Array = preload("res://scripts/team_events.gd").available(self)
+		if events.is_empty(): return false
+		pending_event = events[rng.randi_range(0, events.size() - 1)]
+		interlude = "event"
+		return true
 	if id == "shop":
 		interlude = "shop"
 		return true
@@ -564,11 +622,13 @@ func choose_route(id: String) -> bool:
 	elif id == "cache": run_gold += 35
 	elif id == "curse":
 		curse_count += 1
-		build_history.append("event:curse")
-		for actor in actors:
-			actor.damage *= 1.18
-			actor.max_hp *= 0.90
-			actor.hp = minf(actor.hp, actor.max_hp)
+		if endless: Endless.event(self, "curse")
+		else:
+			build_history.append("event:curse")
+			for actor in actors:
+				actor.damage *= 1.18
+				actor.max_hp *= 0.90
+				actor.hp = minf(actor.hp, actor.max_hp)
 	route_offers.clear()
 	interlude = ""
 	return true
@@ -590,10 +650,13 @@ func buy_supply(id: String) -> bool:
 		return false
 	if id == "potion": restore_party(0.35, true)
 	else:
-		if relics.count(id) >= 3: return false
-		relics.append(id)
-		build_history.append(id)
-		for actor in actors: apply_relic_to_actor(actor, id)
+		if endless:
+			if not Endless.add_upgrade(self, id): return false
+		else:
+			if relics.count(id) >= 3: return false
+			relics.append(id)
+			build_history.append(id)
+			for actor in actors: apply_relic_to_actor(actor, id)
 	run_gold -= cost
 	shop_bought.append(id)
 	return true
@@ -612,3 +675,31 @@ func apply_build_event(actor: Dictionary, event: String) -> void:
 		actor.hp = minf(actor.hp, actor.max_hp)
 	elif event == "event:elite": actor.damage *= 1.1
 	else: apply_relic_to_actor(actor, event)
+
+
+func upgrade_count(id: String) -> int:
+	return int(upgrade_counts.get(id, 0)) if endless else relics.count(id)
+
+
+func upgrade_total() -> int:
+	if not endless: return relics.size()
+	var count := 0
+	for value in upgrade_counts.values(): count += int(value)
+	return count
+
+
+func phase_label() -> String:
+	return "FASE %03d · INFINITO" % (rooms_cleared + 1) if endless else "FASE %02d / 12" % (stage + 1)
+
+
+func upgrade_detail(id: String) -> String:
+	var item := TaleCatalog.offer_data(id)
+	if item.is_empty(): return ""
+	if not endless: return item.detail
+	var count := upgrade_count(id)
+	match id:
+		"power": return "+%.1f%% de dano ao grupo nesta escolha. Ganhos decrescentes por acúmulo." % (20.0 / (1 + count * 0.08))
+		"armor": return "+%.2f de armadura ao grupo nesta escolha. Ganhos decrescentes por acúmulo." % (3.0 / (1 + count * 0.12))
+		"leech": return "Cada acerto passa a curar mais %.2f PV. Ganhos decrescentes por acúmulo." % (3.0 / (1 + count * 0.08))
+		"critical": return "+%.1f%% de chance crítica, até 95%%. Ganhos decrescentes por acúmulo." % (12.0 / (1 + count * 0.1))
+	return item.detail

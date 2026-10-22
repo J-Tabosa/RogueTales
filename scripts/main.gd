@@ -2222,10 +2222,12 @@ func process_tactical_combat(dt: float) -> void:
 			combat_flow.begin(entry)
 			log_label.text = "%s · %s" % [TaleCatalog.HEROES[run.actors[index].id].name, TaleCatalog.HERO_TACTICS[run.actors[index].id].ult if ultimate else (ExpeditionContent.KITS[run.actors[index].id][0] if run.expedition else arena.heroes[index].get_weapon_label())]
 	else:
-		var target: int = run.tactics.choose_target(run.tactics.enemies[index], run.actors)
+		var intent: Dictionary = run.tactics.commit_intent(index) if run.expedition else {}
+		var target: int = int(intent.target) if not intent.is_empty() else run.tactics.choose_target(run.tactics.enemies[index], run.actors)
 		if arena.begin_enemy_attack(index, target):
+			arena.enemy_track["support"] = str(intent.get("key", "")) in ["prepare", "banner", "stagger", "pull"] or (intent.get("key") == "copy" and intent.get("copy") == "rapunzel")
 			combat_flow.begin(entry)
-			log_label.text = str(run.tactics.enemies[index].name) + " · Ataque"
+			log_label.text = str(run.tactics.enemies[index].name) + " · " + str(intent.get("title", "Ataque"))
 	update_hud()
 
 
@@ -2235,11 +2237,13 @@ func on_enemy_attack_hit(index: int) -> void:
 	var hit: Dictionary = run.hit_party(index)
 	if hit.is_empty():
 		return
-	arena.enemy_strike(index, hit.target)
-	if hit.damage > 0:
-		arena.hurt(hit.target)
+	if not hit.get("non_attack", false):
+		arena.enemy_strike(index, hit.target)
+		if hit.damage > 0:
+			for target in hit.get("targets", [hit.target]):
+				if float(hit.get("target_damage", {}).get(target, hit.damage)) > 0: arena.hurt(target)
 	arena.present_result(hit, true, index)
-	log_label.text = "%s · %s" % [TaleCatalog.HEROES[run.actors[hit.target].id].name, "Esquiva" if hit.evaded else ("Guarda · −%d PV" % int(hit.damage) if hit.get("guarded", false) else "−%d PV" % int(hit.damage))]
+	log_label.text = str(hit.message) if not str(hit.get("message", "")).is_empty() else "%s · %s" % [TaleCatalog.HEROES[run.actors[hit.target].id].name, "Esquiva" if hit.evaded else ("Guarda · −%d PV" % int(hit.damage) if hit.get("guarded", false) else "−%d PV" % int(hit.damage))]
 	arena.sync_health(run.actors)
 	if not run.alive():
 		finish_defeat()

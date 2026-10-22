@@ -10,7 +10,7 @@ Após vencer, escolha uma de três melhorias. Há **10% de chance por tela** de 
 
 Entre fases, escolha cartas de rota: combate comum, elite, fogueira, mercador ou evento. Elites têm +35% de PV e +15% de dano; ao vencê-las, ganhe +25 ouro e +10% de dano na run. A fogueira custa 18 ouro e recupera a equipe; o mercador vende suprimentos e relíquias, com compras salvas individualmente. A página proibida troca PV máximos por dano. Chefes têm uma rota obrigatória.
 
-Derrota, abandono ou vitória na fase 12 encerram a tentativa. **Ouro da run, relíquias, transformações e convidados são temporários**. Desbloqueios, feitos, recordes e memórias são permanentes. As memórias abrem novas bênçãos iniciais; as três primeiras estão disponíveis desde o começo. Bônus de níveis, treinamento e escolhas da campanha antiga não entram nos atributos de novas runs. Uma build forte pode vencer sem receber um convite.
+No modo Conto, derrota, abandono ou vitória na fase 12 encerram a tentativa. No Infinito, a fase 12 abre uma nova volta. **Ouro da run, relíquias, transformações e convidados são temporários**. Desbloqueios, feitos, recordes e memórias são permanentes. As memórias abrem novas bênçãos iniciais; as três primeiras estão disponíveis desde o começo. Bônus de níveis, treinamento e escolhas da campanha antiga não entram nos atributos de novas runs. Uma build forte pode vencer sem receber um convite.
 
 A coleção usa **faixas verticais com artes grandes e pergaminho**: carrossel no celular e uma faixa larga no PC. Personagens bloqueados são silhuetas pretas, com nome **???**, classe e habilidades ocultas. Um convite permite experimentar o viajante no combate, mas a ficha só é revelada com o desbloqueio permanente. Só um protagonista começa a próxima run.
 
@@ -35,6 +35,41 @@ A inspiração é a sequência de ações e reações de [Unicorn Overlord](http
 - **PP:** cada aliado tem uma reação própria por rodada. Guarda física da vanguarda reduz 35% de um golpe; Mulan aproveita o aparo e Gato pode interceptar um aliado. Peter transforma esquivas em sombras; João reage a marcas; os suportes têm gatilhos distintos. Os inimigos preservam guarda, esquiva/contra-ataque, disparo extra e concentração. Chefes têm 2 PP.
 - **ULT:** a automática substitui uma ação normal. Ao tocar manualmente enquanto outro personagem age, a ULT aguarda o fim dessa ação; a carga é consumida quando a animação começa. Cliques repetidos não duplicam a reserva.
 - **Leitura:** a fila mostra os próximos atores, as unidades exibem AP/PP e o impacto mostra dano real, crítico, guarda, esquiva, contra-ataque e cura. Pausa, 2× e movimento reduzido afetam os efeitos.
+
+## Sinergias da equipe
+
+As seis duplas têm efeitos concretos e nomes exibidos no impacto. Exigem os dois personagens vivos, um gatilho e 1 PP do parceiro, com **uma ativação por dupla por rodada**. Não criam ações recursivas ou ataques simultâneos. A build lista os vínculos ativos; as descobertas são guardadas ao encerrar a run.
+
+| Dupla | Gatilho e efeito |
+| --- | --- |
+| João + Maria | Maria acerta uma presa marcada; João dispara um virote adicional de 80% e renova o veneno. |
+| Scarlet + Vendedora | Uma acerta o fogo aplicado pela outra; a parceira detona duas parcelas de queimadura. |
+| Ariel + Aladin | O desejo de cura/escudo acrescenta escudo de 8% e 12 de energia ao grupo. |
+| Rapunzel + Gato | O corte carregado recebe fios que curam o Gato em 6% e protegem o grupo em 10%. |
+| Mulan + Peter | Um golpe com sombras recebe um corte adicional de Mulan na vanguarda. |
+| Alice + Branca | Copas/Paus atingem veneno: destilam duas parcelas e curam 5% dos PV do grupo. |
+
+## Chefes e intenções
+
+| Fase | Mecânica |
+| --- | --- |
+| 4: General Sem Nome | O estandarte reduz 40% do dano recebido pelo General. Destruí-lo interrompe sua próxima ação. Alterna preparação e corte na frente. |
+| 8: Guardiã do Índice | Reimprime a forma da última ULT usada **neste combate**, usando seu próprio poder. Pode copiar cura e escudo; a cópia é consumida uma vez. Uma ULT nova usada durante a preparação fica para a ação seguinte. |
+| 12: Costureira dos Finais | Dois fios selam ativas de personagens da equipe. Os fios ligados ao personagem são expostos a qualquer classe. Destruí-los liberta a ativa; ataques básicos e ULTs funcionam durante o selo. A chefe drena energia enquanto os fios sustentam sua cura. |
+
+Cada inimigo mostra um ícone da intenção e o alvo. Toque no selo ou em **Intenções** para pausar e ler os detalhes. O alvo fica comprometido durante a preparação; se cair, o golpe busca outro alvo vivo. Ataques em área mostram os resultados de cada alvo, incluindo proteção, esquiva e cura. Os fios têm ligações visuais e os personagens afetados exibem **SELADO**.
+
+## Eventos da companhia
+
+Seis encontros ligados às duplas podem aparecer como carta de rota. Funcionam também com apenas um dos personagens: só quem está vivo no grupo fala. Há duas escolhas comuns e uma alternativa exclusiva que exige os dois vivos. Ela pode conceder transformações, proteção, cura ou energia. A alternativa de uma dupla ausente não revela nomes de personagens bloqueados. O evento, as opções e sua conclusão são salvos; voltar ao início não duplica recompensas. Cada evento aparece uma vez por volta de 12 fases.
+
+## Modo infinito
+
+Escolha **Infinito · sem fim** antes de começar. Não há vitória automática na fase 12: equipe, vida e build seguem para 13, 14 e adiante. Temas e mecânicas de chefes se repetem, com chefes a cada quatro fases e força crescente pela profundidade total. A curva continua finita em profundidades altas.
+
+As relíquias genéricas continuam disponíveis, com acúmulos sem limite de três e ganhos decrescentes de dano, armadura, drenagem e crítico. Habilidades exclusivas continuam únicas. Ofertas deixam de incluir crítico/velocidade já no teto. Os valores marginais reais aparecem na carta. O save usa um resumo compacto dos atributos, contagens e modificadores para novos convidados, preservando a ordem das adições de PV e maldições sem guardar uma lista que cresça a cada fase.
+
+O recorde infinito é separado das vitórias do Conto. Cada novo marco pessoal de 12 páginas acrescenta 20 memórias à recompensa terminal. Derrota ou abandono encerram a tentativa e resolvem feitos e marcos uma única vez.
 
 ## Personagens e ULTs
 
@@ -91,7 +126,7 @@ As doze áreas fornecem os temas das fases. O diário permite rever os diálogos
 
 ## Salvamento e compatibilidade
 
-Save local em `user://campaign_v1.json`, **schema 5**, com gravação temporária e backup. Contas dos schemas 1–4 preservam personagens, ouro, níveis, capítulos e checkpoints antigos. Estes checkpoints continuam pelo fluxo anterior; novas partidas começam pela expedição de 12 fases. O baú e a patrulha da campanha antiga não aparecem na navegação de novas runs.
+Save local em `user://campaign_v1.json`, **schema 6**, com gravação temporária e backup. Contas dos schemas 1–5 preservam personagens, ouro, níveis, capítulos e checkpoints antigos. Estes checkpoints continuam pelo fluxo anterior; novas partidas começam pela expedição de 12 fases. O baú e a patrulha da campanha antiga não aparecem na navegação de novas runs.
 
 Sair durante um combate retoma no **início daquele encontro**, preservando a mesma tentativa. Nas recompensas, rotas e loja, retoma a tela correspondente com as mesmas opções, histórico, compras, vida, energia, convidados, estados das habilidades e estado do gerador aleatório. Os IDs das runs impedem receber duas vezes feitos ou recompensas terminais.
 
@@ -152,6 +187,10 @@ Texturas, retratos, estilos e cenas usam cache; a arena tem até seis unidades e
 - `scripts/expedition_ui.gd`: início, preparação, recompensas, rotas, loja, galeria de silhuetas e resultados.
 - `scripts/expedition_content.gd`: kits, 36 transformações, bênçãos e eventos.
 - `scripts/hero_abilities.gd`: efeitos das ativas e reações individuais.
+- `scripts/team_synergies.gd`: vínculos, gatilhos, PP e limites por rodada.
+- `scripts/boss_rules.gd`: regras dos chefes, intenções e cópia de ULT.
+- `scripts/team_events.gd`: seis encontros, falas condicionais e escolhas.
+- `scripts/endless_rules.gd`: acúmulos infinitos, curva e saves compactos.
 - `scripts/interface.gd`: componentes, layouts de combate PC/celular, ULTs e reset.
 - `scripts/main.gd`: navegação, história, progressão e orquestração das batalhas.
 - `scripts/battle_flow.gd`: iniciativa, AP/PP, rodadas e fila de ULT.
@@ -163,6 +202,9 @@ Texturas, retratos, estilos e cenas usam cache; a arena tem até seis unidades e
 
 ```sh
 godot --headless --path . --editor --quit
+godot --headless --path . --script tests/party_combat.gd
+godot --headless --path . --script tests/endless_events.gd
+godot --headless --path . --script tests/adventure_ui.gd
 godot --headless --path . --script tests/expedition.gd
 godot --headless --path . --script tests/hero_abilities.gd
 godot --headless --path . --script tests/expedition_ui.gd
@@ -176,6 +218,6 @@ godot --headless --path . --script tests/presentation.gd
 godot --headless --path . --script tests/combat_presentation.gd
 ```
 
-As suítes usam saves isolados. Os testes de expedição cobrem as 12 fases contínuas, sorteio em 20 mil recompensas, retomada/RNG, ordem das melhorias/eventos, loja sem compras duplicadas, derrota/vitória, desbloqueios e migração. Os testes de habilidades cobrem todos os 12 kits e 36 opções, incluindo efeitos e gatilhos concretos. O teste de interface joga um encontro animado real e verifica os limites das 12 fases, silhuetas e layout de PC/celular. As suítes anteriores mantêm a cobertura do combate, animações, ULTs, áudio e checkpoints legados.
+As suítes usam saves isolados. As novas suítes verificam os seis efeitos de dupla, PP/rodadas/morte, estandarte, cópia comprometida de ULT ofensiva e de cura, selos, alvos fixos, todos os eventos solo/em dupla, retomada sem duplicação, 180 fases infinitas, acúmulos não esgotáveis, recrutamento com a build compacta e marcos pessoais. A interface valida as intenções/pausa, a fase 13, os eventos e layouts mobile/PC com capturas gráficas. Os testes de expedição cobrem as 12 fases contínuas, sorteio em 20 mil recompensas, retomada/RNG, ordem das melhorias/eventos, loja sem compras duplicadas, derrota/vitória, desbloqueios e migração. Os testes de habilidades cobrem todos os 12 kits e 36 opções, incluindo efeitos e gatilhos concretos. O teste de interface joga um encontro animado real e verifica os limites das 12 fases, silhuetas e layout de PC/celular. As suítes anteriores mantêm a cobertura do combate, animações, ULTs, áudio e checkpoints legados.
 
 `godot --headless --path . --script tools/simulate_runs.gd` executa uma sondagem determinística de balanceamento com 20 seeds por protagonista. É uma aproximação das durações das animações, sem renderização; não substitui playtests. Esta atualização inclui apenas o projeto-fonte; gere os exports no Godot.

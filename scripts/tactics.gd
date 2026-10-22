@@ -1,5 +1,6 @@
 extends RefCounted
 const Abilities = preload("res://scripts/hero_abilities.gd")
+const BossRules = preload("res://scripts/boss_rules.gd")
 ## Formation rules and all combat results; contains no nodes or rendering logic.
 ## The weak owner avoids a Run -> Tactics -> Run reference cycle.
 var owner_ref: WeakRef
@@ -7,6 +8,9 @@ var enemies: Array[Dictionary] = []
 var slow_left := 0.0
 var last_dot_targets: Array[int] = []
 var elapsed := 0.0
+var synergy_used: Dictionary = {}
+var last_ultimate: Dictionary = {}
+var ultimate_serial := 0
 
 
 func run():
@@ -49,8 +53,9 @@ func spawn() -> void:
 	var count: int = 1 if owner.stage == 0 and owner.wave == 0 else (2 if owner.stage < 3 else 3)
 	var total: float = TaleCatalog.STAGES[owner.stage].hp * [1.0, 1.25, 2.4][owner.wave]
 	if owner.expedition:
-		count = 1 if owner.stage < 2 else (2 if owner.stage < 5 else 3)
-		total = 76.0 * pow(1.22, owner.stage) * (1.5 if ExpeditionContent.is_boss(owner.stage) else 1.0) * (1.35 if owner.room_kind == "elite" else 1.0)
+		var depth: int = owner.rooms_cleared if owner.endless else owner.stage
+		count = 1 if depth < 2 else (2 if depth < 5 else 3)
+		total = 76.0 * (owner.Endless.health_scale(depth) if owner.endless else pow(1.22, owner.stage)) * (1.5 if ExpeditionContent.is_boss(owner.stage) else 1.0) * (1.35 if owner.room_kind == "elite" else 1.0)
 	var roles: Array = ["vanguard", "ranger", "mage"]
 	if owner.stage % 4 == 2:
 		roles[1] = "assassin"
@@ -72,7 +77,7 @@ func spawn() -> void:
 			"burn": 0.0, "burn_left": 0.0, "poison": 0.0, "poison_left": 0.0
 		})
 		if owner.expedition:
-			enemies[-1].damage = (5.5 + owner.stage * 1.8) * (1.2 if boss_unit else 1.0) * (1.15 if owner.room_kind == "elite" else 1.0) / sqrt(float(count))
+			enemies[-1].damage = (5.5 + (owner.rooms_cleared if owner.endless else owner.stage) * 1.8) * (1.2 if boss_unit else 1.0) * (1.15 if owner.room_kind == "elite" else 1.0) / sqrt(float(count))
 	for actor in owner.actors:
 		actor.ult_pending = false
 		actor.ult_queued = false
@@ -81,10 +86,18 @@ func spawn() -> void:
 			actor.evasion = actor.base_evasion
 			actor.evasion_left = 0.0
 		if owner.expedition and actor.id == "puss" and ExpeditionContent.has(actor, "ready"): actor.charged = true
+	if owner.expedition:
+		for at in enemies.size(): enemies[at]["slot"] = at
+		BossRules.setup(self)
 	sync_totals()
 
 
 static func eligible(attacker: Dictionary, defenders: Array) -> Array[int]:
+	if attacker.get("sealed", false):
+		var threads: Array[int] = []
+		for at in defenders.size():
+			if defenders[at].hp > 0 and defenders[at].get("binds", "") == attacker.get("id", ""): threads.append(at)
+		if not threads.is_empty(): return threads
 	var front: Array[int] = []
 	var back: Array[int] = []
 	for index in defenders.size():
@@ -128,6 +141,7 @@ func deal(target: Dictionary, amount: float, magical: bool, certain := false) ->
 	var evaded: bool = not certain and owner.rng.randf() < float(target.evasion)
 	if evaded:
 		return {"damage": 0.0, "evaded": true, "absorbed": 0.0}
+	if target.get("guarded_by_banner", false): amount *= 0.60
 	var guarded: bool = not magical and not certain and target.get("class", "") == "vanguard" and int(target.get("pp", 0)) > 0
 	if guarded:
 		target.pp -= 1
@@ -143,7 +157,9 @@ func deal(target: Dictionary, amount: float, magical: bool, certain := false) ->
 
 func hit_enemy(index: int, requested := -1) -> Dictionary:
 	if run().expedition:
-		return Abilities.attack(self, index, requested)
+		var hit: Dictionary = Abilities.attack(self, index, requested)
+		BossRules.refresh(self)
+		return hit
 	var owner = run()
 	if index < 0 or index >= owner.actors.size() or owner.actors[index].hp <= 0:
 		return {}
@@ -214,7 +230,7 @@ func hit_enemy(index: int, requested := -1) -> Dictionary:
 
 func hit_party(enemy_index := 0) -> Dictionary:
 	if run().expedition:
-		return Abilities.incoming(self, enemy_index)
+		return BossRules.execute(self, enemy_index)
 	var owner = run()
 	if enemy_index < 0 or enemy_index >= enemies.size() or enemies[enemy_index].hp <= 0:
 		return {}
@@ -287,13 +303,19 @@ func tick(delta: float) -> void:
 		if damage > 0:
 			last_dot_targets.append(index)
 	for actor in run().actors:
+		if run().expedition and actor.hp > 0 and actor.get("hostile_dot_left", 0.0) > 0:
+			var duration := minf(delta, float(actor.hostile_dot_left))
+			actor.hp = maxf(0, actor.hp - duration * (float(actor.get("hostile_burn", 0)) + float(actor.get("hostile_poison", 0))))
+			actor.hostile_dot_left = maxf(0, actor.hostile_dot_left - delta)
 		if actor.get("evasion_left", 0.0) > 0:
 			actor.evasion_left = maxf(0, actor.evasion_left - delta)
 			if actor.evasion_left == 0:
 				actor.evasion = actor.base_evasion
 		if actor.hp > 0 and not actor.ult_pending:
 			actor.energy = minf(100, actor.energy + delta * 3.0)
-	if run().expedition: Abilities.deaths(self)
+	if run().expedition:
+		Abilities.deaths(self)
+		BossRules.refresh(self)
 	sync_totals()
 
 
@@ -391,7 +413,11 @@ func ultimate(index: int, requested := -1) -> Dictionary:
 		for ally in owner.actors:
 			if ally.hp > 0:
 				ally.hp = minf(ally.max_hp, ally.hp + ally.max_hp * 0.2)
-	if owner.expedition: Abilities.deaths(self)
+	if owner.expedition:
+		Abilities.deaths(self)
+		BossRules.refresh(self)
+		ultimate_serial += 1
+		last_ultimate = {"hero": str(actor.id), "serial": ultimate_serial}
 	sync_totals()
 	return {"damage": amount, "target_damage": per_target, "targets": targets, "target": target, "critical": false, "evaded": false, "message": TaleCatalog.HERO_TACTICS[actor.id].ult, "healed": healed, "ultimate": true}
 
@@ -413,3 +439,13 @@ func restore(data: Dictionary) -> void:
 				actor.row = "front"
 			actor.energy = clampf(float(stored.get("energy", 0)), 0, 100)
 	ensure_front()
+
+
+func intent_for(index: int) -> Dictionary:
+	return BossRules.plan(self, index) if run().expedition else {}
+
+
+func commit_intent(index: int) -> Dictionary:
+	var intent := intent_for(index)
+	if not intent.is_empty(): intent.locked = true
+	return intent

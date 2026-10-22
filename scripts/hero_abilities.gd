@@ -1,6 +1,7 @@
 extends RefCounted
 ## The twelve run kits. Reactions spend PP and never call another attack recursively.
 const Content = preload("res://scripts/expedition_content.gd")
+const Synergies = preload("res://scripts/team_synergies.gd")
 
 static func has(actor: Dictionary, key: String) -> bool:
 	return Content.has(actor, key)
@@ -27,10 +28,11 @@ static func extra(tactics, at: int, amount: float, magic: bool, damages: Diction
 	var result: Dictionary = tactics.deal(tactics.enemies[at], amount, magic, true)
 	damages[at] = float(damages.get(at, 0.0)) + float(result.damage)
 
-static func ignite(enemy: Dictionary, strength: float, duration := 5.0) -> void:
+static func ignite(enemy: Dictionary, strength: float, duration := 5.0, source := "") -> void:
 	if enemy.hp <= 0: return
 	enemy.burn = maxf(enemy.burn, strength)
 	enemy.burn_left = maxf(enemy.burn_left, duration)
+	if not source.is_empty(): enemy["burn_owner"] = source
 
 static func poison(enemy: Dictionary, strength: float) -> void:
 	if enemy.hp <= 0: return
@@ -45,6 +47,8 @@ static func attack(tactics, index: int, requested: int) -> Dictionary:
 	var target: int = requested if valid.has(requested) else tactics.target_for(index)
 	if target < 0: return {}
 	var foe: Dictionary = tactics.enemies[target]
+	if actor.get("sealed", false): return basic(tactics, actor, target)
+	var old_burn_owner: String = foe.get("burn_owner", "") if foe.burn_left > 0 else ""
 	var number := int(actor.hits) + 1
 	var critical: bool = owner.rng.randf() < actor.crit
 	var amount: float = actor.damage * (2.0 if critical else 1.0)
@@ -82,14 +86,14 @@ static func attack(tactics, index: int, requested: int) -> Dictionary:
 			owner.unlock_stats.new_hits[actor.id] = int(owner.unlock_stats.new_hits.get(actor.id, 0)) + 1
 		match str(actor.id):
 			"scarlet":
-				ignite(foe, actor.damage * 0.12)
+				ignite(foe, actor.damage * 0.12, 5.0, "scarlet")
 				foe["powder"] = int(foe.get("powder", 0)) + 1
 				if foe.powder >= (2 if has(actor, "quick") else 3):
 					foe.powder = 0
 					extra(tactics, target, actor.damage, true, damages)
 					for at in tactics.enemies.size():
 						if at != target: extra(tactics, at, actor.damage * 0.45, true, damages)
-						if has(actor, "spread"): ignite(tactics.enemies[at], actor.damage * 0.12)
+						if has(actor, "spread"): ignite(tactics.enemies[at], actor.damage * 0.12, 5.0, "scarlet")
 					if has(actor, "shelter"): shield_group(owner, 0.12)
 					hit.message = "Explosão de pólvora"
 				if critical and actor.pp > 0:
@@ -160,11 +164,11 @@ static func attack(tactics, index: int, requested: int) -> Dictionary:
 					hit.message = "Corte do crepúsculo"
 				else: hit.message = "Preparando a lâmina"
 			"matches":
-				ignite(foe, minf(actor.damage * 0.5, foe.burn + actor.damage * 0.13))
+				ignite(foe, minf(actor.damage * 0.5, foe.burn + actor.damage * 0.13), 5.0, "matches")
 				if has(actor, "spread"):
 					for at in tactics.enemies.size():
 						if at != target and tactics.enemies[at].hp > 0:
-							ignite(tactics.enemies[at], actor.damage * 0.10)
+							ignite(tactics.enemies[at], actor.damage * 0.10, 5.0, "matches")
 							break
 			"peter":
 				actor.shadows = 1 if shadows > 0 and has(actor, "keep") else 0
@@ -182,6 +186,7 @@ static func attack(tactics, index: int, requested: int) -> Dictionary:
 				elif wish == 2:
 					for ally in owner.actors: healed += heal(owner, ally, ally.max_hp * 0.10 * factor)
 				actor.wish = (wish + 1) % 3
+		healed += Synergies.after_attack(tactics, actor, target, {"burn_owner": old_burn_owner, "wish": wish, "charged": charged, "shadows": shadows, "suit": suit}, hit, damages)
 		# João reacts only once per PP to another member's hit on his mark.
 		if actor.id != "joao" and foe.get("marked", false) and foe.hp > 0:
 			for hunter in owner.actors:
@@ -196,15 +201,16 @@ static func attack(tactics, index: int, requested: int) -> Dictionary:
 	hit.damage = 0.0
 	for value in damages.values(): hit.damage += value
 	hit["healed"] = healed
+	for key in hit.get("synergies", []): hit.message += " · " + str(Synergies.PAIRS[key].name)
 	deaths(tactics)
 	tactics.sync_totals()
 	return hit
 
-static func incoming(tactics, enemy_index: int) -> Dictionary:
+static func incoming(tactics, enemy_index: int, requested := -1) -> Dictionary:
 	var owner = tactics.run()
 	if enemy_index < 0 or enemy_index >= tactics.enemies.size() or tactics.enemies[enemy_index].hp <= 0: return {}
 	var enemy: Dictionary = tactics.enemies[enemy_index]
-	var target: int = tactics.choose_target(enemy, owner.actors)
+	var target: int = requested if requested >= 0 and requested < owner.actors.size() and owner.actors[requested].hp > 0 else tactics.choose_target(enemy, owner.actors)
 	if target < 0: return {}
 	var protected := false
 	if owner.actors[target].hp / owner.actors[target].max_hp < 0.45:
@@ -297,7 +303,7 @@ static func deaths(tactics) -> void:
 						actor.pp -= 1
 						for survivor in tactics.enemies:
 							if survivor.hp > 0:
-								ignite(survivor, maxf(foe.burn, actor.damage * 0.12))
+								ignite(survivor, maxf(foe.burn, actor.damage * 0.12), 5.0, "matches")
 								if has(actor, "fuel"): tactics.deal(survivor, actor.damage * 0.6, true, true)
 				elif actor.id == "snow_white" and (foe.poison_left > 0 or foe.get("died_poisoned", false)) and actor.pp > 0:
 					actor.pp -= 1
@@ -310,3 +316,18 @@ static func deaths(tactics) -> void:
 						if survivor.hp > 0:
 							survivor["marked"] = true
 							break
+
+static func basic(tactics, actor: Dictionary, target: int) -> Dictionary:
+	var critical: bool = tactics.run().rng.randf() < actor.crit
+	var hit: Dictionary = tactics.deal(tactics.enemies[target], actor.damage * (2.0 if critical else 1.0), actor["class"] in ["mage", "artificer"])
+	actor.energy = minf(100, actor.energy + (8 if hit.evaded else 18 + actor.energy_bonus))
+	if not hit.evaded:
+		actor.hits += 1
+		if TaleCatalog.NEW_HERO_IDS.has(actor.id):
+			if not tactics.run().unlock_stats.has("new_hits"): tactics.run().unlock_stats["new_hits"] = {}
+			tactics.run().unlock_stats.new_hits[actor.id] = int(tactics.run().unlock_stats.new_hits.get(actor.id, 0)) + 1
+		actor.hp = minf(actor.max_hp, actor.hp + actor.leech)
+	hit.merge({"target": target, "targets": [target], "target_damage": {target: hit.damage}, "critical": critical, "message": "Ataque básico · habilidade selada"})
+	deaths(tactics)
+	tactics.sync_totals()
+	return hit

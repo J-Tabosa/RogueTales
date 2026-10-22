@@ -3,6 +3,8 @@ extends Node2D
 signal attack_hit(index: int)
 signal attack_started(index: int)
 signal enemy_attack_hit(index: int)
+signal enemy_intent_requested(index: int)
+const IntentIcon = preload("res://scripts/mobile_icon.gd")
 const FLOOR = preload("res://assets/ui/storybook_battle.png")
 const Enemy = preload("res://scripts/enemy.gd")
 var party_scenes: Array = []
@@ -137,6 +139,7 @@ func sync_enemies() -> void:
 		foes.append(model)
 		foe_homes.append(home)
 		foe_widgets.append(widget(home, ("★ " if data.boss else "") + str(TaleCatalog.CLASSES[data["class"]].name), Color("dd9691")))
+		if simulation.expedition: add_intent_badge(index)
 	if not foes.is_empty():
 		enemy = foes[0]
 	sync_health(simulation.actors)
@@ -195,7 +198,7 @@ func sync_health(actors: Array[Dictionary]) -> void:
 		unit_widgets[index].health.max_value = actors[index].max_hp
 		unit_widgets[index].health.value = actors[index].hp
 		unit_widgets[index].energy.value = actors[index].energy
-		unit_widgets[index].text.text = "%s  %dAP %dPP" % [TaleCatalog.hero_class_name(actors[index].id), actors[index].get("ap", 0), actors[index].get("pp", 0)]
+		unit_widgets[index].text.text = "%s  %dAP %dPP" % ["SELADO" if actors[index].get("sealed", false) else TaleCatalog.hero_class_name(actors[index].id), actors[index].get("ap", 0), actors[index].get("pp", 0)]
 	for index in foes.size():
 		var data: Dictionary = simulation.tactics.enemies[index]
 		foes[index].visible = enemy_visible and data.hp > 0
@@ -203,7 +206,16 @@ func sync_health(actors: Array[Dictionary]) -> void:
 		foe_widgets[index].health.max_value = data.max_hp
 		foe_widgets[index].health.value = data.hp
 		foe_widgets[index].energy.value = float(data.get("ap", 0)) * 50.0
-		foe_widgets[index].text.text = "%s  %dAP %dPP" % [TaleCatalog.CLASSES[data["class"]].name, data.get("ap", 0), data.get("pp", 0)]
+		foe_widgets[index].text.text = "%s  %dAP %dPP" % [data.name if data.has("binds") or data.get("banner", false) else TaleCatalog.CLASSES[data["class"]].name, data.get("ap", 0), data.get("pp", 0)]
+		if foe_widgets[index].has("intent"):
+			var intent: Dictionary = simulation.tactics.intent_for(index)
+			foe_widgets[index].intent_title.text = str(intent.get("title", ""))
+			var names: Array[String] = []
+			for at in intent.get("targets", []):
+				if at >= 0 and at < simulation.actors.size(): names.append(str(TaleCatalog.HEROES[simulation.actors[at].id].get("short_name", TaleCatalog.HEROES[simulation.actors[at].id].name)))
+			foe_widgets[index].intent_target.text = ", ".join(names) if not names.is_empty() else "Preparação"
+			foe_widgets[index].intent_icon.glyph = str(intent.get("glyph", "sword"))
+			foe_widgets[index].intent_icon.queue_redraw()
 
 
 func hurt(index: int) -> void:
@@ -280,9 +292,9 @@ func _process(delta: float) -> void:
 		foes[index].position = foe_homes[index]
 		if enemy_track.time >= 0 and enemy_track.index == index:
 			var phase: float = clampf(enemy_track.time / enemy_track.duration, 0, 0.999)
-			var anim := "boss_attack" if data.boss else "attack"
+			var anim := "idle" if enemy_track.get("support", false) else ("boss_attack" if data.boss else "attack")
 			foes[index].seek(anim, phase * foes[index].animation_duration(anim))
-			if data["class"] in ["vanguard", "assassin"] and enemy_track.target >= 0:
+			if not enemy_track.get("support", false) and data["class"] in ["vanguard", "assassin"] and enemy_track.target >= 0:
 				var dash := sin(phase * PI)
 				var to: Vector2 = tracks[enemy_track.target].home + Vector2(60, 0)
 				foes[index].position = foe_homes[index].lerp(to, dash)
@@ -363,6 +375,12 @@ func _draw() -> void:
 			draw_arc(to, 32 + t * 16, 0, TAU, 32, Color(tint, 0.65), 3, true)
 	for item in effects:
 		draw_line(item.from, item.to, Color(item.color, item.time / item.duration), 3, true)
+	for index in foe_homes.size():
+		var foe: Dictionary = simulation.tactics.enemies[index]
+		if not enemy_visible or foe.hp <= 0 or not foe.has("binds"): continue
+		for at in simulation.actors.size():
+			if simulation.actors[at].id == foe.binds and simulation.actors[at].hp > 0:
+				draw_line(foe_homes[index] + Vector2(0, -80), tracks[at].home + Vector2(0, -70), Color("c885b8", 0.55), 2, true)
 
 
 func set_home(index: int, at: Vector2) -> void:
@@ -421,16 +439,20 @@ func damage_number(message: String, at: Vector2, tint: Color) -> void:
 
 
 func present_result(result: Dictionary, hostile: bool, attacker: int) -> void:
-	var targets: Array = [result.target] if hostile else result.get("targets", [result.target])
+	if result.get("non_attack", false):
+		damage_number("SUPORTE", foe_homes[attacker], Color("b1c5f6"))
+		return
+	var targets: Array = result.get("targets", [result.target])
 	for target in targets:
 		var at: Vector2 = tracks[target].home if hostile else foe_homes[target]
 		var amount: float = float(result.get("target_damage", {}).get(target, result.damage))
-		var text := "ESQUIVA" if result.evaded else ("CRÍTICO  %d" % int(amount) if result.get("critical", false) else str(int(amount)))
+		var text := "ESQUIVA" if result.get("target_evaded", {}).get(target, result.evaded) else ("CRÍTICO  %d" % int(amount) if result.get("critical", false) else str(int(amount)))
 		damage_number(text, at, Color("f8d38c") if not hostile else Color("ffb5b4"))
-		if result.get("guarded", false):
+		if result.get("target_guarded", {}).get(target, result.get("guarded", false)):
 			damage_number("GUARDA", at + Vector2(0, 32), Color("8bcce4"))
-		if result.get("support_heal", 0) > 0:
-			damage_number("+%d PV" % int(result.support_heal), at + Vector2(0, 50), Color("9ce5b3"))
+		var healing: float = result.get("target_heal", {}).get(target, result.get("support_heal", 0))
+		if healing > 0:
+			damage_number("+%d PV" % int(healing), at + Vector2(0, 50), Color("9ce5b3"))
 	if result.get("counter", 0) > 0:
 		var at: Vector2 = foe_homes[attacker] if hostile else tracks[attacker].home
 		damage_number("CONTRA %d" % int(result.counter), at, Color("bca8f6"))
@@ -438,3 +460,59 @@ func present_result(result: Dictionary, hostile: bool, attacker: int) -> void:
 		damage_number("DISPARO EXTRA" if result.get("followup", false) else "CONCENTRAÇÃO", (foe_homes[attacker] if hostile else tracks[attacker].home) + Vector2(-10, 50), Color("a9c6ff"))
 	if not reduced_motion and not result.evaded:
 		hit_stop = 0.045
+	for key in result.get("synergies", []): show_synergy(key)
+
+
+func add_intent_badge(index: int) -> void:
+	var data: Dictionary = foe_widgets[index]
+	var badge := Button.new()
+	badge.position = Vector2(-22, -220)
+	badge.size = Vector2(130, 44)
+	badge.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("171e30", 0.94)
+	style.border_color = Color("a47789")
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(7)
+	badge.add_theme_stylebox_override("normal", style)
+	badge.add_theme_stylebox_override("hover", style)
+	var slot := index
+	badge.pressed.connect(func(): enemy_intent_requested.emit(slot))
+	data.root.add_child(badge)
+	var symbol := Control.new()
+	symbol.set_script(IntentIcon)
+	symbol.position = Vector2(6, 5)
+	symbol.size = Vector2(18, 18)
+	symbol.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.add_child(symbol)
+	var labels: Array[Label] = []
+	for row in 2:
+		var tag := Label.new()
+		tag.position = Vector2(28 if row == 0 else 6, 3 + row * 21)
+		tag.size = Vector2(96 if row == 0 else 118, 18)
+		tag.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		tag.add_theme_font_size_override("font_size", 10)
+		tag.add_theme_color_override("font_color", Color("f1c394") if row == 0 else Color("d6dded"))
+		tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		badge.add_child(tag)
+		labels.append(tag)
+	data["intent"] = badge
+	data["intent_title"] = labels[0]
+	data["intent_target"] = labels[1]
+	data["intent_icon"] = symbol
+
+
+func show_synergy(key: String) -> void:
+	var pairs: Dictionary = preload("res://scripts/team_synergies.gd").PAIRS
+	if not pairs.has(key): return
+	var homes: Array[Vector2] = []
+	for index in simulation.actors.size():
+		if pairs[key].heroes.has(simulation.actors[index].id): homes.append(tracks[index].home + Vector2(0, -70))
+	if homes.size() == 2:
+		effects.append({"from": homes[0], "to": homes[1], "time": 0.8, "duration": 0.8, "color": Color("f8d590")})
+	damage_number("SINERGIA · " + str(pairs[key].name), Vector2(field_width * 0.5, field_height * 0.4), Color("ffe0a5"))
+	var tag: Label = numbers[-1].node
+	tag.position = Vector2(20, field_height * 0.14)
+	tag.size = Vector2(field_width - 40, 44)
+	tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	tag.add_theme_font_size_override("font_size", 18)

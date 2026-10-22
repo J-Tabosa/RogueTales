@@ -40,6 +40,7 @@ const MUTATIONS := {
 	"aladin": [["generous", "Desejo generoso", "Os desejos de cura e escudo têm efeito dobrado."], ["storm", "Tempestade das dunas", "O desejo de ataque atinge um segundo inimigo."], ["reserve", "Reserva do gênio", "A quebra de escudo também reconstrói 8% de escudo no grupo."]]
 }
 const ROUTES := {
+	"team_event": {"title": "Um encontro nas margens", "detail": "Sua equipe encontra uma página especial. Quem está no grupo muda o diálogo e as opções."},
 	"battle": {"title": "Pela trilha", "detail": "Combate comum. Preserve suas forças e avance."},
 	"elite": {"title": "Caçadores de tinta", "detail": "Inimigos +35% PV e +15% dano. Vitória: +25 ouro e +10% dano ao grupo."},
 	"camp": {"title": "Fogueira nas margens", "detail": "Pague 18 ouro: cure 30% dos PV e levante um aliado com 20%. Depois, avance."},

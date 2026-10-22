@@ -19,6 +19,9 @@ func unit(entry: Dictionary) -> Dictionary:
 func start_round() -> void:
 	var owner = owner_ref.get_ref()
 	round_number += 1
+	if owner.expedition:
+		owner.tactics.synergy_used.clear()
+		owner.tactics.BossRules.round_start(owner.tactics)
 	order.clear()
 	cursor = 0
 	for side in ["ally", "enemy"]:
@@ -29,6 +32,7 @@ func start_round() -> void:
 			actor.pp = 2 if actor.get("boss", false) else 1
 			if actor.hp > 0:
 				var interval: float = actor.interval if side == "ally" else owner.tactics.interval_for(index)
+				if side == "ally" and int(actor.get("hindered_rounds", 0)) > 0: interval *= 1.3
 				order.append({"side": side, "index": index, "initiative": 100.0 / maxf(0.1, interval)})
 	order.sort_custom(func(a, b):
 		if is_equal_approx(a.initiative, b.initiative):

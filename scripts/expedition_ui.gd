@@ -1,7 +1,11 @@
 extends "res://scripts/interface.gd"
 ## The run experience. Legacy chapter checkpoints can still be finished safely.
 const Content = preload("res://scripts/expedition_content.gd")
+const Synergies = preload("res://scripts/team_synergies.gd")
+const TeamEvents = preload("res://scripts/team_events.gd")
+const BossRules = preload("res://scripts/boss_rules.gd")
 var chosen_blessing := "vigor"
+var chosen_endless := false
 var gallery_building := false
 var gallery_size := Vector2.ZERO
 var gallery_refresh := false
@@ -14,6 +18,10 @@ func label(parent: Node, text: String, rect: Rect2, font_size := 18, color := Co
 	var node := super.label(parent, text, rect, font_size, color)
 	if color.get_luminance() < 0.20: node.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
 	return node
+
+func modal(title: String, subtitle: String) -> void:
+	super.modal(title, subtitle)
+	overlay.z_index = 3000
 
 func header(title: String, subtitle: String) -> void:
 	label(page, "ROGUETALES", Rect2(24, 14, 220, 27), 15, GOLD)
@@ -28,7 +36,7 @@ func show_menu() -> void:
 	paused = false
 	farm_timer = -1
 	clear_page()
-	header("Toda run, um novo conto.", "Recorde: %02d / 12 fases  ·  %d vitórias completas" % [campaign.best_depth, campaign.expedition_wins])
+	header("Toda run, um novo conto.", "Conto: %02d / 12  ·  Infinito: fase %d" % [campaign.best_depth, campaign.best_endless])
 	var art := panel(page, Rect2(24, 190, 492, 352))
 	UISkin.picture(art, UISkin.FOREST, Rect2(0, 0, 492, 352), true).modulate = Color(0.8, 0.8, 0.9)
 	gradient(art, Rect2(0, 0, 492, 352), Color("161c30", 0.15), Color("161c30", 0.95))
@@ -38,7 +46,7 @@ func show_menu() -> void:
 	label(page, "Escolha. Arrisque. Recomece.", Rect2(24, 565, 492, 43), 26)
 	label(page, "Um protagonista. Companheiros raros.\nHabilidades e relíquias que mudam a cada tentativa.", Rect2(24, 620, 492, 66), 17, MUTED)
 	var active := not campaign.checkpoint.is_empty()
-	var detail := "A vida, a build e os encontros da sua tentativa estão salvos." if active else "12 fases · chefes em 4, 8 e 12 · escolhas entre combates"
+	var detail := "A vida, a build e os encontros da sua tentativa estão salvos." if active else "Conto de 12 fases ou modo infinito · chefes a cada 4 fases"
 	label(page, detail, Rect2(24, 704, 492, 48), 14, GOLD)
 	button(page, "Retomar run  →" if active else "Nova run  →", Rect2(24, 772, 492, 62), resume_checkpoint if active else show_map, true)
 	navigation("menu")
@@ -50,22 +58,25 @@ func continue_journey() -> void:
 func show_map() -> void:
 	state = "expedition_setup"
 	clear_page()
-	header("Antes da primeira página", "Escolha um protagonista e uma bênção para esta run.")
+	header("Antes da primeira página", "Escolha o modo, o protagonista e a bênção desta run.")
 	if not campaign.checkpoint.is_empty():
 		label(page, "Uma tentativa em andamento", Rect2(24, 219, 492, 48), 25, GOLD)
-		label(page, "Fase %02d / 12\nRetome sua equipe e sua build, ou encerre a tentativa para começar outra." % (int(campaign.checkpoint.stage) + 1), Rect2(24, 287, 492, 124), 20)
+		var phase := "Infinito · fase %d" % (int(campaign.checkpoint.get("rooms_cleared", 0)) + 1) if campaign.checkpoint.get("endless", false) else "Conto · fase %02d / 12" % (int(campaign.checkpoint.stage) + 1)
+		label(page, phase + "\nRetome sua equipe e sua build, ou encerre a tentativa para começar outra.", Rect2(24, 287, 492, 124), 20)
 		button(page, "Retomar run", Rect2(24, 487, 492, 64), resume_checkpoint, true)
 		button(page, "Encerrar tentativa", Rect2(24, 570, 492, 56), request_abandon)
 		navigation("map")
 		return
 	if not campaign.unlocked.has(selected_hero): selected_hero = campaign.party[0]
 	if not campaign.blessings_unlocked.has(chosen_blessing): chosen_blessing = "vigor"
-	var hero := button(page, "", Rect2(24, 187, 492, 144), show_heroes)
-	face_portrait(hero, selected_hero, Rect2(14, 15, 108, 108))
-	label(hero, "PROTAGONISTA", Rect2(139, 17, 334, 23), 11, GOLD)
-	label(hero, TaleCatalog.HEROES[selected_hero].name, Rect2(139, 46, 334, 36), 23)
-	label(hero, "%s · trocar →" % TaleCatalog.hero_class_name(selected_hero), Rect2(139, 91, 334, 30), 14, MUTED)
-	var inner := scroll_area(349, 353, Content.BLESSINGS.size() * 108)
+	button(page, "Conto · 12 fases", Rect2(24, 183, 238, 46), set_run_mode.bind(false), not chosen_endless)
+	button(page, "Infinito · sem fim", Rect2(278, 183, 238, 46), set_run_mode.bind(true), chosen_endless)
+	var hero := button(page, "", Rect2(24, 246, 492, 118), show_heroes)
+	face_portrait(hero, selected_hero, Rect2(14, 14, 90, 90))
+	label(hero, "PROTAGONISTA", Rect2(123, 11, 350, 21), 10, GOLD)
+	label(hero, TaleCatalog.HEROES[selected_hero].name, Rect2(123, 38, 350, 35), 22)
+	label(hero, "%s · trocar →" % TaleCatalog.hero_class_name(selected_hero), Rect2(123, 81, 350, 26), 14, MUTED)
+	var inner := scroll_area(381, 321, Content.BLESSINGS.size() * 108)
 	var i := 0
 	for key in Content.BLESSINGS:
 		var data: Dictionary = Content.BLESSINGS[key]
@@ -88,10 +99,15 @@ func choose_blessing(id: String) -> void:
 	persist()
 	show_map()
 
+func set_run_mode(infinite: bool) -> void:
+	if not campaign.checkpoint.is_empty(): return
+	chosen_endless = infinite
+	show_map()
+
 func begin_expedition() -> void:
 	if not campaign.checkpoint.is_empty(): return
 	run = IdleRun.new()
-	if not run.start_expedition(campaign, selected_hero, chosen_blessing): return
+	if not run.start_expedition(campaign, selected_hero, chosen_blessing, chosen_endless): return
 	campaign.pending_story = -1
 	campaign.auto_repeat = false
 	persist_run()
@@ -105,10 +121,22 @@ func enter_encounter() -> void:
 	build_battle()
 	begin_travel()
 
+func build_battle() -> void:
+	super.build_battle()
+	if not is_expedition(): return
+	arena.enemy_intent_requested.connect(show_enemy_intents)
+	auto_button.add_theme_font_size_override("font_size", 15)
+	auto_button.set_meta("mobile_rect", Rect2(16, 0, 160, 46))
+	auto_button.set_meta("pc_rect", Rect2(958, 658, 142, 46))
+	speed_button.set_meta("mobile_rect", Rect2(364, 0, 160, 46))
+	var intentions := button(page, "Intenções", Rect2(), show_enemy_intents)
+	battle_place(intentions, Rect2(190, 0, 160, 46), Rect2(1112, 658, 142, 46), "bottom")
+	relayout_battle()
+
 func begin_travel() -> void:
 	super.begin_travel()
 	if is_expedition():
-		log_label.text = "Fase %02d · %s" % [run.stage + 1, "o chefe aguarda" if Content.is_boss(run.stage) else ("rota de elite" if run.room_kind == "elite" else "a jornada continua")]
+		log_label.text = "%s · %s" % [run.phase_label(), "o chefe aguarda" if Content.is_boss(run.stage) else ("rota de elite" if run.room_kind == "elite" else "a jornada continua")]
 
 func restore_checkpoint_now() -> void:
 	if campaign.checkpoint.is_empty() or not campaign.checkpoint.get("expedition", false):
@@ -123,6 +151,7 @@ func restore_checkpoint_now() -> void:
 		"reward": show_relics()
 		"route": show_routes()
 		"shop": show_run_shop()
+		"event": show_team_event()
 		_: enter_encounter()
 
 func resolve_enemy() -> void:
@@ -151,15 +180,15 @@ func show_relics() -> void:
 	state = "choice"
 	paused = false
 	clear_page()
-	header("Reescreva sua build", "%02d / 12 fases vencidas · escolha uma melhoria." % run.rooms_cleared)
+	header("Reescreva sua build", ("%d páginas vencidas · infinito" % run.rooms_cleared if run.endless else "%02d / 12 fases vencidas" % run.rooms_cleared) + " · escolha uma melhoria.")
 	label(page, "ESCOLHAS DESTA RUN", Rect2(24, 190, 492, 28), 12, GOLD)
 	for index in run.offers.size():
 		var id: String = run.offers[index]
 		var offer := TaleCatalog.offer_data(id)
 		var card := button(page, "", Rect2(24, 238 + index * 174, 492, 158), select_relic.bind(id))
 		var title: String = offer.title
-		var detail: String = offer.detail
-		var note := "RELÍQUIA · %d / 3" % (run.relics.count(id) + 1)
+		var detail: String = run.upgrade_detail(id)
+		var note := "RELÍQUIA · ACÚMULO %d · INFINITO" % (run.upgrade_count(id) + 1) if run.endless else "RELÍQUIA · %d / 3" % (run.upgrade_count(id) + 1)
 		if offer.has("owner"):
 			note = "HABILIDADE · " + str(TaleCatalog.HEROES[offer.owner].name)
 		elif offer.has("hero"):
@@ -192,11 +221,11 @@ func show_routes() -> void:
 	state = "route"
 	paused = false
 	clear_page()
-	header("A próxima página", "Fase %02d / 12 · %d ouro nesta run" % [run.stage + 1, run.run_gold])
+	header("A próxima página", "%s · %d ouro nesta run" % [run.phase_label(), run.run_gold])
 	if Content.is_boss(run.stage):
 		label(page, "O FIO LEVA A UM CHEFE", Rect2(24, 201, 492, 30), 13, GOLD)
 		label(page, TaleCatalog.STAGES[run.stage].boss, Rect2(24, 261, 492, 83), 32)
-		label(page, "Os inimigos desta fase são mais resistentes.\nSua vida, energia e melhorias continuam com você.", Rect2(24, 378, 492, 104), 19, MUTED)
+		label(page, BossRules.description(run.stage), Rect2(24, 371, 492, 166), 18, MUTED)
 		button(page, "Enfrentar o chefe  →", Rect2(24, 570, 492, 65), select_route.bind("battle"), true)
 	else:
 		label(page, "ESCOLHA SEU CAMINHO", Rect2(24, 201, 492, 30), 13, GOLD)
@@ -214,6 +243,7 @@ func select_route(id: String) -> void:
 	if state != "route" or not run.choose_route(id): return
 	persist_run()
 	if run.interlude == "shop": show_run_shop()
+	elif run.interlude == "event": show_team_event()
 	else: enter_encounter()
 
 func show_run_shop() -> void:
@@ -244,13 +274,73 @@ func leave_run_shop() -> void:
 	persist_run()
 	enter_encounter()
 
+func show_team_event() -> void:
+	if not TeamEvents.EVENTS.has(run.pending_event): return
+	state = "team_event"
+	clear_page()
+	var event: Dictionary = TeamEvents.EVENTS[run.pending_event]
+	header(event.title, "%s · sua companhia muda esta página." % run.phase_label())
+	for node in page.get_children():
+		if node is Label and node.text == event.title: node.add_theme_font_size_override("font_size", 25)
+	var lines := TeamEvents.dialogue(run, run.pending_event)
+	for index in lines.size():
+		var data: Dictionary = lines[index]
+		var speaker: String = data.speaker
+		var tint := GOLD if speaker == "narrator" else Color(TaleCatalog.HEROES[speaker].color)
+		var y := 184 + index * 88.0
+		panel(page, Rect2(24, y, 492, 81))
+		label(page, "Narradora" if speaker == "narrator" else str(TaleCatalog.HEROES[speaker].name), Rect2(38, y + 4, 464, 21), 12, tint)
+		label(page, data.text, Rect2(38, y + 29, 464, 48), 15)
+	var can_pair := TeamEvents.can_pair(run, run.pending_event)
+	var options := [["supplies", "Recolher os suprimentos", "+30 ouro nesta run."], ["rest", "Ajudar e recuperar o fôlego", "Cure 25% dos PV e levante um aliado com 20%."], ["pair", event.choice if can_pair else "Uma companhia diferente pode ajudar", event.reward if can_pair else "Esta opção exige dois viajantes específicos vivos na equipe."]]
+	for index in options.size():
+		var option: Array = options[index]
+		var card := button(page, "", Rect2(24, 468 + index * 117, 492, 106), select_team_event.bind(str(option[0])))
+		card.disabled = index == 2 and not can_pair
+		label(card, option[1], Rect2(14, 5, 464, 31), 18, GOLD if index == 2 and can_pair else Color("e6e5df"))
+		label(card, option[2], Rect2(14, 42, 464, 57), 14, MUTED)
+	button(page, "Salvar e sair", Rect2(24, 842, 492, 52), leave_battle)
+
+func select_team_event(choice: String) -> void:
+	if state != "team_event" or not TeamEvents.resolve(run, choice): return
+	persist_run()
+	enter_encounter()
+
+func show_enemy_intents(selected: int = -1) -> void:
+	if not is_expedition() or state not in ["battle", "travel"]: return
+	paused = true
+	arena.frozen = true
+	modal("Próximos movimentos", "Ações e alvos previstos. O combate fica pausado enquanto você lê.")
+	label(overlay, BossRules.description(run.stage) if Content.is_boss(run.stage) else "Os alvos ficam comprometidos durante a preparação do golpe. Se um alvo cair antes do impacto, o ataque procura outro alvo válido.", Rect2(32, 385, 476, 115), 15, GOLD)
+	var row := 0
+	for index in run.tactics.enemies.size():
+		var foe: Dictionary = run.tactics.enemies[index]
+		if foe.hp <= 0: continue
+		var intent: Dictionary = run.tactics.intent_for(index)
+		var y := 513 + row * 82
+		panel(overlay, Rect2(32, y, 476, 74))
+		icon(overlay, intent.get("glyph", "sword"), Rect2(44, y + 15, 28, 28), GOLD if selected == index else Color("eea7ad"))
+		label(overlay, str(foe.name) + " · " + str(intent.get("title", "")), Rect2(85, y + 5, 409, 30), 15, GOLD if selected == index else Color("e6e5df"))
+		var names: Array[String] = []
+		for at in intent.get("targets", []):
+			if at >= 0 and at < run.actors.size(): names.append(str(TaleCatalog.HEROES[run.actors[at].id].get("short_name", TaleCatalog.HEROES[run.actors[at].id].name)))
+		label(overlay, "Alvo: " + ", ".join(names) if not names.is_empty() else "Preparação / proteção", Rect2(85, y + 38, 409, 29), 13, MUTED)
+		row += 1
+	button(overlay, "Retomar combate", Rect2(32, 793, 476, 56), resume_battle, true)
+
 func show_run_build() -> void:
 	state = "build"
 	clear_page()
-	header("O conto até aqui", "Fase %02d / 12 · %d ouro · %d melhorias" % [run.stage + 1, run.run_gold, run.relics.size()])
-	var inner := scroll_area(190, 593, 230 + run.actors.size() * 122 + run.relics.size() * 83)
+	header("O conto até aqui", "%s · %d ouro · %d melhorias" % [run.phase_label(), run.run_gold, run.upgrade_total()])
+	var pairs := Synergies.available(run)
+	var inner := scroll_area(190, 593, 230 + run.actors.size() * 122 + run.relics.size() * 83 + pairs.size() * 139)
 	label(inner, "BÊNÇÃO · " + str(Content.BLESSINGS[run.blessing].name), Rect2(0, 0, 476, 42), 18, GOLD)
 	var y := 63.0
+	for key in pairs:
+		var pair: Dictionary = Synergies.PAIRS[key]
+		label(inner, "SINERGIA · " + str(pair.name), Rect2(0, y, 476, 32), 20, GOLD)
+		label(inner, pair.detail, Rect2(0, y + 41, 476, 79), 15, MUTED)
+		y += 139
 	for actor in run.actors:
 		face_portrait(inner, actor.id, Rect2(0, y, 70, 74))
 		label(inner, TaleCatalog.HEROES[actor.id].name, Rect2(88, y, 388, 32), 21)
@@ -258,7 +348,7 @@ func show_run_build() -> void:
 		y += 122
 	for key in run.relics:
 		var data := TaleCatalog.offer_data(key)
-		label(inner, data.title, Rect2(0, y, 476, 29), 19, GOLD)
+		label(inner, str(data.title) + (" ×%d" % run.upgrade_count(key) if run.endless else ""), Rect2(0, y, 476, 29), 19, GOLD)
 		label(inner, data.detail, Rect2(0, y + 31, 476, 47), 13, MUTED)
 		y += 83
 	button(page, "Voltar ao caminho", Rect2(24, 814, 492, 56), show_routes, true)
@@ -281,8 +371,9 @@ func show_run_result(result: Dictionary) -> void:
 	audio.play_effect("win" if won else "loss")
 	header("O final é seu." if won else "Uma página se fecha.", "RUN CONCLUÍDA" if won else "FIM DA TENTATIVA · NOVO COMEÇO")
 	portrait_fitted(page, run.leader, Vector2(270, 479), 273)
-	label(page, "%02d / 12 fases vencidas" % result.get("depth", 0), Rect2(24, 513, 492, 54), 30, GOLD)
-	label(page, "+%d memórias · recorde %02d / 12\nAs relíquias, o ouro e os convidados desta run se encerram aqui." % [result.get("reward", 0), campaign.best_depth], Rect2(24, 585, 492, 89), 17, MUTED)
+	label(page, "%d páginas · infinito" % result.get("depth", 0) if result.get("endless", false) else "%02d / 12 fases vencidas" % result.get("depth", 0), Rect2(24, 513, 492, 54), 30, GOLD)
+	var record := "recorde infinito: %d" % campaign.best_endless if result.get("endless", false) else "recorde %02d / 12" % campaign.best_depth
+	label(page, "+%d memórias · %s\n%d sinergias ativadas · %d novos marcos infinitos" % [result.get("reward", 0), record, run.synergy_activations, result.get("milestones", 0)], Rect2(24, 585, 492, 89), 17, MUTED)
 	var unlocked_now: Array = result.get("unlocks", [])
 	label(page, "Novo protagonista: " + hero_names(unlocked_now) if not unlocked_now.is_empty() else "Seus feitos e desbloqueios foram salvos.", Rect2(24, 700, 492, 63), 19, GOLD)
 	button(page, "Começar outra run  →", Rect2(24, 790, 492, 62), show_map, true)
@@ -314,10 +405,11 @@ func abandon_expedition() -> void:
 func update_hud() -> void:
 	super.update_hud()
 	if is_expedition() and battle_view and is_instance_valid(enemy_label):
-		enemy_label.text = "RUN %02d · FASE %02d / 12 · %s · %d OURO" % [run.run_id, run.stage + 1, "CHEFE" if Content.is_boss(run.stage) else ("ELITE" if run.room_kind == "elite" else "COMBATE"), run.run_gold]
+		enemy_label.text = "%s · %s · %d OURO" % [run.phase_label(), "CHEFE" if Content.is_boss(run.stage) else ("ELITE" if run.room_kind == "elite" else "COMBATE"), run.run_gold]
+		stage_label.text = "%03d   %s" % [run.rooms_cleared + 1, TaleCatalog.STAGES[run.stage].name]
 		for i in mini(ult_buttons.size(), run.actors.size()):
 			var actor: Dictionary = run.actors[i]
-			ult_buttons[i].tooltip_text = "%s (1 AP)\n%s\n\n%s (1 PP)\n%s\n\nULT: %s" % [Content.KITS[actor.id][0], Content.KITS[actor.id][1], Content.KITS[actor.id][2], Content.KITS[actor.id][3], TaleCatalog.HERO_TACTICS[actor.id].ult]
+			ult_buttons[i].tooltip_text = ("HABILIDADE SELADA · destrua seu fio para libertá-la.\n\n" if actor.get("sealed", false) else "") + "%s (1 AP)\n%s\n\n%s (1 PP)\n%s\n\nULT: %s" % [Content.KITS[actor.id][0], Content.KITS[actor.id][1], Content.KITS[actor.id][2], Content.KITS[actor.id][3], TaleCatalog.HERO_TACTICS[actor.id].ult]
 
 func navigation(active: String) -> void:
 	panel(page, Rect2(16, 882, 508, 68))
@@ -483,7 +575,7 @@ func show_journal() -> void:
 	clear_page()
 	header("Memórias das expedições", "Descobertas permanecem; cada tentativa começa uma nova build.")
 	var inner := scroll_area(190, 670, 220 + campaign.journal.size() * 107)
-	label(inner, "MELHOR RUN · %02d / 12\nVITÓRIAS COMPLETAS · %d\nVIAJANTES REVELADOS · %d / 12" % [campaign.best_depth, campaign.expedition_wins, campaign.unlocked.size()], Rect2(0, 0, 476, 151), 21, GOLD)
+	label(inner, "CONTO · %02d / 12  |  INFINITO · %d\nVITÓRIAS COMPLETAS · %d\nVIAJANTES · %d / 12\nSINERGIAS DESCOBERTAS · %d / 6\nEVENTOS DESCOBERTOS · %d / 6" % [campaign.best_depth, campaign.best_endless, campaign.expedition_wins, campaign.unlocked.size(), campaign.discovered_synergies.size(), campaign.discovered_events.size()], Rect2(0, 0, 476, 170), 18, GOLD)
 	for index in campaign.journal.size():
 		var entry: Dictionary = campaign.journal[index]
 		var y := 198 + index * 107
@@ -497,7 +589,7 @@ func show_profile() -> void:
 	clear_page()
 	header(campaign.player_name, "Sua coleção e suas memórias atravessam as runs.")
 	face_portrait(page, campaign.avatar, Rect2(200, 198, 140, 142))
-	label(page, "%d runs iniciadas\n%d vitórias completas\n%d tentativas encerradas\nRecorde: %02d / 12 fases\n%d personagens revelados" % [campaign.run_counter, campaign.expedition_wins, campaign.total_defeats, campaign.best_depth, campaign.unlocked.size()], Rect2(54, 382, 432, 245), 24, GOLD)
+	label(page, "%d runs iniciadas\n%d vitórias completas\n%d tentativas encerradas\nConto: %02d / 12 fases\nInfinito: %d páginas\n%d personagens revelados" % [campaign.run_counter, campaign.expedition_wins, campaign.total_defeats, campaign.best_depth, campaign.best_endless, campaign.unlocked.size()], Rect2(54, 382, 432, 245), 23, GOLD)
 	button(page, "Nome e avatar", Rect2(24, 698, 492, 56), edit_profile)
 	button(page, "Configurações", Rect2(24, 776, 492, 56), show_settings)
 	navigation("profile")
@@ -529,8 +621,8 @@ func show_help() -> void:
 	state = "help"
 	clear_page()
 	header("Uma run, doze páginas", "Prepare o protagonista; descubra o restante durante a tentativa.")
-	var inner := scroll_area(190, 674, 1010)
-	label(inner, "1. COMEÇO\nEscolha um personagem revelado e uma bênção. Níveis e treinamentos antigos não alteram os atributos das novas runs.\n\n2. COMBATE\nA iniciativa organiza ações sequenciais. Ativas gastam AP; reações gastam PP. Os pontos se renovam a cada rodada. Vanguarda enfrenta a frente, atiradores priorizam o fundo e magia alcança ambas as linhas.\n\n3. BUILD\nApós vencer, escolha uma de três melhorias. As skills têm transformações próprias. Existe 10% de chance por tela de uma das cartas ser um convite temporário.\n\n4. JORNADA\nA vida e a energia continuam entre fases. Escolha rotas comuns, elites, descanso, mercador e eventos. O ouro só vale nesta run. Chefes nas fases 4, 8 e 12.\n\n5. FIM\nDerrota ou abandono encerram a tentativa. Ouro, relíquias e convidados se perdem. Feitos, personagens desbloqueados e memórias permanecem. Use memórias para abrir novas bênçãos iniciais.\n\n6. CONTROLES\nToque nos retratos ou use 1–3 para a ULT. Espaço/ESC pausa; A alterna ULT automática; F11 alterna tela cheia. Salvar e sair retoma no início do encontro atual, com as mesmas escolhas.", Rect2(0, 0, 476, 1000), 18)
+	var inner := scroll_area(190, 674, 1290)
+	label(inner, "1. MODOS\nConto: 12 fases, com chefes em 4, 8 e 12. Infinito: continue além da fase 12 com a mesma build e dificuldade crescente. Novos marcos de 12 páginas concedem memórias no fim da tentativa.\n\n2. COMBATE\nAtivas gastam AP; reações gastam PP. Eles se renovam a cada rodada. As classes definem quais linhas podem ser atacadas. Toque numa intenção sobre o inimigo ou no botão Intenções para pausar e ver ações e alvos.\n\n3. SINERGIAS\nCertas duplas combinam efeitos. Elas exigem os dois viajantes vivos, o gatilho e 1 PP do parceiro. Cada dupla ativa uma vez por rodada. Veja os gatilhos em Ver build da equipe.\n\n4. CHEFES\nQuebre o estandarte do General para interrompê-lo. A Guardiã copia a última ULT deste combate: pense antes de usar cura e escudo. Destrua os fios da Costureira para libertar as ativas seladas. Ataques básicos e ULTs continuam disponíveis.\n\n5. BUILD E EVENTOS\nEscolha uma de três melhorias após vencer. Convites têm 10% de chance por tela. Rotas oferecem elites, descanso, loja e eventos. A equipe muda as falas e libera opções especiais. No infinito, relíquias continuam acumulando com ganhos decrescentes; a build não acaba quando as opções exclusivas se esgotam.\n\n6. FIM E RETOMADA\nOuro, relíquias e convidados são da run. Feitos, coleção, descobertas, recordes e memórias permanecem. Salvar e sair retoma no início do combate atual ou na escolha salva, sem sortear outras opções.\n\nCONTROLES\nToque nos retratos ou use 1–3 para a ULT. Espaço/ESC pausa; A alterna ULT automática; F11 alterna tela cheia.", Rect2(0, 0, 476, 1270), 17)
 	navigation("profile")
 
 func show_preview() -> void:

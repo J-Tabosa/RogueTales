@@ -37,5 +37,17 @@ func _draw() -> void:
 			draw_arc(Vector2(12,9),9,PI,TAU,16,tint,2,true)
 			draw_line(Vector2(3,13),Vector2(21,13),tint,2)
 			draw_rect(Rect2(10,11,4,5),tint)
+		"shield":
+			draw_polyline(PackedVector2Array([Vector2(12,2),Vector2(21,6),Vector2(19,16),Vector2(12,22),Vector2(5,16),Vector2(3,6),Vector2(12,2)]),tint,2,true)
+		"magic", "mirror":
+			draw_polyline(PackedVector2Array([Vector2(12,2),Vector2(20,12),Vector2(12,22),Vector2(4,12),Vector2(12,2)]),tint,2,true)
+			draw_line(Vector2(7,17),Vector2(17,7),tint,1.5,true)
+		"warning":
+			draw_polyline(PackedVector2Array([Vector2(12,2),Vector2(22,21),Vector2(2,21),Vector2(12,2)]),tint,2,true)
+			draw_line(Vector2(12,8),Vector2(12,14),tint,2,true)
+			draw_circle(Vector2(12,18),1,tint)
+		"bind":
+			draw_arc(Vector2(8,12),5,-PI,PI*0.6,18,tint,2,true)
+			draw_arc(Vector2(16,12),5,0,PI*1.6,18,tint,2,true)
 		_:
 			draw_circle(Vector2(12,12),8,tint,false,2,true)
