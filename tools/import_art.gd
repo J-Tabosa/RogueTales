@@ -25,6 +25,9 @@ func _initialize() -> void:
 	var heroes: Dictionary={}
 	for sheet in sheets:
 		if sheet.kind in ["effects","arena"]:continue
+		if sheet.kind=="secret":
+			import_secret(sheet)
+			continue
 		var id: String=sheet.hero
 		if not heroes.has(id):
 			var frames:=SpriteFrames.new()
@@ -44,12 +47,16 @@ func _initialize() -> void:
 		var poses:Array[Texture2D]=[]
 		for at in sheet.frames.size():
 			var b:Array=sheet.frames[at].bounds
+			# Keep the same visible body height when changing idle/walk sheets.
+			var pose_density := density
+			if sheet.kind in ["actions","walk"] or (sheet.kind=="motion" and at<int(sheet.walk_count)):
+				pose_density=400.0/float(b[3])
 			var bitmap:=BitMap.new()
 			bitmap.create(Vector2i(b[2],b[3]))
 			for y in int(b[3]):
 				for x in int(b[2]):
 					if ownership[(y+int(b[1]))*source.get_width()+x+int(b[0])]==at+1:bitmap.set_bit(x,y,true)
-			poses.append(mesh_texture(source,bitmap.opaque_to_polygons(Rect2i(0,0,b[2],b[3]),0.8),Vector2(b[0],b[1]),Vector2(-float(b[2])*0.5,-float(b[3])),density))
+			poses.append(mesh_texture(source,bitmap.opaque_to_polygons(Rect2i(0,0,b[2],b[3]),0.8),Vector2(b[0],b[1]),Vector2(-float(b[2])*0.5,-float(b[3])),pose_density))
 		var frames: SpriteFrames=heroes[id]
 		if sheet.kind=="actions":
 			for at in 4:frames.add_frame("idle",poses[at])
@@ -92,3 +99,27 @@ func mesh_texture(source: Texture2D,polygons: Array,region: Vector2,origin: Vect
 	texture.mesh=mesh
 	texture.image_size=CANVAS
 	return texture
+
+func import_secret(sheet: Dictionary) -> void:
+	var source: Texture2D=load("res://"+str(sheet.output))
+	var ownership:=FileAccess.get_file_as_bytes(sheet.mask)
+	for row in 4:
+		var frames:=SpriteFrames.new()
+		frames.remove_animation("default")
+		var poses: Array[Texture2D]=[]
+		var density:=400.0/float(sheet.frames[row*5].bounds[3])
+		for column in 5:
+			var at:=row*5+column
+			var b: Array=sheet.frames[at].bounds
+			var bitmap:=BitMap.new()
+			bitmap.create(Vector2i(b[2],b[3]))
+			for y in int(b[3]):
+				for x in int(b[2]):
+					if ownership[(y+int(b[1]))*source.get_width()+x+int(b[0])]==at+1: bitmap.set_bit(x,y,true)
+			poses.append(mesh_texture(source,bitmap.opaque_to_polygons(Rect2i(0,0,b[2],b[3]),.8),Vector2(b[0],b[1]),Vector2(-float(b[2])*.5,-float(b[3])),density))
+		for animation in ["idle","attack","boss_idle","boss_attack"]:
+			frames.add_animation(animation)
+			frames.set_animation_speed(animation,5 if animation.ends_with("attack") else 2)
+			frames.set_animation_loop(animation,not animation.ends_with("attack"))
+			for column in 5 if animation.ends_with("attack") else 1: frames.add_frame(animation,poses[column])
+		assert(ResourceSaver.save(frames,"res://assets/secrets/%s_%d.tres"%[str(sheet.hero).trim_prefix("secret_"),row])==OK)

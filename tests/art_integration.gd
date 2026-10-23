@@ -4,7 +4,7 @@ const Art = preload("res://scripts/character_effects.gd")
 const Biomes = preload("res://scripts/biomes.gd")
 func _initialize() -> void:call_deferred("checks")
 func checks() -> void:
-	for id in Art.IDS:
+	for id in Art.IDS+["snow_white"]:
 		var actor: AnimatedSprite2D=TaleCatalog.HERO_SCENES[id].instantiate()
 		root.add_child(actor)
 		actor.set_process(false)
@@ -24,7 +24,7 @@ func checks() -> void:
 				assert(alpha.get_size()==texture.base_texture.get_size())
 				assert(actor.material.get_shader_parameter("use_alpha_mask"))
 		assert(count==34)
-		var effect:=Art.frame(id,0.5)
+		var effect:=Art.frame("alice" if id=="snow_white" else id,0.5)
 		assert(effect.get_image().get_pixel(0,0).a<0.02,"JPEG effects reconstruct their original alpha")
 		actor.free()
 	for world in 12:
@@ -41,5 +41,5 @@ func checks() -> void:
 		var first:=Layout.home(units,1,false)
 		units[0].hp=0
 		assert(Layout.home(units,1,false)==first,"Deaths never move the remaining formation")
-	print("ART INTEGRATION PASS: 340 padded JPEG mesh poses, lossless alpha, all effect atlases, 12 HD worlds, mirrored fixed 3-slot rows")
+	print("ART INTEGRATION PASS: 374 padded JPEG mesh poses, lossless alpha, all effect atlases, 12 HD worlds, mirrored fixed 3-slot rows")
 	quit()

@@ -21,6 +21,7 @@ static func available(owner) -> Array[String]:
 	for key in EVENTS:
 		var pair: Array = EVENTS[key].pair
 		if not owner.seen_events.has(key) and (ids.has(pair[0]) or ids.has(pair[1])): result.append(key)
+	result.append_array(preload("res://scripts/secret_encounters.gd").available(owner))
 	return result
 
 static func can_pair(owner, key: String) -> bool:
@@ -29,8 +30,9 @@ static func can_pair(owner, key: String) -> bool:
 	return ids.has(EVENTS[key].pair[0]) and ids.has(EVENTS[key].pair[1])
 
 static func dialogue(owner, key: String) -> Array[Dictionary]:
-	if not EVENTS.has(key): return []
-	var data: Dictionary = EVENTS[key]
+	if not has_event(key): return []
+	var data: Dictionary = event(key)
+	if key.begins_with("secret_"): return [{"speaker":"narrator","text":data.body},{"speaker":key.trim_prefix("secret_"),"text":data.lines[0]}]
 	var lines: Array[Dictionary] = [{"speaker": "narrator", "text": data.body}]
 	var ids := alive_ids(owner)
 	for index in 2:
@@ -39,6 +41,16 @@ static func dialogue(owner, key: String) -> Array[Dictionary]:
 
 static func resolve(owner, choice: String) -> bool:
 	var key: String = owner.pending_event
+	if key.begins_with("secret_"):
+		var id:=key.trim_prefix("secret_")
+		if owner.interlude!="event" or not preload("res://scripts/secret_encounters.gd").eligible(owner,id) or choice not in ["challenge","leave"]: return false
+		owner.seen_events.append(key)
+		if not owner.events_discovered.has(key): owner.events_discovered.append(key)
+		owner.active_secret=id if choice=="challenge" else ""
+		owner.pending_event=""
+		owner.interlude=""
+		owner.route_offers.clear()
+		return true
 	if owner.interlude != "event" or not EVENTS.has(key) or choice not in ["supplies", "rest", "pair"]: return false
 	if choice == "pair" and not can_pair(owner, key): return false
 	if choice == "supplies": owner.run_gold += 30
@@ -57,3 +69,8 @@ static func resolve(owner, choice: String) -> bool:
 	owner.interlude = ""
 	owner.route_offers.clear()
 	return true
+
+static func has_event(key: String) -> bool:
+	return EVENTS.has(key) or (key.begins_with("secret_") and preload("res://scripts/secret_encounters.gd").DATA.has(key.trim_prefix("secret_")))
+static func event(key: String) -> Dictionary:
+	return EVENTS.get(key,preload("res://scripts/secret_encounters.gd").event(key))

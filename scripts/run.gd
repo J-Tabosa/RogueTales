@@ -49,10 +49,16 @@ var score := 0
 var last_room_score := 0
 var upgrade_counts: Dictionary = {}
 var team_template: Dictionary = Endless.template()
+var active_secret := ""
+var pending_secret_reward := ""
+var secret_defeated: Array[String]=[]
 
 
 func setup(campaign: TaleCampaign, index: int, fresh: bool = true) -> void:
 	expedition = false
+	active_secret=""
+	pending_secret_reward=""
+	secret_defeated.clear()
 	endless = false
 	score = 0
 	last_room_score = 0
@@ -265,6 +271,7 @@ func to_checkpoint() -> Dictionary:
 		hits.append(int(actor.hits))
 	return {
 		"expedition": expedition, "world_format": 2, "phase": phase,
+		"active_secret":active_secret,"pending_secret_reward":pending_secret_reward,"secret_defeated":secret_defeated.duplicate(),
 		"run_gold": run_gold, "blessing": blessing, "leader": leader,
 		"interlude": interlude, "route_offers": route_offers.duplicate(),
 		"room_kind": room_kind, "rooms_cleared": rooms_cleared,
@@ -310,15 +317,23 @@ func restore(campaign: TaleCampaign, data: Dictionary) -> void:
 		if not ExpeditionContent.BLESSINGS.has(blessing): blessing = "vigor"
 		leader = str(data.get("leader", "scarlet"))
 		interlude = str(data.get("interlude", ""))
-		if interlude not in ["", "reward", "route", "shop", "event"]: interlude = ""
+		if interlude not in ["", "reward", "route", "shop", "event", "secret_reward"]: interlude = ""
+		active_secret=str(data.get("active_secret",""))
+		pending_secret_reward=str(data.get("pending_secret_reward",""))
+		var secrets=preload("res://scripts/secret_encounters.gd")
+		if not secrets.DATA.has(active_secret): active_secret=""
+		if not secrets.DATA.has(pending_secret_reward): pending_secret_reward=""
+		for key in data.get("secret_defeated",[]):
+			if secrets.DATA.has(key) and not secret_defeated.has(key): secret_defeated.append(key)
+		if secret_defeated.has(active_secret): active_secret=""
 		pending_event = str(data.get("pending_event", ""))
-		if not preload("res://scripts/team_events.gd").EVENTS.has(pending_event): pending_event = ""
+		if not preload("res://scripts/team_events.gd").has_event(pending_event): pending_event = ""
 		seen_events.clear()
 		events_discovered.clear()
 		for key in data.get("seen_events", []):
-			if preload("res://scripts/team_events.gd").EVENTS.has(key) and not seen_events.has(key): seen_events.append(key)
+			if preload("res://scripts/team_events.gd").has_event(key) and not seen_events.has(key): seen_events.append(key)
 		for key in data.get("events_discovered", []):
-			if preload("res://scripts/team_events.gd").EVENTS.has(key) and not events_discovered.has(key): events_discovered.append(key)
+			if preload("res://scripts/team_events.gd").has_event(key) and not events_discovered.has(key): events_discovered.append(key)
 		room_kind = "elite" if data.get("room_kind") == "elite" else "battle"
 		rooms_cleared = clampi(int(data.get("rooms_cleared", 0)), 0, 2147483647 if endless else 72)
 		mercy_used = bool(data.get("mercy_used", false))
@@ -556,7 +571,10 @@ func roll_run_offers() -> void:
 
 
 func clear_encounter() -> bool:
-	if not expedition: return false
+	if not expedition or interlude=="secret_reward": return false
+	if not active_secret.is_empty():
+		preload("res://scripts/secret_encounters.gd").reward(self)
+		return false
 	last_room_score = 100 + (300 if ExpeditionContent.is_boss(stage, phase) else 0) + (150 if room_kind == "elite" else 0)
 	if tactics != null:
 		last_room_score += maxi(0, 120 - int(tactics.elapsed * 2))
@@ -613,7 +631,9 @@ func choose_route(id: String) -> bool:
 	if id == "team_event":
 		var events: Array = preload("res://scripts/team_events.gd").available(self)
 		if events.is_empty(): return false
-		pending_event = events[rng.randi_range(0, events.size() - 1)]
+		var secrets: Array=events.filter(func(key):return str(key).begins_with("secret_"))
+		var pool: Array=secrets if not secrets.is_empty() and rng.randf()<.5 else events
+		pending_event = pool[rng.randi_range(0, pool.size() - 1)]
 		interlude = "event"
 		return true
 	if id == "shop":

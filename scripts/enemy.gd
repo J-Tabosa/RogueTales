@@ -21,6 +21,7 @@ var illustrated := false
 var biome_id := 0
 var variant_id := 0
 var body_height := 210.0
+var secret_id := ""
 
 
 static func warm(chapter: int) -> PackedScene:
@@ -76,7 +77,7 @@ func advance(dt: float, is_boss: bool, windup: float, interval: float) -> void:
 	else:
 		seek(prefix + "idle", idle_clock)
 	var canvas := sprite_frames.get_frame_texture(animation, frame).get_size()
-	offset = Vector2(-160, -304) if illustrated else Vector2(-canvas.x * 0.5, -canvas.y)
+	offset = Vector2(-1400,-1400) if not secret_id.is_empty() else (Vector2(-160, -304) if illustrated else Vector2(-canvas.x * 0.5, -canvas.y))
 	scale = Vector2.ONE * ((boss_height if is_boss else regular_height) / (body_height if illustrated else canvas.y))
 
 
@@ -109,6 +110,10 @@ func seek(id: String, seconds: float) -> void:
 		var duration := sprite_frames.get_frame_duration(id, index)
 		if remaining < duration:
 			set_frame_and_progress(index, remaining / duration)
-			if illustrated: flip_h = preload("res://scripts/biomes.gd").flip_for(biome_id, variant_id, index if id.ends_with("attack") else 0)
+			if not secret_id.is_empty():
+				var texture: MeshTexture=sprite_frames.get_frame_texture(id,index)
+				var bounds:=texture.mesh.get_aabb()
+				RenderingServer.canvas_item_set_custom_rect(get_canvas_item(),true,Rect2(Vector2(bounds.position.x,bounds.position.y)+Vector2(-1400,-1400),Vector2(bounds.size.x,bounds.size.y)).grow(24))
+			if illustrated and secret_id.is_empty(): flip_h = preload("res://scripts/biomes.gd").flip_for(biome_id, variant_id, index if id.ends_with("attack") else 0)
 			return
 		remaining -= duration

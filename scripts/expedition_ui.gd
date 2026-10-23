@@ -51,7 +51,7 @@ func show_menu() -> void:
 	label(page, "Escolha. Arrisque. Recomece.", Rect2(24, 565, 492, 43), 26)
 	label(page, "Um protagonista. Companheiros raros.\nHabilidades e relíquias que mudam a cada tentativa.", Rect2(24, 620, 492, 66), 17, MUTED)
 	var active := not campaign.checkpoint.is_empty()
-	var detail := "A vida, a build e os encontros da sua tentativa estão salvos." if active else "12 fases · vença a run para continuar no infinito"
+	var detail := "A vida, a build e os encontros da sua tentativa estão salvos." if active else "12 mundos · 72 fases · vença a run para continuar no infinito"
 	label(page, detail, Rect2(24, 704, 492, 48), 14, GOLD)
 	button(page, "Retomar run  →" if active else "Nova run  →", Rect2(24, 772, 492, 62), resume_checkpoint if active else show_map, true)
 	navigation("menu")
@@ -75,7 +75,7 @@ func show_map() -> void:
 	if not campaign.unlocked.has(selected_hero): selected_hero = campaign.party[0]
 	if not campaign.blessings_unlocked.has(chosen_blessing): chosen_blessing = "vigor"
 	chosen_endless = false
-	label(page, "CONTO · 12 FASES  →  INFINITO APÓS VENCER", Rect2(24, 183, 492, 46), 14, GOLD)
+	label(page, "CONTO · 12 MUNDOS  →  INFINITO APÓS VENCER", Rect2(24, 183, 492, 46), 14, GOLD)
 	var hero := button(page, "", Rect2(24, 246, 492, 118), show_heroes)
 	face_portrait(hero, selected_hero, Rect2(14, 14, 90, 90))
 	label(hero, "PROTAGONISTA", Rect2(123, 11, 350, 21), 10, GOLD)
@@ -152,8 +152,8 @@ func spawn_enemy() -> void:
 	if not is_expedition(): return
 	state = "encounter_intro"
 	encounter_left = 1.15
-	current_action("CHEFE À VISTA" if Content.is_boss(run.stage, run.phase) else "ENCONTRO · prepare-se!")
-	arena.damage_number("CHEFE À VISTA" if Content.is_boss(run.stage, run.phase) else "INIMIGOS À VISTA", Vector2(arena.field_width * 0.45, arena.field_height * 0.44), GOLD)
+	current_action("CHEFE SECRETO · "+str(preload("res://scripts/secret_encounters.gd").DATA[run.active_secret].name) if not run.active_secret.is_empty() else ("CHEFE À VISTA" if Content.is_boss(run.stage, run.phase) else "ENCONTRO · prepare-se!"))
+	arena.damage_number("DESAFIO SECRETO" if not run.active_secret.is_empty() else ("CHEFE À VISTA" if Content.is_boss(run.stage, run.phase) else "INIMIGOS À VISTA"), Vector2(arena.field_width * 0.45, arena.field_height * 0.44), GOLD)
 
 func _process(delta: float) -> void:
 	if state == "route_travel" and not paused:
@@ -187,6 +187,7 @@ func restore_checkpoint_now() -> void:
 		"route": show_routes()
 		"shop": show_run_shop()
 		"event": show_team_event()
+		"secret_reward": show_secret_reward()
 		_: enter_encounter()
 
 func resolve_enemy() -> void:
@@ -217,7 +218,8 @@ func finish_encounter_now() -> void:
 		show_run_result(result)
 	else:
 		persist_run()
-		show_relics()
+		if run.interlude=="secret_reward": show_secret_reward()
+		else: show_relics()
 
 func show_relics() -> void:
 	if not is_expedition():
@@ -333,10 +335,10 @@ func leave_run_shop() -> void:
 	enter_encounter()
 
 func show_team_event() -> void:
-	if not TeamEvents.EVENTS.has(run.pending_event): return
+	if not TeamEvents.has_event(run.pending_event): return
 	state = "team_event"
 	clear_page()
-	var event: Dictionary = TeamEvents.EVENTS[run.pending_event]
+	var event: Dictionary = TeamEvents.event(run.pending_event)
 	header(event.title, "%s · sua companhia muda esta página." % run.phase_label())
 	for node in page.get_children():
 		if node is Label and node.text == event.title: node.add_theme_font_size_override("font_size", 25)
@@ -351,6 +353,9 @@ func show_team_event() -> void:
 		label(page, data.text, Rect2(38, y + 29, 464, 48), 15)
 	var can_pair := TeamEvents.can_pair(run, run.pending_event)
 	var options := [["supplies", "Recolher os suprimentos", "+30 ouro nesta run."], ["rest", "Ajudar e recuperar o fôlego", "Cure 25% dos PV e levante um aliado com 20%."], ["pair", event.choice if can_pair else "Uma companhia diferente pode ajudar", event.reward if can_pair else "Esta opção exige dois viajantes específicos vivos na equipe."]]
+	var secret := run.pending_event.begins_with("secret_")
+	if secret:
+		options=[["challenge","Aceitar o duelo secreto",event.reward+" Só nesta run. Inimigo único com poder de 2 mundos à frente."],["leave","Seguir pela trilha","Deixe o desafio para outra ocasião. Nenhuma penalidade."]]
 	for index in options.size():
 		var option: Array = options[index]
 		var card := button(page, "", Rect2(24, 468 + index * 117, 492, 106), select_team_event.bind(str(option[0])))
@@ -372,7 +377,14 @@ func show_run_build() -> void:
 	clear_page()
 	header("O conto até aqui", "%s · %d ouro · %d melhorias" % [run.phase_label(), run.run_gold, run.upgrade_total()])
 	var pairs := Synergies.available(run)
-	var inner := scroll_area(190, 593, 230 + run.actors.size() * 122 + run.relics.size() * 83 + pairs.size() * 139)
+	var entries: Array[Dictionary]=[]
+	var total_height := 230.0+run.relics.size()*83+pairs.size()*139
+	for actor in run.actors:
+		var description:=preload("res://scripts/combat_details.gd").sheet(actor)
+		var text_height:=get_theme_font("font").get_multiline_string_size(description,HORIZONTAL_ALIGNMENT_LEFT,476,14).y+24
+		entries.append({"actor":actor,"description":description,"height":text_height})
+		total_height+=text_height+115
+	var inner := scroll_area(190,593,total_height)
 	label(inner, "BÊNÇÃO · " + str(Content.BLESSINGS[run.blessing].name), Rect2(0, 0, 476, 42), 18, GOLD)
 	var y := 63.0
 	for key in pairs:
@@ -380,11 +392,12 @@ func show_run_build() -> void:
 		label(inner, "SINERGIA · " + str(pair.name), Rect2(0, y, 476, 32), 20, GOLD)
 		label(inner, pair.detail, Rect2(0, y + 41, 476, 79), 15, MUTED)
 		y += 139
-	for actor in run.actors:
+	for entry in entries:
+		var actor: Dictionary=entry.actor
 		face_portrait(inner, actor.id, Rect2(0, y, 70, 74))
 		label(inner, TaleCatalog.HEROES[actor.id].name, Rect2(88, y, 388, 32), 21)
-		label(inner, "%d / %d PV · %s\n%s" % [actor.hp, actor.max_hp, TaleCatalog.hero_class_name(actor.id), Content.KITS[actor.id][0]], Rect2(88, y + 39, 388, 55), 14, MUTED)
-		y += 122
+		label(inner, entry.description, Rect2(0, y + 86, 476, entry.height), 14, MUTED)
+		y += entry.height+115
 	for key in run.relics:
 		var data := TaleCatalog.offer_data(key)
 		label(inner, str(data.title) + (" ×%d" % run.upgrade_count(key) if run.endless else ""), Rect2(0, y, 476, 29), 19, GOLD)
@@ -464,6 +477,7 @@ func update_hud() -> void:
 	super.update_hud()
 	if is_expedition() and battle_view and is_instance_valid(enemy_label):
 		enemy_label.text = "%s · %s · %d OURO" % [run.phase_label(), "PRESSÃO +%d%%" % int((run.tactics.pressure() - 1) * 100) if run.tactics.pressure() > 1 else ("CHEFE" if Content.is_boss(run.stage, run.phase) else ("ELITE" if run.room_kind == "elite" else "COMBATE")), run.run_gold]
+		if not run.active_secret.is_empty(): enemy_label.text=run.phase_label()+" · SECRETO · "+str(preload("res://scripts/secret_encounters.gd").DATA[run.active_secret].name)
 		power_label.text = "%d PONTOS · RECORDE %d" % [run.score, campaign.best_score]
 		stage_label.text = "%02d   %s" % [run.stage + 1, TaleCatalog.STAGES[run.stage].name]
 		for i in mini(ult_buttons.size(), run.actors.size()):
@@ -520,6 +534,7 @@ func show_heroes() -> void:
 	var ids: Array = TaleCatalog.HEROES.keys().filter(func(id): return roster_filter == "all" or campaign.unlocked.has(id))
 	if not ids.has(selected_hero) and not ids.is_empty(): selected_hero = ids[0]
 	gallery_scroll = ScrollContainer.new()
+	gallery_scroll.set_script(preload("res://scripts/hero_carousel.gd"))
 	gallery_scroll.position = Vector2(24, 246)
 	gallery_scroll.size = Vector2(w - 48, 416)
 	gallery_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -562,9 +577,10 @@ func banner_portrait(parent: Node, id: String, rect: Rect2, hidden: bool) -> voi
 	actor.name = "Silhouette" if hidden else "HeroArt"
 	actor.texture = data.texture
 	actor.centered = false
-	var factor := minf(rect.size.x / maxf(1, bounds.size.x), rect.size.y / maxf(1, bounds.size.y))
-	actor.scale = Vector2.ONE * factor
-	actor.position = rect.position + (rect.size - bounds.size * factor) * 0.5 - bounds.position * factor
+	var body_scale := Vector2(preload("res://scripts/character_visuals.gd").width(id),1)
+	var factor := minf(rect.size.x / maxf(1, bounds.size.x*body_scale.x), rect.size.y / maxf(1, bounds.size.y))
+	actor.scale = body_scale * factor
+	actor.position = rect.position + (rect.size - bounds.size * actor.scale) * 0.5 - bounds.position * actor.scale
 	actor.self_modulate = Color.BLACK if hidden else Color.WHITE
 	parent.add_child(actor)
 	if parent == overlay:
@@ -605,23 +621,28 @@ func show_hero_details(id: String) -> void:
 	state = "hero_details"
 	clear_page()
 	header(TaleCatalog.HEROES[id].name, "%s · uma ativa, uma reação e uma ULT própria." % TaleCatalog.hero_class_name(id))
-	var inner := scroll_area(184, 605, 1160)
+	var inner := scroll_area(184, 605, 1570)
 	var art := panel(inner, Rect2(0, 0, 476, 228))
 	gradient(art, Rect2(0, 0, 476, 228), Color(TaleCatalog.HEROES[id].color, 0.18), Color("212338"))
 	banner_portrait(art, id, Rect2(76, 4, 324, 217), false)
-	var descriptions := [["ATIVA · AUTOMÁTICA", Content.KITS[id][0], Content.KITS[id][1]], ["PASSIVA · RECARGA 6 s", Content.KITS[id][2], Content.KITS[id][3]], ["ULT · 100 MANA", TaleCatalog.HERO_TACTICS[id].ult, TaleCatalog.HERO_TACTICS[id].detail]]
+	var stats:=TaleCatalog.hero_stats(id,[0,0,0],{})
+	if is_expedition():
+		for current in run.actors:
+			if current.id==id: stats=current
+	var detail=preload("res://scripts/combat_details.gd")
+	var descriptions := [["ATIVA · AUTOMÁTICA", Content.KITS[id][0], detail.active(stats)], ["PASSIVA · RECARGA 6 s", Content.KITS[id][2], detail.passive(stats)], ["ULT · 100 MANA", TaleCatalog.HERO_TACTICS[id].ult, detail.ultimate(stats)]]
 	for index in descriptions.size():
 		var data: Array = descriptions[index]
-		var y := 248 + index * 156
-		panel(inner, Rect2(0, y, 476, 145))
+		var y := 248 + index * 250
+		panel(inner, Rect2(0, y, 476, 240))
 		label(inner, data[0], Rect2(16, y + 10, 444, 21), 10, GOLD)
 		label(inner, data[1], Rect2(16, y + 37, 444, 32), 22)
-		label(inner, data[2], Rect2(16, y + 78, 444, 58), 15, MUTED)
-	label(inner, "TRANSFORMAÇÕES DURANTE A RUN", Rect2(0, 737, 476, 26), 12, GOLD)
+		label(inner, data[2], Rect2(16, y + 78, 444, 154), 15, MUTED)
+	label(inner, "TRANSFORMAÇÕES DURANTE A RUN", Rect2(0, 1020, 476, 26), 12, GOLD)
 	for index in Content.MUTATIONS[id].size():
 		var entry: Array = Content.MUTATIONS[id][index]
-		label(inner, entry[1], Rect2(0, 783 + index * 110, 476, 30), 20)
-		label(inner, entry[2], Rect2(0, 821 + index * 110, 476, 57), 14, MUTED)
+		label(inner, entry[1], Rect2(0, 1066 + index * 140, 476, 30), 20)
+		label(inner, entry[2], Rect2(0, 1104 + index * 140, 476, 57), 14, MUTED)
 	button(page, "Escolher protagonista", Rect2(24, 813, 316, 54), use_protagonist.bind(id), true).disabled = not campaign.checkpoint.is_empty()
 	button(page, "Coleção", Rect2(356, 813, 160, 54), show_heroes)
 	navigation("heroes")
@@ -634,7 +655,7 @@ func show_journal() -> void:
 	clear_page()
 	header("Memórias das expedições", "Descobertas permanecem; cada tentativa começa uma nova build.")
 	var inner := scroll_area(190, 670, 220 + campaign.journal.size() * 107)
-	label(inner, "CONTO · %02d / 12  |  INFINITO · %d\nVITÓRIAS COMPLETAS · %d\nVIAJANTES · %d / 12\nSINERGIAS DESCOBERTAS · %d / 3\nEVENTOS DESCOBERTOS · %d / 6" % [campaign.best_depth, campaign.best_endless, campaign.expedition_wins, campaign.unlocked.size(), campaign.discovered_synergies.size(), campaign.discovered_events.size()], Rect2(0, 0, 476, 170), 18, GOLD)
+	label(inner, "CONTO · %02d / 12  |  INFINITO · %d\nVITÓRIAS COMPLETAS · %d\nVIAJANTES · %d / 12\nSINERGIAS DESCOBERTAS · %d / 3\nEVENTOS DESCOBERTOS · %d / 18" % [campaign.best_depth, campaign.best_endless, campaign.expedition_wins, campaign.unlocked.size(), campaign.discovered_synergies.size(), campaign.discovered_events.size()], Rect2(0, 0, 476, 170), 18, GOLD)
 	for index in campaign.journal.size():
 		var entry: Dictionary = campaign.journal[index]
 		var y := 198 + index * 107
@@ -744,3 +765,27 @@ func journey_modal(title: String, subtitle: String) -> void:
 	overlay.add_child(card)
 	register_layout(card, "center")
 	overlay.move_child(card, 1)
+
+func show_secret_reward() -> void:
+	var secrets=preload("res://scripts/secret_encounters.gd")
+	if not secrets.DATA.has(run.pending_secret_reward):
+		run.interlude=""
+		enter_encounter()
+		return
+	state="secret_reward"
+	paused=true
+	if not is_instance_valid(arena) or not battle_view: build_battle()
+	arena.frozen=true
+	arena.enemy_visible=false
+	var reward: Dictionary=secrets.DATA[run.pending_secret_reward]
+	journey_modal("Lenda vencida · "+str(reward.name),"+600 pontos · +%d ouro"%(75+run.stage*5))
+	face_portrait(overlay,run.pending_secret_reward,Rect2(208,336,124,124))
+	label(overlay,reward.reward+"\n\nBônus aplicado nesta run. A próxima fase normal continua de onde parou.",Rect2(40,492,460,170),20,GOLD)
+	button(overlay,"Continuar a jornada",Rect2(32,768,476,58),continue_after_secret,true)
+func continue_after_secret() -> void:
+	if run.interlude!="secret_reward": return
+	run.pending_secret_reward=""
+	run.interlude=""
+	paused=false
+	persist_run()
+	enter_encounter()

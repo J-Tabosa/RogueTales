@@ -1,6 +1,6 @@
 extends RefCounted
 ## Compact endless progression: no growing replay history, no finite offer pool.
-const KEYS := ["max_hp", "damage", "interval", "crit", "armor", "leech", "energy_bonus"]
+const KEYS := ["max_hp", "damage", "interval", "crit", "armor", "leech", "energy_bonus", "evasion", "base_evasion"]
 
 static func template() -> Dictionary:
 	return {"hp_scale": 1.0, "hp_flat": 0.0, "damage_scale": 1.0, "interval_scale": 1.0, "crit_flat": 0.0, "armor_flat": 0.0, "leech_flat": 0.0}

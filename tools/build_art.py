@@ -3,13 +3,14 @@ Run: GODOT=/path/to/godot python tools/build_art.py
 No source image is cropped, resized or repainted by this script.
 """
 from pathlib import Path
-import json,os,subprocess
+import json,os,subprocess,sys
 import numpy as np
 from scipy import ndimage as nd
 from PIL import Image
 ROOT=Path(__file__).resolve().parents[1]
 work=ROOT.parent/'art-build';work.mkdir(exist_ok=True)
 manifest=json.loads((ROOT/'assets/characters/sources.json').read_text())
+if len(sys.argv)>1: manifest=[entry for entry in manifest if entry.get("hero")==sys.argv[1]]
 sheets=[]
 for entry in manifest:
  if entry.get('kind') in ('effects','arena'): sheets.append(entry);continue
@@ -29,6 +30,21 @@ for entry in manifest:
   seeds[labels==sizes.argmax()]=at+1
  _,nearest=nd.distance_transform_edt(seeds==0,return_indices=True)
  ownership=seeds[tuple(nearest)];ownership[alpha<8]=0
+ # A pose may never borrow feet or hair from another row. Locate the actual
+ # transparent gutter rather than assuming generated rows have exact heights.
+ projection=(alpha>40).sum(axis=1)
+ boundaries=[0]
+ for row in range(1,rows):
+  nominal=int(row*ch);radius=max(2,int(ch*.13))
+  lo=max(boundaries[-1]+1,nominal-radius);hi=min(h,nominal+radius)
+  smooth=nd.uniform_filter1d(projection.astype(float),size=3)
+  boundary=lo+int(np.argmin(smooth[lo:hi]))
+  boundaries.append(boundary)
+ boundaries.append(h)
+ for at in range(count):
+  row=at//cols
+  ownership[:boundaries[row]][ownership[:boundaries[row]]==at+1]=0
+  ownership[boundaries[row+1]:][ownership[boundaries[row+1]:]==at+1]=0
  frames=[]
  for at in range(1,count+1):
   pieces,n=nd.label(ownership==at,np.ones((3,3)))

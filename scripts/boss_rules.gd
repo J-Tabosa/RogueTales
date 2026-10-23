@@ -22,6 +22,7 @@ static func setup(tactics) -> void:
 	for foe in tactics.enemies:
 		foe["action_count"] = 0
 		foe["intent"] = {}
+	if owner.expedition and not owner.active_secret.is_empty(): return
 	if not (ExpeditionContent.is_boss(owner.stage, owner.phase) if owner.expedition else ExpeditionContent.is_boss(owner.stage)) or tactics.enemies.is_empty(): return
 	var boss: Dictionary = tactics.enemies[0]
 	boss["mechanic"] = ExpeditionContent.boss_rule(owner.stage) if owner.expedition else owner.stage
@@ -81,6 +82,12 @@ static func plan(tactics, index: int) -> Dictionary:
 	var owner = tactics.run()
 	var target: int = tactics.choose_target(foe, owner.actors)
 	var result := {"key": "attack", "title": "Ataque", "glyph": "sword", "target": target, "targets": [target] if target >= 0 else [], "power": 1.0, "magical": foe["class"] == "mage", "locked": false}
+	if foe.has("secret_id"):
+		var spec: Dictionary=preload("res://scripts/secret_encounters.gd").DATA[foe.secret_id]
+		var charged: bool=int(foe.get("action_count",0))%3==2
+		result.merge({"key":"secret","title":str(spec.name)+(": golpe decisivo" if charged else ": investida"),"power":1.75 if charged else 1.0,"secret_effect":spec.effect if charged else "","magical":foe["class"]=="mage"},true)
+		foe.intent=result
+		return result
 	if not foe.get("boss", false) and not foe.has("binds") and foe["class"] == "mage":
 		result.merge({"key": "storm", "title": "Conjuração em área", "power": 0.68, "magical": true, "targets": living(owner.actors)}, true)
 	if not foe.get("boss", false) and not foe.has("binds") and int(foe.get("action_count", 0)) % 3 == 2:
@@ -164,7 +171,16 @@ static func execute(tactics, index: int) -> Dictionary:
 		# A ULT used during the windup stays available for the next action.
 		if tactics.last_ultimate.get("serial", -1) == intent.get("serial", -2): tactics.last_ultimate = {}
 	else:
-		for at in targets: strike(tactics, foe, at, float(intent.power), bool(intent.magical), result)
+		for at in targets:
+			var hit:=strike(tactics, foe, at, float(intent.power), bool(intent.magical), result)
+			if not hit.is_empty() and not hit.evaded:
+				var victim: Dictionary=owner.actors[hit.target]
+				match str(intent.get("secret_effect","")):
+					"burn","poison":
+						victim["hostile_"+str(intent.secret_effect)]=foe.damage*.12
+						victim.hostile_dot_left=5.0
+					"drain": victim.energy=maxf(0,victim.energy-15)
+					"slow": victim.hindered_rounds=2
 	Abilities.deaths(tactics)
 	if not result.target_damage.is_empty():
 		result.targets = result.target_damage.keys()

@@ -18,7 +18,7 @@ const KITS := {
 	"scarlet": ["Carga de pólvora", "Aplica fogo e pólvora. A terceira carga explode no alvo e respinga nos demais.", "Estilhaços úteis", "Um crítico ativa a passiva e recupera 20 de ULT."],
 	"rapunzel": ["Trança vital", "Ataca e cura o aliado vivo mais ferido em 8% dos PV máximos.", "Laço de resgate", "Ao deixar um aliado abaixo de 45% dos PV, ativa a passiva para curá-lo e protegê-lo."],
 	"snow_white": ["Maçã amarga", "Aplica veneno acumulável. Acertar um alvo já envenenado também drena vida.", "Semente maldita", "Ao derrotar um alvo envenenado, ativa a passiva para transferir o veneno."],
-	"mulan": ["Três movimentos", "O terceiro acerto causa +80% de dano e atinge os outros inimigos da frente.", "Aparo de jade", "Uma guarda com a passiva pronta devolve um corte e concede escudo a Mulan."],
+	"mulan": ["Três movimentos", "O terceiro acerto causa +80% de dano e atinge os outros inimigos da frente.", "Aparo de jade", "Uma esquiva com a passiva pronta devolve 45% do ataque em dano e concede 10% dos PV em escudo."],
 	"ariel": ["Maré que volta", "Cada terceiro acerto cura 12% dos PV de todos os aliados vivos.", "Corrente de retorno", "Ao ferir um aliado abaixo de 50% dos PV, ativa a passiva para curá-lo e atrasar os inimigos."],
 	"joao": ["Marca da caçada", "Marca a presa. Seus próximos acertos na mesma presa causam +40% de dano.", "Fogo de cobertura", "Após um aliado acertar sua presa, ativa a passiva para dar uma estocada adicional."],
 	"maria": ["Receita roubada", "Alterna entre aplicar veneno e consumi-lo numa onda que recupera vida.", "Gota de revanche", "Ao sofrer dano, ativa a passiva para envenenar o agressor."],

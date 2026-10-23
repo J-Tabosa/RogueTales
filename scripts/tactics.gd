@@ -74,6 +74,9 @@ func spawn() -> void:
 	elif owner.stage % 4 == 1:
 		roles[2] = "assassin"
 	var picked: Array[int] = []
+	if owner.expedition and not owner.active_secret.is_empty():
+		count=0
+		enemies.append(preload("res://scripts/secret_encounters.gd").spawn(owner))
 	for index in count:
 		var boss_unit: bool = (ExpeditionContent.is_boss(owner.stage, owner.phase) if owner.expedition else owner.wave == 2) and index == 0
 		var weight := (0.6 if index == 0 else 0.4 / maxf(1, count - 1)) if owner.wave == 2 and count > 1 else 1.0 / count

@@ -227,7 +227,7 @@ func load_data(data: Dictionary) -> void:
 	for key in data.get("discovered_synergies", []):
 		if preload("res://scripts/team_synergies.gd").PAIRS.has(key) and not discovered_synergies.has(key): discovered_synergies.append(key)
 	for key in data.get("discovered_events", []):
-		if preload("res://scripts/team_events.gd").EVENTS.has(key) and not discovered_events.has(key): discovered_events.append(key)
+		if preload("res://scripts/team_events.gd").has_event(key) and not discovered_events.has(key): discovered_events.append(key)
 	best_score = maxi(0, int(data.get("best_score", 0)))
 	best_depth = clampi(int(data.get("best_depth", 0)), 0, 12)
 	if int(data.get("version", 1)) < 8: best_depth = floori(best_depth / 6.0)
@@ -285,7 +285,7 @@ func load_data(data: Dictionary) -> void:
 	if not cleared.has(pending_story) or choices.has(str(pending_story)):
 		pending_story = -1
 	reduced_motion = bool(data.get("reduced_motion", false))
-	speed = 2.0 if float(data.get("speed", 1.0)) == 2.0 else 1.0
+	speed = float(clampi(int(data.get("speed", 1)),1,3))
 	checkpoint = {}
 	var candidate: Variant = data.get("checkpoint", {})
 	if candidate is Dictionary and candidate.has("stage") and (int(candidate.stage) in range(12) if candidate.get("expedition", false) else can_play(int(candidate.stage))):
@@ -657,7 +657,7 @@ func finish_expedition(data: Dictionary, won: bool) -> Dictionary:
 	for key in data.get("synergies_seen", []):
 		if preload("res://scripts/team_synergies.gd").PAIRS.has(key) and not discovered_synergies.has(key): discovered_synergies.append(key)
 	for key in data.get("events_discovered", []):
-		if preload("res://scripts/team_events.gd").EVENTS.has(key) and not discovered_events.has(key): discovered_events.append(key)
+		if preload("res://scripts/team_events.gd").has_event(key) and not discovered_events.has(key): discovered_events.append(key)
 	earn_gold(fragments)
 	grant_xp(new_depth * 8, []) # Profile experience; starting combat stats always use level 1.
 	if won and not infinite:

@@ -262,6 +262,7 @@ func build_battle() -> void:
 	arena.attack_hit.connect(on_attack_hit)
 	arena.attack_started.connect(on_attack_started)
 	arena.enemy_attack_hit.connect(on_enemy_attack_hit)
+	arena.status_requested.connect(show_condition_information)
 	timeline = Control.new()
 	page.add_child(timeline)
 	battle_place(timeline, Rect2(20, 108, 500, 44), Rect2(24, 89, 910, 44))
@@ -281,8 +282,28 @@ func build_battle() -> void:
 		var face := face_portrait(card, actor.id, Rect2(10,10,40,40))
 		face.set_meta("card_face",true)
 		card.add_theme_color_override("font_disabled_color", Color("eeeae2"))
+		var information := Button.new()
+		information.name="CharacterInformation"
+		information.text="i"
+		information.custom_minimum_size=Vector2(30,30)
+		information.add_theme_font_size_override("font_size",20)
+		information.add_theme_color_override("font_color",GOLD)
+		for skin in ["normal","hover","pressed"]:
+			var plate:=box(Color("19382d") if skin=="normal" else Color("395b40"),GOLD,10).duplicate()
+			plate.content_margin_left=4
+			plate.content_margin_right=4
+			information.add_theme_stylebox_override(skin,plate)
+		information.tooltip_text="Atributos, habilidades e passivas atuais"
+		information.set_meta("card_info",true)
+		information.pressed.connect(show_character_information.bind(index))
+		card.add_child(information)
 		var name_tag := label(card, str(TaleCatalog.HEROES[actor.id].get("short_name", TaleCatalog.HEROES[actor.id].name)), Rect2(58, 6, 94, 43), 14)
 		name_tag.set_meta("card_name", true)
+		name_tag.set_meta("full_name",name_tag.text)
+		name_tag.set_meta("short_name",{"snow_white":"Branca","puss":"Gato","matches":"Fósforos"}.get(actor.id,name_tag.text))
+		name_tag.autowrap_mode=TextServer.AUTOWRAP_OFF
+		name_tag.text_overrun_behavior=TextServer.OVERRUN_TRIM_ELLIPSIS
+		name_tag.clip_text=true
 		var ult_tag := label(card, str(TaleCatalog.HERO_TACTICS[actor.id].ult), Rect2(10, 101, 140, 21), 12, GOLD)
 		ult_tag.set_meta("card_ult", true)
 		var status := label(card, "", Rect2(10, 123, 140, 19), 11, MUTED)
@@ -339,13 +360,17 @@ func relayout_battle() -> void:
 		node.size = rect.size
 	for card in ult_buttons:
 		for child in card.get_children():
-			if child.has_meta("card_face"):
+			if child.has_meta("card_info"):
+				child.position=Vector2(256,10) if desktop else Vector2(125,8)
+				child.size=Vector2(30,30)
+			elif child.has_meta("card_face"):
 				child.position = Vector2(16,18) if desktop else Vector2(10,10)
 				child.size = Vector2(82,82) if desktop else Vector2(40,40)
 			elif child.has_meta("card_name"):
+				child.text=child.get_meta("full_name") if desktop else child.get_meta("short_name")
 				child.position = Vector2(111, 15) if desktop else Vector2(58, 6)
-				child.size = Vector2(172, 43) if desktop else Vector2(94, 43)
-				child.add_theme_font_size_override("font_size", 20 if desktop else 14)
+				child.size = Vector2(140, 32) if desktop else Vector2(65, 32)
+				child.add_theme_font_size_override("font_size", 18 if desktop else 14)
 			elif child.has_meta("card_ult"):
 				child.position = Vector2(111, 92) if desktop else Vector2(10, 101)
 				child.size = Vector2(172, 22) if desktop else Vector2(144, 21)
@@ -485,11 +510,56 @@ func confirm_reset() -> void:
 	show_menu()
 
 
+var windowed_size := Vector2i(1280,720)
+var windowed_position := Vector2i.ZERO
+var fullscreen_host: Window
 func apply_window_mode() -> void:
-	if OS.has_feature("mobile") or DisplayServer.get_name() == "headless":
+	if OS.has_feature("mobile") or DisplayServer.get_name()=="headless": return
+	# The editor's embedded Game view is an externally parented native window.
+	# Fullscreen that view in its own native Window instead of resizing the editor.
+	if OS.get_cmdline_args().has("--wid"):
+		apply_embedded_fullscreen.call_deferred()
 		return
-	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if campaign.window_mode == "fullscreen" else DisplayServer.WINDOW_MODE_WINDOWED)
+	var window:=get_window()
+	if campaign.window_mode=="fullscreen":
+		if window.mode==Window.MODE_WINDOWED:
+			windowed_size=window.size
+			windowed_position=window.position
+		window.mode=Window.MODE_EXCLUSIVE_FULLSCREEN
+	else:
+		var was_fullscreen:=window.mode in [Window.MODE_FULLSCREEN,Window.MODE_EXCLUSIVE_FULLSCREEN]
+		window.mode=Window.MODE_WINDOWED
+		if was_fullscreen:
+			window.size=windowed_size
+			window.position=windowed_position
+func apply_embedded_fullscreen() -> void:
+	if campaign.window_mode=="fullscreen":
+		if is_instance_valid(fullscreen_host): return
+		fullscreen_host=Window.new()
+		fullscreen_host.hide()
+		fullscreen_host.title="RogueTales · Tela cheia"
+		fullscreen_host.force_native=true
+		fullscreen_host.content_scale_mode=Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
+		fullscreen_host.content_scale_size=Vector2i(1280,720)
+		get_tree().root.add_child(fullscreen_host)
+		reparent(fullscreen_host)
+		set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		fullscreen_host.close_requested.connect(toggle_fullscreen)
+		fullscreen_host.show()
+		fullscreen_host.mode=Window.MODE_EXCLUSIVE_FULLSCREEN
+		fullscreen_host.grab_focus()
+		# Initial native-window configure notifications may report windowed mode.
+		# Apply the requested mode again once that first notification was processed.
+		get_tree().process_frame.connect(finalize_fullscreen_host,CONNECT_ONE_SHOT)
+	elif is_instance_valid(fullscreen_host):
+		reparent(get_tree().root)
+		set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		fullscreen_host.queue_free()
+		fullscreen_host=null
 
+func finalize_fullscreen_host() -> void:
+	if is_instance_valid(fullscreen_host) and campaign.window_mode=="fullscreen":
+		fullscreen_host.mode=Window.MODE_EXCLUSIVE_FULLSCREEN
 
 func toggle_fullscreen() -> void:
 	campaign.window_mode = "windowed" if campaign.window_mode == "fullscreen" else "fullscreen"
@@ -536,7 +606,7 @@ func update_desktop_shell() -> void:
 	add_child(desktop_shell)
 	label(desktop_shell, "ROGUETALES", Rect2(0, 52, 190, 40), 22, GOLD)
 	label(desktop_shell, "O ÚLTIMO FIO", Rect2(0, 98, 190, 26), 12, MUTED)
-	var links := [["Início", show_menu], ["Campanha", show_map], ["Heróis", show_heroes], ["Formação", show_party], ["Perfil", show_profile], ["Configurações", show_settings]]
+	var links := [["Início", show_menu], ["Campanha", show_map], ["Heróis", show_heroes], ["Perfil", show_profile], ["Configurações", show_settings]]
 	for index in links.size():
 		button(desktop_shell, links[index][0], Rect2(0, 192 + index * 67, 187, 48), links[index][1])
 	var right := 770.0
@@ -621,7 +691,6 @@ func show_heroes() -> void:
 	header("Personagens", "%d / 12 recrutados · escolha quem escreverá seu conto." % campaign.unlocked.size())
 	button(page, "Todos", Rect2(24, 182, 154, 48), filter_roster.bind("all"), roster_filter == "all")
 	button(page, "Recrutados", Rect2(188, 182, 158, 48), filter_roster.bind("owned"), roster_filter == "owned")
-	button(page, "Formação", Rect2(356, 182, 160, 48), show_party)
 	var ids: Array = TaleCatalog.HEROES.keys().filter(func(id): return roster_filter == "all" or campaign.unlocked.has(id))
 	var inner := scroll_area(247, 620, ceili(ids.size()/2.0)*284)
 	for index in ids.size():
@@ -754,3 +823,47 @@ func record_result(hit: Dictionary, hostile: bool, index: int, before: Array) ->
 			push_battle_log("%s ganhou %d de escudo" % [TaleCatalog.HEROES[actor.id].name, ceili(shield)])
 			arena.damage_number("+%d ESCUDO" % ceili(shield), arena.tracks[at].home + Vector2(0, 58), Color("a9c9ff"))
 	if hit.get("absorbed", 0) > 0: push_battle_log("O escudo absorveu %d de dano" % ceili(hit.absorbed))
+
+var information_was_paused := false
+func show_character_information(index: int) -> void:
+	if run==null or index<0 or index>=run.actors.size(): return
+	information_was_paused=paused
+	paused=true
+	arena.frozen=true
+	modal(TaleCatalog.HEROES[run.actors[index].id].name,"Atributos atuais · velocidade %d×"%int(game_speed))
+	var scroll:=ScrollContainer.new()
+	scroll.position=Vector2(32,338)
+	scroll.size=Vector2(476,398)
+	scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED
+	overlay.add_child(scroll)
+	var body:=Label.new()
+	body.custom_minimum_size=Vector2(452,0)
+	body.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
+	body.add_theme_font_size_override("font_size",17)
+	body.text=preload("res://scripts/combat_details.gd").sheet(run.actors[index])
+	scroll.add_child(body)
+	button(overlay,"Voltar ao combate",Rect2(32,768,476,58),close_character_information,true)
+func close_character_information() -> void:
+	if is_instance_valid(overlay): overlay.queue_free()
+	overlay=null
+	paused=information_was_paused
+	if is_instance_valid(arena): arena.frozen=paused
+
+func show_condition_information(index: int, hostile: bool) -> void:
+	if not hostile:
+		show_character_information(index)
+		return
+	if run==null or index<0 or index>=run.tactics.enemies.size(): return
+	var data: Dictionary=run.tactics.enemies[index]
+	information_was_paused=paused
+	paused=true
+	arena.frozen=true
+	modal(str(data.name),"Condições atuais")
+	var description := ""
+	for kind in ["poison","burn"]:
+		var duration: float=float(data.get(kind+"_left",0))
+		var amount: float=float(data.get(kind,0))
+		if duration>0 and amount>0:
+			description+="%s: %.1f dano/s\n%.1f s restantes · até %.1f dano pendente\n\n"%["Veneno" if kind=="poison" else "Queimadura",amount,duration,amount*duration]
+	label(overlay,description if not description.is_empty() else "Sem condições ativas.",Rect2(32,336,476,350),22)
+	button(overlay,"Voltar ao combate",Rect2(32,768,476,58),close_character_information,true)

@@ -121,7 +121,7 @@ func checks() -> void:
 		prepare([id], 0)
 		var actor: AnimatedSprite2D = game.arena.heroes[0]
 		var height: float = game.arena.hero_bounds(actor).size.y * actor.scale.y
-		if id in ["puss", "matches"]: assert(is_equal_approx(height, game.arena.human_height() * (0.5 if id=="puss" else 0.75)))
+		if id in ["puss", "matches"]: assert(is_equal_approx(height, game.arena.human_height() * (0.62 if id=="puss" else 0.75)))
 		else: actual_heights.append(height)
 	assert(float(actual_heights.max()) - float(actual_heights.min()) < 0.1)
 	prepare(["scarlet", "alice", "ariel"], 6)

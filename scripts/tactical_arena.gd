@@ -3,6 +3,7 @@ extends Node2D
 signal attack_hit(index: int)
 signal attack_started(index: int)
 signal enemy_attack_hit(index: int)
+signal status_requested(index: int, hostile: bool)
 const Formation = preload("res://scripts/formation_layout.gd")
 const ArenaSkin = preload("res://scripts/ui_skin.gd")
 const Biomes = preload("res://scripts/biomes.gd")
@@ -113,7 +114,7 @@ func widget_size() -> Vector2:
 func place_widget(item: Dictionary,at: Vector2) -> void:
 	var extent := widget_size()
 	item.panel.size = extent
-	item.root.position = Vector2(clampf(at.x-extent.x*0.5+ (8 if item.hostile else -8),9,field_width-extent.x-9),clampf(at.y+9,9,field_height-extent.y-9))
+	item.root.position = Vector2(clampf(at.x-extent.x*0.5+ (8 if item.hostile else -8),22,field_width-extent.x-22),clampf(at.y+9,9,field_height-extent.y-9))
 	item.text.position=Vector2(6,3)
 	item.text.size=Vector2(extent.x-12,14)
 	item.text.add_theme_font_size_override("font_size",9 if extent.x<90 else 11)
@@ -135,8 +136,8 @@ func human_height() -> float:
 
 func normalize_hero(actor: AnimatedSprite2D, id: String) -> void:
 	var bounds := hero_bounds(actor)
-	var height := human_height() * (0.5 if id=="puss" else 0.75 if id=="matches" else 1.0)
-	actor.scale = Vector2.ONE * (height / maxf(1, bounds.size.y))
+	var height := human_height() * preload("res://scripts/character_visuals.gd").height(id)
+	actor.scale = Vector2(preload("res://scripts/character_visuals.gd").width(id),1) * (height / maxf(1, bounds.size.y))
 	actor.offset = -Vector2(bounds.get_center().x, bounds.end.y)
 	actor.set_meta("visual_height", height)
 
@@ -177,7 +178,7 @@ func widget(at: Vector2,title: String,tint: Color,hostile:=false) -> Dictionary:
 		bar.add_theme_stylebox_override("fill",fill)
 		panel.add_child(bar)
 		bars.append(bar)
-	var item:={"root":group,"panel":panel,"text":text,"health":bars[0],"energy":bars[1],"hostile":hostile}
+	var item:={"root":group,"panel":panel,"text":text,"health":bars[0],"energy":bars[1],"hostile":hostile,"badges":{}}
 	place_widget(item,at)
 	return item
 
@@ -192,7 +193,14 @@ func sync_enemies() -> void:
 	for index in simulation.tactics.enemies.size():
 		var data: Dictionary = simulation.tactics.enemies[index]
 		var model: AnimatedSprite2D
-		if simulation.expedition:
+		if data.has("secret_id"):
+			model=AnimatedSprite2D.new()
+			model.set_script(Enemy)
+			model.secret_id=data.secret_id
+			model.sprite_frames=preload("res://scripts/secret_enemy_art.gd").frames(data.secret_id)
+			model.body_height=400
+			model.illustrated=true
+		elif simulation.expedition:
 			model = AnimatedSprite2D.new()
 			model.set_script(Enemy)
 			model.sprite_frames = Biomes.frames(int(data.biome), int(data.variant))
@@ -203,7 +211,7 @@ func sync_enemies() -> void:
 			model.flip_h = false
 		else: model = Enemy.warm(stage).instantiate()
 		model.regular_height = human_height() * (Biomes.height_factor(int(data.biome), int(data.variant)) if simulation.expedition else 1.0)
-		model.boss_height = human_height() * (1.0 if simulation.expedition else 1.22)
+		model.boss_height = human_height() * (1.25 if data.has("secret_id") else 1.0 if simulation.expedition else 1.22)
 		add_child(model)
 		var home := home_for(str(data.row), index, true)
 		model.advance(0, data.boss, 0, data.interval)
@@ -280,6 +288,7 @@ func sync_health(actors: Array[Dictionary]) -> void:
 		unit_widgets[index].health.max_value = actors[index].max_hp
 		unit_widgets[index].health.value = actors[index].hp
 		unit_widgets[index].energy.value = actors[index].energy
+		sync_conditions(unit_widgets[index],actors[index],index,false)
 		unit_widgets[index].text.text = ("%s/%s" if unit_widgets[index].panel.size.x<90 else "%s/%s PV") % [compact_hp(actors[index].hp),compact_hp(actors[index].max_hp)]
 		if actors[index].id=="alice":unit_widgets[index].text.text=CharacterEffects.SUITS[int(actors[index].get("suit",0))%4]+" "+unit_widgets[index].text.text
 	for index in foes.size():
@@ -289,6 +298,7 @@ func sync_health(actors: Array[Dictionary]) -> void:
 		foe_widgets[index].health.max_value = data.max_hp
 		foe_widgets[index].health.value = data.hp
 		foe_widgets[index].energy.visible = false
+		sync_conditions(foe_widgets[index],data,index,true)
 		foe_widgets[index].text.text = ("%s/%s" if foe_widgets[index].panel.size.x<90 else "%s/%s PV") % [compact_hp(data.hp),compact_hp(data.max_hp)]
 
 
@@ -336,7 +346,9 @@ func _process(delta: float) -> void:
 		if track.alive:
 			actor.modulate = Enemy.hurt_color(track.hurt)
 		if walking and track.alive:
-			actor.position = track.home + Vector2(-90 * (1.0 - travel_progress), 0 if reduced_motion else sin(clock * 8 + index) * 2)
+			actor.position = track.home + Vector2(-90 * (1.0 - travel_progress), 0)
+			if simulation.actors[index].id in ["ariel","aladin","peter"]:
+				actor.position.y-=human_height()*0.1+(0.0 if reduced_motion else sin(clock*2.5+index)*human_height()*0.025)
 		if track.time < 0 or dt <= 0:
 			continue
 		track.time += dt
@@ -562,7 +574,7 @@ func fit_field(dimensions: Vector2) -> void:
 		place_widget(unit_widgets[index],tracks[index].home)
 	for index in foes.size():
 		foes[index].regular_height = human_height() * (Biomes.height_factor(int(simulation.tactics.enemies[index].biome), int(simulation.tactics.enemies[index].variant)) if simulation.expedition else 1.0)
-		foes[index].boss_height = human_height() * (1.0 if simulation.expedition else 1.22)
+		foes[index].boss_height = human_height() * (1.25 if simulation.tactics.enemies[index].has("secret_id") else 1.0 if simulation.expedition else 1.22)
 		foe_homes[index] = home_for(simulation.tactics.enemies[index].row, index, true)
 		foes[index].position = foe_homes[index]
 		place_widget(foe_widgets[index],foe_homes[index])
@@ -690,3 +702,27 @@ func passive_effect(event:Dictionary) -> void:
 			for at in simulation.tactics.enemies.size():
 				if simulation.tactics.enemies[at].hp>0:targets.append(at)
 			ultimate_effect(index,{"targets":targets})
+
+func sync_conditions(item: Dictionary, data: Dictionary, index: int, hostile: bool) -> void:
+	var visible_conditions := {}
+	for kind in ["poison","burn"]:
+		var duration: float=float(data.get(kind+"_left",0)) if hostile else float(data.get("hostile_dot_left",0))
+		var amount: float=float(data.get(kind if hostile else "hostile_"+kind,0))
+		if duration>0 and amount>0 and data.hp>0: visible_conditions[kind]=[amount,duration]
+	for kind in item.badges.keys():
+		if not visible_conditions.has(kind):
+			item.badges[kind].queue_free()
+			item.badges.erase(kind)
+	var slot := 0
+	for kind in visible_conditions:
+		if not item.badges.has(kind):
+			var badge:=Button.new()
+			badge.set_script(preload("res://scripts/status_badge.gd"))
+			badge.pressed.connect(func(): status_requested.emit(index,hostile))
+			item.panel.add_child(badge)
+			item.badges[kind]=badge
+		var badge: Button=item.badges[kind]
+		badge.configure(kind,visible_conditions[kind][0],visible_conditions[kind][1])
+		badge.position=Vector2(slot*43,-19)
+		badge.size=Vector2(42,17)
+		slot+=1

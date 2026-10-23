@@ -11,7 +11,7 @@ shader = ExtResource("3_idle")
 [node name="Joao" type="AnimatedSprite2D"]
 material = SubResource("ShaderMaterial_idle")
 position = Vector2(270, 520)
-scale = Vector2(0.4, 0.4)
+scale = Vector2(0.5000, 0.4000)
 sprite_frames = ExtResource("2_frames")
 animation = &"idle"
 autoplay = "idle"

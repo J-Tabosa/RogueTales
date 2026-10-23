@@ -390,9 +390,6 @@ func show_menu() -> void:
 		button(page, "Heróis e evolução", Rect2(24, 808, 236, 48), show_heroes)
 		. add_theme_font_size_override("font_size", 16)
 	)
-	button(page, "Formação", Rect2(280, 808, 236, 48), show_party).add_theme_font_size_override(
-		"font_size", 16
-	)
 	if not campaign.save_error.is_empty():
 		label(page, campaign.save_error, Rect2(24, 855, 492, 26), 13, Color("ed9a9c"))
 	navigation("menu")
@@ -896,7 +893,7 @@ func toggle_motion() -> void:
 
 
 func change_default_speed() -> void:
-	campaign.speed = 2.0 if campaign.speed == 1.0 else 1.0
+	campaign.speed = float(int(campaign.speed) % 3 + 1)
 	persist()
 	show_settings()
 
@@ -1388,7 +1385,7 @@ func abandon_expedition() -> void:
 
 
 func toggle_speed() -> void:
-	game_speed = 2.0 if game_speed == 1.0 else 1.0
+	game_speed = float(int(game_speed) % 3 + 1)
 	campaign.speed = game_speed
 	persist()
 	arena.speed = game_speed
@@ -1787,9 +1784,6 @@ func show_hero_details(id: String) -> void:
 			or not campaign.checkpoint.is_empty()
 		)
 	button(page, "← Coleção", Rect2(24, 838, 236, 38), show_heroes).add_theme_font_size_override(
-		"font_size", 16
-	)
-	button(page, "Formação", Rect2(280, 838, 236, 38), show_party).add_theme_font_size_override(
 		"font_size", 16
 	)
 	navigation("heroes")

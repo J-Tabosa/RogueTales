@@ -246,6 +246,12 @@ static func incoming(tactics, enemy_index: int, requested := -1) -> Dictionary:
 		actor.shadows = mini(3, int(actor.get("shadows", 0)) + (2 if has(actor, "double") else 1))
 		hit["counter"] = tactics.deal(enemy, actor.damage * 0.6, false, true).damage
 		tactics.notify(actor.id, Content.KITS[actor.id][2], "Esquivou, criou sombra e contra-atacou")
+	elif hit.evaded and actor.id=="mulan" and actor.pp>0:
+		actor.pp-=1
+		hit["counter"]=tactics.deal(enemy,actor.damage*.45,false,true).damage
+		actor.shield=minf(actor.max_hp,actor.shield+actor.max_hp*.10)
+		if has(actor,"guard"): shield_group(owner,.08)
+		tactics.notify(actor.id,Content.KITS[actor.id][2],"Esquivou e devolveu o corte")
 	elif not hit.evaded:
 		if actor.id == "mulan" and hit.get("guarded", false):
 			tactics.notify(actor.id, Content.KITS[actor.id][2], "Aparou e devolveu o corte")

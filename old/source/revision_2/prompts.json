@@ -1,0 +1,63 @@
+[
+  {
+    "id": "snow_actions",
+    "prompt": "Production Godot game sprite sheet, transparent RGBA, no text or grid or shadows or ground. Use approved Rapunzel reference ONLY for bold clean cel-animation ink lines, expressive angular face and balanced NORMAL BODY BUILD: about 5 heads tall, sturdy visible forearms/calves and normal shoulder width. Neither chibi nor fashion-model skinny, no needle limbs, no overdesign. Each complete figure stays FULLY within its cell with at least 10% TRANSPARENT GUTTER all sides, especially top and bottom. Same head/body scale and boot baseline for every pose. Snow White redesigned as an eccentric poison scientist inspired by the witch-alchemist vibe of Sucy from Little Witch Academia, while unmistakably Snow White: pale skin, messy short BLACK hair, iconic RED bow, mischievous half-lidded eyes, small visible serrated teeth in a manic grin, simple open WHITE laboratory coat over a short NAVY dress, black boots, one green poison vial and an iconic red APPLE. No yellow skirt, no pointed witch hat, no guns, no scenery. All face RIGHT. Exactly FOUR COLUMNS TWO ROWS, 8 full-body idle/variation poses: first four standing holding apple and vial, last four blink and sly grins. 2048x1024.",
+    "refs": [
+      "/workspace/scratch/3141db23f84b/RogueTales/old/source/rapunzel_idle.png",
+      "/workspace/scratch/3141db23f84b/RogueTales/assets/snow_white/snow_white_sheet.png"
+    ]
+  },
+  {
+    "id": "snow_walk",
+    "prompt": "Production Godot game sprite sheet, transparent RGBA, no text or grid or shadows or ground. Use approved Rapunzel reference ONLY for bold clean cel-animation ink lines, expressive angular face and balanced NORMAL BODY BUILD: about 5 heads tall, sturdy visible forearms/calves and normal shoulder width. Neither chibi nor fashion-model skinny, no needle limbs, no overdesign. Each complete figure stays FULLY within its cell with at least 10% TRANSPARENT GUTTER all sides, especially top and bottom. Same head/body scale and boot baseline for every pose. Snow White redesigned as an eccentric poison scientist inspired by the witch-alchemist vibe of Sucy from Little Witch Academia, while unmistakably Snow White: pale skin, messy short BLACK hair, iconic RED bow, mischievous half-lidded eyes, small visible serrated teeth in a manic grin, simple open WHITE laboratory coat over a short NAVY dress, black boots, one green poison vial and an iconic red APPLE. No yellow skirt, no pointed witch hat, no guns, no scenery. All face RIGHT. Exactly FOUR COLUMNS FOUR ROWS, exactly 16 distinct smoothly ordered WALK poses ONLY, carrying apple and vial carefully, calm steps, stay at same height, no hopping. All 16 fully visible including LAST ROW feet. Square 2048x2048.",
+    "refs": [
+      "/workspace/scratch/3141db23f84b/RogueTales/old/source/rapunzel_idle.png",
+      "/workspace/scratch/3141db23f84b/RogueTales/assets/snow_white/snow_white_sheet.png"
+    ]
+  },
+  {
+    "id": "snow_attack",
+    "prompt": "Production Godot game sprite sheet, transparent RGBA, no text or grid or shadows or ground. Use approved Rapunzel reference ONLY for bold clean cel-animation ink lines, expressive angular face and balanced NORMAL BODY BUILD: about 5 heads tall, sturdy visible forearms/calves and normal shoulder width. Neither chibi nor fashion-model skinny, no needle limbs, no overdesign. Each complete figure stays FULLY within its cell with at least 10% TRANSPARENT GUTTER all sides, especially top and bottom. Same head/body scale and boot baseline for every pose. Snow White redesigned as an eccentric poison scientist inspired by the witch-alchemist vibe of Sucy from Little Witch Academia, while unmistakably Snow White: pale skin, messy short BLACK hair, iconic RED bow, mischievous half-lidded eyes, small visible serrated teeth in a manic grin, simple open WHITE laboratory coat over a short NAVY dress, black boots, one green poison vial and an iconic red APPLE. No yellow skirt, no pointed witch hat, no guns, no scenery. All face RIGHT. Exactly FIVE COLUMNS TWO ROWS, 10 distinct ordered ATTACK poses: anticipate, wind up apple hand, throw poisoned red apple towards RIGHT, follow through and recover. Keep the apple in the early poses only; projectile VFX is separate. Every pose includes both boots and full coat. 2560x1024.",
+    "refs": [
+      "/workspace/scratch/3141db23f84b/RogueTales/old/source/rapunzel_idle.png",
+      "/workspace/scratch/3141db23f84b/RogueTales/assets/snow_white/snow_white_sheet.png"
+    ]
+  },
+  {
+    "id": "mulan_walk",
+    "prompt": "Production Godot game sprite sheet, transparent RGBA, no text or grid or shadows or ground. Use approved Rapunzel reference ONLY for bold clean cel-animation ink lines, expressive angular face and balanced NORMAL BODY BUILD: about 5 heads tall, sturdy visible forearms/calves and normal shoulder width. Neither chibi nor fashion-model skinny, no needle limbs, no overdesign. Each complete figure stays FULLY within its cell with at least 10% TRANSPARENT GUTTER all sides, especially top and bottom. Same head/body scale and boot baseline for every pose. Mulan is the black-haired CHINESE military swordswoman in the second reference. Preserve her teal Chinese military tunic, dark lamellar breastplate, white sash, dark trousers and sword sheathed at her side, Asian facial features and serious expression. Reference 2 locks outfit and identity; reference 1 guides body build and ink style. Exactly FOUR COLUMNS FOUR ROWS, 16 DISTINCT ordered serious WALK cycle poses, every body including both boots fully inside its cell; NO CROPPED FINAL ROW. Face RIGHT, hand near sword hilt, no drawn sword, no effects. Square 2048x2048.",
+    "refs": [
+      "/workspace/scratch/3141db23f84b/RogueTales/old/source/rapunzel_idle.png",
+      "/workspace/scratch/3141db23f84b/RogueTales/old/assets/revision/mulan_actions.webp"
+    ]
+  },
+  {
+    "id": "secret_a",
+    "prompt": "Production Godot game sprite sheet, transparent RGBA, no text or grid or shadows or ground. Use approved Rapunzel reference ONLY for bold clean cel-animation ink lines, expressive angular face and balanced NORMAL BODY BUILD: about 5 heads tall, sturdy visible forearms/calves and normal shoulder width. Neither chibi nor fashion-model skinny, no needle limbs, no overdesign. Each complete figure stays FULLY within its cell with at least 10% TRANSPARENT GUTTER all sides, especially top and bottom. Same head/body scale and boot baseline for every pose. Exactly FIVE COLUMNS FOUR ROWS, 20 complete boss sprites. Each ROW is one different boss. In each row: column1 idle, column2 anticipation, column3 windup, column4 attacking LEFT, column5 recovery. ALL face LEFT towards heroes. Row1: enormous charcoal BLACK BAD WOLF with red eyes, broad shoulders, tattered red hood trophy and huge claws, single body. Row2: POISON QUEEN, mature dark witch in emerald and black robe, apple-green toxic flask and poison staff, sharp crown. Row3: TOWER JAILER, stern silver-haired witch in purple gown with giant golden scissors and braided golden chains. Row4: SHADOW JADE GENERAL, imposing Chinese ghost warrior in dark jade lamellar armor wielding a broad glaive, teal spectral face. Exactly one figure per cell, NO minions, NO scenery. Source 2560x2048.",
+    "refs": [
+      "/workspace/scratch/3141db23f84b/RogueTales/old/source/rapunzel_idle.png"
+    ]
+  },
+  {
+    "id": "secret_b",
+    "prompt": "Production Godot game sprite sheet, transparent RGBA, no text or grid or shadows or ground. Use approved Rapunzel reference ONLY for bold clean cel-animation ink lines, expressive angular face and balanced NORMAL BODY BUILD: about 5 heads tall, sturdy visible forearms/calves and normal shoulder width. Neither chibi nor fashion-model skinny, no needle limbs, no overdesign. Each complete figure stays FULLY within its cell with at least 10% TRANSPARENT GUTTER all sides, especially top and bottom. Same head/body scale and boot baseline for every pose. Exactly FIVE COLUMNS FOUR ROWS, 20 complete boss sprites. Each ROW one boss. Each row columns: idle, anticipation, windup, attack LEFT, recovery. ALL face LEFT. Row1: BLACK TIDE WITCH, menacing sea witch with dark turquoise fish tail, pale hair, coral staff and blackwater aura. Row2: DUKE OF SUGAR, aristocratic red-haired elder man in burgundy suit, ornate red-white candy cane rapier, sharp smile. Row3: COUNTESS OF THE EMPTY GOBLET, tall adult noblewoman in simple dark crimson gown, gray hair, silver goblet with violet juice, severe face. Row4: QUEEN OF HEARTS, formidable adult woman in black/red dress, heart crown and giant bladed playing cards, broad regal shoulders. Exactly ONE figure per cell, NO minions or scenery. Source 2560x2048.",
+    "refs": [
+      "/workspace/scratch/3141db23f84b/RogueTales/old/source/rapunzel_idle.png"
+    ]
+  },
+  {
+    "id": "secret_c",
+    "prompt": "Production Godot game sprite sheet, transparent RGBA, no text or grid or shadows or ground. Use approved Rapunzel reference ONLY for bold clean cel-animation ink lines, expressive angular face and balanced NORMAL BODY BUILD: about 5 heads tall, sturdy visible forearms/calves and normal shoulder width. Neither chibi nor fashion-model skinny, no needle limbs, no overdesign. Each complete figure stays FULLY within its cell with at least 10% TRANSPARENT GUTTER all sides, especially top and bottom. Same head/body scale and boot baseline for every pose. Exactly FIVE COLUMNS FOUR ROWS, 20 complete boss sprites. Each ROW one boss. Columns idle, anticipation, windup, attack LEFT, recovery. ALL face LEFT. Row1: NINE LIVES EXECUTIONER, dark anthropomorphic panther in simple executioner coat, huge straight silver execution sword, strong body. Row2: FURNACE KING, hulking charcoal-faced fire wraith with tattered dark red smith's apron, furnace opening in chest, ember crown and large hammer. Row3: ANCHOR CAPTAIN, spectral adult pirate in navy coat and tricorn, cyan ghost skin, hook hand and enormous iron anchor, no ship. Row4: VIZIER OF VIOLET SAND, sinister desert sorcerer in dark purple robe and small turban, hourglass staff and curling violet mist. Exactly ONE figure per cell, NO minions, no scenery. Source 2560x2048.",
+    "refs": [
+      "/workspace/scratch/3141db23f84b/RogueTales/old/source/rapunzel_idle.png"
+    ]
+  },
+  {
+    "id": "snow_attack_fixed",
+    "refs": [
+      "snow_actions.png",
+      "../rapunzel_idle.png"
+    ],
+    "prompt": "Production sprite atlas, exactly FIVE columns and TWO rows, TEN full-body right-facing attack frames of the SAME Snow White scientist in reference 1; art style and sturdy normal body proportions from Rapunzel reference 2. Pale skin, BLACK short curly hair, RED hairbow, serrated mischievous grin, open WHITE laboratory coat over NAVY short outfit, BLACK boots, green vial and red poisoned apple. No yellow dress. Throw a poisoned apple with one arm: ready, reach for apple, windup, throw, follow-through, recover across ten distinct consecutive animation frames. The apple projectile is NOT included. CRITICAL TECHNICAL REQUIREMENT: every whole figure INCLUDING EXTENDED HANDS AND COAT must fit inside its OWN cell with LARGE EMPTY transparent gutters: maximum figure width 60% of cell, height 75% of cell, at least 20% empty on left/right and 12.5% on top/bottom. Rightmost figure's hand MUST have generous transparent space before the image edge. Bottom boots have transparent space below. Never crop any body part. No touching cells. Keep identical body height, width and boot baseline in all cells. Bold clean expressive cel ink, no chibi, no needle limbs, no text, no labels, transparent background. Wide landscape layout."
+  }
+]

@@ -18,7 +18,7 @@
       4
     ],
     "count": 16,
-    "source": "old/assets/revision/mulan_walk.webp",
+    "source": "old/source/revision_2/mulan_walk.png",
     "output": "assets/characters/mulan/walk.jpg"
   },
   {
@@ -390,5 +390,71 @@
     "count": 16,
     "source": "old/source/maria_walk.png",
     "output": "assets/characters/maria/walk.jpg"
+  },
+  {
+    "hero": "snow_white",
+    "kind": "actions",
+    "grid": [
+      4,
+      2
+    ],
+    "count": 8,
+    "source": "old/source/revision_2/snow_actions_fixed.png",
+    "output": "assets/characters/snow_white/actions.jpg"
+  },
+  {
+    "hero": "snow_white",
+    "kind": "walk",
+    "grid": [
+      4,
+      4
+    ],
+    "count": 16,
+    "source": "old/source/revision_2/snow_walk.png",
+    "output": "assets/characters/snow_white/walk.jpg"
+  },
+  {
+    "hero": "snow_white",
+    "kind": "attack",
+    "grid": [
+      5,
+      2
+    ],
+    "count": 10,
+    "source": "old/source/revision_2/snow_attack_fixed.png",
+    "output": "assets/characters/snow_white/attack.jpg"
+  },
+  {
+    "hero": "secret_a",
+    "kind": "secret",
+    "grid": [
+      5,
+      4
+    ],
+    "count": 20,
+    "source": "old/source/revision_2/secret_a.png",
+    "output": "assets/secrets/a.jpg"
+  },
+  {
+    "hero": "secret_b",
+    "kind": "secret",
+    "grid": [
+      5,
+      4
+    ],
+    "count": 20,
+    "source": "old/source/revision_2/secret_b.png",
+    "output": "assets/secrets/b.jpg"
+  },
+  {
+    "hero": "secret_c",
+    "kind": "secret",
+    "grid": [
+      5,
+      4
+    ],
+    "count": 20,
+    "source": "old/source/revision_2/secret_c.png",
+    "output": "assets/secrets/c.jpg"
   }
 ]
