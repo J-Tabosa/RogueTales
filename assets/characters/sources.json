@@ -1,0 +1,394 @@
+[
+  {
+    "hero": "mulan",
+    "kind": "actions",
+    "grid": [
+      4,
+      2
+    ],
+    "count": 8,
+    "source": "old/assets/revision/mulan_actions.webp",
+    "output": "assets/characters/mulan/actions.jpg"
+  },
+  {
+    "hero": "mulan",
+    "kind": "walk",
+    "grid": [
+      4,
+      4
+    ],
+    "count": 16,
+    "source": "old/assets/revision/mulan_walk.webp",
+    "output": "assets/characters/mulan/walk.jpg"
+  },
+  {
+    "hero": "mulan",
+    "kind": "attack",
+    "grid": [
+      5,
+      2
+    ],
+    "count": 10,
+    "source": "old/assets/revision/mulan_attack.webp",
+    "output": "assets/characters/mulan/attack.jpg"
+  },
+  {
+    "hero": "alice",
+    "kind": "actions",
+    "grid": [
+      4,
+      2
+    ],
+    "count": 8,
+    "source": "old/assets/revision/alice_actions.webp",
+    "output": "assets/characters/alice/actions.jpg"
+  },
+  {
+    "hero": "alice",
+    "kind": "walk",
+    "grid": [
+      4,
+      4
+    ],
+    "count": 16,
+    "source": "old/assets/revision/alice_walk.webp",
+    "output": "assets/characters/alice/walk.jpg"
+  },
+  {
+    "hero": "alice",
+    "kind": "attack",
+    "grid": [
+      5,
+      2
+    ],
+    "count": 10,
+    "source": "old/assets/revision/alice_attack.webp",
+    "output": "assets/characters/alice/attack.jpg"
+  },
+  {
+    "hero": "aladin",
+    "kind": "actions",
+    "grid": [
+      4,
+      2
+    ],
+    "count": 8,
+    "source": "old/assets/revision/aladin_actions.webp",
+    "output": "assets/characters/aladin/actions.jpg"
+  },
+  {
+    "hero": "aladin",
+    "kind": "motion",
+    "grid": [
+      4,
+      7
+    ],
+    "walk_count": 16,
+    "count": 26,
+    "source": "old/source/aladin_motion.png",
+    "output": "assets/characters/aladin/motion.jpg"
+  },
+  {
+    "hero": "ariel",
+    "kind": "actions",
+    "grid": [
+      4,
+      2
+    ],
+    "count": 8,
+    "source": "old/assets/revision/ariel_actions.webp",
+    "output": "assets/characters/ariel/actions.jpg"
+  },
+  {
+    "hero": "ariel",
+    "kind": "motion",
+    "grid": [
+      4,
+      7
+    ],
+    "walk_count": 16,
+    "count": 26,
+    "source": "old/source/ariel_motion.png",
+    "output": "assets/characters/ariel/motion.jpg"
+  },
+  {
+    "hero": "puss",
+    "kind": "actions",
+    "grid": [
+      4,
+      2
+    ],
+    "count": 8,
+    "source": "old/assets/revision/puss_actions.webp",
+    "output": "assets/characters/puss/actions.jpg"
+  },
+  {
+    "hero": "puss",
+    "kind": "motion",
+    "grid": [
+      4,
+      6
+    ],
+    "walk_count": 12,
+    "count": 22,
+    "source": "old/source/puss_motion.png",
+    "output": "assets/characters/puss/motion.jpg"
+  },
+  {
+    "hero": "joao",
+    "kind": "actions",
+    "grid": [
+      4,
+      2
+    ],
+    "count": 8,
+    "source": "old/assets/revision/joao_actions.webp",
+    "output": "assets/characters/joao/actions.jpg"
+  },
+  {
+    "hero": "joao",
+    "kind": "motion",
+    "grid": [
+      4,
+      7
+    ],
+    "walk_count": 16,
+    "count": 26,
+    "source": "old/source/joao_motion.png",
+    "output": "assets/characters/joao/motion.jpg"
+  },
+  {
+    "hero": "maria",
+    "kind": "actions",
+    "grid": [
+      4,
+      2
+    ],
+    "count": 8,
+    "source": "old/assets/revision/maria_actions.webp",
+    "output": "assets/characters/maria/actions.jpg"
+  },
+  {
+    "hero": "maria",
+    "kind": "motion",
+    "grid": [
+      4,
+      6
+    ],
+    "walk_count": 12,
+    "count": 22,
+    "source": "old/source/maria_motion.png",
+    "output": "assets/characters/maria/motion.jpg"
+  },
+  {
+    "hero": "peter",
+    "kind": "actions",
+    "grid": [
+      4,
+      2
+    ],
+    "count": 8,
+    "source": "old/assets/revision/peter_actions.webp",
+    "output": "assets/characters/peter/actions.jpg"
+  },
+  {
+    "hero": "peter",
+    "kind": "walk",
+    "grid": [
+      4,
+      4
+    ],
+    "count": 16,
+    "source": "old/assets/revision/peter_walk.webp",
+    "output": "assets/characters/peter/walk.jpg"
+  },
+  {
+    "hero": "peter",
+    "kind": "attack",
+    "grid": [
+      5,
+      2
+    ],
+    "count": 10,
+    "source": "old/assets/revision/peter_attack.webp",
+    "output": "assets/characters/peter/attack.jpg"
+  },
+  {
+    "hero": "matches",
+    "kind": "actions",
+    "grid": [
+      4,
+      5
+    ],
+    "count": 8,
+    "source": "old/assets/revision/matches_actions.webp",
+    "output": "assets/characters/matches/actions.jpg"
+  },
+  {
+    "hero": "matches",
+    "kind": "walk",
+    "grid": [
+      4,
+      4
+    ],
+    "count": 16,
+    "source": "old/assets/revision/matches_walk.webp",
+    "output": "assets/characters/matches/walk.jpg"
+  },
+  {
+    "hero": "matches",
+    "kind": "attack",
+    "grid": [
+      5,
+      2
+    ],
+    "count": 10,
+    "source": "old/assets/revision/matches_attack.webp",
+    "output": "assets/characters/matches/attack.jpg"
+  },
+  {
+    "hero": "mulan",
+    "kind": "effects",
+    "source": "old/assets/revision/mulan_fx.webp",
+    "output": "assets/characters/mulan/effects.jpg"
+  },
+  {
+    "hero": "alice",
+    "kind": "effects",
+    "source": "old/assets/revision/alice_fx.webp",
+    "output": "assets/characters/alice/effects.jpg"
+  },
+  {
+    "hero": "aladin",
+    "kind": "effects",
+    "source": "old/assets/revision/aladin_fx.webp",
+    "output": "assets/characters/aladin/effects.jpg"
+  },
+  {
+    "hero": "ariel",
+    "kind": "effects",
+    "source": "old/assets/revision/ariel_fx.webp",
+    "output": "assets/characters/ariel/effects.jpg"
+  },
+  {
+    "hero": "puss",
+    "kind": "effects",
+    "source": "old/assets/revision/puss_fx.webp",
+    "output": "assets/characters/puss/effects.jpg"
+  },
+  {
+    "hero": "joao",
+    "kind": "effects",
+    "source": "old/assets/revision/joao_fx.webp",
+    "output": "assets/characters/joao/effects.jpg"
+  },
+  {
+    "hero": "maria",
+    "kind": "effects",
+    "source": "old/assets/revision/maria_fx.webp",
+    "output": "assets/characters/maria/effects.jpg"
+  },
+  {
+    "hero": "peter",
+    "kind": "effects",
+    "source": "old/assets/revision/peter_fx.webp",
+    "output": "assets/characters/peter/effects.jpg"
+  },
+  {
+    "hero": "matches",
+    "kind": "effects",
+    "source": "old/assets/revision/matches_fx.webp",
+    "output": "assets/characters/matches/effects.jpg"
+  },
+  {
+    "hero": "rapunzel",
+    "kind": "effects",
+    "source": "old/assets/revision/rapunzel_fx.webp",
+    "output": "assets/characters/rapunzel/effects.jpg"
+  },
+  {
+    "kind": "arena",
+    "source": "old/assets/biomes/arena_forest.webp",
+    "output": "assets/biomes/arena_forest.jpg"
+  },
+  {
+    "kind": "arena",
+    "source": "old/assets/biomes/arena_castle.webp",
+    "output": "assets/biomes/arena_castle.jpg"
+  },
+  {
+    "kind": "arena",
+    "source": "old/assets/biomes/arena_ice.webp",
+    "output": "assets/biomes/arena_ice.jpg"
+  },
+  {
+    "kind": "arena",
+    "source": "old/assets/biomes/arena_shore.webp",
+    "output": "assets/biomes/arena_shore.jpg"
+  },
+  {
+    "kind": "arena",
+    "source": "old/assets/biomes/arena_fire.webp",
+    "output": "assets/biomes/arena_fire.jpg"
+  },
+  {
+    "kind": "arena",
+    "source": "old/assets/biomes/arena_arcane.webp",
+    "output": "assets/biomes/arena_arcane.jpg"
+  },
+  {
+    "kind": "arena",
+    "source": "old/assets/biomes/arena_swamp.webp",
+    "output": "assets/biomes/arena_swamp.jpg"
+  },
+  {
+    "kind": "arena",
+    "source": "old/assets/biomes/arena_desert.webp",
+    "output": "assets/biomes/arena_desert.jpg"
+  },
+  {
+    "hero": "rapunzel",
+    "kind": "actions",
+    "grid": [
+      4,
+      2
+    ],
+    "count": 8,
+    "source": "old/source/rapunzel_idle.png",
+    "output": "assets/characters/rapunzel/actions.jpg"
+  },
+  {
+    "hero": "rapunzel",
+    "kind": "motion",
+    "grid": [
+      4,
+      7
+    ],
+    "walk_count": 16,
+    "count": 26,
+    "source": "old/source/rapunzel_motion.png",
+    "output": "assets/characters/rapunzel/motion.jpg"
+  },
+  {
+    "hero": "puss",
+    "kind": "walk",
+    "grid": [
+      4,
+      4
+    ],
+    "count": 16,
+    "source": "old/source/puss_walk.png",
+    "output": "assets/characters/puss/walk.jpg"
+  },
+  {
+    "hero": "maria",
+    "kind": "walk",
+    "grid": [
+      4,
+      4
+    ],
+    "count": 16,
+    "source": "old/source/maria_walk.png",
+    "output": "assets/characters/maria/walk.jpg"
+  }
+]

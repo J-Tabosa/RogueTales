@@ -56,7 +56,7 @@ static func picture(parent: Node, texture: Texture2D, rect: Rect2, cover := fals
 	return node
 
 
-static func decorate(node: Control, button_style := false, frame_only := false) -> NinePatchRect:
+static func decorate(node: Control, button_style := false, frame_only := false, factor_override := 0.0) -> NinePatchRect:
 	var patch := NinePatchRect.new()
 	patch.texture = artwork("button") if button_style else PANEL
 	patch.draw_center = not frame_only
@@ -65,7 +65,7 @@ static func decorate(node: Control, button_style := false, frame_only := false) 
 	var texture_size := patch.texture.get_size()
 	# Scale the drawing coordinate system, preserving high-resolution source corners.
 	# The border stays thin at any card size; the source PNG is never resampled in code.
-	var factor := 0.16 if button_style else 0.15
+	var factor := factor_override if factor_override > 0 else (0.16 if button_style else 0.15)
 	patch.scale = Vector2.ONE * factor
 	patch.patch_margin_left = int(texture_size.x * (0.12 if button_style else 0.18))
 	patch.patch_margin_right = patch.patch_margin_left

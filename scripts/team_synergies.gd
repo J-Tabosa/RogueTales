@@ -31,7 +31,11 @@ static func after_attack(tactics, actor: Dictionary, target: int, context: Dicti
 		var foe: Dictionary = tactics.enemies[target]
 		match key:
 			"hunters":
-				if actor.id == "maria" and foe.get("marked", false) and foe.hp > 0: supporter = member(owner, "joao")
+				if actor.id=="maria":
+					for marked in tactics.enemies:
+						if marked.hp>0 and marked.get("marked",false):
+							supporter=member(owner,"joao")
+							break
 			"powder":
 				if actor.id in ["scarlet", "matches"] and context.get("burn_owner", "") == ("matches" if actor.id == "scarlet" else "scarlet") and foe.hp > 0:
 					supporter = member(owner, "matches" if actor.id == "scarlet" else "scarlet")
@@ -47,9 +51,14 @@ static func after_attack(tactics, actor: Dictionary, target: int, context: Dicti
 		hit.synergies.append(key)
 		match key:
 			"hunters":
-				bonus(tactics, target, supporter.damage * 0.8, false, damages)
-				hit["followup"] = true
-				if foe.poison > 0: foe.poison_left = maxf(foe.poison_left, 5.0)
+				for at in tactics.enemies.size():
+					var marked:Dictionary=tactics.enemies[at]
+					if marked.hp>0 and marked.get("marked",false):
+						bonus(tactics,at,supporter.damage*0.8,false,damages)
+						marked.poison=maxf(marked.poison,actor.damage*0.1)
+						marked.poison_left=maxf(marked.poison_left,5.0)
+						break
+				hit["followup"]=true
 			"powder":
 				bonus(tactics, target, maxf(foe.burn * 2, actor.damage * 0.7), true, damages)
 				foe.burn_left = maxf(0, foe.burn_left - 1.0)

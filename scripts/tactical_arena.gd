@@ -3,7 +3,10 @@ extends Node2D
 signal attack_hit(index: int)
 signal attack_started(index: int)
 signal enemy_attack_hit(index: int)
+const Formation = preload("res://scripts/formation_layout.gd")
+const ArenaSkin = preload("res://scripts/ui_skin.gd")
 const Biomes = preload("res://scripts/biomes.gd")
+const CharacterEffects = preload("res://scripts/character_effects.gd")
 const UltimateArt = preload("res://scripts/ultimate_art.gd")
 const EnemyArt = preload("res://scripts/enemy_art.gd")
 const Enemy = preload("res://scripts/enemy.gd")
@@ -57,6 +60,15 @@ func _ready() -> void:
 	add_child(vfx)
 	backdrop = TextureRect.new()
 	backdrop.texture = Biomes.scenery(stage)
+	backdrop.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	var projection := ShaderMaterial.new()
+	projection.shader = preload("res://assets/biomes/arena_floor.gdshader")
+	var window := Biomes.floor_window(stage)
+	projection.set_shader_parameter("ground_start",window.x)
+	projection.set_shader_parameter("ground_end",window.y)
+	projection.set_shader_parameter("floor_horizon",Formation.FLOOR_HORIZON)
+	backdrop.material = projection
+	backdrop.position.x = -12
 	backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	backdrop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	backdrop.size = Vector2(field_width, field_height)
@@ -83,34 +95,30 @@ func _ready() -> void:
 	queue_redraw()
 
 
-func home_for(row: String, index: int, hostile: bool) -> Vector2:
-	var same: Array[int] = []
-	var units: Array = simulation.tactics.enemies if hostile else simulation.actors
-	for at in units.size():
-		if units[at].row == row: same.append(at)
-	var order := maxi(0, same.find(index))
-	var center: float = {"front": 0.40, "middle": 0.26, "back": 0.12}.get(row, 0.12)
-	var y: float = {"front": 0.88, "middle": 0.83, "back": 0.78}.get(row, 0.78)
-	if same.size() == 2: center = {"front": 0.31, "middle": 0.25, "back": 0.19}.get(row, 0.19)
-	if same.size() >= 3: center = 0.26
-	var x := center + (order - (same.size() - 1) * 0.5) * 0.18
-	var half_width := 48.0
-	if hostile and units[index].has("variant"):
-		var bounds := Biomes.bounds(int(units[index].biome), int(units[index].variant))
-		var height := human_height() * (1.0 if units[index].boss else Biomes.height_factor(int(units[index].biome), int(units[index].variant)))
-		half_width = bounds.size.x / maxf(1, bounds.size.y) * height * 0.5
-	elif not hostile:
-		var id: String = units[index].id
-		if not hero_shape_cache.has(id):
-			var model: AnimatedSprite2D = TaleCatalog.HERO_SCENES[id].instantiate()
-			hero_shape_cache[id] = hero_bounds(model)
-			model.free()
-		var bounds: Rect2 = hero_shape_cache[id]
-		half_width = bounds.size.x / maxf(1, bounds.size.y) * human_height() * (0.25 if id in ["puss", "matches"] else 0.5)
-	if not hostile and units[index].id in ["puss", "matches"]:
-		y = 0.92
-		if units[index].id == "matches" and same.size() == 1: x += 0.06
-	return Vector2(clampf((1.0 - x if hostile else x) * field_width, half_width + 8, field_width - half_width - 8), field_height * y)
+func home_for(_row: String,index: int,hostile: bool) -> Vector2:
+	return Formation.home(simulation.tactics.enemies if hostile else simulation.actors,index,hostile)*Vector2(field_width,field_height)
+
+func spawn_zone(hostile: bool) -> Rect2:
+	var zone := Formation.zone(hostile)
+	return Rect2(zone.position*Vector2(field_width,field_height),zone.size*Vector2(field_width,field_height))
+
+func max_row_size() -> int:
+	return maxi(Formation.max_stack(simulation.actors),Formation.max_stack(simulation.tactics.enemies))
+
+func widget_size() -> Vector2:
+	var width := clampf(field_width*0.155,76,112)
+	if max_row_size()>=3: width=minf(width,field_width*0.135-9)
+	return Vector2(maxf(54,width),36)
+
+func place_widget(item: Dictionary,at: Vector2) -> void:
+	var extent := widget_size()
+	item.panel.size = extent
+	item.root.position = Vector2(clampf(at.x-extent.x*0.5+ (8 if item.hostile else -8),9,field_width-extent.x-9),clampf(at.y+9,9,field_height-extent.y-9))
+	item.text.position=Vector2(6,3)
+	item.text.size=Vector2(extent.x-12,14)
+	item.text.add_theme_font_size_override("font_size",9 if extent.x<90 else 11)
+	item.health.size.x=extent.x-16
+	item.energy.size.x=extent.x-16
 
 func hero_bounds(actor: AnimatedSprite2D) -> Rect2:
 	var texture: Texture2D = actor.sprite_frames.get_frame_texture("idle", 0)
@@ -121,53 +129,57 @@ func hero_bounds(actor: AnimatedSprite2D) -> Rect2:
 	return Rect2(Vector2.ZERO, texture.get_size())
 
 func human_height() -> float:
-	return clampf(field_height * 0.30, 132, 174)
+	var height := clampf(minf(field_height*0.29,field_width*0.17),60,174)
+	if max_row_size()>=3: height=minf(height,maxf(36,field_height*0.22-46))
+	return height
 
 func normalize_hero(actor: AnimatedSprite2D, id: String) -> void:
 	var bounds := hero_bounds(actor)
-	var height := human_height() * (0.5 if id in ["puss", "matches"] else 1.0)
+	var height := human_height() * (0.5 if id=="puss" else 0.75 if id=="matches" else 1.0)
 	actor.scale = Vector2.ONE * (height / maxf(1, bounds.size.y))
 	actor.offset = -Vector2(bounds.get_center().x, bounds.end.y)
 	actor.set_meta("visual_height", height)
 
 
 
-func widget(at: Vector2, title: String, tint: Color) -> Dictionary:
-	var group := Node2D.new()
-	group.position = at + Vector2(-43, 12)
-	group.z_index = 900
+func widget(at: Vector2,title: String,tint: Color,hostile:=false) -> Dictionary:
+	var group:=Node2D.new()
+	group.z_index=900
 	add_child(group)
-	var text := Label.new()
-	text.text = title
-	text.position = Vector2(-4, -3)
-	text.size = Vector2(94, 20)
-	text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	text.add_theme_font_size_override("font_size", 11)
-	text.add_theme_color_override("font_color", Color("e9e8dd"))
-	text.add_theme_color_override("font_shadow_color", Color("10171c"))
-	text.add_theme_constant_override("shadow_outline_size", 3)
-	group.add_child(text)
-	var bars: Array[ProgressBar] = []
+	var panel:=Panel.new()
+	panel.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	var plate:=StyleBoxFlat.new()
+	plate.bg_color=Color("102a24")
+	plate.border_color=Color("8c7043")
+	plate.set_border_width_all(1)
+	plate.set_corner_radius_all(4)
+	panel.add_theme_stylebox_override("panel",plate)
+	group.add_child(panel)
+	ArenaSkin.decorate(panel,true,true,0.055)
+	var text:=Label.new()
+	text.text=title
+	text.clip_text=true
+	text.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
+	text.add_theme_color_override("font_color",Color("f5e8c3"))
+	panel.add_child(text)
+	var bars:Array[ProgressBar]=[]
 	for index in 2:
-		var bar := ProgressBar.new()
-		bar.show_percentage = false
-		bar.position = Vector2(0, 20 + index * 8)
-		bar.size = Vector2(86, 5)
-		bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var bg := StyleBoxFlat.new()
-		bg.bg_color = Color("141e27")
-		bg.corner_radius_top_left = 2
-		bg.corner_radius_bottom_left = 2
-		bg.corner_radius_top_right = 2
-		bg.corner_radius_bottom_right = 2
-		var fill := bg.duplicate()
-		fill.bg_color = tint if index == 0 else Color("8ab4f0")
-		bar.add_theme_stylebox_override("background", bg)
-		bar.add_theme_stylebox_override("fill", fill)
-		group.add_child(bar)
+		var bar:=ProgressBar.new()
+		bar.show_percentage=false
+		bar.position=Vector2(8,20 if index==0 else 28)
+		bar.size=Vector2(64,5 if index==0 else 3)
+		var bg:=StyleBoxFlat.new()
+		bg.bg_color=Color("091a19")
+		bg.set_corner_radius_all(2)
+		var fill:=bg.duplicate()
+		fill.bg_color=tint if index==0 else Color("76b8e9")
+		bar.add_theme_stylebox_override("background",bg)
+		bar.add_theme_stylebox_override("fill",fill)
+		panel.add_child(bar)
 		bars.append(bar)
-	return {"root": group, "health": bars[0], "energy": bars[1], "text": text}
-
+	var item:={"root":group,"panel":panel,"text":text,"health":bars[0],"energy":bars[1],"hostile":hostile}
+	place_widget(item,at)
+	return item
 
 func sync_enemies() -> void:
 	for actor in foes:
@@ -199,11 +211,12 @@ func sync_enemies() -> void:
 		model.z_index = int(home.y)
 		foes.append(model)
 		foe_homes.append(home)
-		foe_widgets.append(widget(home, ("★ " if data.boss else "") + str(TaleCatalog.CLASSES[data["class"]].name), Color("dd9691")))
+		foe_widgets.append(widget(home, ("★ " if data.boss else "") + str(TaleCatalog.CLASSES[data["class"]].name), Color("dd9691"),true))
 		data["death_left"] = 0.0
 		data["was_alive"] = true
 	if not foes.is_empty():
 		enemy = foes[0]
+	fit_field(Vector2(field_width,field_height))
 	sync_health(simulation.actors)
 
 
@@ -237,6 +250,7 @@ func reset_effects() -> void:
 	walking = false
 	intro_left = 0.0
 	bursts.clear()
+	enemy_impacts.clear()
 	enemy_areas.clear()
 	enemy_track.time = -1.0
 	hit_stop = 0.0
@@ -266,7 +280,8 @@ func sync_health(actors: Array[Dictionary]) -> void:
 		unit_widgets[index].health.max_value = actors[index].max_hp
 		unit_widgets[index].health.value = actors[index].hp
 		unit_widgets[index].energy.value = actors[index].energy
-		unit_widgets[index].text.text = "%s / %s PV" % [compact_hp(actors[index].hp), compact_hp(actors[index].max_hp)]
+		unit_widgets[index].text.text = ("%s/%s" if unit_widgets[index].panel.size.x<90 else "%s/%s PV") % [compact_hp(actors[index].hp),compact_hp(actors[index].max_hp)]
+		if actors[index].id=="alice":unit_widgets[index].text.text=CharacterEffects.SUITS[int(actors[index].get("suit",0))%4]+" "+unit_widgets[index].text.text
 	for index in foes.size():
 		var data: Dictionary = simulation.tactics.enemies[index]
 		foes[index].visible = enemy_visible and (data.hp > 0 or data.get("death_left", 0) > 0)
@@ -274,7 +289,7 @@ func sync_health(actors: Array[Dictionary]) -> void:
 		foe_widgets[index].health.max_value = data.max_hp
 		foe_widgets[index].health.value = data.hp
 		foe_widgets[index].energy.visible = false
-		foe_widgets[index].text.text = "%s / %s PV" % [compact_hp(data.hp), compact_hp(data.max_hp)]
+		foe_widgets[index].text.text = ("%s/%s" if foe_widgets[index].panel.size.x<90 else "%s/%s PV") % [compact_hp(data.hp),compact_hp(data.max_hp)]
 
 
 
@@ -302,7 +317,8 @@ func _process(delta: float) -> void:
 	if not frozen: intro_left = maxf(0, intro_left - delta)
 	if walking and dt > 0:
 		travel_progress = minf(1, travel_progress + dt / 2.8)
-		backdrop.position.x = 0 if reduced_motion else -18 * travel_progress
+		backdrop.position.x=-12 if reduced_motion else -12-12*travel_progress
+	if not walking: backdrop.position.x=-12
 	entrance_left = maxf(0, entrance_left - dt)
 	if not frozen:
 		hit_stop = maxf(0, hit_stop - delta * speed)
@@ -311,6 +327,10 @@ func _process(delta: float) -> void:
 		var actor: AnimatedSprite2D = heroes[index]
 		actor.z_index = 950 if tracks[index].time >= 0 else (925 if simulation.actors[index].id in ["puss", "matches"] else int(actor.position.y))
 		var track: Dictionary = tracks[index]
+		var hero_id: String=simulation.actors[index].id
+		if track.time<0 and not walking and track.alive:
+			actor.position=track.home
+			if hero_id in ["ariel","aladin","peter"]: actor.position.y-=human_height()*0.1+(0.0 if reduced_motion else sin(clock*2.5+index)*human_height()*0.025)
 		actor.speed_scale = 0.0 if frozen or hit_stop > 0 or intro_left > 0 or not track.alive else speed
 		track.hurt = maxf(0, track.hurt - dt)
 		if track.alive:
@@ -326,12 +346,18 @@ func _process(delta: float) -> void:
 			track.target = simulation.tactics.target_for(index)
 			target = track.target
 		var impact: float = actor.impact_ratio
-		actor.seek_animation("attack", phase * actor.get_animation_duration("attack"))
+		var visual_phase:=phase
+		if track.ultimate and hero_id in ["mulan","joao"] and phase<impact: visual_phase=fposmod(phase/impact*(3.0 if hero_id=="mulan" else 5.0),1.0)
+		if track.ultimate and hero_id=="puss":visual_phase=1.0-phase
+		actor.seek_animation("attack",visual_phase*actor.get_animation_duration("attack"))
 		if actor.is_melee_attack() and not (actor.is_hair_attack() and track.ultimate):
 			if target >= 0:
 				var contact := foe_homes[target] + Vector2(-62, 8)
 				var dash := smoothstep(0, 1, phase / maxf(0.1, impact * 0.65)) if phase < impact else (1.0 - smoothstep(impact, 1, phase))
+				if track.ultimate and hero_id in ["mulan","joao"] and phase<impact: dash=0.3+sin(fposmod(phase/impact*(3.0 if hero_id=="mulan" else 5.0),1.0)*PI)*0.7
 				actor.position = track.home.lerp(contact, dash)
+				if track.ultimate and hero_id=="mulan" and phase>impact*0.65 and phase<impact:actor.position.y-=sin((phase-impact*0.65)/(impact*0.35)*PI)*human_height()*0.7
+				if track.ultimate and hero_id=="puss" and not reduced_motion:actor.rotation=TAU*smoothstep(0.15,impact,phase) if phase<impact else 0.0
 		if not track.hit and phase >= impact:
 			track.hit = true
 			# Emit before starting recovery: the controller applies exactly one result.
@@ -340,6 +366,7 @@ func _process(delta: float) -> void:
 				return
 		if track.time >= track.duration:
 			track.time = -1.0
+			actor.rotation=0.0
 			actor.position = track.home
 			if track.alive:
 				actor.show_animation("idle")
@@ -399,11 +426,11 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	for track in tracks:
 		draw_set_transform(track.home, 0, Vector2(1, 0.23))
-		draw_circle(Vector2.ZERO, 36, Color("0a151b", 0.5), true, -1, true)
+		draw_circle(Vector2.ZERO, human_height()*0.24, Color("0a151b", 0.5), true, -1, true)
 	draw_set_transform(Vector2.ZERO)
 	for at in foe_homes:
 		draw_set_transform(at, 0, Vector2(1, 0.23))
-		draw_circle(Vector2.ZERO, 38, Color("0a151b", 0.5), true, -1, true)
+		draw_circle(Vector2.ZERO, human_height()*0.24, Color("0a151b", 0.5), true, -1, true)
 	draw_set_transform(Vector2.ZERO)
 
 
@@ -413,6 +440,11 @@ func draw_combat_effects(canvas: Node2D) -> void:
 		if track.time < 0 or track.hit or track.target < 0 or track.target >= foe_homes.size():
 			continue
 		var phase: float = track.time / track.duration
+		var id: String=simulation.actors[index].id
+		if CharacterEffects.IDS.has(id):
+			if not track.ultimate: CharacterEffects.basic(self,canvas,index,phase)
+			elif id in ["mulan","puss","joao"] and phase>0.16:CharacterEffects.stamp(canvas,id,heroes[index].position+Vector2(human_height()*0.3,-human_height()*0.5),Vector2.ONE*human_height()*1.25,phase/heroes[index].impact_ratio,true)
+			continue
 		var release: float = heroes[index].impact_ratio * 0.45
 		if phase < release:
 			continue
@@ -481,6 +513,13 @@ func draw_combat_effects(canvas: Node2D) -> void:
 			canvas.draw_line(dir * 10, dir * radius, tint, 3, true)
 		canvas.draw_set_transform(Vector2.ZERO)
 	for burst in bursts: draw_burst(canvas, burst)
+	for index in simulation.actors.size():
+		var actor:Dictionary=simulation.actors[index]
+		if actor.hp<=0 or actor.id!="peter":continue
+		for flame in int(actor.get("spirit_flames",0)):
+			var angle:=flame*TAU/3.0+(0.0 if reduced_motion else clock*1.8)
+			var at:Vector2=heroes[index].position+Vector2(0,-human_height()*0.5)+Vector2.from_angle(angle)*human_height()*0.48
+			CharacterEffects.stamp(canvas,"peter",at,Vector2.ONE*human_height()*0.33,0.0,false)
 	if walking:
 		for step in 9:
 			var x := fposmod(step * 83.0 - clock * 90.0, field_width)
@@ -515,17 +554,18 @@ func fit_field(dimensions: Vector2) -> void:
 		backdrop.size = dimensions + Vector2(24, 0)
 	for index in heroes.size():
 		normalize_hero(heroes[index], str(simulation.actors[index].id))
+		heroes[index].set_meta("battle_scale",heroes[index].scale)
 		heroes[index].position *= ratio
 		tracks[index].home = home_for(simulation.actors[index].row, index, false)
 		if tracks[index].time < 0:
 			heroes[index].position = tracks[index].home
-		unit_widgets[index].root.position = tracks[index].home + Vector2(-43, 12)
+		place_widget(unit_widgets[index],tracks[index].home)
 	for index in foes.size():
 		foes[index].regular_height = human_height() * (Biomes.height_factor(int(simulation.tactics.enemies[index].biome), int(simulation.tactics.enemies[index].variant)) if simulation.expedition else 1.0)
 		foes[index].boss_height = human_height() * (1.0 if simulation.expedition else 1.22)
 		foe_homes[index] = home_for(simulation.tactics.enemies[index].row, index, true)
 		foes[index].position = foe_homes[index]
-		foe_widgets[index].root.position = foe_homes[index] + Vector2(-43, 12)
+		place_widget(foe_widgets[index],foe_homes[index])
 	queue_redraw()
 
 
@@ -615,14 +655,21 @@ func ultimate_effect(index: int, result: Dictionary) -> void:
 	var id: String = simulation.actors[index].id
 	var points: Array[Vector2] = []
 	for at in result.get("targets", []): points.append(foe_homes[at] + Vector2(0, -human_height() * 0.5))
-	if id in ["rapunzel", "ariel", "aladin"]:
+	if id=="rapunzel":
+		points.clear()
 		for track in tracks:
 			if track.alive: points.append(track.home + Vector2(0, -human_height() * 0.5))
+	if id in ["ariel","aladin","peter"]:points.assign([tracks[index].home+Vector2(0,-human_height()*0.5)])
+	if id=="matches":points.append(tracks[index].home+Vector2(0,-human_height()*0.5))
 	for at in points:
-		bursts.append({"id": id, "from": tracks[index].home + Vector2(0, -human_height() * 0.5), "at": at, "left": 1.5, "duration": 1.5})
+		bursts.append({"id": id, "from": tracks[index].home + Vector2(0, -human_height() * 0.5), "at": at, "left": 1.5, "duration": 1.5,"suit":simulation.actors[index].get("suit",0)})
 	if not reduced_motion: hit_stop = 0.10
+	if is_instance_valid(vfx): vfx.queue_redraw()
 
 func draw_burst(canvas: Node2D, burst: Dictionary) -> void:
+	if CharacterEffects.IDS.has(str(burst.id)):
+		CharacterEffects.burst(self,canvas,burst)
+		return
 	var t: float = 1 - burst.left / burst.duration
 	var at: Vector2 = burst.at if reduced_motion else Vector2(burst.from).lerp(burst.at, smoothstep(0, 0.65, t))
 	var extent := Vector2.ONE * human_height() * (1.25 if str(burst.id) == "alice" else 1.15)
@@ -634,3 +681,12 @@ func compact_hp(value: float) -> String:
 	if value >= 1000000: return "%.1fm" % (value / 1000000.0)
 	if value >= 10000: return "%.0fk" % (value / 1000.0)
 	return str(ceili(value))
+
+func passive_effect(event:Dictionary) -> void:
+	if str(event.get("hero",""))!="matches" or str(event.get("kind",""))!="passive":return
+	for index in simulation.actors.size():
+		if simulation.actors[index].id=="matches":
+			var targets:Array=[]
+			for at in simulation.tactics.enemies.size():
+				if simulation.tactics.enemies[at].hp>0:targets.append(at)
+			ultimate_effect(index,{"targets":targets})

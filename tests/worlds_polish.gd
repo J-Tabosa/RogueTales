@@ -40,9 +40,9 @@ func checks() -> void:
 	var legacy := IdleRun.new()
 	legacy.restore(account, {"expedition":true,"stage":8,"hero_ids":["alice"],"health":[100]})
 	assert(legacy.stage == 1 and legacy.phase == 2)
-	var alice: SpriteFrames = load("res://assets/alice/frames.tres")
-	var rapunzel: SpriteFrames = load("res://assets/rapunzel/rapunzel_frames.tres")
-	assert(alice.get_frame_count("attack") == 10 and rapunzel.get_frame_count("attack") == 8)
+	var alice: SpriteFrames = load("res://assets/characters/alice/frames.tres")
+	var rapunzel: SpriteFrames = load("res://assets/characters/rapunzel/frames.tres")
+	assert(alice.get_frame_count("attack") == 10 and rapunzel.get_frame_count("attack") == 10)
 	assert(alice.get_frame_texture("idle", 0) is MeshTexture and rapunzel.get_frame_texture("idle", 0) is MeshTexture)
 	root.content_scale_size = Vector2i(540,960)
 	root.size = Vector2i(540,960)
@@ -69,7 +69,7 @@ func checks() -> void:
 	game.arena._process(0.1)
 	assert(game.arena.vfx.z_index > 950)
 	assert(game.arena.heroes[2].z_index > game.arena.heroes[0].z_index)
-	assert(game.arena.heroes[2].get_meta("visual_height") == game.arena.heroes[0].get_meta("visual_height") * 0.5)
+	assert(game.arena.heroes[2].get_meta("visual_height") == game.arena.heroes[0].get_meta("visual_height") * 0.75)
 	for foe in game.arena.foes: assert(not foe.flip_h)
 	for mode in ["mobile","pc"]:
 		if mode == "pc":

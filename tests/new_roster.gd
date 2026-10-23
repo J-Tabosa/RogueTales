@@ -1,6 +1,6 @@
 extends SceneTree
 const SAVE := "user://roster_isolated.json"
-const JOBS := {"joao": "assassin", "maria": "assassin", "alice": "mage", "puss": "vanguard", "matches": "ranger", "peter": "assassin", "aladin": "mage"}
+const JOBS := {"joao": "vanguard", "maria": "assassin", "alice": "ranger", "puss": "vanguard", "matches": "mage", "peter": "assassin", "aladin": "mage"}
 
 func _initialize() -> void:
 	call_deferred("checks")
@@ -49,7 +49,7 @@ func checks() -> void:
 			foe.evasion = 0.0
 		var hit := run.hit_enemy(0)
 		assert(hit.damage > 0 and run.unlock_stats.new_hits[id] == 1)
-		assert(run.tactics.enemies[hit.target].row == ("front" if id == "puss" else "back" if id in ["joao", "maria", "matches", "peter"] else "front"))
+		assert(run.tactics.enemies[hit.target].row == ("front" if id in ["puss","joao","matches","aladin"] else "back"))
 		if id == "maria":
 			assert(run.tactics.enemies[hit.target].poison_left == 4)
 		if id == "matches":
@@ -63,15 +63,13 @@ func checks() -> void:
 		run.actors[0].energy = 100
 		assert(run.tactics.reserve_ultimate(0) and not run.tactics.reserve_ultimate(0))
 		var ult: Dictionary = run.tactics.ultimate(0)
-		assert(ult.damage > 0 and run.tactics.ultimate(0).is_empty())
+		assert((ult.damage > 0 or id=="peter") and run.tactics.ultimate(0).is_empty())
 		if id in ["alice", "aladin"]:
 			assert(ult.targets.size() == 3)
 		if id == "puss":
 			assert(run.actors[0].shield > 0 and run.tactics.enemies[ult.target].row == "front")
 		if id == "peter":
-			assert(run.actors[0].evasion == 0.60)
-			run.tactics.tick(5.1)
-			assert(run.actors[0].evasion == 0.35)
+			assert(run.actors[0].spirit_flames==3 and run.actors[0].shield>0)
 		if id == "aladin":
 			assert(ult.healed > 0 and run.actors[1].shield > 0)
 		if id == "maria":

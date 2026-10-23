@@ -398,7 +398,7 @@ func restore(campaign: TaleCampaign, data: Dictionary) -> void:
 		for actor in actors:
 			var saved: Variant = states.get(actor.id, {}) if states is Dictionary else {}
 			if saved is Dictionary:
-				for key in ["shadows", "suit", "wish", "charged", "nine_used"]:
+				for key in ["shadows", "suit", "wish", "charged", "nine_used", "spirit_flames"]:
 					if saved.has(key): actor[key] = saved[key]
 
 	# Preserve combos and the random stream at the encounter boundary.
@@ -508,7 +508,7 @@ func ability_snapshot() -> Dictionary:
 	var saved := {}
 	for actor in actors:
 		var entry := {}
-		for key in ["shadows", "suit", "wish", "charged", "nine_used"]:
+		for key in ["shadows", "suit", "wish", "charged", "nine_used", "spirit_flames"]:
 			if actor.has(key): entry[key] = actor[key]
 		saved[actor.id] = entry
 	return saved

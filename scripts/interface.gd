@@ -569,24 +569,6 @@ func gradient(parent: Node, rect: Rect2, top: Color, bottom: Color) -> void:
 
 
 func face_portrait(parent: Node, id: String, rect: Rect2) -> Control:
-	if id in ["alice", "rapunzel"]:
-		var slot := Panel.new()
-		slot.position = rect.position
-		slot.size = rect.size
-		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		slot.add_theme_stylebox_override("panel", box(Color("23352b"), GOLD, 8))
-		parent.add_child(slot)
-		register_layout(slot)
-		var source: Texture2D = preload("res://assets/portraits/heroes_hd.png")
-		var half := source.get_size() / Vector2(2, 1)
-		var atlas := AtlasTexture.new()
-		atlas.atlas = source
-		atlas.region = Rect2(Vector2(half.x if id == "rapunzel" else 0, 0) + half * (Vector2(0.23, 0.06) if id == "rapunzel" else Vector2(0.21, 0)), half * (Vector2(0.70, 0.70) if id == "rapunzel" else Vector2(0.69, 0.69)))
-		atlas.filter_clip = true
-		var face := UISkin.picture(slot, atlas, Rect2(Vector2(3, 3), slot.size - Vector2(6, 6)))
-		face.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-		slot.resized.connect(func(): face.size = slot.size - Vector2(6, 6))
-		return slot
 	cache_portrait(id)
 	var data: Dictionary = static_portraits[id]
 	var slot := Panel.new()
@@ -598,7 +580,7 @@ func face_portrait(parent: Node, id: String, rect: Rect2) -> Control:
 	parent.add_child(slot)
 	register_layout(slot)
 	var bounds: Rect2 = Rect2(data.bounds)
-	var focuses := {"scarlet":Vector2(0.58,0.18),"rapunzel":Vector2(0.57,0.18),"snow_white":Vector2(0.52,0.17),"mulan":Vector2(0.5,0.17),"ariel":Vector2(0.52,0.16),"joao":Vector2(0.52,0.17),"maria":Vector2(0.58,0.18),"alice":Vector2(0.58,0.30),"puss":Vector2(0.53,0.38),"matches":Vector2(0.58,0.22),"peter":Vector2(0.58,0.24),"aladin":Vector2(0.35,0.25)}
+	var focuses := {"scarlet":Vector2(0.58,0.18),"rapunzel":Vector2(0.75,0.20),"snow_white":Vector2(0.52,0.17),"mulan":Vector2(0.5,0.17),"ariel":Vector2(0.52,0.16),"joao":Vector2(0.52,0.17),"maria":Vector2(0.58,0.18),"alice":Vector2(0.55,0.18),"puss":Vector2(0.55,0.23),"matches":Vector2(0.58,0.22),"peter":Vector2(0.58,0.24),"aladin":Vector2(0.55,0.16)}
 	var extent := Vector2.ONE * bounds.size.y * 0.44
 	var center: Vector2 = bounds.position + bounds.size * focuses.get(id,Vector2(0.5,0.2))
 	var face := Sprite2D.new()
@@ -721,6 +703,7 @@ func push_battle_log(message: String) -> void:
 func consume_feedback() -> void:
 	if run == null or run.tactics == null: return
 	for event in run.tactics.feedback_events:
+		if is_instance_valid(arena): arena.passive_effect(event)
 		if is_instance_valid(feedback): feedback.enqueue(event)
 		push_battle_log("%s · %s · %s" % [TaleCatalog.HEROES[event.hero].name, event.title, event.detail])
 	run.tactics.feedback_events.clear()

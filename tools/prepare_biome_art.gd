@@ -47,7 +47,7 @@ func _initialize() -> void:
 					atlas.blit_rect(pose, Rect2i(Vector2i.ZERO, pose.get_size()), at)
 			assert(atlas.save_webp("res://assets/biomes/%s.webp" % key, true, 0.94) == OK)
 		elif key == "biome_scenery":
-			assert(source.save_webp("res://assets/biomes/scenery.webp", true, 0.94) == OK)
+			assert(source.save_webp("res://old/assets/biomes/scenery.webp", true, 0.94) == OK)
 		else:
 			clean_alpha(source)
 			assert(source.save_webp("res://assets/effects/%s.webp" % key, true, 0.96) == OK)

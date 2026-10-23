@@ -107,6 +107,7 @@ func spawn() -> void:
 		actor.ult_pending = false
 		actor.ult_queued = false
 		actor.shield = 0.0
+		actor["spirit_flames"] = 0
 		if owner.expedition:
 			actor.evasion = actor.base_evasion
 			actor.evasion_left = 0.0
@@ -169,7 +170,7 @@ func deal(target: Dictionary, amount: float, magical: bool, certain := false) ->
 	if guarded:
 		target.pp -= 1
 		amount *= 0.65
-	var raw := maxf(amount * 0.28 if owner.expedition else 1.0, amount - float(target.armor) * (0.35 if magical else 1.0))
+	var raw := maxf(amount * 0.28 if owner.expedition else 1.0, amount - float(target.armor) * (0.8 if target.get("armor_break_left",0.0)>0 else 1.0) * (0.35 if magical else 1.0))
 	var absorbed := minf(float(target.get("shield", 0.0)), raw)
 	if target.has("shield"):
 		target.shield -= absorbed
@@ -279,6 +280,9 @@ func hit_party(enemy_index := 0) -> Dictionary:
 		enemy.pp -= 1
 		hit.damage += deal(actor, float(enemy.damage) * 0.25, false, true).damage
 		hit["followup"] = true
+	if not hit.evaded and actor.id=="peter" and int(actor.get("spirit_flames",0))>0:
+		actor.spirit_flames-=1
+		hit["counter"]=deal(enemy,actor.damage,true,true).damage
 	if hit.evaded and actor["class"] == "assassin" and int(actor.get("pp", 0)) > 0:
 		actor.pp -= 1
 		hit["counter"] = deal(enemy, actor.damage * 0.6, false, true).damage
@@ -318,6 +322,7 @@ func tick(delta: float) -> void:
 		var fire_damage: float = enemy.burn * minf(delta, enemy.burn_left)
 		var poison_damage: float = enemy.poison * minf(delta, enemy.poison_left)
 		var damage: float = fire_damage + poison_damage
+		enemy["armor_break_left"]=maxf(0,float(enemy.get("armor_break_left",0.0))-delta)
 		enemy.burn_left = maxf(0, enemy.burn_left - delta)
 		enemy.poison_left = maxf(0, enemy.poison_left - delta)
 		enemy.hp = maxf(0, enemy.hp - damage)
@@ -387,18 +392,18 @@ func ultimate(index: int, requested := -1) -> Dictionary:
 	var healed := 0.0
 	var per_target := {}
 	match str(actor.id):
-		"scarlet", "ariel", "alice", "aladin":
+		"scarlet", "ariel", "alice", "aladin", "maria", "matches":
 			for at in enemies.size():
 				if enemies[at].hp > 0:
 					targets.append(at)
 		"mulan":
 			targets = eligible({"class": "vanguard"}, enemies)
 			actor.shield += actor.max_hp * 0.35
-		"snow_white", "joao", "maria", "peter", "matches":
+		"snow_white", "joao":
 			targets.append(target)
-			if actor.id == "peter":
-				actor.evasion = minf(0.80, actor.base_evasion + 0.25)
-				actor.evasion_left = 5.0
+		"peter":
+			actor["spirit_flames"]=3
+			actor.shield=minf(actor.max_hp,actor.shield+actor.max_hp*0.30)
 		"puss":
 			targets = eligible({"class": "vanguard"}, enemies)
 			actor.shield = minf(actor.max_hp, actor.shield + actor.max_hp * 0.25)
@@ -410,9 +415,12 @@ func ultimate(index: int, requested := -1) -> Dictionary:
 					healed += ally.hp - before
 					ally.shield += ally.max_hp * 0.20
 			owner.unlock_stats.healing += healed
+	if not targets.is_empty() and not targets.has(target):target=targets[0]
 	for at in targets:
-		var multiplier: float = {"scarlet": 2.0, "snow_white": 4.0, "mulan": 3.2, "ariel": 1.6, "joao": 4.2, "maria": 2.8, "alice": 2.0, "puss": 3.6, "peter": 3.0, "matches": 4.0, "aladin": 2.0}.get(actor.id, 1.0)
-		var dealt: float = deal(enemies[at], actor.damage * multiplier, actor["class"] in ["mage", "artificer"], true).damage
+		var multiplier: float = {"scarlet": 2.0, "snow_white": 4.0, "mulan": 3.2, "ariel": 1.6, "joao": 4.2, "maria": 2.8, "alice": 2.0, "puss": 3.6, "peter": 3.0, "matches": 2.0, "aladin": 2.0}.get(actor.id, 1.0)
+		var dealt := 0.0
+		for strike in (5 if actor.id=="joao" else 1):
+			dealt += deal(enemies[at],actor.damage*multiplier/(5.0 if actor.id=="joao" else 1.0),actor["class"] in ["mage","artificer"],true).damage
 		per_target[at] = dealt
 		amount += dealt
 		if actor.id == "scarlet":
@@ -422,6 +430,7 @@ func ultimate(index: int, requested := -1) -> Dictionary:
 			enemies[at].poison = 8.0 + actor.ranks[0] * 2
 			enemies[at].poison_left = 6.0
 		elif actor.id == "maria":
+			enemies[at]["armor_break_left"]=6.0
 			enemies[at].poison = 8.0 + actor.ranks[2] * 2
 			enemies[at].poison_left = 6.0
 		elif actor.id == "matches":
@@ -439,6 +448,8 @@ func ultimate(index: int, requested := -1) -> Dictionary:
 		for ally in owner.actors:
 			if ally.hp > 0:
 				ally.hp = minf(ally.max_hp, ally.hp + ally.max_hp * 0.2)
+				for key in ["hostile_burn","hostile_poison","hostile_dot_left"]:ally[key]=0.0
+				ally["sealed"]=false
 	if owner.expedition:
 		Abilities.deaths(self)
 		BossRules.refresh(self)

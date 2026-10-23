@@ -14,16 +14,16 @@ const CLASSES = {
 }
 const HERO_TACTICS = {
 	"scarlet": {"class": "artificer", "row": "back", "ult": "Final explosivo", "detail": "Explode todos os inimigos (200%) e aplica queimadura."},
-	"rapunzel": {"class": "assassin", "row": "front", "ult": "Coroa de fios", "detail": "Cura 35% dos PV e concede 20% de escudo a todas as aliadas vivas."},
+	"rapunzel": {"class": "vanguard", "row": "front", "ult": "Coroa de fios", "detail": "Cura 35% dos PV e concede 20% de escudo a todas as aliadas vivas."},
 	"snow_white": {"class": "ranger", "row": "back", "ult": "Maçã da sentença", "detail": "Disparo de 400% na retaguarda e veneno fortalecido."},
-	"mulan": {"class": "vanguard", "row": "front", "ult": "Dragão de jade", "detail": "Corte de 320% na linha de frente e escudo de 35% para si."},
-	"ariel": {"class": "mage", "row": "back", "ult": "Sinfonia abissal", "detail": "Maré de 160% em todos; cura 20% do grupo e desacelera por 5 s."},
-	"joao": {"class": "assassin", "row": "back", "ult": "Caçada cruzada", "detail": "Rajada de 420% no alvo da retaguarda."},
-	"maria": {"class": "assassin", "row": "front", "ult": "Receita da bruxa", "detail": "Estocada de 280% e veneno fortalecido por 6 s."},
-	"alice": {"class": "mage", "row": "back", "ult": "Cortejo das cartas", "detail": "Cartas mágicas atingem todos os inimigos (200%)."},
+	"mulan": {"class": "assassin", "row": "middle", "ult": "Dragão de jade", "detail": "Corte de 320% na linha de frente e escudo de 35% para si."},
+	"ariel": {"class": "mage", "row": "back", "ult": "Sinfonia abissal", "detail": "Maré de 160% em todos; cura 20% do grupo e limpa os efeitos negativos e desacelera por 5 s."},
+	"joao": {"class": "vanguard", "row": "front", "ult": "Cinco estocadas", "detail": "Cinco estocadas de 84% no alvo da vanguarda."},
+	"maria": {"class": "assassin", "row": "middle", "ult": "Brinde sombrio", "detail": "Onda sombria em todos (280%); reduz a armadura em 20% por 6 s."},
+	"alice": {"class": "ranger", "row": "back", "ult": "Cortejo das cartas", "detail": "Cartas mágicas atingem todos os inimigos (200%)."},
 	"puss": {"class": "vanguard", "row": "front", "ult": "Nove vidas, um corte", "detail": "Corte de 360% na vanguarda e escudo de 25% para si."},
-	"matches": {"class": "ranger", "row": "back", "ult": "Último fósforo", "detail": "Disparo de 400% na retaguarda e queimadura por 5 s."},
-	"peter": {"class": "assassin", "row": "front", "ult": "Passo do outro lado", "detail": "Estocada de 300% na retaguarda e +25% de esquiva por 5 s."},
+	"matches": {"class": "mage", "row": "back", "ult": "Último fósforo", "detail": "Círculos de fogo atingem todos os inimigos (200%) e queimam por 5 s."},
+	"peter": {"class": "assassin", "row": "middle", "ult": "Três chamas guardiãs", "detail": "Três chamas concedem 30% de escudo e retaliam os próximos três ataques."},
 	"aladin": {"class": "mage", "row": "back", "ult": "Três desejos", "detail": "Magia de 200% em todos; cura e escudo de 15% para o grupo."}
 }
 const HERO_SCENES = {

@@ -237,6 +237,10 @@ static func incoming(tactics, enemy_index: int, requested := -1) -> Dictionary:
 	hit["target"] = target
 	hit["enemy"] = enemy_index
 	if protected: hit["guarded"] = true
+	if not hit.evaded and actor.id=="peter" and int(actor.get("spirit_flames",0))>0:
+		actor.spirit_flames-=1
+		hit["counter"]=tactics.deal(enemy,actor.damage,true,true).damage
+		tactics.notify(actor.id,"Chama guardiã","Uma chama retaliou o ataque recebido")
 	if hit.evaded and actor.id == "peter" and actor.pp > 0:
 		actor.pp -= 1
 		actor.shadows = mini(3, int(actor.get("shadows", 0)) + (2 if has(actor, "double") else 1))
@@ -317,7 +321,7 @@ static func deaths(tactics) -> void:
 						for survivor in tactics.enemies:
 							if survivor.hp > 0:
 								ignite(survivor, maxf(foe.burn, actor.damage * 0.12), 5.0, "matches")
-								if has(actor, "fuel"): tactics.deal(survivor, actor.damage * 0.6, true, true)
+								tactics.deal(survivor,actor.damage*(0.6 if has(actor,"fuel") else 0.3),true,true)
 				elif actor.id == "snow_white" and (foe.poison_left > 0 or foe.get("died_poisoned", false)) and actor.pp > 0 and tactics.enemies.any(func(unit): return unit.hp > 0):
 					actor.pp -= 1
 					tactics.notify(actor.id, Content.KITS[actor.id][2], "Transferiu o veneno da vítima")

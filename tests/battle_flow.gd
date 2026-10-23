@@ -42,7 +42,7 @@ func checks() -> void:
 	first = run.hit_party(0)
 	second = run.hit_party(0)
 	assert(first.evaded and first.counter > 0 and second.evaded and not second.has("counter"))
-	run = make_run(["alice"])
+	run = make_run(["aladin"])
 	flow = Flow.new()
 	flow.bind(run)
 	for foe in run.tactics.enemies: foe.evasion = 0

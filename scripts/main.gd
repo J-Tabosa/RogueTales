@@ -292,23 +292,32 @@ func make_arena(y: float, ids: Array = [], target_stage: int = 0) -> void:
 
 
 func cache_portrait(id: String) -> void:
-	if not static_portraits.has(id):
-		var model: AnimatedSprite2D = HERO_SCENES[id].instantiate()
-		var texture: Texture2D = model.sprite_frames.get_frame_texture("idle",0)
-		var bounds := Rect2(Vector2.ZERO,texture.get_size())
-		if texture is MeshTexture:
-			var volume: AABB = texture.mesh.get_aabb()
-			bounds = Rect2(Vector2(volume.position.x,volume.position.y),Vector2(volume.size.x,volume.size.y))
-		elif texture is AtlasTexture:
-			bounds = Rect2(texture.margin.position,texture.region.size)
-		static_portraits[id] = {
-			"texture": model.sprite_frames.get_frame_texture("idle", 0),
-			"scale": model.scale,
-			"offset": model.offset,
-			"centered": model.centered,
-			"bounds": bounds
-		}
-		model.free()
+	if static_portraits.has(id):return
+	var model: AnimatedSprite2D=HERO_SCENES[id].instantiate()
+	var texture: Texture2D=model.sprite_frames.get_frame_texture("idle",0)
+	var bounds:=Rect2(Vector2.ZERO,texture.get_size())
+	var scale:Vector2=model.scale
+	var offset:Vector2=model.offset
+	if texture is MeshTexture:
+		var volume:AABB=texture.mesh.get_aabb()
+		bounds=Rect2(Vector2(volume.position.x,volume.position.y),Vector2(volume.size.x,volume.size.y))
+		if texture.base_texture.resource_path.ends_with(".jpg"):
+			var uv:PackedVector2Array=texture.mesh.surface_get_arrays(0)[Mesh.ARRAY_TEX_UV]
+			var region:=Rect2(uv[0],Vector2.ZERO)
+			for point in uv:region=region.expand(point)
+			var extent:Vector2=texture.base_texture.get_size()
+			region=Rect2(region.position*extent,region.size*extent)
+			var portrait:=AtlasTexture.new()
+			portrait.atlas=preload("res://scripts/jpeg_alpha.gd").texture(texture.base_texture.resource_path)
+			portrait.region=region
+			portrait.filter_clip=true
+			texture=portrait
+			scale*=bounds.size.y/region.size.y
+			bounds=Rect2(Vector2.ZERO,region.size)
+			offset=-Vector2(region.size.x*0.5,region.size.y)
+	elif texture is AtlasTexture:bounds=Rect2(texture.margin.position,texture.region.size)
+	static_portraits[id]={"texture":texture,"scale":scale,"offset":offset,"centered":model.centered,"bounds":bounds}
+	model.free()
 
 
 func portrait(parent: Node, id: String, at: Vector2, factor: float = 0.68) -> void:

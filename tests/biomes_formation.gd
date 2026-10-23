@@ -106,7 +106,7 @@ func checks() -> void:
 	game.campaign = TaleCampaign.new()
 	game.campaign.unlocked.assign(TaleCatalog.HEROES.keys())
 	game.campaign.auto_ult = false
-	prepare(["mulan", "peter", "alice"], 3)
+	prepare(["joao", "peter", "alice"], 3)
 	assert(game.run.actors.map(func(actor): return actor.row) == ["front", "middle", "back"])
 	assert(game.arena.tracks[0].home.x > game.arena.tracks[1].home.x and game.arena.tracks[1].home.x > game.arena.tracks[2].home.x)
 	await capture("three_ranks_ice_mobile")
@@ -121,19 +121,19 @@ func checks() -> void:
 		prepare([id], 0)
 		var actor: AnimatedSprite2D = game.arena.heroes[0]
 		var height: float = game.arena.hero_bounds(actor).size.y * actor.scale.y
-		if id in ["puss", "matches"]: assert(is_equal_approx(height, game.arena.human_height() * 0.5))
+		if id in ["puss", "matches"]: assert(is_equal_approx(height, game.arena.human_height() * (0.5 if id=="puss" else 0.75)))
 		else: actual_heights.append(height)
 	assert(float(actual_heights.max()) - float(actual_heights.min()) < 0.1)
 	prepare(["scarlet", "alice", "ariel"], 6)
 	var homes: Array = game.arena.tracks.map(func(track): return track.home)
-	assert(homes[0].y == homes[1].y and homes[1].y == homes[2].y)
-	assert(homes[0].x < homes[1].x and homes[1].x < homes[2].x)
+	assert(homes[0].x == homes[1].x and homes[1].x == homes[2].x)
+	assert(homes[0].y < homes[1].y and homes[1].y < homes[2].y)
 	await capture("same_rank_fire_mobile")
-	prepare(["mulan", "puss", "matches"], 4)
+	prepare(["joao", "puss", "matches"], 4)
 	assert(game.arena.tracks[1].home.y >= game.arena.tracks[0].home.y)
-	assert(game.arena.tracks[0].home.x != game.arena.tracks[1].home.x)
+	assert(game.arena.tracks[0].home.x == game.arena.tracks[1].home.x)
 	await capture("half_size_mobile")
-	prepare(["mulan", "peter", "alice"], 6)
+	prepare(["joao", "peter", "alice"], 6)
 	for actor in game.run.actors: actor.evasion = 0
 	var foe: Dictionary = game.run.tactics.enemies[0]
 	foe["class"] = "assassin"
@@ -195,7 +195,7 @@ func checks() -> void:
 	assert(result.score == 625 and saved.best_score == 900)
 	assert(saved.finish_expedition(restored.to_checkpoint(), false).is_empty())
 	for stage in [0, 1, 3, 5, 6, 7, 8, 10]:
-		prepare(["mulan", "peter", "alice"], stage)
+		prepare(["joao", "peter", "alice"], stage)
 		await capture("biome_%s_mobile" % Biomes.KEYS[Biomes.biome(stage)])
 	root.content_scale_size = Vector2i(1280, 800)
 	root.size = Vector2i(1280, 800)

@@ -53,6 +53,8 @@ func checks() -> void:
 		assert(run.actors[0].energy == 0 and not run.actors[0].ult_pending)
 		if id == "rapunzel":
 			assert(result.healed > 0 and run.actors[1].shield > 0)
+		elif id == "peter":
+			assert(result.damage == 0 and run.actors[0].spirit_flames == 3 and run.actors[0].shield > 0)
 		else:
 			assert(result.damage > 0)
 		if id in ["ariel", "scarlet"]:

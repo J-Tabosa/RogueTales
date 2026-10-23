@@ -3,7 +3,7 @@ extends AnimatedSprite2D
 ## Idle holds frame 0, then occasionally plays a blink or a short sway once.
 
 enum IdleState { REST, BLINK, SWAY }
-enum AttackStyle { BOMB, HAIR, APPLE, SWORD, TIDE, CROSSBOW, DAGGER, CARDS, GREATSWORD, MATCH, SPIRIT, LAMP }
+enum AttackStyle { BOMB, HAIR, APPLE, SWORD, TIDE, CROSSBOW, DAGGER, CARDS, GREATSWORD, MATCH, SPIRIT, LAMP, CANE, GOBLET }
 
 @export_group("Personagem")
 @export var hero_name := "Scarlet"
@@ -36,6 +36,9 @@ var idle_rng := RandomNumberGenerator.new()
 func _ready() -> void:
 	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	idle_rng.randomize()
+	frame_changed.connect(sync_alpha)
+	animation_changed.connect(sync_alpha)
+	sync_alpha()
 	animation_finished.connect(_on_animation_finished)
 	show_animation(String(animation))
 
@@ -80,7 +83,7 @@ func is_hair_attack() -> bool:
 
 
 func is_melee_attack() -> bool:
-	return attack_style in [AttackStyle.HAIR, AttackStyle.SWORD, AttackStyle.DAGGER, AttackStyle.GREATSWORD, AttackStyle.SPIRIT]
+	return attack_style in [AttackStyle.HAIR, AttackStyle.SWORD, AttackStyle.DAGGER, AttackStyle.GREATSWORD, AttackStyle.CANE]
 
 
 func get_weapon_label() -> String:
@@ -92,7 +95,7 @@ func get_weapon_label() -> String:
 		AttackStyle.SWORD:
 			return "Lâmina da guerreira"
 		AttackStyle.TIDE:
-			return "Tridente das marés"
+			return "Leque das marés"
 		AttackStyle.CROSSBOW:
 			return "Besta de caçador"
 		AttackStyle.DAGGER:
@@ -105,6 +108,10 @@ func get_weapon_label() -> String:
 			return "Fósforos encantados"
 		AttackStyle.SPIRIT:
 			return "Adaga espectral"
+		AttackStyle.CANE:
+			return "Bengala de doces"
+		AttackStyle.GOBLET:
+			return "Taça de suco de uva"
 		AttackStyle.LAMP:
 			return "Lâmpada dos três desejos"
 	return "Bombas à distância"
@@ -224,3 +231,20 @@ func seek_animation(anim: String, elapsed: float) -> void:
 			set_frame_and_progress(index, clampf(remaining / duration, 0, 0.999))
 			return
 		remaining -= duration
+
+func sync_alpha() -> void:
+	if sprite_frames==null or not sprite_frames.has_animation(animation):return
+	var texture: Texture2D=sprite_frames.get_frame_texture(animation,frame)
+	if not texture is MeshTexture:return
+	# MeshTexture's padded logical canvas is larger than its real silhouette.
+	# Supply the actual local drawing bounds for canvas clipping on resized views.
+	var volume: AABB=texture.mesh.get_aabb()
+	RenderingServer.canvas_item_set_custom_rect(get_canvas_item(),true,Rect2(Vector2(volume.position.x,volume.position.y)+offset,Vector2(volume.size.x,volume.size.y)).grow(24))
+	var path: String=texture.base_texture.resource_path
+	var shader_material:=material as ShaderMaterial
+	if shader_material==null:return
+	var alpha_path:=path.get_basename()+"_alpha.png"
+	var enabled:=path.ends_with(".jpg") and ResourceLoader.exists(alpha_path)
+	shader_material.set_shader_parameter("use_alpha_mask",enabled)
+	shader_material.set_shader_parameter("frame_anchor",Vector2(1400,1400) if enabled else Vector2(360,580))
+	if enabled:shader_material.set_shader_parameter("alpha_mask",load(alpha_path))

@@ -4,13 +4,13 @@ Roguelite de combate por esquadrões em **Godot 4.7 / GDScript**. Uma run atrave
 
 ## Jogar
 
-Importe `project.godot` na Godot 4.7 e pressione **F5**. Escolha **Nova run**, um protagonista já revelado e uma bênção inicial. As **12 mundos de 6 fases (72 combates) formam uma única expedição**, com chefes nas fases **4, 8 e 12**. Vida, energia, equipe e build continuam de uma fase à próxima. O combate é automático por iniciativa; ULTs também podem ser usadas manualmente.
+Importe `project.godot` na Godot 4.7 e pressione **F5**. Escolha **Nova run**, um protagonista já revelado e uma bênção inicial. As **12 mundos de 6 fases (72 combates) formam uma única expedição**, com um chefe ao final de cada mundo. Vida, energia, equipe e build continuam de uma fase à próxima. O combate é automático por iniciativa; ULTs também podem ser usadas manualmente.
 
 Após vencer, escolha uma de três melhorias. Há **25% de chance por tela** de uma carta ser um convite temporário, inclusive na primeira recompensa. Não existe convite garantido. O sorteio é da tela inteira, não de cada uma das três cartas. Recarregar não altera as opções. O grupo comporta três integrantes; com a equipe cheia, um convite exige uma substituição.
 
 Entre fases, escolha cartas de rota: combate comum, elite, fogueira, mercador ou evento. Elites têm +35% de PV e +15% de dano; ao vencê-las, ganhe +25 ouro e +10% de dano na run. A fogueira custa 18 ouro e recupera a equipe; o mercador vende suprimentos e relíquias, com compras salvas individualmente. A página proibida troca PV máximos por dano. Chefes têm uma rota obrigatória.
 
-No modo Conto, derrota, abandono ou vitória na fase 12 encerram a tentativa. No Infinito, a fase 12 abre uma nova volta. **Ouro da run, relíquias, transformações e convidados são temporários**. Desbloqueios, feitos, recordes e memórias são permanentes. As memórias abrem novas bênçãos iniciais; as três primeiras estão disponíveis desde o começo. Bônus de níveis, treinamento e escolhas da campanha antiga não entram nos atributos de novas runs. Uma build forte pode vencer sem receber um convite.
+No modo Conto, derrota, abandono ou vitória após os 12 mundos encerram a tentativa. O modo Infinito só fica disponível depois de concluir as 72 fases. **Ouro da run, relíquias, transformações e convidados são temporários**. Desbloqueios, feitos, recordes e memórias são permanentes. As memórias abrem novas bênçãos iniciais; as três primeiras estão disponíveis desde o começo. Bônus de níveis, treinamento e escolhas da campanha antiga não entram nos atributos de novas runs. Uma build forte pode vencer sem receber um convite.
 
 A coleção usa **faixas verticais com artes grandes e pergaminho**: carrossel no celular e uma faixa larga no PC. Personagens bloqueados são silhuetas pretas, com nome **???**, classe e habilidades ocultas. Um convite permite experimentar o viajante no combate, mas a ficha só é revelada com o desbloqueio permanente. Só um protagonista começa a próxima run.
 
@@ -24,14 +24,14 @@ A coleção usa **faixas verticais com artes grandes e pergaminho**: carrossel n
 | Assassina | Fica no meio. Busca a retaguarda mais ferida e tem 35% de esquiva. |
 | Artilheira | Fica atrás. Alcança todas as linhas e prioriza a menor armadura. |
 
-As regras também valem para os inimigos, que agora lutam em esquadrões de até três unidades, com classe, linha, vida, armadura, esquiva e relógio de ataque próprios. A morte de um alvo permite escolher outro elegível, incluindo durante a preparação do golpe. Cada acerto pertence a uma única animação. Mulan e Rapunzel avançam ao alvo; as maçãs de Branca de Neve viajam em linha reta.
+As regras também valem para os inimigos, que agora lutam em esquadrões de até três unidades, com classe, linha, vida, armadura, esquiva e relógio de ataque próprios. A morte de um alvo permite escolher outro elegível, incluindo durante a preparação do golpe. Cada acerto pertence a uma única animação. Mulan, João e Gato de Botas avançam ao alvo; as maçãs de Branca de Neve viajam em linha reta.
 
 ## Combate idle e feedback
 
 A referência de Unicorn Overlord é a apresentação da arena: equipes em lados opostos, personagens avançando para golpear e projéteis atravessando o campo. Nas runs, o combate é automático por intervalo individual, sem AP/PP na interface. Uma animação completa sua antecipação, impacto e retorno antes da próxima ação. Aliados e inimigos têm a mesma oportunidade de agir; a ordem prioriza quem está esperando há mais tempo.
 
 - **Ritmo:** caminhada de 2,8 s até o encontro, entrada dos inimigos, aviso de 1,15 s e início da luta. Golpes duram pelo menos 1,12 s, ataques inimigos 1,3 s, com recuperação entre ações.
-- **ULT:** faixa de 62 px no canto, com nome e personagem; preparação de 0,55 s e efeito ilustrado de seis quadros no impacto. O aviso não cobre a arena. As doze ULTs usam folhas geradas com o criador de imagens: cortes, ondas, cartas, flechas, fogo e fios. Alice abre um leque dos quatro naipes e espalha as cartas até cada alvo real. A abertura mantém a duração em 1×/2×. ULTs gastam 100 mana; comandos durante uma ação ficam na fila.
+- **ULT:** faixa de 62 px no canto, com nome e personagem; preparação de 0,55 s e efeito ilustrado de seis quadros no impacto. O aviso não cobre a arena. As doze ULTs usam folhas geradas com o criador de imagens: cortes, ondas, cartas, flechas, fogo e fios. Alice lança cartas a partir de si e detona um círculo do naipe atual em volta dos inimigos. A abertura mantém a duração em 1×/2×. ULTs gastam 100 mana; comandos durante uma ação ficam na fila.
 - **Passivas:** avisos laterais com personagem, habilidade e efeito. As reações recarregam 6 s depois de consumidas; sinergias compartilham esse recurso interno. Não exigem configuração tática do jogador.
 - **Vida e mana:** números e barras nos cartões laterais do PC e inferiores do celular, além dos PV sobre as unidades. Escudo aparece numericamente; cura, dano, guarda e esquiva aparecem no campo.
 - **Histórico:** quatro mensagens recentes no canto e até 150 entradas por encontro. O botão Histórico pausa para ler ataques, alvos reais atingidos, valores, cura, escudo, ULT e passivas. Não há previsão de alvo inimigo na tela.
@@ -248,3 +248,13 @@ A campanha tem 12 mundos e seis encontros por mundo, com chefe no sexto encontro
 Os efeitos de ataque, impacto e ULT usam uma camada acima dos sprites. A orientação dos inimigos é ajustada por pose. Vendedora e Gato preservam a metade da altura humana, com posição e ordem de desenho para permanecerem visíveis. Alice e Rapunzel usam fontes HD sem reduzir os pixels originais e retratos próprios.
 
 Validação adicional: `godot --headless --path . --script tests/worlds_polish.gd`. Com renderização disponível, adicione `-- /caminho/para/capturas` para verificar arena, impactos e ULT em celular e PC.
+
+## Artes integradas
+
+As cenas usam `assets/characters/<personagem>/frames.tres`: dez kits com 34 quadros cada, spritesheets JPEG em resolução nativa e máscaras PNG que preservam transparência, bordas e brilho dos efeitos. Os oito cenários JPEG ficam em `assets/biomes/arena_*.jpg`, com o chão ampliado em profundidade para todos os mundos. As imagens substituídas e os arquivos-fonte estão em `old/`, fora da importação e dos exports.
+
+As formações têm posições fixas e espelhadas: vanguarda à frente, assassinos no meio e magos/atiradores atrás. Cada linha admite até três personagens; o limite atual da equipe continua sendo três. Humanos têm altura equivalente; Gato de Botas mede metade e a Vendedora mede três quartos. Os painéis de vida têm moldura de madeira, números de PV e barra de mana. Ataques e ULTs usam efeitos próprios seguindo a origem e o alvo real.
+
+João desfere cinco estocadas, Maria reduz a armadura por seis segundos, Ariel limpa efeitos negativos e Peter recebe três chamas que concedem escudo e retaliam ataques recebidos. Os retratos usam a mesma arte atual com recortes próprios, sem compartilhar a malha de combate.
+
+Reconstrução das artes: `GODOT=/caminho/godot python tools/build_art.py`. Detalhes em `assets/characters/ART_PIPELINE.md`; referências e prompts em `old/source/PROMPTS.json`.

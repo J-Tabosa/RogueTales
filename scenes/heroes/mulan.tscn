@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/hero.gd" id="1_hero"]
-[ext_resource type="SpriteFrames" path="res://assets/mulan/mulan_frames.tres" id="2_frames"]
+[ext_resource type="SpriteFrames" path="res://assets/characters/mulan/frames.tres" id="2_frames"]
 [ext_resource type="Shader" path="res://assets/hero/shaders/idle_motion.gdshader" id="3_motion"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_mulan"]
@@ -16,7 +16,7 @@ sprite_frames = ExtResource("2_frames")
 animation = &"idle"
 autoplay = "idle"
 centered = false
-offset = Vector2(-360, -580)
+offset = Vector2(-1400, -1400)
 script = ExtResource("1_hero")
 hero_name = "Mulan"
 hero_title = "A Lâmina do Amanhecer"

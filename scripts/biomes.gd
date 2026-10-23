@@ -31,14 +31,12 @@ static func sheet(biome_id: int) -> Texture2D:
 	return textures[key]
 
 static func scenery(stage: int) -> Texture2D:
-	if not textures.has("scenery"): textures["scenery"] = load("res://assets/biomes/scenery.webp")
-	var source: Texture2D = textures.scenery
-	var cell := source.get_size() / Vector2(2, 4)
-	var id := biome(stage)
-	var atlas := AtlasTexture.new()
-	atlas.atlas = source
-	atlas.region = Rect2(Vector2(id % 2, id / 2) * cell, cell)
-	return atlas
+	var key: String = "arena:"+KEYS[biome(stage)]
+	if not textures.has(key): textures[key]=load("res://assets/biomes/arena_%s.jpg" % KEYS[biome(stage)])
+	return textures[key]
+
+static func floor_window(stage: int) -> Vector2:
+	return [Vector2(.42,.92),Vector2(.44,.86),Vector2(.44,.84),Vector2(.435,.99),Vector2(.45,.98),Vector2(.43,.82),Vector2(.52,.88),Vector2(.44,.98)][biome(stage)]
 
 static func pick(stage: int, phase: int, slot: int, rng: RandomNumberGenerator, chosen: Array[int]) -> int:
 	var deck: Array[int] = [0, 1, 2, 3, 4, 5]

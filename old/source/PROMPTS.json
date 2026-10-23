@@ -1,0 +1,14 @@
++{
+  "tool": "image_gen built-in",
+  "style": "Thin angular cel animation, small head, long limbs; approved reference identity preserved",
+  "motion_grid": "4 columns, 7 rows requested; actual source layouts recorded in sources.json",
+  "characters": {
+    "aladin": "Aladin, lean adult man, angular smug face, long black hair, teal open shirt, rust short vest, rust waist sash, dark long trousers and pointed boots, gold lamp always held in one hand. Walk: float slightly above ground, calm forward drift, loose clothes move, stable height. Attack: rub lamp with other hand and release lamp nozzle forward; no wind painted, VFX separate.",
+    "ariel": "Ariel, lean adult blonde sleepy mermaid with blue eyes, dark circles, messy long blonde hair, cropped white tank top exposing midriff, long blue fish tail, blue folding fan. Walk: hover forward lazily gently swaying tail and hair. Attack: lazily move one arm, flick open fan forward with bored expression; no water painted, VFX separate.",
+    "puss": "Puss in Boots, slender angular black cat, sharp yellow eyes, broad black feathered swordsman hat, plain black coat with red lining, dark boots, enormous straight two handed claymore larger than himself. Walk: deliberate slow walk sword resting across one shoulder. Attack: forward low dash then vertical claymore swing from bottom to top, clear recovery; no slash VFX painted. Keep him a feline, not human, and preserve lean small head proportions.",
+    "joao": "Joao, lanky slim red haired freckled young adult aristocrat, angular small head, fitted simple red tailcoat and red trousers, white collared shirt, black formal shoes, red and white striped Christmas candy cane. Walk: elegant forward walk holding cane. Attack: fast low forward dash followed by straight cane thrust towards right, extend arm, then recoil and recover. No magical VFX painted.",
+    "maria": "Maria, slim red haired freckled adult noblewoman, angular face, long red hair in ponytail, red elegant plain long dress with dark lining, dark boots, holding a gold stemmed goblet of purple grape juice. Walk: elegant poised walk holding goblet. Attack: gracefully swing goblet forward and splash motion towards right, lean forearm then recover; no actual liquid painted because VFX separate."
+  },
+  "rapunzel": "Preserve purple outfit, gold hair whip and black boots; thin sharp angular design. 8 idle/variation poses and 26 walk/attack poses, full hair padded.",
+  "walk_corrections": "Puss and Maria: 16 distinct walking poses, 4 columns x 4 rows, same design and foot baseline, no attack, no background, no shadows."
+}

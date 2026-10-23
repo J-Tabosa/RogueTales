@@ -8,8 +8,11 @@ uniform float walk_phase = 0.0;
 uniform float shoulder_swing : hint_range(0.0, 16.0) = 6.0;
 uniform float shoulder_roll : hint_range(0.0, 12.0) = 4.0;
 
+uniform bool use_alpha_mask = false;
+uniform sampler2D alpha_mask : filter_linear, repeat_disable;
+uniform vec2 frame_anchor=vec2(360.0,580.0);
 void vertex() {
-	vec2 point = VERTEX;
+	vec2 point = VERTEX - (frame_anchor-vec2(360.0,580.0));
 	float upper_body = 1.0 - smoothstep(345.0, 410.0, point.y);
 	float cape = (1.0 - smoothstep(285.0, 370.0, point.x))
 		* (1.0 - smoothstep(440.0, 580.0, point.y));
@@ -29,3 +32,5 @@ void vertex() {
 	VERTEX.y += stride * shoulder_roll * side * shoulders * walk_weight;
 	VERTEX.y -= sin(walk_phase * 2.0) * shoulder_roll * 0.18 * upper_body * walk_weight;
 }
+
+void fragment(){if(use_alpha_mask){COLOR.a*=texture(alpha_mask,UV).r;}}
