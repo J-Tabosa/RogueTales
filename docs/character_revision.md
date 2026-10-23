@@ -1,5 +1,7 @@
 # Personagens, leitura de combate e duelos secretos
 
+Atualização posterior de arte, recortes, ficha e tela cheia: [Consistência visual](visual_consistency.md).
+
 A formação aprovada continua com as mesmas posições. As folhas de animação agora têm limites por fileira: um quadro não pode puxar o pé da pose acima. Espera e caminhada usam a mesma altura visível e a mesma âncora dos pés. Mulan ganhou uma caminhada completa; o Gato usa 62% da altura humana, e a Vendedora continua com 75%. Os perfis de largura são compartilhados por arena, cenas editáveis e galeria. Rapunzel, Peter e Vendedora preservam seus desenhos aprovados.
 
 Branca de Neve recebeu 34 quadros na temática de cientista do veneno: laço vermelho, cabelo preto, maçã, frasco verde, jaleco branco e roupa azul. Os originais e prompts estão em `old/source/revision_2`; a folha anterior está em `old/assets/snow_white`. Somente JPEG com máscara alfa PNG é carregado pelos novos sprites e chefes. `old/.gdignore` impede importação e exportação do acervo.

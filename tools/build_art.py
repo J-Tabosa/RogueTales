@@ -28,8 +28,6 @@ for entry in manifest:
   sizes=np.bincount(labels.ravel());sizes[0]=0
   assert sizes.max()>20,(entry['hero'],entry['kind'],at,'body core missing')
   seeds[labels==sizes.argmax()]=at+1
- _,nearest=nd.distance_transform_edt(seeds==0,return_indices=True)
- ownership=seeds[tuple(nearest)];ownership[alpha<8]=0
  # A pose may never borrow feet or hair from another row. Locate the actual
  # transparent gutter rather than assuming generated rows have exact heights.
  projection=(alpha>40).sum(axis=1)
@@ -41,10 +39,18 @@ for entry in manifest:
   boundary=lo+int(np.argmin(smooth[lo:hi]))
   boundaries.append(boundary)
  boundaries.append(h)
- for at in range(count):
-  row=at//cols
-  ownership[:boundaries[row]][ownership[:boundaries[row]]==at+1]=0
-  ownership[boundaries[row+1]:][ownership[boundaries[row+1]:]==at+1]=0
+ # Resolve ownership inside each row independently. Global nearest seeds let
+ # the next row's head steal the current row's boots; zeroing that label later
+ # silently clips the legs. A transparent gutter is a hard ownership boundary.
+ ownership=np.zeros_like(seeds)
+ for row in range(rows):
+  lo,hi=boundaries[row:row+2]
+  local=seeds[lo:hi].copy()
+  local[(local<row*cols+1)|(local>min(count,(row+1)*cols))]=0
+  if not local.any():continue
+  _,nearest=nd.distance_transform_edt(local==0,return_indices=True)
+  ownership[lo:hi]=local[tuple(nearest)]
+ ownership[alpha<8]=0
  frames=[]
  for at in range(1,count+1):
   pieces,n=nd.label(ownership==at,np.ones((3,3)))

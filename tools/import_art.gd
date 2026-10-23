@@ -8,6 +8,8 @@ func _initialize() -> void:
 		for sheet in sheets:
 			var source:=Image.load_from_file("res://"+str(sheet.source))
 			assert(source!=null,str(sheet))
+			if sheet.kind in ["actions","portraits"]:bake_portraits(source,sheet)
+			if sheet.kind=="portraits":continue
 			var output: String="res://"+str(sheet.output)
 			DirAccess.make_dir_recursive_absolute(output.get_base_dir())
 			if sheet.kind!="arena":
@@ -22,9 +24,12 @@ func _initialize() -> void:
 			assert(source.save_jpg(output,0.97)==OK)
 		quit()
 		return
+	var separate_attack:Dictionary={}
+	for sheet in sheets:
+		if sheet.kind=="attack":separate_attack[sheet.hero]=true
 	var heroes: Dictionary={}
 	for sheet in sheets:
-		if sheet.kind in ["effects","arena"]:continue
+		if sheet.kind in ["effects","arena","portraits"]:continue
 		if sheet.kind=="secret":
 			import_secret(sheet)
 			continue
@@ -65,7 +70,8 @@ func _initialize() -> void:
 			var walk_count:int=sheet.walk_count
 			if walk_count==16:
 				for at in 16:frames.add_frame("walk",poses[at])
-			for at in 10:frames.add_frame("attack",poses[walk_count+at])
+			if not separate_attack.has(id):
+				for at in 10:frames.add_frame("attack",poses[walk_count+at])
 		else:
 			var count:int=16 if sheet.kind=="walk" else 10
 			for at in count:frames.add_frame(sheet.kind,poses[mini(at,poses.size()-1)])
@@ -123,3 +129,43 @@ func import_secret(sheet: Dictionary) -> void:
 			frames.set_animation_loop(animation,not animation.ends_with("attack"))
 			for column in 5 if animation.ends_with("attack") else 1: frames.add_frame(animation,poses[column])
 		assert(ResourceSaver.save(frames,"res://assets/secrets/%s_%d.tres"%[str(sheet.hero).trim_prefix("secret_"),row])==OK)
+
+func save_pair(image: Image,path: String) -> void:
+	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
+	image.convert(Image.FORMAT_RGBA8)
+	var data:=image.get_data()
+	var alpha:=PackedByteArray()
+	alpha.resize(image.get_width()*image.get_height())
+	for at in alpha.size():alpha[at]=data[at*4+3]
+	assert(Image.create_from_data(image.get_width(),image.get_height(),false,Image.FORMAT_L8,alpha).save_png(path.get_basename()+"_alpha.png")==OK)
+	var rgb:=image.duplicate()
+	rgb.convert(Image.FORMAT_RGB8)
+	assert(rgb.save_jpg(path,.97)==OK)
+
+func bake_portraits(source: Image,sheet: Dictionary) -> void:
+	# Bake the isolated pose once. A UV rectangle over a sheet can expose a
+	# neighbour's feet or hair; the ownership mask is authoritative for UI too.
+	var b:Array=sheet.frames[0].bounds
+	var ownership:=FileAccess.get_file_as_bytes(sheet.mask)
+	source.convert(Image.FORMAT_RGBA8)
+	var bytes:=source.get_data()
+	var out:=PackedByteArray()
+	out.resize(int(b[2])*int(b[3])*4)
+	for y in int(b[3]):
+		for x in int(b[2]):
+			var at:=(y+int(b[1]))*source.get_width()+x+int(b[0])
+			var target:=(y*int(b[2])+x)*4
+			for channel in 4:out[target+channel]=bytes[at*4+channel] if channel<3 or ownership[at]==1 else 0
+	var body:=Image.create_from_data(b[2],b[3],false,Image.FORMAT_RGBA8,out)
+	var base:="res://assets/characters/%s/"%str(sheet.hero)
+	save_pair(body,base+"display.jpg")
+	var focus:Vector2=preload("res://scripts/character_visuals.gd").FACE.get(sheet.hero,Vector2(.55,.2))
+	var extent:=ceili(body.get_height()*(.56 if sheet.hero=="puss" else .48))
+	var origin:=Vector2i(Vector2(body.get_size())*focus-Vector2.ONE*extent*.5)
+	var face:=Image.create(extent,extent,false,Image.FORMAT_RGBA8)
+	face.fill(Color.TRANSPARENT)
+	for y in extent:
+		for x in extent:
+			var point:=origin+Vector2i(x,y)
+			if Rect2i(Vector2i.ZERO,body.get_size()).has_point(point):face.set_pixel(x,y,body.get_pixelv(point))
+	save_pair(face,base+"portrait.jpg")

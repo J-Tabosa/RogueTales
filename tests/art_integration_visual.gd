@@ -29,11 +29,16 @@ func checks() -> void:
 	root.add_child(game)
 	game.set_process(false)
 	game.campaign=TaleCampaign.new()
+	game.campaign.window_mode="windowed"
+	game.campaign.window_mode_selected=true
+	game.apply_window_mode()
+	await create_timer(.15).timeout
 	game.campaign.unlocked.assign(TaleCatalog.HEROES.keys())
 	game.campaign.auto_ult=false
 	for dimensions in [Vector2i(540,960),Vector2i(1280,800)]:
 		root.content_scale_size=dimensions
 		root.size=dimensions
+		await create_timer(.1).timeout
 		game.center_content()
 		var mode:="mobile" if dimensions.x==540 else "pc"
 		for world in 12:

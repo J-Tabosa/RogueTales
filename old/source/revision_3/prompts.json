@@ -1,0 +1,94 @@
+{
+  "method": "Native imagegen with reference-guided transparent sheets",
+  "jobs": [
+    {
+      "id": "mulan_actions",
+      "refs": [
+        "assets/hero/idle.png",
+        "old/source/rapunzel_idle.png",
+        "old/assets/revision/mulan_actions.webp"
+      ],
+      "prompt": "Use case: style-transfer. Asset: production 2D game sprite atlas. Reference image 1 (Scarlet) and reference image 2 (Rapunzel) define the EXACT common graphic language and BODY PROPORTIONS: angular expressive face, LARGE sharp cartoon eyes, graphic pointed chin, bold clean black contour, flat limited cel colors, very simple angular shadow shapes, sturdy torso, ordinary-width arms and legs, compact stylized body about 4.5 heads tall. MATCH their head-to-body ratio and body width; no long fashion-model legs, no realistic painted anime anatomy, no soft shading, no photorealism, no toddler/chibi proportions. Preserve the readable adult cartoon silhouette. All poses face RIGHT. Exactly FOUR columns by TWO rows = EIGHT full-body poses, first row four quiet idle poses, second row four small idle facial/hand variations. Each character must occupy ONLY 68% of cell HEIGHT with HUGE TRANSPARENT gutters on all four sides; no head, boot, tail, item or clothing may touch a cell border or canvas edge. Constant body height and baseline between poses. Actual transparent background. No text, labels, scenery, floor, cast shadow or particles. Character: MULAN, preserve the Chinese military identity and teal/charcoal outfit of reference 3, with white split sash, black ponytail and practical dark boots. Simplify armor to 2-3 broad graphic plates with no microdetail. Asian almond-shaped eyes, confident serious expression, one hand always resting on the sword hilt at her hip while standing calmly. She must share Scarlet/Rapunzel's compact sturdy cartoon anatomy, not the reference-3 elongated fashion body. The idle variations are a glance, a blink, a small confident smirk, and shifting the hilt hand."
+    },
+    {
+      "id": "ariel_actions",
+      "refs": [
+        "assets/hero/idle.png",
+        "old/source/rapunzel_idle.png",
+        "old/assets/revision/ariel_actions.webp"
+      ],
+      "prompt": "Use case: style-transfer. Asset: production 2D game sprite atlas. Reference image 1 (Scarlet) and reference image 2 (Rapunzel) define the EXACT common graphic language and BODY PROPORTIONS: angular expressive face, LARGE sharp cartoon eyes, graphic pointed chin, bold clean black contour, flat limited cel colors, very simple angular shadow shapes, sturdy torso, ordinary-width arms and legs, compact stylized body about 4.5 heads tall. MATCH their head-to-body ratio and body width; no long fashion-model legs, no realistic painted anime anatomy, no soft shading, no photorealism, no toddler/chibi proportions. Preserve the readable adult cartoon silhouette. All poses face RIGHT. Exactly FOUR columns by TWO rows = EIGHT full-body poses, first row four quiet idle poses, second row four small idle facial/hand variations. Each character must occupy ONLY 68% of cell HEIGHT with HUGE TRANSPARENT gutters on all four sides; no head, boot, tail, item or clothing may touch a cell border or canvas edge. Constant body height and baseline between poses. Actual transparent background. No text, labels, scenery, floor, cast shadow or particles. Character: ARIEL, keep the identity/design from reference 3: young adult blonde mermaid with messy loose hair, BLUE eyes with dark tired under-eye marks, plain WHITE cropped tank top, BLUE fish tail, a simple BLUE folding fan. No human legs. Lazy and mildly annoyed sleepy personality. Her compact torso, expressive face, substantial arms, broad simple tail, line weight and flat colors must match references 1 and 2, rather than reference 3's elongated narrow anatomy. Tail curls gently under her, full tail fin entirely visible. Quiet idle variations include a small yawn, half-closed eyes and lazily opening the fan with one arm. No excessive accessories."
+    },
+    {
+      "id": "snow_white_actions",
+      "refs": [
+        "assets/hero/idle.png",
+        "old/source/rapunzel_idle.png"
+      ],
+      "prompt": "Use case: style-transfer. Asset: production 2D game sprite atlas. Reference image 1 (Scarlet) and reference image 2 (Rapunzel) define the EXACT common graphic language and BODY PROPORTIONS: angular expressive face, LARGE sharp cartoon eyes, graphic pointed chin, bold clean black contour, flat limited cel colors, very simple angular shadow shapes, sturdy torso, ordinary-width arms and legs, compact stylized body about 4.5 heads tall. MATCH their head-to-body ratio and body width; no long fashion-model legs, no realistic painted anime anatomy, no soft shading, no photorealism, no toddler/chibi proportions. Preserve the readable adult cartoon silhouette. All poses face RIGHT. Exactly FOUR columns by TWO rows = EIGHT full-body poses, first row four quiet idle poses, second row four small idle facial/hand variations. Each character must occupy ONLY 68% of cell HEIGHT with HUGE TRANSPARENT gutters on all four sides; no head, boot, tail, item or clothing may touch a cell border or canvas edge. Constant body height and baseline between poses. Actual transparent background. No text, labels, scenery, floor, cast shadow or particles. Character: a COMPLETE new design of SNOW WHITE as an eccentric poison scientist. She must look like a member of Scarlet and Rapunzel's SAME cartoon cast, with EXACTLY their head/face proportions and bold simple shapes. Pale skin, asymmetric jagged BLACK bob haircut, tilted RED hair bow, half-lidded GREEN eyes, dark angular under-eye circles, mischievous wide grin with small TRIANGULAR SERRATED teeth. A simple boxy WHITE lab coat with elbow-length sleeves over a modest NAVY short A-line dress, chunky dark boots, RED apple in one hand and SMALL GREEN poison vial in the other. No yellow clothes. Avoid realistic anime scientist, curvy pinup anatomy, smooth round baby face, tiny eyes, long thin legs, glossy skin or elaborate costume. Strong angular mad-scientist attitude. Alternate quietly inspecting the apple, grinning, a blink, and tipping the small vial while standing. Keep limbs and torso substantial like Rapunzel."
+    },
+    {
+      "id": "joao_attack",
+      "refs": [
+        "assets/hero/idle.png",
+        "old/source/rapunzel_idle.png",
+        "old/assets/revision/joao_actions.webp"
+      ],
+      "prompt": "Use case: precise-object-edit. Production attack sprite sheet, exactly FIVE columns and TWO rows, TEN successive full-body right-facing frames. Character identity is JOAO in reference 3: red-haired freckled noble young man in a simple RED suit, white shirt, dark shoes, red-white striped Christmas CANDY CANE. Match reference 1/2 bold angular cel cartoon art and compact sturdy normal limbs, roughly 4.5-5 heads tall, no chibi, no long needle legs. Action: ready, lower into fencing stance, dash to the RIGHT, STRAIGHT-TIP THRUST to the right, follow through, recoil, recover. CRITICAL WEAPON RULE: he grips the CURVED HOOK/HANDLE END in his hand BEHIND the weapon; the LONG STRAIGHT SHAFT extends HORIZONTALLY RIGHT, ending in the straight pointed tip that hits the enemy. The hook stays beside/behind his fist at the LEFT/rear. NEVER thrust with the rounded hook, NEVER place a curve at the right-facing impact tip. Show the whole candy cane in every frame, generous empty transparent gutters (at least 15% cell margins), no item crosses a cell edge. Fixed body height and boot baseline. No FX, text, background, ground or shadows; genuine transparent canvas."
+    },
+    {
+      "id": "mulan_walk",
+      "prompt": "Create a production ready transparent sprite sheet EDIT matching reference 1 EXACTLY in character identity, costume, colors, head size and sturdy body proportions. References 2 and 3 are the approved game's art: clean bold angular ink, flat cel shading, expressive faces, compact body with substantial arms and thighs. No realistic rendering, no thin fashion silhouette, no chibi. Character: mulan. Animation: serious disciplined walk to the RIGHT, one hand at sheathed sword hilt, full step cycle. 16 sequential full body frames in an exact 4 column by 4 row grid. Each cell identical size. Entire character including hair, weapons, boots or tail must fit fully INSIDE its own cell with at least 12% transparent padding on every side; never touch neighbor or canvas edges. Keep identical visible body height and fixed foot baseline across frames. Do not make the character progressively smaller. No scenery, no ground, no shadows on background, no text, no labels, no particles or spell effects. True transparent background. Detailed crisp high resolution sprite sheet.",
+      "refs": [
+        "/workspace/scratch/3141db23f84b/RogueTales/old/source/revision_3/mulan_actions.png",
+        "/workspace/scratch/3141db23f84b/RogueTales/assets/hero/idle.png",
+        "/workspace/scratch/3141db23f84b/RogueTales/old/source/rapunzel_idle.png"
+      ]
+    },
+    {
+      "id": "mulan_attack",
+      "prompt": "Create a production ready transparent sprite sheet EDIT matching reference 1 EXACTLY in character identity, costume, colors, head size and sturdy body proportions. References 2 and 3 are the approved game's art: clean bold angular ink, flat cel shading, expressive faces, compact body with substantial arms and thighs. No realistic rendering, no thin fashion silhouette, no chibi. Character: mulan. Animation: dash and horizontal sword slash to the RIGHT, anticipates, lunges, slashes horizontally, returns guard. 10 sequential full body frames in an exact 5 column by 2 row grid. Each cell identical size. Entire character including hair, weapons, boots or tail must fit fully INSIDE its own cell with at least 12% transparent padding on every side; never touch neighbor or canvas edges. Keep identical visible body height and fixed foot baseline across frames. Do not make the character progressively smaller. No scenery, no ground, no shadows on background, no text, no labels, no particles or spell effects. True transparent background. Detailed crisp high resolution sprite sheet.",
+      "refs": [
+        "/workspace/scratch/3141db23f84b/RogueTales/old/source/revision_3/mulan_actions.png",
+        "/workspace/scratch/3141db23f84b/RogueTales/assets/hero/idle.png",
+        "/workspace/scratch/3141db23f84b/RogueTales/old/source/rapunzel_idle.png"
+      ]
+    },
+    {
+      "id": "ariel_walk",
+      "prompt": "Create a production ready transparent sprite sheet EDIT matching reference 1 EXACTLY in character identity, costume, colors, head size and sturdy body proportions. References 2 and 3 are the approved game's art: clean bold angular ink, flat cel shading, expressive faces, compact body with substantial arms and thighs. No realistic rendering, no thin fashion silhouette, no chibi. Character: ariel. Animation: float in place while travelling RIGHT with blue mermaid tail swishing gently, sleepy bored expression, no human legs. 16 sequential full body frames in an exact 4 column by 4 row grid. Each cell identical size. Entire character including hair, weapons, boots or tail must fit fully INSIDE its own cell with at least 12% transparent padding on every side; never touch neighbor or canvas edges. Keep identical visible body height and fixed foot baseline across frames. Do not make the character progressively smaller. No scenery, no ground, no shadows on background, no text, no labels, no particles or spell effects. True transparent background. Detailed crisp high resolution sprite sheet.",
+      "refs": [
+        "/workspace/scratch/3141db23f84b/RogueTales/old/source/revision_3/ariel_actions.png",
+        "/workspace/scratch/3141db23f84b/RogueTales/assets/hero/idle.png",
+        "/workspace/scratch/3141db23f84b/RogueTales/old/source/rapunzel_idle.png"
+      ]
+    },
+    {
+      "id": "ariel_attack",
+      "prompt": "Create a production ready transparent sprite sheet EDIT matching reference 1 EXACTLY in character identity, costume, colors, head size and sturdy body proportions. References 2 and 3 are the approved game's art: clean bold angular ink, flat cel shading, expressive faces, compact body with substantial arms and thighs. No realistic rendering, no thin fashion silhouette, no chibi. Character: ariel. Animation: lazy one handed blue fan swipe to RIGHT, bored expression, fan opens and flicks then recovers; no water effect drawn. 10 sequential full body frames in an exact 5 column by 2 row grid. Each cell identical size. Entire character including hair, weapons, boots or tail must fit fully INSIDE its own cell with at least 12% transparent padding on every side; never touch neighbor or canvas edges. Keep identical visible body height and fixed foot baseline across frames. Do not make the character progressively smaller. No scenery, no ground, no shadows on background, no text, no labels, no particles or spell effects. True transparent background. Detailed crisp high resolution sprite sheet.",
+      "refs": [
+        "/workspace/scratch/3141db23f84b/RogueTales/old/source/revision_3/ariel_actions.png",
+        "/workspace/scratch/3141db23f84b/RogueTales/assets/hero/idle.png",
+        "/workspace/scratch/3141db23f84b/RogueTales/old/source/rapunzel_idle.png"
+      ]
+    },
+    {
+      "id": "snow_white_walk",
+      "prompt": "Create a production ready transparent sprite sheet EDIT matching reference 1 EXACTLY in character identity, costume, colors, head size and sturdy body proportions. References 2 and 3 are the approved game's art: clean bold angular ink, flat cel shading, expressive faces, compact body with substantial arms and thighs. No realistic rendering, no thin fashion silhouette, no chibi. Character: snow_white. Animation: confident mischievous walking cycle to RIGHT holding apple and poison flask. 16 sequential full body frames in an exact 4 column by 4 row grid. Each cell identical size. Entire character including hair, weapons, boots or tail must fit fully INSIDE its own cell with at least 12% transparent padding on every side; never touch neighbor or canvas edges. Keep identical visible body height and fixed foot baseline across frames. Do not make the character progressively smaller. No scenery, no ground, no shadows on background, no text, no labels, no particles or spell effects. True transparent background. Detailed crisp high resolution sprite sheet.",
+      "refs": [
+        "/workspace/scratch/3141db23f84b/RogueTales/old/source/revision_3/snow_white_actions.png",
+        "/workspace/scratch/3141db23f84b/RogueTales/assets/hero/idle.png",
+        "/workspace/scratch/3141db23f84b/RogueTales/old/source/rapunzel_idle.png"
+      ]
+    },
+    {
+      "id": "snow_white_attack",
+      "prompt": "Create a production ready transparent sprite sheet EDIT matching reference 1 EXACTLY in character identity, costume, colors, head size and sturdy body proportions. References 2 and 3 are the approved game's art: clean bold angular ink, flat cel shading, expressive faces, compact body with substantial arms and thighs. No realistic rendering, no thin fashion silhouette, no chibi. Character: snow_white. Animation: winds up and throws red apple to RIGHT with forward arm, keeps green flask in other hand, grin, recovers. 10 sequential full body frames in an exact 5 column by 2 row grid. Each cell identical size. Entire character including hair, weapons, boots or tail must fit fully INSIDE its own cell with at least 12% transparent padding on every side; never touch neighbor or canvas edges. Keep identical visible body height and fixed foot baseline across frames. Do not make the character progressively smaller. No scenery, no ground, no shadows on background, no text, no labels, no particles or spell effects. True transparent background. Detailed crisp high resolution sprite sheet.",
+      "refs": [
+        "/workspace/scratch/3141db23f84b/RogueTales/old/source/revision_3/snow_white_actions.png",
+        "/workspace/scratch/3141db23f84b/RogueTales/assets/hero/idle.png",
+        "/workspace/scratch/3141db23f84b/RogueTales/old/source/rapunzel_idle.png"
+      ]
+    }
+  ]
+}

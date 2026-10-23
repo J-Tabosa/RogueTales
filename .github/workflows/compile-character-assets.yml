@@ -1,0 +1,52 @@
+name: Compile validated character assets
+on:
+  push:
+    branches: [codex/character-visual-consistency]
+permissions:
+  contents: write
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install build dependencies
+        run: python -m pip install pillow numpy scipy
+      - name: Install pinned Godot
+        run: |
+          curl --fail --location --retry 3 https://github.com/godotengine/godot/releases/download/4.7-stable/Godot_v4.7-stable_linux.x86_64.zip -o "$RUNNER_TEMP/godot.zip"
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP/godot-runtime"
+          mv "$RUNNER_TEMP/godot-runtime/Godot_v4.7-stable_linux.x86_64" "$RUNNER_TEMP/godot"
+          chmod +x "$RUNNER_TEMP/godot"
+      - name: Rebuild native atlases and clean portraits
+        env:
+          GODOT: ${{ runner.temp }}/godot
+        run: python tools/build_art.py
+      - name: Validate images and all headless suites
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import os, subprocess
+          from PIL import Image
+          for path in Path('assets').rglob('*'):
+              if path.suffix.lower() in ['.png', '.jpg', '.webp']:
+                  Image.open(path).verify()
+          for path in sorted(Path('tests').glob('*.gd')):
+              if path.stem.endswith('_visual'):
+                  continue
+              result = subprocess.run([os.environ['RUNNER_TEMP']+'/godot', '--headless', '--path', '.', '--script', 'res://'+str(path)], capture_output=True, text=True, timeout=75)
+              output = result.stdout + result.stderr
+              print(path.name, output, flush=True)
+              if result.returncode or 'SCRIPT ERROR' in output or 'ERROR:' in output:
+                  raise SystemExit('Validation failed: '+str(path))
+          PY
+      - name: Save validated generated resources on the build branch
+        run: |
+          git add assets/characters assets/secrets assets/biomes
+          if ! git diff --cached --quiet; then
+            git -c user.name='RogueTales Asset Build' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'build: integrate validated character atlases and portraits'
+            git push origin HEAD:refs/heads/codex/character-visual-consistency
+          fi
