@@ -46,6 +46,8 @@ var last_resolved_run := 0
 var best_depth := 0
 var best_score := 0
 var expedition_wins := 0
+var hero_milestones: Dictionary = {}
+var blessing_credit: Dictionary = {}
 var blessings_unlocked: Array[String] = ["vigor", "fury", "echo"]
 var best_endless := 0
 var endless_runs := 0
@@ -173,7 +175,8 @@ func choose_memory(index: int, choice: String) -> bool:
 
 func to_dict() -> Dictionary:
 	return {
-		"version": 8,
+		"version": 9,
+		"hero_milestones":hero_milestones.duplicate(true),"blessing_credit":blessing_credit.duplicate(),
 		"best_endless": best_endless, "endless_runs": endless_runs,
 		"discovered_synergies": discovered_synergies.duplicate(), "discovered_events": discovered_events.duplicate(),
 		"best_score": best_score, "best_depth": best_depth, "expedition_wins": expedition_wins,
@@ -222,6 +225,12 @@ func to_dict() -> Dictionary:
 
 
 func load_data(data: Dictionary) -> void:
+	hero_milestones={}
+	blessing_credit=data.get("blessing_credit",{}).duplicate() if data.get("blessing_credit",{}) is Dictionary else {}
+	var milestones:Dictionary=data.get("hero_milestones",{}) if data.get("hero_milestones",{}) is Dictionary else {}
+	for hero in TaleCatalog.HEROES:
+		var p:Dictionary=milestones.get(hero,{}) if milestones.get(hero,{}) is Dictionary else {}
+		hero_milestones[hero]={"rooms":clampi(int(p.get("rooms",0)),0,12),"secret":bool(p.get("secret",false)),"win":bool(p.get("win",false))}
 	best_endless = clampi(int(data.get("best_endless", 0)), 0, 2147483647)
 	endless_runs = maxi(0, int(data.get("endless_runs", 0)))
 	discovered_synergies.clear()
@@ -410,7 +419,7 @@ func load_from(path: String = SAVE_PATH) -> bool:
 			parser.parse(FileAccess.get_file_as_string(candidate)) == OK
 			and parser.data is Dictionary
 		):
-			if int(parser.data.get("version", 0)) in [1, 2, 3, 4, 5, 6, 7, 8]:
+			if int(parser.data.get("version", 0)) in [1, 2, 3, 4, 5, 6, 7, 8, 9]:
 				load_data(parser.data)
 				return true
 	return false
@@ -548,7 +557,7 @@ func valid_checkpoint_party(data: Dictionary) -> bool:
 		return data.health.size() == party.size()
 	var ids: Variant = data.hero_ids
 	var drafted: Variant = data.get("drafted", [])
-	if not ids is Array or not drafted is Array or ids.is_empty() or ids.size() > 3:
+	if not ids is Array or not drafted is Array or ids.is_empty() or ids.size() > (clampi(int(data.get("party_capacity",3)),3,9) if data.get("expedition",false) else 3):
 		return false
 	if data.health.size() != ids.size():
 		return false
@@ -559,6 +568,12 @@ func valid_checkpoint_party(data: Dictionary) -> bool:
 		if not unlocked.has(id) and not drafted.has(id):
 			return false
 		seen.append(id)
+	if data.get("expedition",false):
+		var rows:Dictionary={}
+		for id in ids:
+			var row:=preload("res://scripts/tactics.gd").rank_for_class(TaleCatalog.HERO_TACTICS[id]["class"])
+			rows[row]=int(rows.get(row,0))+1
+			if rows[row]>3:return false
 	return true
 
 
@@ -646,6 +661,7 @@ func finish_expedition(data: Dictionary, won: bool) -> Dictionary:
 	var number := int(data.get("run_id", 0))
 	if not data.get("expedition", false) or number <= last_resolved_run or number > run_counter:
 		return {}
+	preload("res://scripts/hero_blessings.gd").record(self,data,won and not data.get("endless",false))
 	var newly_unlocked := resolve_run(data, won)
 	best_score = maxi(best_score, int(data.get("score", 0)))
 	var infinite := bool(data.get("endless", false))

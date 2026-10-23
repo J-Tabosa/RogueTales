@@ -1,18 +1,26 @@
 # RogueTales: O Último Fio
 
-Roguelite de combate por esquadrões em **Godot 4.7 / GDScript**. Uma run atravessa **12 mundos de 6 fases (72 combates)**, com 12 protagonistas, builds temporárias, encontros raros de companheiros e equipes de até três integrantes em três linhas. Interface mobile, galeria de silhuetas, habilidades individuais, ataques automáticos por intervalo, passivas com recarga e ULTs. No PC, os controles ficam na lateral; no celular, na base.
+Roguelite de combate por esquadrões em **Godot 4.7 / GDScript**. Uma run atravessa **12 mundos de 6 fases (72 combates)**, com 12 protagonistas, builds temporárias, encontros raros de companheiros e equipes de até nove integrantes em três linhas. Interface mobile, galeria de silhuetas, habilidades individuais, ataques automáticos por intervalo, passivas com recarga e ULTs. No PC, os controles ficam na lateral; no celular, na base.
 
 ## Jogar
 
 Importe `project.godot` na Godot 4.7 e pressione **F5**. Escolha **Nova run**, um protagonista já revelado e uma bênção inicial. As **12 mundos de 6 fases (72 combates) formam uma única expedição**, com um chefe ao final de cada mundo. Vida, energia, equipe e build continuam de uma fase à próxima. O combate é automático por iniciativa; ULTs também podem ser usadas manualmente.
 
-Após vencer, escolha uma de três melhorias. Há **25% de chance por tela** de uma carta ser um convite temporário, inclusive na primeira recompensa. Não existe convite garantido. O sorteio é da tela inteira, não de cada uma das três cartas. Recarregar não altera as opções. O grupo comporta três integrantes; com a equipe cheia, um convite exige uma substituição.
+Após vencer, escolha uma de três melhorias. Há **25% de chance por tela** de uma carta ser um convite temporário, inclusive na primeira recompensa. Não existe convite garantido. O sorteio é da tela inteira, não de cada uma das três cartas. Recarregar não altera as opções. A capacidade começa em três integrantes e aumenta até nove com vagas compradas no mercador. Cada posição comporta até três viajantes; um convite exige substituição se a capacidade total ou a posição estiver cheia.
 
-Entre fases, escolha cartas de rota: combate comum, elite, fogueira, mercador ou evento. Elites têm +35% de PV e +15% de dano; ao vencê-las, ganhe +25 ouro e +10% de dano na run. A fogueira custa 18 ouro e recupera a equipe; o mercador vende suprimentos e relíquias, com compras salvas individualmente. A página proibida troca PV máximos por dano. Chefes têm uma rota obrigatória.
+Entre fases, escolha cartas de rota: combate comum, elite, fogueira, mercador ou evento. Elites têm +35% de PV e +15% de dano; ao vencê-las, ganhe +25 ouro e +10% de dano na run. A fogueira custa 18 ouro e recupera a equipe; o mercador vende suprimentos, relíquias, equipamentos e vagas de equipe, com compras salvas individualmente. A página proibida troca PV máximos por dano. Chefes têm uma rota obrigatória.
 
-No modo Conto, derrota, abandono ou vitória após os 12 mundos encerram a tentativa. O modo Infinito só fica disponível depois de concluir as 72 fases. **Ouro da run, relíquias, transformações e convidados são temporários**. Desbloqueios, feitos, recordes e memórias são permanentes. As memórias abrem novas bênçãos iniciais; as três primeiras estão disponíveis desde o começo. Bônus de níveis, treinamento e escolhas da campanha antiga não entram nos atributos de novas runs. Uma build forte pode vencer sem receber um convite.
+No modo Conto, derrota, abandono ou vitória após os 12 mundos encerram a tentativa. O modo Infinito só fica disponível depois de concluir as 72 fases. **Ouro da run, relíquias, transformações e convidados são temporários**. Desbloqueios, feitos, recordes e memórias são permanentes. Cada protagonista possui quatro bênçãos pessoais: uma inicial, uma por vencer 12 fases vivo, uma por vencer seu chefe secreto vivo e uma por concluir a expedição vivo. Escolha uma ao iniciar a run; as bênçãos antigas continuam compatíveis com checkpoints legados. Bônus de níveis, treinamento e escolhas da campanha antiga não entram nos atributos de novas runs. Uma build forte pode vencer sem receber um convite.
 
 A coleção usa **faixas verticais com artes grandes e pergaminho**: carrossel no celular e uma faixa larga no PC. Personagens bloqueados são silhuetas pretas, com nome **???**, classe e habilidades ocultas. Um convite permite experimentar o viajante no combate, mas a ficha só é revelada com o desbloqueio permanente. Só um protagonista começa a próxima run.
+
+## Itens, recompensas e equipe
+
+Cada personagem pode equipar dois itens pelo botão **Itens** junto aos seus PV e mana. A bolsa também abre nas encruzilhadas, no mercador e após duelos secretos. Trocas acontecem entre encontros; abrir a bolsa durante a luta pausa o combate para consulta. No PC, os cartões da equipe rolam verticalmente; no celular, horizontalmente.
+
+Há dez equipamentos comuns e doze troféus de chefes secretos, com cópias físicas: o mesmo exemplar não pode estar em dois personagens. Os efeitos incluem a água de Ariel incendiando, conversão de fogo em veneno, reverberação, reflexão, escudos, cura, crítico e modificadores de ULT. Equipar PV máximos não cura. Itens pertencem à run e seus efeitos e portadores ficam salvos no checkpoint.
+
+Recompensas comuns têm 40% de chance de oferecer um equipamento; após chefes de área, uma das três escolhas é sempre um item. Cada chefe secreto concede seu troféu uma única vez por run, além do bônus pessoal existente. Ouro aumenta conforme o número de inimigos e os chefes vencidos. Vagas adicionais custam 150, 400, 900, 1.500, 2.200 e 3.000 de ouro, chegando a nove integrantes. Desbloqueios pessoais de bênçãos persistem entre runs, com crédito por participação sem duplicação ao recarregar.
 
 ## Classes e alvos
 
@@ -24,7 +32,7 @@ A coleção usa **faixas verticais com artes grandes e pergaminho**: carrossel n
 | Assassina | Fica no meio. Busca a retaguarda mais ferida e tem 35% de esquiva. |
 | Artilheira | Fica atrás. Alcança todas as linhas e prioriza a menor armadura. |
 
-As regras também valem para os inimigos, que agora lutam em esquadrões de até três unidades, com classe, linha, vida, armadura, esquiva e relógio de ataque próprios. A morte de um alvo permite escolher outro elegível, incluindo durante a preparação do golpe. Cada acerto pertence a uma única animação. Mulan, João e Gato de Botas avançam ao alvo; as maçãs de Branca de Neve viajam em linha reta.
+As regras também valem para os inimigos, que agora lutam em esquadrões aleatórios de uma a nove unidades, com classe, linha, vida, armadura, esquiva e relógio de ataque próprios. A morte de um alvo permite escolher outro elegível, incluindo durante a preparação do golpe. Cada acerto pertence a uma única animação. Mulan, João e Gato de Botas avançam ao alvo; as maçãs de Branca de Neve viajam em linha reta.
 
 ## Combate idle e feedback
 
@@ -42,9 +50,9 @@ Os checkpoints legados mantêm suas rodadas anteriores para poderem ser concluí
 
 ## Formação, escala e biomas
 
-A formação das runs segue a classe e corrige checkpoints antigos: **vanguarda à frente, assassinos no meio, magos/atiradores/artilheira atrás**. Personagens da mesma linha ficam lado a lado, com a mesma coordenada de profundidade. Humanos têm a mesma altura visível, medida pela arte em vez do tamanho do arquivo. Gato de Botas e Vendedora têm metade dessa altura. Os pés ficam ancorados durante ataque, caminhada e mudança de resolução.
+A formação das runs segue a classe e corrige checkpoints antigos: **vanguarda à frente, assassinos no meio, magos/atiradores/artilheira atrás**. Cada posição começa centralizada: um viajante fica no meio, dois ficam acima e abaixo e três formam uma coluna reta. A formação é espelhada para os inimigos e mantém os espaços dos personagens derrotados durante o encontro. Humanos têm a mesma altura visível, medida pela arte em vez do tamanho do arquivo. Gato de Botas mede metade dessa altura; a Vendedora mede três quartos. Os pés ficam ancorados durante ataque, caminhada e mudança de resolução.
 
-Oito biomas cobrem os doze atos: bosque (1/3), castelo (2/5), gelo/jade (4/10), marés (6), fogo (7), biblioteca/tear (8/12), pântano (9) e dunas (11). Cada um tem cenário próprio e **seis inimigos distintos**, totalizando 48 identidades com quatro poses de ataque por identidade. Encontros sorteiam variantes sem repetir a mesma dentro do grupo. Melee avança com dash e retorna; magos conjuram em área; assassinos procuram a retaguarda, com fallback pelo meio e frente.
+Oito biomas cobrem os doze atos: bosque (1/3), castelo (2/5), gelo/jade (4/10), marés (6), fogo (7), biblioteca/tear (8/12), pântano (9) e dunas (11). Cada um tem cenário próprio e **seis inimigos distintos**, totalizando 48 identidades com quatro poses de ataque por identidade. Encontros sorteiam de um a nove inimigos, respeitando até três por posição; grupos grandes podem repetir variantes. Chefes de área aparecem com dois lacaios e têm escala maior. Melee avança com dash e retorna; magos conjuram em área; assassinos procuram a retaguarda, com fallback pelo meio e frente.
 
 As artes foram feitas com **image_gen integrado**, usando Scarlet e Alice como referência de desenho, e empacotadas pelo Godot em WebP com alpha. Cenários e inimigos em `assets/biomes/`; ULTs em `assets/effects/`. Prompts completos em `assets/BIOME_ART_PROMPTS.json`. `tools/detect_biome_frames.py` identifica as regiões pela transparência e cria metadados de cada pose; `tools/prepare_biome_art.gd` usa esses metadados para empacotar as imagens no Godot, preservando a arte mesmo quando a folha não tem linhas uniformes. As imagens não dependem de caminhos temporários em runtime.
 
@@ -152,7 +160,7 @@ A janela padrão no PC é **1280 × 720**, redimensionável, com tela cheia e co
 | Controle | Ação |
 | --- | --- |
 | Mouse / toque | Navegação, formação e ULTs |
-| 1, 2, 3 | ULT da integrante correspondente |
+| 1 a 9 | ULT da integrante correspondente |
 | Espaço / Esc | Pausar ou retomar o combate |
 | A | Alternar ULT automática |
 | F11 | Tela cheia / janela |
@@ -216,6 +224,8 @@ Texturas, retratos, estilos e cenas usam cache; a arena tem até seis unidades e
 
 ```sh
 godot --headless --path . --editor --quit
+godot --headless --path . --script tests/equipment_progression.gd
+godot --headless --path . --script tests/equipment_ui.gd
 godot --headless --path . --script tests/biomes_formation.gd
 godot --headless --path . --script tests/idle_feedback.gd
 godot --headless --path . --script tests/party_combat.gd
@@ -253,7 +263,7 @@ Validação adicional: `godot --headless --path . --script tests/worlds_polish.g
 
 As cenas usam `assets/characters/<personagem>/frames.tres`: dez kits com 34 quadros cada, spritesheets JPEG em resolução nativa e máscaras PNG que preservam transparência, bordas e brilho dos efeitos. Os oito cenários JPEG ficam em `assets/biomes/arena_*.jpg`, com o chão ampliado em profundidade para todos os mundos. As imagens substituídas e os arquivos-fonte estão em `old/`, fora da importação e dos exports.
 
-As formações têm posições fixas e espelhadas: vanguarda à frente, assassinos no meio e magos/atiradores atrás. Cada linha admite até três personagens; o limite atual da equipe continua sendo três. Humanos têm altura equivalente; Gato de Botas mede metade e a Vendedora mede três quartos. Os painéis de vida têm moldura de madeira, números de PV e barra de mana. Ataques e ULTs usam efeitos próprios seguindo a origem e o alvo real.
+As formações têm posições fixas e espelhadas: vanguarda à frente, assassinos no meio e magos/atiradores atrás. Cada linha admite até três personagens; a equipe pode crescer de três até nove integrantes por meio do mercador. Humanos têm altura equivalente; Gato de Botas mede metade e a Vendedora mede três quartos. Os painéis de vida têm moldura de madeira, números de PV e barra de mana. Ataques e ULTs usam efeitos próprios seguindo a origem e o alvo real.
 
 João desfere cinco estocadas, Maria reduz a armadura por seis segundos, Ariel limpa efeitos negativos e Peter recebe três chamas que concedem escudo e retaliam ataques recebidos. Os retratos usam a mesma arte atual com recortes próprios, sem compartilhar a malha de combate.
 

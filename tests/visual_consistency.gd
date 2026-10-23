@@ -60,12 +60,12 @@ func checks() -> void:
 		game.apply_window_mode()
 		await process_frame
 		await process_frame
-		assert(root.mode==Window.MODE_EXCLUSIVE_FULLSCREEN)
+		assert(game.get_window().mode==Window.MODE_FULLSCREEN)
 		for i in 4:
 			await f11()
-			assert(root.mode==(Window.MODE_WINDOWED if i%2==0 else Window.MODE_EXCLUSIVE_FULLSCREEN),"F11 must change the actual native window mode once")
+			assert(game.get_window().mode==(Window.MODE_WINDOWED if i%2==0 else Window.MODE_FULLSCREEN),"F11 must change the actual native window mode once")
 		await f11()
-		assert(root.mode==Window.MODE_WINDOWED)
+		assert(game.get_window().mode==Window.MODE_WINDOWED)
 	var unlocks:Array=game.campaign.unlocked.duplicate()
 	game.toggle_debug()
 	game.reveal_debug_roster()
@@ -101,6 +101,7 @@ func checks() -> void:
 		prepare(["scarlet","alice","ariel"])
 		var height:float=game.arena.human_height()
 		while game.run.tactics.enemies.size()<3:game.run.tactics.enemies.append(game.run.tactics.enemies[0].duplicate(true))
+		game.run.tactics.enemies.resize(3)
 		for foe in game.run.tactics.enemies:foe.row="front"
 		game.arena.sync_enemies()
 		assert(game.arena.human_height()==height,"Enemy row composition must never shrink anyone")
@@ -136,11 +137,11 @@ func checks() -> void:
 		game.apply_embedded_fullscreen()
 		await process_frame
 		await process_frame
-		assert(game.get_window()==game.fullscreen_host and game.fullscreen_host.mode==Window.MODE_EXCLUSIVE_FULLSCREEN)
+		assert(game.get_window()==game.fullscreen_host and game.fullscreen_host.mode==Window.MODE_FULLSCREEN)
 		await f11()
 		assert(game.get_window()==game.fullscreen_host and game.fullscreen_host.mode==Window.MODE_WINDOWED,"Editor fallback keeps its native keyboard target")
 		await f11()
-		assert(game.fullscreen_host.mode==Window.MODE_EXCLUSIVE_FULLSCREEN)
+		assert(game.fullscreen_host.mode==Window.MODE_FULLSCREEN)
 	print("VISUAL CONSISTENCY PASS: native F11/default, temporary all-hero debug, 34 frames, standard gallery height/baseline, stable arena scale, 8 live stat boxes and separate skills")
 	if is_instance_valid(game.fullscreen_host):
 		var host:Window=game.fullscreen_host

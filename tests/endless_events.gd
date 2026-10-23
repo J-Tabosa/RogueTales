@@ -47,7 +47,7 @@ func checks() -> void:
 		assert(run.apply_relic(choice))
 		assert(run.choose_route("battle"))
 	assert(run.build_history.is_empty() and run.relics.size() < 12)
-	assert(run.upgrade_total() == 180)
+	assert(run.upgrade_total() + run.inventory.size() == 180)
 	for i in 20: assert(run.apply_relic("power"))
 	assert(run.upgrade_count("power") > 3)
 	run.interlude = "route"
@@ -82,9 +82,11 @@ func checks() -> void:
 	assert(is_equal_approx(resumed.actors[1].max_hp, expected))
 	resumed.rooms_cleared = 181
 	resumed.stage = 1
+	resumed.rng.seed = 812
 	resumed.spawn_enemy()
 	var strength: float = resumed.enemy_max
 	resumed.rooms_cleared = 193
+	resumed.rng.seed = 812
 	resumed.spawn_enemy()
 	assert(resumed.enemy_max > strength)
 	resumed.rooms_cleared = 100000

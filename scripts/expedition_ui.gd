@@ -4,7 +4,9 @@ const Content = preload("res://scripts/expedition_content.gd")
 const Synergies = preload("res://scripts/team_synergies.gd")
 const TeamEvents = preload("res://scripts/team_events.gd")
 const BossRules = preload("res://scripts/boss_rules.gd")
-var chosen_blessing := "vigor"
+const Blessings = preload("res://scripts/hero_blessings.gd")
+const Equipment = preload("res://scripts/equipment.gd")
+var chosen_blessing := "blessing:scarlet:0"
 var chosen_endless := false
 var gallery_building := false
 var gallery_size := Vector2.ZERO
@@ -76,7 +78,7 @@ func show_map() -> void:
 		navigation("map")
 		return
 	if not campaign.unlocked.has(selected_hero): selected_hero = campaign.party[0]
-	if not campaign.blessings_unlocked.has(chosen_blessing): chosen_blessing = "vigor"
+	if Blessings.data(chosen_blessing).get("hero","")!=selected_hero or not Blessings.unlocked(campaign,chosen_blessing):chosen_blessing=Blessings.id_for(selected_hero,0)
 	chosen_endless = false
 	label(page, "CONTO · 12 MUNDOS  →  INFINITO APÓS VENCER", Rect2(24, 183, 492, 46), 14, GOLD)
 	var hero := button(page, "", Rect2(24, 246, 492, 118), show_heroes)
@@ -84,27 +86,26 @@ func show_map() -> void:
 	label(hero, "PROTAGONISTA", Rect2(123, 11, 350, 21), 10, GOLD)
 	label(hero, TaleCatalog.HEROES[selected_hero].name, Rect2(123, 38, 350, 35), 22)
 	label(hero, "%s · trocar →" % TaleCatalog.hero_class_name(selected_hero), Rect2(123, 81, 350, 26), 14, MUTED)
-	var inner := scroll_area(381, 321, Content.BLESSINGS.size() * 108)
-	var i := 0
-	for key in Content.BLESSINGS:
-		var data: Dictionary = Content.BLESSINGS[key]
-		var owned := campaign.blessings_unlocked.has(key)
-		var card := button(inner, "", Rect2(0, i * 108, 476, 98), choose_blessing.bind(key), chosen_blessing == key and owned)
-		label(card, data.name + ("" if owned else " · %d memórias" % data.cost), Rect2(14, 9, 448, 28), 18, Color("192329") if chosen_blessing == key and owned else GOLD)
-		label(card, data.detail, Rect2(14, 44, 448, 45), 14, Color("29363b") if chosen_blessing == key and owned else MUTED)
-		i += 1
+	var inner := scroll_area(381,321,4*156)
+	for i in 4:
+		var key:=Blessings.id_for(selected_hero,i)
+		var data:=Blessings.data(key)
+		var owned:=Blessings.unlocked(campaign,key)
+		var card:=button(inner,"",Rect2(0,i*156,476,146),choose_blessing.bind(key),chosen_blessing==key and owned)
+		label(card,("LIBERADA · " if owned else "BLOQUEADA · ")+data.title,Rect2(14,9,448,30),18,GOLD)
+		label(card,data.detail,Rect2(14,44,448,53),14,MUTED)
+		label(card,Blessings.mission(campaign,key),Rect2(14,103,448,36),12,Color("9dc5a5") if owned else Color("d7b18c"))
+
 	label(page, "Ouro, habilidades e convidados pertencem a esta tentativa.\nDesbloqueios e memórias continuam depois dela.", Rect2(24, 724, 492, 55), 14, MUTED)
 	button(page, "Iniciar expedição  →", Rect2(24, 798, 492, 60), begin_expedition, true)
 	navigation("map")
 
 func choose_blessing(id: String) -> void:
-	if not campaign.blessings_unlocked.has(id):
-		if not campaign.unlock_blessing(id):
-			modal("Uma nova possibilidade", "%s\n\nChegue à fase %d e reúna %d memórias para liberar esta bênção inicial." % [Content.BLESSINGS[id].name, 4 if id == "thorns" else 8, Content.BLESSINGS[id].cost])
-			button(overlay, "Voltar", Rect2(32, 614, 476, 56), show_map, true)
-			return
-	chosen_blessing = id
-	persist()
+	if not Blessings.unlocked(campaign,id):
+		modal("Bênção pessoal bloqueada",Blessings.data(id).detail+"\n\n"+Blessings.mission(campaign,id))
+		button(overlay,"Voltar",Rect2(32,680,476,56),show_map,true)
+		return
+	chosen_blessing=id
 	show_map()
 
 func set_run_mode(infinite: bool) -> void:
@@ -123,6 +124,7 @@ func begin_expedition() -> void:
 
 func persist_run() -> void:
 	campaign.checkpoint = run.to_checkpoint()
+	if run.expedition:Blessings.record(campaign,campaign.checkpoint)
 	persist()
 
 func enter_encounter() -> void:
@@ -243,7 +245,8 @@ func show_relics() -> void:
 		var title: String = offer.title
 		var detail: String = run.upgrade_detail(id)
 		var note := "RELÍQUIA · ACÚMULO %d" % (run.upgrade_count(id) + 1)
-		if offer.has("owner"): note = "HABILIDADE · " + str(TaleCatalog.HEROES[offer.owner].name)
+		if offer.has("item"):note="EQUIPAMENTO · ESCOLHA O PORTADOR NO INVENTÁRIO"
+		elif offer.has("owner"): note = "HABILIDADE · " + str(TaleCatalog.HEROES[offer.owner].name)
 		elif offer.has("hero"):
 			var owned := campaign.unlocked.has(offer.hero)
 			title = str(TaleCatalog.HEROES[offer.hero].name) if owned else "Um viajante desconhecido"
@@ -261,7 +264,7 @@ func select_relic(id: String, replace_index: int = -1) -> void:
 	if state != "choice" or not run.offers.has(id): return
 	var offer := TaleCatalog.offer_data(id)
 	if offer.is_empty(): return
-	if offer.has("hero") and run.actors.size() == 3 and replace_index < 0:
+	if offer.has("hero") and not run.can_recruit(offer.hero) and replace_index < 0:
 		show_recruit_replacement(id)
 		return
 	var applied: bool = run.recruit(campaign, offer.hero, replace_index) if offer.has("hero") else run.apply_relic(id)
@@ -282,8 +285,8 @@ func show_routes() -> void:
 	journey_modal("Uma encruzilhada", "%s · %d ouro · escolha o próximo caminho." % [run.phase_label(), run.run_gold])
 	if Content.is_boss(run.stage, run.phase):
 		label(overlay, TaleCatalog.STAGES[run.stage].boss, Rect2(32, 390, 476, 75), 28, GOLD)
-		label(overlay, BossRules.description(run.stage), Rect2(32, 482, 476, 166), 18, MUTED)
-		button(overlay, "Enfrentar o chefe  →", Rect2(32, 673, 476, 58), select_route.bind("battle"), true)
+		label(overlay, BossRules.description(run.stage), Rect2(32, 482, 476, 132), 18, MUTED)
+		button(overlay, "Enfrentar o chefe  →", Rect2(32, 624, 476, 50), select_route.bind("battle"), true)
 	else:
 		for index in run.route_offers.size():
 			var key: String = run.route_offers[index]
@@ -291,8 +294,34 @@ func show_routes() -> void:
 			var card := button(overlay, "", Rect2(32, 390 + index * 116, 476, 106), select_route.bind(key))
 			label(card, data.title, Rect2(14, 9, 448, 33), 21, GOLD)
 			label(card, data.detail, Rect2(14, 48, 448, 50), 14, MUTED)
+	button(overlay,"Itens · %d"%run.inventory.size(),Rect2(32,682,230,48),show_equipment.bind(0))
+	button(overlay,"Equipe · %d/%d"%[run.actors.size(),run.party_capacity],Rect2(278,682,230,48),show_run_build)
 	button(overlay, "Ver build", Rect2(32, 758, 230, 48), show_run_build)
 	button(overlay, "Salvar e sair", Rect2(278, 758, 230, 48), leave_battle)
+
+func show_recruit_replacement(id: String) -> void:
+	if not is_expedition():
+		super.show_recruit_replacement(id)
+		return
+	state = "replacement"
+	var offer := TaleCatalog.offer_data(id)
+	journey_modal("Quem abre espaço?", "%s · capacidade %d/%d. Cada posição comporta até 3 viajantes." % [TaleCatalog.HEROES[offer.hero].name, run.actors.size(), run.party_capacity])
+	var scroll := ScrollContainer.new()
+	scroll.name = "RecruitReplacementScroll"
+	scroll.set_script(preload("res://scripts/touch_scroll.gd"))
+	scroll.position = Vector2(32, 390)
+	scroll.size = Vector2(476, 354)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	overlay.add_child(scroll)
+	register_layout(scroll, "center")
+	var inner := Control.new()
+	inner.custom_minimum_size = Vector2(460, run.actors.size() * 96)
+	scroll.add_child(inner)
+	for index in run.actors.size():
+		var actor: Dictionary = run.actors[index]
+		var card := button(inner, "Substituir %s\n%d / %d PV" % [TaleCatalog.HEROES[actor.id].name, actor.hp, actor.max_hp], Rect2(0, index * 96, 460, 86), confirm_replacement.bind(id, index))
+		card.disabled = not run.can_recruit(offer.hero, index)
+	button(overlay, "Voltar às opções", Rect2(32, 778, 476, 52), show_relics)
 
 func walk_to_routes() -> void:
 	build_battle()
@@ -310,21 +339,26 @@ func select_route(id: String) -> void:
 	else: enter_encounter()
 
 func show_run_shop() -> void:
-	state = "shop"
+	state="shop"
 	clear_page()
-	header("Mercador de histórias", "%d ouro nesta run · compras não voltam a aparecer." % run.run_gold)
-	for index in run.shop_stock.size():
-		var key: String = run.shop_stock[index]
-		var data := {"title": "Frasco de recomeço", "detail": "Cure 35% dos PV e levante um aliado com 20%."} if key == "potion" else TaleCatalog.offer_data(key)
-		var cost := 22 if key == "potion" else 32
-		var bought := run.shop_bought.has(key)
-		var card := button(page, "", Rect2(24, 228 + index * 162, 492, 146), buy_run_supply.bind(key))
-		card.disabled = bought or run.run_gold < cost
-		label(card, data.title, Rect2(16, 12, 460, 32), 22, GOLD)
-		label(card, data.detail, Rect2(16, 51, 460, 48), 15, MUTED)
-		label(card, "COMPRADO" if bought else "%d OURO" % cost, Rect2(16, 111, 460, 23), 12, GOLD)
-	button(page, "Seguir viagem  →", Rect2(24, 773, 492, 60), leave_run_shop, true)
-	button(page, "Salvar e sair", Rect2(24, 848, 492, 48), leave_battle)
+	header("Mercador de histórias","%d ouro · equipe %d/%d · até 3 por posição."%[run.run_gold,run.actors.size(),run.party_capacity])
+	var keys:Array[String]=["capacity"]
+	keys.append_array(run.shop_stock)
+	var inner:=scroll_area(196,548,keys.size()*154)
+	for index in keys.size():
+		var key:String=keys[index]
+		var data:Dictionary={"title":"Expandir equipe · +1 espaço","detail":"Capacidade %d → %d. Até 9 no total; cada posição continua com até 3 personagens."%[run.party_capacity,mini(9,run.party_capacity+1)]} if key=="capacity" else {"title":"Frasco de recomeço","detail":"Cure 35% dos PV e levante um aliado com 20%."} if key=="potion" else TaleCatalog.offer_data(key)
+		var cost:int=run.supply_cost(key)
+		var bought:bool=run.shop_bought.has(key)
+		var card:=button(inner,"",Rect2(0,index*154,476,144),buy_run_supply.bind(key))
+		card.set_meta("shop_item",key)
+		card.disabled=bought or cost<0 or run.run_gold<cost
+		label(card,data.title,Rect2(14,9,448,32),21,GOLD)
+		label(card,data.detail,Rect2(14,48,448,61),14,MUTED)
+		label(card,"EQUIPE NO MÁXIMO" if cost<0 else "COMPRADO" if bought else "%d OURO"%cost,Rect2(14,113,448,23),12,GOLD)
+	button(page,"Equipar itens · %d no inventário"%run.inventory.size(),Rect2(24,756,492,48),show_equipment.bind(0))
+	button(page,"Seguir viagem →",Rect2(24,818,316,56),leave_run_shop,true)
+	button(page,"Salvar e sair",Rect2(356,818,160,56),leave_battle)
 
 func buy_run_supply(id: String) -> void:
 	if state == "shop" and run.buy_supply(id):
@@ -388,7 +422,7 @@ func show_run_build() -> void:
 		entries.append({"actor":actor,"description":description,"height":text_height})
 		total_height+=text_height+115
 	var inner := scroll_area(190,593,total_height)
-	label(inner, "BÊNÇÃO · " + str(Content.BLESSINGS[run.blessing].name), Rect2(0, 0, 476, 42), 18, GOLD)
+	label(inner, "BÊNÇÃO · " + str(Blessings.data(run.blessing).get("title",Content.BLESSINGS.get(run.blessing,{}).get("name","Bênção"))), Rect2(0, 0, 476, 42), 18, GOLD)
 	var y := 63.0
 	for key in pairs:
 		var pair: Dictionary = Synergies.PAIRS[key]
@@ -710,7 +744,7 @@ func show_help() -> void:
 	clear_page()
 	header("Uma run, doze páginas", "Prepare o protagonista; descubra o restante durante a tentativa.")
 	var inner := scroll_area(190, 674, 1290)
-	label(inner, "1. MODOS\nConto: 12 mundos com 6 fases cada, totalizando 72 combates. Cada mundo termina em um chefe e cura 12% dos PV dos sobreviventes. Após vencer os 12 mundos, escolha continuar no infinito com a mesma build e dificuldade crescente. Novos marcos de 12 páginas concedem memórias no fim da tentativa.\n\n2. COMBATE\nAtaques automáticos seguem o intervalo de cada personagem. ULTs gastam 100 mana e têm apresentação própria. Passivas ativam automaticamente com recarga de 6 s e avisam no canto. Histórico pausa e mostra dano, cura e efeitos. Vanguardas ficam na frente, assassinos no meio e magos/atiradores atrás. A classe define a formação.\n\n3. SINERGIAS\nJoão e Maria, Peter e Mulan, Scarlet e Vendedora combinam efeitos. As três duplas exigem os dois viajantes vivos, o gatilho e a passiva do parceiro pronta. Cada dupla tem recarga de 6 s. Veja os gatilhos em Ver build da equipe.\n\n4. CHEFES\nQuebre o estandarte do General para interrompê-lo. A Guardiã copia a última ULT deste combate: pense antes de usar cura e escudo. Destrua os fios da Costureira para libertar as ativas seladas. Ataques básicos e ULTs continuam disponíveis.\n\n5. BUILD E EVENTOS\nEscolha uma de três melhorias após vencer. Convites têm 25% de chance por tela. Rotas oferecem elites, descanso, loja e eventos. A equipe muda as falas e libera opções especiais. No infinito, relíquias continuam acumulando com ganhos decrescentes; a build não acaba quando as opções exclusivas se esgotam.\n\n6. FIM E RETOMADA\nOuro, relíquias e convidados são da run. Feitos, coleção, descobertas, recordes e memórias permanecem. Pontos vêm das vitórias, chefes, elites, rapidez e aliados sobreviventes; vencer sem perder PV concede um bônus. Salvar e sair retoma no início do combate atual ou na escolha salva, sem sortear outras opções.\n\nCONTROLES\nToque nos retratos ou use 1–3 para a ULT. Espaço/ESC pausa; A alterna ULT automática; F11 alterna tela cheia.", Rect2(0, 0, 476, 1270), 17)
+	label(inner, "1. MODOS\nConto: 12 mundos com 6 fases cada, totalizando 72 combates. Cada mundo termina em um chefe e cura 12% dos PV dos sobreviventes. Após vencer os 12 mundos, escolha continuar no infinito com a mesma build e dificuldade crescente. Novos marcos de 12 páginas concedem memórias no fim da tentativa.\n\n2. COMBATE\nAtaques automáticos seguem o intervalo de cada personagem. ULTs gastam 100 mana e têm apresentação própria. Passivas ativam automaticamente com recarga de 6 s e avisam no canto. Histórico pausa e mostra dano, cura e efeitos. Vanguardas ficam na frente, assassinos no meio e magos/atiradores atrás. A classe define a formação.\n\n3. SINERGIAS\nJoão e Maria, Peter e Mulan, Scarlet e Vendedora combinam efeitos. As três duplas exigem os dois viajantes vivos, o gatilho e a passiva do parceiro pronta. Cada dupla tem recarga de 6 s. Veja os gatilhos em Ver build da equipe.\n\n4. CHEFES\nQuebre o estandarte do General para interrompê-lo. A Guardiã copia a última ULT deste combate: pense antes de usar cura e escudo. Destrua os fios da Costureira para libertar as ativas seladas. Ataques básicos e ULTs continuam disponíveis.\n\n5. BUILD E EVENTOS\nEscolha uma de três melhorias após vencer. Convites têm 25% de chance por tela. Rotas oferecem elites, descanso, loja e eventos. O mercador vende espaços de equipe (150/400/900/1.500/2.200/3.000 ouro), até 9. Cada posição comporta 3. Grupos comuns têm 1–9 inimigos aleatórios, inclusive na primeira fase; chefes vêm com 2 minions. Cada personagem equipa 2 itens entre combates. Chefes oferecem um equipamento; duelos secretos dão um troféu exclusivo. Cada protagonista tem 4 bênçãos, liberadas por feitos próprios. A equipe muda as falas e libera opções especiais. No infinito, relíquias continuam acumulando com ganhos decrescentes; a build não acaba quando as opções exclusivas se esgotam.\n\n6. FIM E RETOMADA\nOuro, relíquias e convidados são da run. Feitos, coleção, descobertas, recordes e memórias permanecem. Pontos vêm das vitórias, chefes, elites, rapidez e aliados sobreviventes; vencer sem perder PV concede um bônus. Salvar e sair retoma no início do combate atual ou na escolha salva, sem sortear outras opções.\n\nCONTROLES\nToque nos retratos ou use 1–9 para a ULT. Espaço/ESC pausa; A alterna ULT automática; F11 alterna tela cheia.", Rect2(0, 0, 476, 1270), 17)
 	navigation("profile")
 
 func show_preview() -> void:
@@ -789,7 +823,8 @@ func show_secret_reward() -> void:
 	var reward: Dictionary=secrets.DATA[run.pending_secret_reward]
 	journey_modal("Lenda vencida · "+str(reward.name),"+600 pontos · +%d ouro"%(75+run.stage*5))
 	face_portrait(overlay,run.pending_secret_reward,Rect2(208,336,124,124))
-	label(overlay,reward.reward+"\n\nBônus aplicado nesta run. A próxima fase normal continua de onde parou.",Rect2(40,492,460,170),20,GOLD)
+	label(overlay,reward.reward+"\nTroféu: "+Equipment.data("trophy_"+run.pending_secret_reward).title+" adicionado ao inventário.\n\nBônus aplicado nesta run. A próxima fase normal continua de onde parou.",Rect2(40,492,460,170),20,GOLD)
+	button(overlay,"Equipar troféu",Rect2(32,702,476,50),show_equipment.bind(maxi(0,run.actor_ids().find(run.pending_secret_reward))))
 	button(overlay,"Continuar a jornada",Rect2(32,768,476,58),continue_after_secret,true)
 func continue_after_secret() -> void:
 	if run.interlude!="secret_reward": return

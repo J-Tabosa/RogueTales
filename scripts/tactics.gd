@@ -1,4 +1,5 @@
 extends RefCounted
+const Modifiers = preload("res://scripts/combat_modifiers.gd")
 const Abilities = preload("res://scripts/hero_abilities.gd")
 const Biomes = preload("res://scripts/biomes.gd")
 const BossRules = preload("res://scripts/boss_rules.gd")
@@ -66,7 +67,7 @@ func spawn() -> void:
 	var total: float = TaleCatalog.STAGES[owner.stage].hp * [1.0, 1.25, 2.4][owner.wave]
 	if owner.expedition:
 		var depth: int = owner.rooms_cleared if owner.endless else owner.stage * 6 + owner.phase
-		count = 1 if depth == 0 else (2 if depth < 3 else 3)
+		count = 3 if ExpeditionContent.is_boss(owner.stage,owner.phase) else owner.rng.randi_range(1,9)
 		total = 86.0 * ((1.0 + depth * 0.05) * pow(1.045, mini(depth, 120)) * (1.0 + maxi(0, depth - 120) * 0.08)) * (1.5 if ExpeditionContent.is_boss(owner.stage, owner.phase) else 1.0) * (1.35 if owner.room_kind == "elite" else 1.0)
 	var roles: Array = ["vanguard", "ranger", "mage"]
 	if owner.stage % 4 == 2:
@@ -74,20 +75,27 @@ func spawn() -> void:
 	elif owner.stage % 4 == 1:
 		roles[2] = "assassin"
 	var picked: Array[int] = []
+	var row_counts:Dictionary={"front":0,"middle":0,"back":0}
 	if owner.expedition and not owner.active_secret.is_empty():
 		count=0
 		enemies.append(preload("res://scripts/secret_encounters.gd").spawn(owner))
 	for index in count:
 		var boss_unit: bool = (ExpeditionContent.is_boss(owner.stage, owner.phase) if owner.expedition else owner.wave == 2) and index == 0
-		var weight := (0.6 if index == 0 else 0.4 / maxf(1, count - 1)) if owner.wave == 2 and count > 1 else 1.0 / count
-		var job: String = "mage" if boss_unit and owner.stage % 2 == 1 else str(roles[index])
+		var weight := (0.70 if index == 0 else 0.30 / maxf(1, count - 1)) if (ExpeditionContent.is_boss(owner.stage,owner.phase) if owner.expedition else owner.wave==2) and count > 1 else (0.72 if owner.expedition else 1.0/count)
+		var job: String = "mage" if boss_unit and owner.stage % 2 == 1 else str(roles[index % roles.size()])
 		var interval := 3.1 + index * 0.35
 		var variant := 0
 		if owner.expedition:
 			variant = (0 if ExpeditionContent.boss_rule(owner.stage) == 3 else (3 if ExpeditionContent.boss_rule(owner.stage) == 7 else 5)) if boss_unit else Biomes.pick(owner.stage, owner.phase, index, owner.rng, picked)
+			if not boss_unit:
+				var options:Array[int]=[]
+				for candidate in 6:
+					if row_counts[rank_for_class(Biomes.CLASSES[candidate])]<3:options.append(candidate)
+				if not options.has(variant):variant=options[owner.rng.randi_range(0,options.size()-1)]
 			picked.append(variant)
 			job = str(Biomes.CLASSES[variant]) if not boss_unit else ("vanguard" if ExpeditionContent.boss_rule(owner.stage) == 3 else "mage")
 			interval = float(Biomes.INTERVALS[variant])
+			row_counts[rank_for_class(job)]+=1
 		enemies.append({
 			"id": "enemy_%d" % index, "class": job,
 			"name": TaleCatalog.STAGES[owner.stage].boss if boss_unit else TaleCatalog.STAGES[owner.stage].enemy,
@@ -105,11 +113,12 @@ func spawn() -> void:
 			if not boss_unit: enemies[-1].name = Biomes.ENEMIES[Biomes.biome(owner.stage)][variant]
 			enemies[-1].hp *= float(Biomes.HP[variant]) if not boss_unit else 1.0
 			enemies[-1].max_hp = enemies[-1].hp
-			enemies[-1].damage = (13.0 + (owner.rooms_cleared if owner.endless else owner.stage * 6 + owner.phase) * 0.85) * (1.2 if boss_unit else 1.0) * (1.15 if owner.room_kind == "elite" else 1.0) * (float(Biomes.POWER[variant]) if not boss_unit else 1.0) / pow(float(count), 0.25)
+			enemies[-1].damage = (13.0 + (owner.rooms_cleared if owner.endless else owner.stage * 6 + owner.phase) * 0.85) * (1.2 if boss_unit else 1.0) * (1.15 if owner.room_kind == "elite" else 1.0) * (float(Biomes.POWER[variant]) if not boss_unit else 1.0)
 	for actor in owner.actors:
 		actor.ult_pending = false
 		actor.ult_queued = false
-		actor.shield = 0.0
+		actor.shield = actor.max_hp*float(Modifiers.effects(actor).get("shield_start",0)) if owner.expedition else 0.0
+		actor["burn_follow_ready"]=0.0
 		actor["spirit_flames"] = 0
 		if owner.expedition:
 			actor.evasion = actor.base_evasion
@@ -311,7 +320,7 @@ func interval_for(index: int) -> float:
 	for actor in run().actors:
 		if actor.id == "ariel" and actor.hp > 0:
 			slow += 0.08 + actor.ranks[1] * 0.06
-	return float(enemies[index].interval) * (1 + slow)
+	return float(enemies[index].interval) * (1 + slow) * (1.15 if float(enemies[index].get("item_slow_left",0))>0 else 1.0)
 
 
 func tick(delta: float) -> void:
@@ -322,6 +331,7 @@ func tick(delta: float) -> void:
 		var enemy: Dictionary = enemies[index]
 		if enemy.hp <= 0:
 			continue
+		enemy["item_slow_left"]=maxf(0,float(enemy.get("item_slow_left",0))-delta)
 		var fire_damage: float = enemy.burn * minf(delta, enemy.burn_left)
 		var poison_damage: float = enemy.poison * minf(delta, enemy.poison_left)
 		var damage: float = fire_damage + poison_damage
@@ -414,7 +424,7 @@ func ultimate(index: int, requested := -1) -> Dictionary:
 			for ally in owner.actors:
 				if ally.hp > 0:
 					var before: float = ally.hp
-					ally.hp = minf(ally.max_hp, ally.hp + ally.max_hp * 0.35)
+					ally.hp = minf(ally.max_hp, ally.hp + ally.max_hp * 0.35 * (1.0+float(Modifiers.effects(actor).get("heal_mult",0))))
 					healed += ally.hp - before
 					ally.shield += ally.max_hp * 0.20
 			owner.unlock_stats.healing += healed
@@ -423,37 +433,32 @@ func ultimate(index: int, requested := -1) -> Dictionary:
 		var multiplier: float = {"scarlet": 2.0, "snow_white": 4.0, "mulan": 3.2, "ariel": 1.6, "joao": 4.2, "maria": 2.8, "alice": 2.0, "puss": 3.6, "peter": 3.0, "matches": 2.0, "aladin": 2.0}.get(actor.id, 1.0)
 		var dealt := 0.0
 		for strike in (5 if actor.id=="joao" else 1):
-			dealt += deal(enemies[at],actor.damage*multiplier/(5.0 if actor.id=="joao" else 1.0),actor["class"] in ["mage","artificer"],true).damage
+			dealt += deal(enemies[at],Modifiers.amount(actor,enemies[at],actor.damage*multiplier,true)/(5.0 if actor.id=="joao" else 1.0),actor["class"] in ["mage","artificer"],true).damage
 		per_target[at] = dealt
 		amount += dealt
-		if actor.id == "scarlet":
-			enemies[at].burn = 6.0 + actor.ranks[1] * 2
-			enemies[at].burn_left = 4.0
-		elif actor.id == "snow_white":
-			enemies[at].poison = 8.0 + actor.ranks[0] * 2
-			enemies[at].poison_left = 6.0
-		elif actor.id == "maria":
-			enemies[at]["armor_break_left"]=6.0
-			enemies[at].poison = 8.0 + actor.ranks[2] * 2
-			enemies[at].poison_left = 6.0
-		elif actor.id == "matches":
-			enemies[at].burn = 8.0 + actor.ranks[0] * 2
-			enemies[at].burn_left = 5.0
+		if actor.id=="scarlet":Modifiers.burn(self,actor,enemies[at],6.0+actor.ranks[1]*2,4.0)
+		elif actor.id in ["snow_white","maria"]:
+			Modifiers.venom(actor,enemies[at],8.0+actor.ranks[0 if actor.id=="snow_white" else 2]*2)
+			enemies[at].poison_left=6.0
+			if actor.id=="maria":enemies[at]["armor_break_left"]=6.0
+		elif actor.id=="matches":Modifiers.burn(self,actor,enemies[at],8.0+actor.ranks[0]*2)
+
 	if actor.id == "aladin":
 		for ally in owner.actors:
 			if ally.hp > 0:
 				var before: float = ally.hp
-				ally.hp = minf(ally.max_hp, ally.hp + ally.max_hp * 0.15)
+				ally.hp = minf(ally.max_hp, ally.hp + ally.max_hp * 0.15 * (1.0+float(Modifiers.effects(actor).get("heal_mult",0))))
 				healed += ally.hp - before
 				ally.shield = minf(ally.max_hp, ally.shield + ally.max_hp * 0.15)
 	if actor.id == "ariel":
 		slow_left = 5.0
 		for ally in owner.actors:
 			if ally.hp > 0:
-				ally.hp = minf(ally.max_hp, ally.hp + ally.max_hp * 0.2)
+				ally.hp = minf(ally.max_hp, ally.hp + ally.max_hp * 0.2 * (1.0+float(Modifiers.effects(actor).get("heal_mult",0))))
 				for key in ["hostile_burn","hostile_poison","hostile_dot_left"]:ally[key]=0.0
 				ally["sealed"]=false
 	if owner.expedition:
+		Modifiers.after(self,actor,targets,per_target,true)
 		Abilities.deaths(self)
 		BossRules.refresh(self)
 		ultimate_serial += 1

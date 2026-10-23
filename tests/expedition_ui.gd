@@ -69,6 +69,13 @@ func checks() -> void:
 	game.begin_expedition()
 	assert(game.run.expedition and game.run.actors.size() == 1 and not game.campaign.checkpoint.is_empty())
 	game.enter_encounter()
+	# Exercise a reproducible solo opening; larger groups are covered separately.
+	for seed_value in 100:
+		var probe := RandomNumberGenerator.new()
+		probe.seed = seed_value
+		if probe.randi_range(1, 9) == 1:
+			game.run.rng.seed = seed_value
+			break
 	game.spawn_enemy()
 	game._process(1.2)
 	game.arena.set_process(false)

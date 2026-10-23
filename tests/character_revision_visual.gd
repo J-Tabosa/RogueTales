@@ -181,19 +181,19 @@ func checks() -> void:
 	assert(game.run.active_secret.is_empty() and game.run.phase==2 and not game.run.tactics.enemies[0].has("secret_id"))
 	game.show_hero_details("puss")
 	await capture("numeric_collection")
-	var old_size:=root.size
+	var old_size:=game.get_window().size
 	game.campaign.window_mode="windowed"
 	game.toggle_fullscreen()
 	await process_frame
-	assert(root.mode==Window.MODE_EXCLUSIVE_FULLSCREEN)
+	assert(game.get_window().mode==Window.MODE_FULLSCREEN)
 	game.toggle_fullscreen()
 	await process_frame
-	assert(root.mode==Window.MODE_WINDOWED and root.size==old_size)
+	assert(game.get_window().mode==Window.MODE_WINDOWED and game.get_window().size==old_size)
 	game.campaign.window_mode="fullscreen"
 	game.apply_embedded_fullscreen()
 	await process_frame
 	print("FULLSCREEN HOST: own_window=",game.get_window()==game.fullscreen_host," force=",game.fullscreen_host.force_native," mode=",game.fullscreen_host.mode)
-	assert(game.get_window()==game.fullscreen_host and game.fullscreen_host.force_native and game.fullscreen_host.mode==Window.MODE_EXCLUSIVE_FULLSCREEN)
+	assert(game.get_window()==game.fullscreen_host and game.fullscreen_host.force_native and game.fullscreen_host.mode==Window.MODE_FULLSCREEN)
 	game.campaign.window_mode="windowed"
 	game.apply_embedded_fullscreen()
 	await process_frame

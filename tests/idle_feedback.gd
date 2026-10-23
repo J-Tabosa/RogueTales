@@ -115,6 +115,7 @@ func checks() -> void:
 	# Terminal damage waits for the complete swing/recovery, then the victory hold.
 	prepare(["mulan"], 0)
 	game.run.actors[0].crit = 0
+	for foe in game.run.tactics.enemies: foe.hp = 0
 	game.run.tactics.enemies[0].hp = 1
 	game.run.tactics.enemies[0].armor = 0
 	game.run.tactics.sync_totals()
@@ -175,7 +176,7 @@ func checks() -> void:
 	flow.advance(0.3)
 	assert(game.run.actors[0].pp == 1)
 	var acted := {}
-	for turn in 18:
+	for turn in 3 * (game.run.actors.size() + game.run.tactics.enemies.size()):
 		flow.advance(1.7)
 		var entry: Dictionary = flow.next_action()
 		if entry.is_empty(): continue
@@ -183,7 +184,7 @@ func checks() -> void:
 		flow.begin(entry)
 		assert(flow.next_action().is_empty())
 		flow.complete()
-	assert(acted.size() == 6, "Every living hero and enemy must get to act")
+	assert(acted.size() == game.run.actors.size() + game.run.tactics.enemies.size(), "Every living hero and enemy must get to act")
 	# Complete normal run; the same build is converted only at its earned ending.
 	prepare(["scarlet", "rapunzel"], 11)
 	game.run.phase = 5
@@ -223,7 +224,7 @@ func checks() -> void:
 	game.consume_feedback()
 	game.feedback._process(0.3)
 	await capture("battle_pc")
-	assert(game.desktop and game.card_health[0].size.x == 172)
+	assert(game.desktop and game.card_health[0].size.x == 158)
 	root.content_scale_size = Vector2i(360, 800)
 	root.size = Vector2i(360, 800)
 	await process_frame

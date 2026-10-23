@@ -96,6 +96,15 @@ func rebuild() -> void:
 	stack.add_theme_constant_override("separation",10)
 	scroll.add_child(stack)
 	var skills:Array=[["AUTOMÁTICA",Content.KITS[actor.id][0],Details.active(actor)],["PASSIVA · RECARGA 6 s",Content.KITS[actor.id][2],Details.passive(actor)],["ULT · 100 MANA",TaleCatalog.HERO_TACTICS[actor.id].ult,Details.ultimate(actor)]]
+	if actor.get("equipment",[]).any(func(id):return not str(id).is_empty()):
+		var gear_lines:Array[String]=[]
+		for id in actor.equipment:
+			var item:=preload("res://scripts/equipment.gd").data(id)
+			if not item.is_empty():gear_lines.append(item.title+" · "+item.detail)
+		skills.append(["EQUIPAMENTOS","2 espaços por personagem","\n\n".join(gear_lines)])
+	if not actor.get("blessing_effects",{}).is_empty() and ui.run!=null:
+		var boon:=preload("res://scripts/hero_blessings.gd").data(ui.run.blessing)
+		if not boon.is_empty():skills.append(["BÊNÇÃO DO PROTAGONISTA",boon.title,boon.detail])
 	if not Details.conditions(actor).is_empty():skills.push_front(["CONDIÇÕES ATIVAS","Dano ao longo do tempo",Details.conditions(actor)])
 	for skill in skills:
 		var card:=PanelContainer.new()

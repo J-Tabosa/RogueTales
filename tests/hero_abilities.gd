@@ -11,7 +11,12 @@ func fixture(id: String, stage := 8) -> IdleRun:
 	run.stage = stage
 	run.wave = 0
 	run.rng.seed = 123
-	run.spawn_enemy()
+	# Isolate ability behavior against three targets; generation is tested separately.
+	for encounter_seed in 100:
+		run.rng.seed = encounter_seed
+		run.spawn_enemy()
+		if run.tactics.enemies.size() == 3: break
+	assert(run.tactics.enemies.size() == 3)
 	var flow := Flow.new()
 	flow.bind(run)
 	for foe in run.tactics.enemies:

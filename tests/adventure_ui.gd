@@ -79,7 +79,7 @@ func checks() -> void:
 	prepare(["scarlet", "mulan", "alice"], 11, 11)
 	assert(game.run.actors[0].sealed and game.run.actors[1].sealed)
 	await capture("weaver_mobile")
-	# The same UI continues into floor 13, with 3 stronger enemies and its build intact.
+	# The same UI continues into floor 13, with a random group and its build intact.
 	prepare(["scarlet"], 11, 71, true)
 	game.run.actors[0].hp = 93
 	for foe in game.run.tactics.enemies: foe.hp = 0
@@ -96,7 +96,7 @@ func checks() -> void:
 	game.spawn_enemy()
 	game._process(1.2)
 	game.arena.set_process(false)
-	assert(game.run.tactics.enemies.size() == 3 and game.run.enemy_max > 76)
+	assert(game.run.tactics.enemies.size() >= 1 and game.run.tactics.enemies.size() <= 9 and game.run.enemy_max > 76)
 	assert(game.enemy_label.text.contains("INFINITO"))
 	await capture("endless_13_mobile")
 	# An actual event choice resumes the run; reloading before selection preserves it.

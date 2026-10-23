@@ -4,8 +4,8 @@ const ROWS := ["back", "middle", "front"]
 const MAX_PER_ROW := 3
 const FLOOR_HORIZON := 0.36
 const COLUMNS := {"back":0.12,"middle":0.255,"front":0.39}
-const SINGLE_DEPTH := {"back":0.52,"middle":0.69,"front":0.86}
-const DEPTHS := {2:[0.50,0.86],3:[0.44,0.66,0.88]}
+const SINGLE_DEPTH := {"back":0.66,"middle":0.66,"front":0.66}
+const DEPTHS := {2:[0.52,0.80],3:[0.44,0.66,0.88]}
 static func zone(hostile: bool) -> Rect2:
 	return Rect2(0.56 if hostile else 0.06,0.40,0.38,0.50)
 static func max_stack(units: Array) -> int:
@@ -24,5 +24,4 @@ static func home(units: Array,index: int,hostile: bool) -> Vector2:
 	assert(peers.size() <= MAX_PER_ROW,"Each row supports at most three units")
 	var y: float = SINGLE_DEPTH[row] if peers.size()==1 else DEPTHS[peers.size()][peers.find(index)]
 	var x: float = COLUMNS[row]
-	if peers.size()==3:x += ([0,.035,.07] if row=="back" else [-.035,0,.035])[peers.find(index)]
 	return Vector2(1.0-x if hostile else x,y)

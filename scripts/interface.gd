@@ -1,6 +1,10 @@
 extends "res://scripts/main.gd"
 ## Mobile storybook presentation; progression/story orchestration stays in main.gd.
 const TacticalArena = preload("res://scripts/tactical_arena.gd")
+var hero_deck_scroll: ScrollContainer
+var hero_deck: Control
+var equipment_panel: Control
+var equipment_was_paused:=false
 var battle_view := false
 var desktop := false
 var logical_width := 540.0
@@ -276,12 +280,20 @@ func build_battle() -> void:
 	action_label = label(page, "Preparando encontro", Rect2(34,175,472,36), 16, GOLD)
 	action_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	battle_place(action_label, Rect2(34,175,472,36), Rect2(54,149,850,38))
+	hero_deck_scroll=ScrollContainer.new()
+	hero_deck_scroll.name="HeroDeck"
+	hero_deck_scroll.scroll_deadzone=10
+	hero_deck_scroll.set_script(preload("res://scripts/touch_scroll.gd"))
+	page.add_child(hero_deck_scroll)
+	battle_place(hero_deck_scroll,Rect2(16,0,508,156),Rect2(958,142,296,492),"deck")
+	hero_deck=Control.new()
+	hero_deck_scroll.add_child(hero_deck)
 	for index in run.actors.size():
 		cooldowns.append(0.15 + index * 0.28)
 		var actor: Dictionary = run.actors[index]
-		var card := button(page, "", Rect2(), try_ultimate.bind(index))
+		var card := button(hero_deck, "", Rect2(), try_ultimate.bind(index))
 		var slot := int(index)
-		battle_place(card, Rect2(16 + slot * 174, 0, 160, 148), Rect2(958, 142 + slot * 164, 296, 146), "deck")
+		card.set_meta("deck_index",slot)
 		var face := face_portrait(card, actor.id, Rect2(10,10,40,40))
 		face.set_meta("card_face",true)
 		card.add_theme_color_override("font_disabled_color", Color("eeeae2"))
@@ -300,6 +312,12 @@ func build_battle() -> void:
 		information.set_meta("card_info",true)
 		information.pressed.connect(show_character_information.bind(index))
 		card.add_child(information)
+		var bag:=Button.new()
+		bag.text="Itens"
+		bag.set_meta("card_items",true)
+		bag.add_theme_font_size_override("font_size",10)
+		bag.pressed.connect(show_equipment.bind(index))
+		card.add_child(bag)
 		var name_tag := label(card, str(TaleCatalog.HEROES[actor.id].get("short_name", TaleCatalog.HEROES[actor.id].name)), Rect2(58, 6, 94, 43), 14)
 		name_tag.set_meta("card_name", true)
 		name_tag.set_meta("full_name",name_tag.text)
@@ -322,12 +340,6 @@ func build_battle() -> void:
 		meter.set_meta("card_mana_bar", true)
 		ult_meters.append(meter)
 		ult_buttons.append(card)
-	for empty_slot in range(run.actors.size(), TaleCatalog.PARTY_LIMIT):
-		var placeholder := panel(page,Rect2())
-		battle_place(placeholder,Rect2(16+empty_slot*174,0,160,148),Rect2(958,142+empty_slot*164,296,146),"deck")
-		icon(placeholder,"heroes",Rect2(16,18,28,28),Color("747e9b"))
-		label(placeholder,"Companheiro",Rect2(12,61,136,24),13,MUTED)
-		label(placeholder,"Convocação entre encontros",Rect2(12,91,136,40),11,Color("858fa9"))
 	log_label = label(page, "", Rect2(), 12, MUTED)
 	battle_place(log_label, Rect2(20, 0, 500, 64), Rect2(24, 710, 910, 65), "log")
 	auto_button = button(page, "", Rect2(), toggle_auto_ult)
@@ -362,11 +374,21 @@ func relayout_battle() -> void:
 		if node.has_meta("desktop_fullscreen"):node.visible=desktop
 		node.position = rect.position
 		node.size = rect.size
+	if is_instance_valid(hero_deck_scroll):
+		hero_deck_scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED if desktop else ScrollContainer.SCROLL_MODE_AUTO
+		hero_deck_scroll.vertical_scroll_mode=ScrollContainer.SCROLL_MODE_AUTO if desktop else ScrollContainer.SCROLL_MODE_DISABLED
+		hero_deck.custom_minimum_size=Vector2(296,maxf(492,ult_buttons.size()*154)) if desktop else Vector2(maxf(508,ult_buttons.size()*174-14),148)
 	for card in ult_buttons:
+		var at:int=card.get_meta("deck_index",0)
+		card.position=Vector2(0,at*154) if desktop else Vector2(at*174,0)
+		card.size=Vector2(280,146) if desktop else Vector2(160,148)
 		for child in card.get_children():
 			if child.has_meta("card_info"):
-				child.position=Vector2(256,10) if desktop else Vector2(125,8)
+				child.position=Vector2(244,8) if desktop else Vector2(125,8)
 				child.size=Vector2(30,30)
+			elif child.has_meta("card_items"):
+				child.position=Vector2(18,110) if desktop else Vector2(105,124)
+				child.size=Vector2(72,28) if desktop else Vector2(49,22)
 			elif child.has_meta("card_face"):
 				child.position = Vector2(16,18) if desktop else Vector2(10,10)
 				child.size = Vector2(82,82) if desktop else Vector2(40,40)
@@ -377,24 +399,26 @@ func relayout_battle() -> void:
 				child.add_theme_font_size_override("font_size", 18 if desktop else 14)
 			elif child.has_meta("card_ult"):
 				child.position = Vector2(111, 92) if desktop else Vector2(10, 101)
-				child.size = Vector2(172, 22) if desktop else Vector2(144, 21)
+				child.size = Vector2(158, 22) if desktop else Vector2(144, 21)
 			elif child.has_meta("card_status"):
 				child.position = Vector2(111, 119) if desktop else Vector2(10, 123)
+				child.size.x=158 if desktop else 92
 			elif child.has_meta("card_hp"):
 				child.position = Vector2(111, 48) if desktop else Vector2(10, 48)
-				child.size.x = 172 if desktop else 144
+				child.size.x = 158 if desktop else 144
 			elif child.has_meta("card_mana"):
 				child.position = Vector2(111, 72) if desktop else Vector2(10, 76)
-				child.size.x = 172 if desktop else 144
+				child.size.x = 158 if desktop else 144
 			elif child.has_meta("card_hp_bar") or child.has_meta("card_mana_bar"):
 				var health: bool = child.has_meta("card_hp_bar")
 				child.position = Vector2(111, 68 if health else 90) if desktop else Vector2(10, 69 if health else 94)
-				child.size.x = 172 if desktop else 144
+				child.size.x = 158 if desktop else 144
 	if is_instance_valid(arena) and arena.get_script() == TacticalArena:
 		arena.fit_field(battle_viewport.size)
 	if is_instance_valid(feedback):
 		feedback.size = battle_viewport.size
 		feedback.layout()
+	if is_instance_valid(equipment_panel):equipment_panel.size=Vector2(logical_width,logical_height)
 	if is_instance_valid(overlay):
 		if overlay.has_meta("character_inspector"):
 			overlay.position=Vector2.ZERO
@@ -540,9 +564,9 @@ func handle_window_key(event: InputEvent) -> bool:
 func apply_window_mode() -> void:
 	if OS.has_feature("mobile") or DisplayServer.get_name()=="headless":return
 	hook_window_keys(get_tree().root)
-	# Keep the editor's externally parented Game view out of desktop fullscreen.
-	# A separate native game window retains keyboard focus in both modes.
-	if OS.get_cmdline_args().has("--wid") or is_instance_valid(fullscreen_host):
+	# The engine consumes --wid before get_cmdline_args(), so inspecting it never
+	# detected the embedded Game view. Editor binaries always use our native host.
+	if OS.has_feature("editor") or is_instance_valid(fullscreen_host):
 		apply_embedded_fullscreen.call_deferred()
 		return
 	set_game_window_mode(get_window())
@@ -552,7 +576,7 @@ func set_game_window_mode(window: Window) -> void:
 		if window.mode==Window.MODE_WINDOWED:
 			windowed_size=window.size
 			windowed_position=window.position
-		window.mode=Window.MODE_EXCLUSIVE_FULLSCREEN
+		window.mode=Window.MODE_FULLSCREEN
 	else:
 		var was_fullscreen:=window.mode in [Window.MODE_FULLSCREEN,Window.MODE_EXCLUSIVE_FULLSCREEN]
 		window.mode=Window.MODE_WINDOWED
@@ -560,13 +584,15 @@ func set_game_window_mode(window: Window) -> void:
 			window.size=windowed_size
 			window.position=windowed_position
 func finalize_window_mode() -> void:
-	if campaign.window_mode=="fullscreen" and DisplayServer.get_name()!="headless":get_window().mode=Window.MODE_EXCLUSIVE_FULLSCREEN
+	if campaign.window_mode=="fullscreen" and DisplayServer.get_name()!="headless":get_window().mode=Window.MODE_FULLSCREEN
 func apply_embedded_fullscreen() -> void:
 	if not is_instance_valid(fullscreen_host):
 		fullscreen_host=Window.new()
 		fullscreen_host.hide()
 		fullscreen_host.title="RogueTales"
 		fullscreen_host.force_native=true
+		fullscreen_host.transient=false
+		fullscreen_host.current_screen=get_tree().root.current_screen
 		fullscreen_host.size=windowed_size
 		fullscreen_host.content_scale_mode=Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
 		fullscreen_host.content_scale_size=Vector2i(1280,720)
@@ -576,6 +602,7 @@ func apply_embedded_fullscreen() -> void:
 		fullscreen_host.close_requested.connect(func():persist();get_tree().quit())
 		hook_window_keys(fullscreen_host)
 		fullscreen_host.show()
+		fullscreen_host.move_to_center()
 	set_game_window_mode(fullscreen_host)
 	fullscreen_host.grab_focus()
 	if not get_tree().process_frame.is_connected(finalize_window_mode):get_tree().process_frame.connect(finalize_window_mode,CONNECT_ONE_SHOT)
@@ -595,12 +622,16 @@ func _input(event: InputEvent) -> void:
 		if handle_window_key(event):
 			get_viewport().set_input_as_handled()
 			return
+		if is_instance_valid(equipment_panel):
+			if key == KEY_ESCAPE: close_equipment()
+			get_viewport().set_input_as_handled()
+			return
 		if state in ["battle", "travel", "route_travel", "encounter_intro", "battle_outro"] and not event.ctrl_pressed:
 			if key == KEY_SPACE:
 				toggle_pause()
 				get_viewport().set_input_as_handled()
 				return
-			if key in [KEY_1, KEY_2, KEY_3]:
+			if key>=KEY_1 and key<=KEY_9:
 				try_ultimate(int(key - KEY_1))
 				get_viewport().set_input_as_handled()
 				return
@@ -870,3 +901,27 @@ func show_condition_information(index: int, hostile: bool) -> void:
 			description+="%s: %.1f dano/s\n%.1f s restantes · até %.1f dano pendente\n\n"%["Veneno" if kind=="poison" else "Queimadura",amount,duration,amount*duration]
 	label(overlay,description if not description.is_empty() else "Sem condições ativas.",Rect2(32,336,476,350),22)
 	button(overlay,"Voltar ao combate",Rect2(32,768,476,58),close_character_information,true)
+
+func show_equipment(index: int=0) -> void:
+	if run==null or not run.expedition or is_instance_valid(equipment_panel):return
+	equipment_was_paused=paused
+	paused=true
+	if is_instance_valid(arena):arena.frozen=true
+	if is_instance_valid(feedback):feedback.frozen=true
+	equipment_panel=Control.new()
+	equipment_panel.set_script(preload("res://scripts/equipment_panel.gd"))
+	equipment_panel.size=Vector2(logical_width,logical_height)
+	content.add_child(equipment_panel)
+	equipment_panel.setup(self,index)
+func close_equipment() -> void:
+	if is_instance_valid(equipment_panel):equipment_panel.queue_free()
+	equipment_panel=null
+	paused=equipment_was_paused
+	if is_instance_valid(arena):arena.frozen=paused
+	if is_instance_valid(feedback):feedback.frozen=paused
+	update_hud()
+func equip_from_panel(index: int,id: String,slot: int) -> void:
+	if run.equip_item(index,id,slot):
+		if has_method("persist_run"):call("persist_run")
+		equipment_panel.rebuild()
+		update_hud()

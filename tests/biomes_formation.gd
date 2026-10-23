@@ -88,10 +88,10 @@ func checks() -> void:
 			run.wave = 2 if ExpeditionContent.is_boss(stage) else 0
 			run.rng.seed = seed_value + 87
 			run.spawn_enemy()
-			var local := {}
+			var rows := {"front":0, "middle":0, "back":0}
 			for foe in run.tactics.enemies:
-				assert(not local.has(foe.variant))
-				local[foe.variant] = true
+				rows[foe.row] += 1
+				assert(rows[foe.row] <= 3)
 				seen[foe.variant] = true
 				assert(foe.biome == Biomes.biome(stage))
 				if foe.get("mechanic", -1) == 3: assert(foe.row == "front")
@@ -126,7 +126,7 @@ func checks() -> void:
 	assert(float(actual_heights.max()) - float(actual_heights.min()) < 0.1)
 	prepare(["scarlet", "alice", "ariel"], 6)
 	var homes: Array = game.arena.tracks.map(func(track): return track.home)
-	assert(homes[0].x < homes[1].x and homes[1].x < homes[2].x, "Three peers keep fixed staggered columns")
+	assert(homes[0].x == homes[1].x and homes[1].x == homes[2].x, "Three peers share one straight column")
 	assert(homes[0].y < homes[1].y and homes[1].y < homes[2].y)
 	await capture("same_rank_fire_mobile")
 	prepare(["joao", "puss", "matches"], 4)

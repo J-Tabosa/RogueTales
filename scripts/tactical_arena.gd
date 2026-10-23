@@ -213,8 +213,8 @@ func sync_enemies() -> void:
 			model.variant_id = int(data.variant)
 			model.flip_h = false
 		else: model = Enemy.warm(stage).instantiate()
-		model.regular_height = human_height() * (Biomes.height_factor(int(data.biome), int(data.variant)) if simulation.expedition else 1.0)
-		model.boss_height = human_height() * (1.25 if data.has("secret_id") else 1.0 if simulation.expedition else 1.22)
+		model.regular_height = human_height() * (Biomes.height_factor(int(data.biome), int(data.variant))*(0.72 if ExpeditionContent.is_boss(simulation.stage,simulation.phase) and not data.boss else 1.0) if simulation.expedition else 1.0)
+		model.boss_height = human_height() * (1.25 if data.has("secret_id") else 1.40 if simulation.expedition else 1.22)
 		add_child(model)
 		var home := home_for(str(data.row), index, true)
 		model.advance(0, data.boss, 0, data.interval)
@@ -576,8 +576,8 @@ func fit_field(dimensions: Vector2) -> void:
 			heroes[index].position = tracks[index].home
 		place_widget(unit_widgets[index],tracks[index].home)
 	for index in foes.size():
-		foes[index].regular_height = human_height() * (Biomes.height_factor(int(simulation.tactics.enemies[index].biome), int(simulation.tactics.enemies[index].variant)) if simulation.expedition else 1.0)
-		foes[index].boss_height = human_height() * (1.25 if simulation.tactics.enemies[index].has("secret_id") else 1.0 if simulation.expedition else 1.22)
+		foes[index].regular_height = human_height() * (Biomes.height_factor(int(simulation.tactics.enemies[index].biome), int(simulation.tactics.enemies[index].variant))*(0.72 if ExpeditionContent.is_boss(simulation.stage,simulation.phase) and not simulation.tactics.enemies[index].boss else 1.0) if simulation.expedition else 1.0)
+		foes[index].boss_height = human_height() * (1.25 if simulation.tactics.enemies[index].has("secret_id") else 1.40 if simulation.expedition else 1.22)
 		foe_homes[index] = home_for(simulation.tactics.enemies[index].row, index, true)
 		foes[index].position = foe_homes[index]
 		place_widget(foe_widgets[index],foe_homes[index])
