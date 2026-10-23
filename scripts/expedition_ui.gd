@@ -83,7 +83,7 @@ func show_map() -> void:
 	label(page, "CONTO · 12 MUNDOS  →  INFINITO APÓS VENCER", Rect2(24, 183, 492, 46), 14, GOLD)
 	var hero := button(page, "", Rect2(24, 246, 492, 118), show_heroes)
 	face_portrait(hero, selected_hero, Rect2(14, 14, 90, 90))
-	label(hero, "PROTAGONISTA", Rect2(123, 11, 350, 21), 10, GOLD)
+	label(hero, "Selecionar Personagem", Rect2(123, 11, 350, 21), 10, GOLD)
 	label(hero, TaleCatalog.HEROES[selected_hero].name, Rect2(123, 38, 350, 35), 22)
 	label(hero, "%s · trocar →" % TaleCatalog.hero_class_name(selected_hero), Rect2(123, 81, 350, 26), 14, MUTED)
 	var inner := scroll_area(381,321,4*156)
@@ -141,10 +141,10 @@ func build_battle() -> void:
 	arena.feedback = feedback
 	auto_button.add_theme_font_size_override("font_size", 15)
 	auto_button.set_meta("mobile_rect", Rect2(16, 0, 160, 46))
-	auto_button.set_meta("pc_rect", Rect2(958, 658, 142, 46))
+	auto_button.set_meta("pc_rect", Rect2(958, 704, 142, 46))
 	speed_button.set_meta("mobile_rect", Rect2(364, 0, 160, 46))
 	var history := button(page, "Histórico", Rect2(), show_battle_history)
-	battle_place(history, Rect2(190, 0, 160, 46), Rect2(1112, 658, 142, 46), "bottom")
+	battle_place(history, Rect2(190, 0, 160, 46), Rect2(1112, 704, 142, 46), "bottom")
 	relayout_battle()
 
 func begin_travel() -> void:
@@ -603,7 +603,9 @@ func show_heroes() -> void:
 	var action_w:=(w-72)/3
 	button(page,"Habilidades" if owned else "Desconhecido",Rect2(24,bottom,action_w,54),show_hero_details.bind(selected_hero) if owned else show_unlock_details.bind(selected_hero)).add_theme_font_size_override("font_size",14)
 	button(page,"Animações",Rect2(36+action_w,bottom,action_w,54),show_preview).disabled=not owned
-	button(page,"Protagonista",Rect2(48+action_w*2,bottom,action_w,54),use_protagonist.bind(selected_hero),true).disabled=not campaign.unlocked.has(selected_hero) or not campaign.checkpoint.is_empty()
+	var select_character := button(page,"Selecionar Personagem",Rect2(48+action_w*2,bottom,action_w,54),use_protagonist.bind(selected_hero),true)
+	select_character.add_theme_font_size_override("font_size",14 if desktop else 12)
+	select_character.disabled=not campaign.unlocked.has(selected_hero) or not campaign.checkpoint.is_empty()
 
 	gallery_scroll.set_deferred("scroll_horizontal", int(maxf(0, ids.find(selected_hero) * 282 - (w - 48 - 268) * 0.5)))
 	gallery_size = Vector2(logical_width, logical_height)
@@ -685,7 +687,7 @@ func show_hero_details(id: String) -> void:
 		var entry: Array = Content.MUTATIONS[id][index]
 		label(inner, entry[1], Rect2(0, 1066 + index * 140, 476, 30), 20)
 		label(inner, entry[2], Rect2(0, 1104 + index * 140, 476, 57), 14, MUTED)
-	button(page, "Escolher protagonista", Rect2(24, 813, 316, 54), use_protagonist.bind(id), true).disabled = not campaign.checkpoint.is_empty()
+	button(page, "Selecionar Personagem", Rect2(24, 813, 316, 54), use_protagonist.bind(id), true).disabled = not campaign.checkpoint.is_empty()
 	button(page, "Coleção", Rect2(356, 813, 160, 54), show_heroes)
 	navigation("heroes")
 

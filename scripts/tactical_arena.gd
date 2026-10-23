@@ -87,7 +87,7 @@ func _ready() -> void:
 		heroes.append(actor)
 		var home := home_for(simulation.actors[index].row, index, false)
 		actor.position = home
-		actor.z_index = 925 if simulation.actors[index].id in ["puss", "matches"] else int(home.y)
+		actor.z_index = int(home.y)
 		actor.show_animation("idle")
 		tracks.append({"home": home, "time": -1.0, "duration": 1.0, "hit": false, "hurt": 0.0, "alive": true, "target": -1, "ultimate": false})
 		unit_widgets.append(widget(home, TaleCatalog.hero_class_name(simulation.actors[index].id), Color("a3d9c3"),false,index))
@@ -107,23 +107,20 @@ func max_row_size() -> int:
 	return maxi(Formation.max_stack(simulation.actors),Formation.max_stack(simulation.tactics.enemies))
 
 func widget_size() -> Vector2:
-	var width := clampf(field_width*0.155,76,112)
-	return Vector2(maxf(54,width),36)
+	# Each plate fits inside one formation column, including at nine vs nine.
+	return Vector2(clampf(field_width * 0.115, 54, 104), 27)
 
-func place_widget(item: Dictionary,at: Vector2) -> void:
+func place_widget(item: Dictionary, at: Vector2) -> void:
 	var extent := widget_size()
 	item.panel.size = extent
-	item.root.position = Vector2(clampf(at.x-extent.x*0.5+ (8 if item.hostile else -8),22,field_width-extent.x-22),clampf(at.y+9,9,field_height-extent.y-9))
-	var units:Array=simulation.tactics.enemies if item.hostile else simulation.actors
-	if item.index>=0 and units.filter(func(u):return u.row==units[item.index].row).size()==3:
-		var right:bool=(units[item.index].row=="back")!=item.hostile
-		var side:float=at.x+human_height()*.32 if right else at.x-human_height()*.32-extent.x
-		item.root.position=Vector2(clampf(side,22,field_width-extent.x-22),clampf(at.y-22,9,field_height-extent.y-9))
-	item.text.position=Vector2(6,3)
-	item.text.size=Vector2(extent.x-12,14)
-	item.text.add_theme_font_size_override("font_size",9 if extent.x<90 else 11)
-	item.health.size.x=extent.x-16
-	item.energy.size.x=extent.x-16
+	item.root.position = Vector2(clampf(at.x - extent.x * .5, 4, field_width - extent.x - 4), minf(at.y + 5, field_height - extent.y - 4))
+	item.text.position = Vector2(3, 1)
+	item.text.size = Vector2(extent.x - 6, 13)
+	item.text.add_theme_font_size_override("font_size", 9 if extent.x < 80 else 10)
+	item.health.position = Vector2(5, 16)
+	item.health.size = Vector2(extent.x - 10, 4)
+	item.energy.position = Vector2(5, 22)
+	item.energy.size = Vector2(extent.x - 10, 3)
 
 func hero_bounds(actor: AnimatedSprite2D) -> Rect2:
 	var texture: Texture2D = actor.sprite_frames.get_frame_texture("idle", 0)
@@ -134,7 +131,14 @@ func hero_bounds(actor: AnimatedSprite2D) -> Rect2:
 	return Rect2(Vector2.ZERO, texture.get_size())
 
 func human_height() -> float:
-	var height := clampf(minf(field_height*0.29,field_width*0.17),60,174)
+	var height := clampf(minf(field_height * .29, field_width * .17), 48, 174)
+	if max_row_size() > 1:
+		# Reserve the next lane's body, hover, plate and status badges. Two-unit
+		# rows share the outer lanes of the three-unit grid; single units stay centered.
+		var tallest := 1.14
+		for foe in simulation.tactics.enemies:
+			if foe.boss: tallest = maxf(tallest, 1.25 if foe.has("secret_id") else 1.40)
+		height = minf(height, maxf(28, field_height * .22 - 52) / tallest)
 	return height
 
 func normalize_hero(actor: AnimatedSprite2D, id: String) -> void:
@@ -159,7 +163,6 @@ func widget(at: Vector2,title: String,tint: Color,hostile:=false,unit_index:=-1)
 	plate.set_corner_radius_all(4)
 	panel.add_theme_stylebox_override("panel",plate)
 	group.add_child(panel)
-	ArenaSkin.decorate(panel,true,true,0.055)
 	var text:=Label.new()
 	text.text=title
 	text.clip_text=true
@@ -288,6 +291,7 @@ func sync_health(actors: Array[Dictionary]) -> void:
 		if actors[index].hp <= 0:
 			tracks[index].time = -1.0
 			heroes[index].modulate = Color(0.4, 0.42, 0.48, 0.35)
+		unit_widgets[index].root.visible = actors[index].hp > 0
 		unit_widgets[index].health.max_value = actors[index].max_hp
 		unit_widgets[index].health.value = actors[index].hp
 		unit_widgets[index].energy.value = actors[index].energy
@@ -338,7 +342,7 @@ func _process(delta: float) -> void:
 	clock += dt
 	for index in heroes.size():
 		var actor: AnimatedSprite2D = heroes[index]
-		actor.z_index = 950 if tracks[index].time >= 0 else (925 if simulation.actors[index].id in ["puss", "matches"] else int(actor.position.y))
+		actor.z_index = 950 if tracks[index].time >= 0 else int(actor.position.y)
 		var track: Dictionary = tracks[index]
 		var hero_id: String=simulation.actors[index].id
 		if track.time<0 and not walking and track.alive:
@@ -726,6 +730,10 @@ func sync_conditions(item: Dictionary, data: Dictionary, index: int, hostile: bo
 			item.badges[kind]=badge
 		var badge: Button=item.badges[kind]
 		badge.configure(kind,visible_conditions[kind][0],visible_conditions[kind][1])
-		badge.position=Vector2(slot*43,-19)
-		badge.size=Vector2(42,17)
+		if widget_size().x < 80:
+			badge.text = " %d" % ceili(visible_conditions[kind][0])
+			badge.add_theme_font_size_override("font_size",8)
+		var badge_width: float = (widget_size().x - 2) * .5
+		badge.position=Vector2(slot * (badge_width + 2), 29)
+		badge.size=Vector2(badge_width, 17)
 		slot+=1

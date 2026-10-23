@@ -1,6 +1,7 @@
 extends "res://scripts/main.gd"
 ## Mobile storybook presentation; progression/story orchestration stays in main.gd.
 const TacticalArena = preload("res://scripts/tactical_arena.gd")
+const ItemArt = preload("res://scripts/item_art.gd")
 var hero_deck_scroll: ScrollContainer
 var hero_deck: Control
 var equipment_panel: Control
@@ -254,7 +255,7 @@ func build_battle() -> void:
 	battle_viewport = Control.new()
 	battle_viewport.clip_contents = true
 	page.add_child(battle_viewport)
-	battle_place(battle_viewport, Rect2(0, 166, 540, 490), Rect2(24, 140, 910, 560))
+	battle_place(battle_viewport, Rect2(0, 166, 540, 490), Rect2(12, 140, 934, 648))
 	arena = Node2D.new()
 	arena.set_script(TacticalArena)
 	arena.simulation = run
@@ -285,7 +286,7 @@ func build_battle() -> void:
 	hero_deck_scroll.scroll_deadzone=10
 	hero_deck_scroll.set_script(preload("res://scripts/touch_scroll.gd"))
 	page.add_child(hero_deck_scroll)
-	battle_place(hero_deck_scroll,Rect2(16,0,508,156),Rect2(958,142,296,492),"deck")
+	battle_place(hero_deck_scroll,Rect2(16,0,508,156),Rect2(958,142,296,548),"deck")
 	hero_deck=Control.new()
 	hero_deck_scroll.add_child(hero_deck)
 	for index in run.actors.size():
@@ -312,12 +313,10 @@ func build_battle() -> void:
 		information.set_meta("card_info",true)
 		information.pressed.connect(show_character_information.bind(index))
 		card.add_child(information)
-		var bag:=Button.new()
-		bag.text="Itens"
-		bag.set_meta("card_items",true)
-		bag.add_theme_font_size_override("font_size",10)
-		bag.pressed.connect(show_equipment.bind(index))
-		card.add_child(bag)
+		for equipment_slot in 2:
+			var equipped_id: String = ItemArt.equipped(actor,equipment_slot)
+			var item_slot := ItemArt.slot(card, equipped_id, Rect2(18 + equipment_slot * 39, 110, 34, 34), show_equipment.bind(index, equipment_slot))
+			item_slot.set_meta("card_items", equipment_slot)
 		var name_tag := label(card, str(TaleCatalog.HEROES[actor.id].get("short_name", TaleCatalog.HEROES[actor.id].name)), Rect2(58, 6, 94, 43), 14)
 		name_tag.set_meta("card_name", true)
 		name_tag.set_meta("full_name",name_tag.text)
@@ -341,11 +340,11 @@ func build_battle() -> void:
 		ult_meters.append(meter)
 		ult_buttons.append(card)
 	log_label = label(page, "", Rect2(), 12, MUTED)
-	battle_place(log_label, Rect2(20, 0, 500, 64), Rect2(24, 710, 910, 65), "log")
+	log_label.visible = false # Complete history remains available through Histórico.
 	auto_button = button(page, "", Rect2(), toggle_auto_ult)
-	battle_place(auto_button, Rect2(16, 0, 246, 46), Rect2(958, 658, 296, 46), "bottom")
+	battle_place(auto_button, Rect2(16, 0, 246, 46), Rect2(958, 704, 296, 46), "bottom")
 	speed_button = button(page, "%d×" % int(game_speed), Rect2(), toggle_speed)
-	battle_place(speed_button, Rect2(278, 0, 246, 46), Rect2(958, 720, 296, 46), "bottom")
+	battle_place(speed_button, Rect2(278, 0, 246, 46), Rect2(958, 754, 296, 44), "bottom")
 	relayout_battle()
 	update_hud()
 
@@ -366,29 +365,32 @@ func relayout_battle() -> void:
 		var rect: Rect2 = node.get_meta("pc_rect" if desktop else "mobile_rect")
 		if not desktop:
 			match str(node.get_meta("battle_kind")):
-				"deck": rect.position.y = logical_height - 230
+				"deck":
+					rect.position.y = logical_height - 258
+					rect.size.y = 184
 				"log": rect.position.y = logical_height - 304
 				"bottom": rect.position.y = logical_height - 67
 			if node == battle_viewport:
-				rect.size.y = logical_height - 480
+				rect.size.y = logical_height - 430
 		if node.has_meta("desktop_fullscreen"):node.visible=desktop
 		node.position = rect.position
 		node.size = rect.size
 	if is_instance_valid(hero_deck_scroll):
 		hero_deck_scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED if desktop else ScrollContainer.SCROLL_MODE_AUTO
 		hero_deck_scroll.vertical_scroll_mode=ScrollContainer.SCROLL_MODE_AUTO if desktop else ScrollContainer.SCROLL_MODE_DISABLED
-		hero_deck.custom_minimum_size=Vector2(296,maxf(492,ult_buttons.size()*154)) if desktop else Vector2(maxf(508,ult_buttons.size()*174-14),148)
+		hero_deck.custom_minimum_size=Vector2(296,maxf(548,ult_buttons.size()*168)) if desktop else Vector2(maxf(508,ult_buttons.size()*174-14),176)
 	for card in ult_buttons:
 		var at:int=card.get_meta("deck_index",0)
-		card.position=Vector2(0,at*154) if desktop else Vector2(at*174,0)
-		card.size=Vector2(280,146) if desktop else Vector2(160,148)
+		card.position=Vector2(0,at*168) if desktop else Vector2(at*174,0)
+		card.size=Vector2(280,160) if desktop else Vector2(160,176)
 		for child in card.get_children():
 			if child.has_meta("card_info"):
 				child.position=Vector2(244,8) if desktop else Vector2(125,8)
 				child.size=Vector2(30,30)
 			elif child.has_meta("card_items"):
-				child.position=Vector2(18,110) if desktop else Vector2(105,124)
-				child.size=Vector2(72,28) if desktop else Vector2(49,22)
+				var equipment_slot: int = child.get_meta("card_items")
+				child.position=Vector2(18 + equipment_slot * 39,110) if desktop else Vector2(81 + equipment_slot * 38,136)
+				child.size=Vector2(34,34) if desktop else Vector2(32,32)
 			elif child.has_meta("card_face"):
 				child.position = Vector2(16,18) if desktop else Vector2(10,10)
 				child.size = Vector2(82,82) if desktop else Vector2(40,40)
@@ -401,8 +403,8 @@ func relayout_battle() -> void:
 				child.position = Vector2(111, 92) if desktop else Vector2(10, 101)
 				child.size = Vector2(158, 22) if desktop else Vector2(144, 21)
 			elif child.has_meta("card_status"):
-				child.position = Vector2(111, 119) if desktop else Vector2(10, 123)
-				child.size.x=158 if desktop else 92
+				child.position = Vector2(111, 122) if desktop else Vector2(10, 139)
+				child.size.x=158 if desktop else 65
 			elif child.has_meta("card_hp"):
 				child.position = Vector2(111, 48) if desktop else Vector2(10, 48)
 				child.size.x = 158 if desktop else 144
@@ -447,6 +449,9 @@ func update_hud() -> void:
 				child.text = "Caído" if actor.hp <= 0 else ("ULT na fila" if actor.get("ult_queued", false) else ("ULT em ação" if actor.ult_pending else ("TOQUE · ULT" if actor.energy >= 100 else ("Ativa selada" if actor.get("sealed", false) else "Carregando ULT"))))
 			elif child.has_meta("card_hp"):
 				child.text = "PV %d / %d%s" % [ceili(actor.hp), ceili(actor.max_hp), "  +%d" % ceili(actor.shield) if actor.shield > 0 else ""]
+			elif child.has_meta("card_items"):
+				var equipment_slot: int = child.get_meta("card_items")
+				ItemArt.refresh(child, ItemArt.equipped(actor,equipment_slot))
 			elif child.has_meta("card_mana"):
 				child.text = "MANA %d / 100" % int(actor.energy)
 		ult_buttons[index].disabled = paused or state != "battle" or actor.hp <= 0 or actor.energy < 100 or actor.ult_pending or actor.get("ult_queued", false) or arena.tracks[index].time >= 0
@@ -902,7 +907,7 @@ func show_condition_information(index: int, hostile: bool) -> void:
 	label(overlay,description if not description.is_empty() else "Sem condições ativas.",Rect2(32,336,476,350),22)
 	button(overlay,"Voltar ao combate",Rect2(32,768,476,58),close_character_information,true)
 
-func show_equipment(index: int=0) -> void:
+func show_equipment(index: int=0, slot_index: int=0) -> void:
 	if run==null or not run.expedition or is_instance_valid(equipment_panel):return
 	equipment_was_paused=paused
 	paused=true
@@ -912,7 +917,7 @@ func show_equipment(index: int=0) -> void:
 	equipment_panel.set_script(preload("res://scripts/equipment_panel.gd"))
 	equipment_panel.size=Vector2(logical_width,logical_height)
 	content.add_child(equipment_panel)
-	equipment_panel.setup(self,index)
+	equipment_panel.setup(self,index,slot_index)
 func close_equipment() -> void:
 	if is_instance_valid(equipment_panel):equipment_panel.queue_free()
 	equipment_panel=null

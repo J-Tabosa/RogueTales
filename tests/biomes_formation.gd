@@ -119,6 +119,9 @@ func checks() -> void:
 	var actual_heights := []
 	for id in TaleCatalog.HEROES:
 		prepare([id], 0)
+		# Compare species at the same density; crowded fields reserve space for plates.
+		game.run.tactics.enemies.resize(1)
+		game.arena.sync_enemies()
 		var actor: AnimatedSprite2D = game.arena.heroes[0]
 		var height: float = game.arena.hero_bounds(actor).size.y * actor.scale.y
 		if id in ["puss", "matches"]: assert(is_equal_approx(height, game.arena.human_height() * (0.62 if id=="puss" else 0.75)))

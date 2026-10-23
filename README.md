@@ -16,7 +16,7 @@ A coleção usa **faixas verticais com artes grandes e pergaminho**: carrossel n
 
 ## Itens, recompensas e equipe
 
-Cada personagem pode equipar dois itens pelo botão **Itens** junto aos seus PV e mana. A bolsa também abre nas encruzilhadas, no mercador e após duelos secretos. Trocas acontecem entre encontros; abrir a bolsa durante a luta pausa o combate para consulta. No PC, os cartões da equipe rolam verticalmente; no celular, horizontalmente.
+Cada personagem mostra **dois espaços quadrados com as artes dos itens equipados**, junto aos seus PV e mana. Clique em um espaço para abrir sua bolsa: a grade de **Aparência** tem filtros de itens e troféus; **Descrição** mostra a arte ampliada, efeitos, cópias disponíveis e portadores. No PC, os dois painéis ficam lado a lado; no celular, use as abas. Escolher uma arte permite consultar o item; o botão Equipar confirma a troca no espaço selecionado. A bolsa também abre nas encruzilhadas, no mercador e após duelos secretos. Trocas acontecem entre encontros; abrir a bolsa durante a luta pausa o combate para consulta. No PC, os cartões da equipe rolam verticalmente; no celular, horizontalmente.
 
 Há dez equipamentos comuns e doze troféus de chefes secretos, com cópias físicas: o mesmo exemplar não pode estar em dois personagens. Os efeitos incluem a água de Ariel incendiando, conversão de fogo em veneno, reverberação, reflexão, escudos, cura, crítico e modificadores de ULT. Equipar PV máximos não cura. Itens pertencem à run e seus efeitos e portadores ficam salvos no checkpoint.
 
@@ -42,7 +42,7 @@ A referência de Unicorn Overlord é a apresentação da arena: equipes em lados
 - **ULT:** faixa de 62 px no canto, com nome e personagem; preparação de 0,55 s e efeito ilustrado de seis quadros no impacto. O aviso não cobre a arena. As doze ULTs usam folhas geradas com o criador de imagens: cortes, ondas, cartas, flechas, fogo e fios. Alice lança cartas a partir de si e detona um círculo do naipe atual em volta dos inimigos. A abertura mantém a duração em 1×/2×. ULTs gastam 100 mana; comandos durante uma ação ficam na fila.
 - **Passivas:** avisos laterais com personagem, habilidade e efeito. As reações recarregam 6 s depois de consumidas; sinergias compartilham esse recurso interno. Não exigem configuração tática do jogador.
 - **Vida e mana:** números e barras nos cartões laterais do PC e inferiores do celular, além dos PV sobre as unidades. Escudo aparece numericamente; cura, dano, guarda e esquiva aparecem no campo.
-- **Histórico:** quatro mensagens recentes no canto e até 150 entradas por encontro. O botão Histórico pausa para ler ataques, alvos reais atingidos, valores, cura, escudo, ULT e passivas. Não há previsão de alvo inimigo na tela.
+- **Histórico:** até 150 entradas por encontro no botão Histórico; o log permanente foi retirado da arena para ampliar o campo de batalha. O botão Histórico pausa para ler ataques, alvos reais atingidos, valores, cura, escudo, ULT e passivas. Não há previsão de alvo inimigo na tela.
 - **Fim de encontro:** o golpe fatal e seu retorno terminam, a vitória fica 1,2 s e a recompensa abre como pop-up sobre a arena. Após escolher, o grupo caminha até a encruzilhada, escolhe uma rota no pop-up e segue até o próximo encontro. Derrotas também aguardam o golpe terminar.
 - **Ameaça:** menos crescimento de PV, dano inimigo mais alto, ataques fortes por classe a cada terceiro movimento e dano mínimo de 28% antes de escudos. Após 28 s, a pressão aumenta gradualmente o dano inimigo até 3×, impedindo sustento infinito por cura. A pressão fica visível no HUD. Pausa, 2× e movimento reduzido são respeitados.
 
@@ -50,7 +50,7 @@ Os checkpoints legados mantêm suas rodadas anteriores para poderem ser concluí
 
 ## Formação, escala e biomas
 
-A formação das runs segue a classe e corrige checkpoints antigos: **vanguarda à frente, assassinos no meio, magos/atiradores/artilheira atrás**. Cada posição começa centralizada: um viajante fica no meio, dois ficam acima e abaixo e três formam uma coluna reta. A formação é espelhada para os inimigos e mantém os espaços dos personagens derrotados durante o encontro. Humanos têm a mesma altura visível, medida pela arte em vez do tamanho do arquivo. Gato de Botas mede metade dessa altura; a Vendedora mede três quartos. Os pés ficam ancorados durante ataque, caminhada e mudança de resolução.
+A formação das runs segue a classe e corrige checkpoints antigos: **vanguarda à frente, assassinos no meio, magos/atiradores/artilheira atrás**. Cada posição começa centralizada: um viajante fica no meio, dois ficam acima e abaixo e três formam uma coluna reta. A formação é espelhada para os inimigos e mantém os espaços dos personagens derrotados durante o encontro. Fileiras de dois usam as posições externas da mesma grade de três; as placas compactas ficam abaixo dos pés, e a escala reserva espaço para corpos, placas e condições, inclusive com nove unidades em cada equipe. Humanos têm a mesma altura visível, medida pela arte em vez do tamanho do arquivo. Gato de Botas mede metade dessa altura; a Vendedora mede três quartos. Os pés ficam ancorados durante ataque, caminhada e mudança de resolução.
 
 Oito biomas cobrem os doze atos: bosque (1/3), castelo (2/5), gelo/jade (4/10), marés (6), fogo (7), biblioteca/tear (8/12), pântano (9) e dunas (11). Cada um tem cenário próprio e **seis inimigos distintos**, totalizando 48 identidades com quatro poses de ataque por identidade. Encontros sorteiam de um a nove inimigos, respeitando até três por posição; grupos grandes podem repetir variantes. Chefes de área aparecem com dois lacaios e têm escala maior. Melee avança com dash e retorna; magos conjuram em área; assassinos procuram a retaguarda, com fallback pelo meio e frente.
 
@@ -226,6 +226,7 @@ Texturas, retratos, estilos e cenas usam cache; a arena tem até seis unidades e
 godot --headless --path . --editor --quit
 godot --headless --path . --script tests/equipment_progression.gd
 godot --headless --path . --script tests/equipment_ui.gd
+godot --headless --path . --script tests/arena_equipment_layout.gd
 godot --headless --path . --script tests/biomes_formation.gd
 godot --headless --path . --script tests/idle_feedback.gd
 godot --headless --path . --script tests/party_combat.gd
@@ -268,3 +269,5 @@ As formações têm posições fixas e espelhadas: vanguarda à frente, assassin
 João desfere cinco estocadas, Maria reduz a armadura por seis segundos, Ariel limpa efeitos negativos e Peter recebe três chamas que concedem escudo e retaliam ataques recebidos. Os retratos usam a mesma arte atual com recortes próprios, sem compartilhar a malha de combate.
 
 Reconstrução das artes: `GODOT=/caminho/godot python tools/build_art.py`. Detalhes em `assets/characters/ART_PIPELINE.md`; referências e prompts em `old/source/PROMPTS.json`.
+
+As 22 artes individuais dos equipamentos e troféus ficam em `assets/items/`, com os prompts completos em `assets/items/ART_PROMPTS.json`; geração pelo ImageGen integrado. `arena_equipment_layout.gd` verifica nove contra nove sem sobreposição de placas e corpos em PC/celular, os dois espaços equipados e o pop-up Aparência/Descrição. Para capturas renderizadas, execute sem `--headless` e acrescente `-- /caminho/capturas`.

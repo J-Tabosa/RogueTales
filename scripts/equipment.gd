@@ -28,6 +28,9 @@ const TROPHIES := {
 	"peter":["Âncora sem peso",{"counter_mult":0.50,"shield_start":0.20}],
 	"aladin":["Areia do vizir",{"heal_mult":0.30,"ult_shield":0.25}]
 }
+static func item_at(actor: Dictionary, index: int) -> String:
+	var items: Array = actor.get("equipment", [])
+	return str(items[index]) if index >= 0 and index < items.size() else ""
 static func data(id: String) -> Dictionary:
 	if ITEMS.has(id): return ITEMS[id].duplicate(true)
 	var hero:=id.trim_prefix("trophy_")

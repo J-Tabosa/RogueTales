@@ -26,6 +26,7 @@ func checks() -> void:
 		game.run.offers.assign(["ally:" + hero, "power", "heart"])
 		assert(game.run.recruit(game.campaign, hero))
 	for id in Gear.ITEMS: assert(game.run.grant_item(id))
+	for hero in Gear.TROPHIES: assert(game.run.grant_item("trophy_" + hero))
 	for dimensions in [Vector2i(540, 960), Vector2i(1280, 800)]:
 		root.content_scale_size = dimensions
 		root.size = dimensions
@@ -38,7 +39,7 @@ func checks() -> void:
 		assert(game.ult_buttons.size() == 9)
 		assert(game.hero_deck.custom_minimum_size.y > 492 if game.desktop else game.hero_deck.custom_minimum_size.x > 508)
 		for card in game.ult_buttons:
-			assert(card.get_children().any(func(child): return child.has_meta("card_items")))
+			assert(card.get_children().filter(func(child): return child.has_meta("card_items")).size() == 2)
 		game.run.interlude = "route"
 		game.run.route_offers.assign(["battle"])
 		game.show_routes()
@@ -47,6 +48,7 @@ func checks() -> void:
 		game.equip_from_panel(8, "tower_braid", 0)
 		assert(game.run.actors[8].equipment[0] == "tower_braid")
 		assert(game.campaign.checkpoint.equipment_state.alice.items[0] == "tower_braid")
+		game.equipment_panel.select_tab("appearance")
 		var scroll: ScrollContainer = game.equipment_panel.find_child("InventoryScroll", true, false)
 		assert(scroll != null)
 		await process_frame
