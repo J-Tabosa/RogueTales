@@ -65,9 +65,9 @@ func spawn() -> void:
 	var count: int = 1 if owner.stage == 0 and owner.wave == 0 else (2 if owner.stage < 3 else 3)
 	var total: float = TaleCatalog.STAGES[owner.stage].hp * [1.0, 1.25, 2.4][owner.wave]
 	if owner.expedition:
-		var depth: int = owner.rooms_cleared if owner.endless else owner.stage
-		count = 1 if depth < 2 else (2 if depth < 5 else 3)
-		total = 86.0 * (owner.Endless.health_scale(depth) if owner.endless else pow(1.15, owner.stage)) * (1.5 if ExpeditionContent.is_boss(owner.stage) else 1.0) * (1.35 if owner.room_kind == "elite" else 1.0)
+		var depth: int = owner.rooms_cleared if owner.endless else owner.stage * 6 + owner.phase
+		count = 1 if depth == 0 else (2 if depth < 3 else 3)
+		total = 86.0 * ((1.0 + depth * 0.05) * pow(1.045, mini(depth, 120)) * (1.0 + maxi(0, depth - 120) * 0.08)) * (1.5 if ExpeditionContent.is_boss(owner.stage, owner.phase) else 1.0) * (1.35 if owner.room_kind == "elite" else 1.0)
 	var roles: Array = ["vanguard", "ranger", "mage"]
 	if owner.stage % 4 == 2:
 		roles[1] = "assassin"
@@ -75,15 +75,15 @@ func spawn() -> void:
 		roles[2] = "assassin"
 	var picked: Array[int] = []
 	for index in count:
-		var boss_unit: bool = owner.wave == 2 and index == 0
+		var boss_unit: bool = (ExpeditionContent.is_boss(owner.stage, owner.phase) if owner.expedition else owner.wave == 2) and index == 0
 		var weight := (0.6 if index == 0 else 0.4 / maxf(1, count - 1)) if owner.wave == 2 and count > 1 else 1.0 / count
 		var job: String = "mage" if boss_unit and owner.stage % 2 == 1 else str(roles[index])
 		var interval := 3.1 + index * 0.35
 		var variant := 0
 		if owner.expedition:
-			variant = (0 if owner.stage == 3 else (3 if owner.stage == 7 else 5)) if boss_unit else Biomes.pick(owner.stage, owner.rooms_cleared, index, owner.rng, picked)
+			variant = (0 if ExpeditionContent.boss_rule(owner.stage) == 3 else (3 if ExpeditionContent.boss_rule(owner.stage) == 7 else 5)) if boss_unit else Biomes.pick(owner.stage, owner.phase, index, owner.rng, picked)
 			picked.append(variant)
-			job = str(Biomes.CLASSES[variant]) if not boss_unit else job
+			job = str(Biomes.CLASSES[variant]) if not boss_unit else ("vanguard" if ExpeditionContent.boss_rule(owner.stage) == 3 else "mage")
 			interval = float(Biomes.INTERVALS[variant])
 		enemies.append({
 			"id": "enemy_%d" % index, "class": job,
@@ -102,7 +102,7 @@ func spawn() -> void:
 			if not boss_unit: enemies[-1].name = Biomes.ENEMIES[Biomes.biome(owner.stage)][variant]
 			enemies[-1].hp *= float(Biomes.HP[variant]) if not boss_unit else 1.0
 			enemies[-1].max_hp = enemies[-1].hp
-			enemies[-1].damage = (13.0 + (owner.rooms_cleared if owner.endless else owner.stage) * 3.5) * (1.2 if boss_unit else 1.0) * (1.15 if owner.room_kind == "elite" else 1.0) * (float(Biomes.POWER[variant]) if not boss_unit else 1.0) / pow(float(count), 0.25)
+			enemies[-1].damage = (13.0 + (owner.rooms_cleared if owner.endless else owner.stage * 6 + owner.phase) * 0.85) * (1.2 if boss_unit else 1.0) * (1.15 if owner.room_kind == "elite" else 1.0) * (float(Biomes.POWER[variant]) if not boss_unit else 1.0) / pow(float(count), 0.25)
 	for actor in owner.actors:
 		actor.ult_pending = false
 		actor.ult_queued = false

@@ -172,7 +172,7 @@ func choose_memory(index: int, choice: String) -> bool:
 
 func to_dict() -> Dictionary:
 	return {
-		"version": 7,
+		"version": 8,
 		"best_endless": best_endless, "endless_runs": endless_runs,
 		"discovered_synergies": discovered_synergies.duplicate(), "discovered_events": discovered_events.duplicate(),
 		"best_score": best_score, "best_depth": best_depth, "expedition_wins": expedition_wins,
@@ -230,6 +230,7 @@ func load_data(data: Dictionary) -> void:
 		if preload("res://scripts/team_events.gd").EVENTS.has(key) and not discovered_events.has(key): discovered_events.append(key)
 	best_score = maxi(0, int(data.get("best_score", 0)))
 	best_depth = clampi(int(data.get("best_depth", 0)), 0, 12)
+	if int(data.get("version", 1)) < 8: best_depth = floori(best_depth / 6.0)
 	expedition_wins = maxi(0, int(data.get("expedition_wins", 0)))
 	blessings_unlocked.assign(["vigor", "fury", "echo"])
 	for key in data.get("blessings_unlocked", []):
@@ -406,7 +407,7 @@ func load_from(path: String = SAVE_PATH) -> bool:
 			parser.parse(FileAccess.get_file_as_string(candidate)) == OK
 			and parser.data is Dictionary
 		):
-			if int(parser.data.get("version", 0)) in [1, 2, 3, 4, 5, 6, 7]:
+			if int(parser.data.get("version", 0)) in [1, 2, 3, 4, 5, 6, 7, 8]:
 				load_data(parser.data)
 				return true
 	return false
@@ -645,13 +646,13 @@ func finish_expedition(data: Dictionary, won: bool) -> Dictionary:
 	var newly_unlocked := resolve_run(data, won)
 	best_score = maxi(best_score, int(data.get("score", 0)))
 	var infinite := bool(data.get("endless", false))
-	var depth := clampi(int(data.get("rooms_cleared", 0)), 0, 2147483647 if infinite else 12)
-	var milestones := maxi(0, floori(depth / 12.0) - floori(best_endless / 12.0)) if infinite else 0
+	var depth := clampi(int(data.get("rooms_cleared", 0)), 0, 2147483647 if infinite else 72)
+	var milestones := maxi(0, floori(depth / 12.0) - floori(maxi(best_endless, int(data.get("continuation_from", 0))) / 12.0)) if infinite else 0
 	if infinite:
 		best_endless = maxi(best_endless, depth)
 		endless_runs += 1
-	best_depth = maxi(best_depth, mini(depth, 12))
-	var new_depth := maxi(0, depth - (12 if infinite and int(data.get("continuation_from", 0)) == 12 else 0))
+	best_depth = maxi(best_depth, mini(floori(depth / 6.0), 12))
+	var new_depth := maxi(0, depth - (int(data.get("continuation_from", 0)) if infinite else 0))
 	var fragments := mini(9999999, new_depth * 4 + (30 if won and not infinite else 0) + milestones * 20)
 	for key in data.get("synergies_seen", []):
 		if preload("res://scripts/team_synergies.gd").PAIRS.has(key) and not discovered_synergies.has(key): discovered_synergies.append(key)
@@ -663,7 +664,7 @@ func finish_expedition(data: Dictionary, won: bool) -> Dictionary:
 		expedition_wins += 1
 		total_wins += 1
 	else: total_defeats += 1
-	for chapter in mini(depth, 12):
+	for chapter in mini(floori(depth / 6.0), 12):
 		if not cleared.has(chapter):
 			cleared.append(chapter)
 			journal.append({"stage": chapter, "title": TaleCatalog.STAGES[chapter].name})

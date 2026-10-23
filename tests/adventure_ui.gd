@@ -23,6 +23,7 @@ func prepare(ids: Array, stage: int, depth: int, infinite := false) -> void:
 		game.run.offers.assign(["ally:" + id, "power", "heart"])
 		assert(game.run.recruit(game.campaign, id))
 	game.run.stage = stage
+	game.run.phase = 5 if ExpeditionContent.is_boss(stage) else 0
 	game.run.wave = 2 if ExpeditionContent.is_boss(stage) else 0
 	game.run.rooms_cleared = depth
 	game.run.interlude = ""
@@ -46,7 +47,7 @@ func checks() -> void:
 	game.campaign.expedition_wins = 1
 	await capture("mode_mobile")
 	prepare(["scarlet", "matches", "puss"], 3, 3)
-	assert(game.arena.foe_widgets.size() == 2 and not game.arena.foe_widgets[0].has("intent"))
+	assert(game.arena.foe_widgets.size() == 3 and not game.arena.foe_widgets[0].has("intent"))
 	for foe in game.run.tactics.enemies:
 		foe.hp = 20000
 		foe.max_hp = 20000
@@ -79,14 +80,14 @@ func checks() -> void:
 	assert(game.run.actors[0].sealed and game.run.actors[1].sealed)
 	await capture("weaver_mobile")
 	# The same UI continues into floor 13, with 3 stronger enemies and its build intact.
-	prepare(["scarlet"], 11, 11, true)
+	prepare(["scarlet"], 11, 71, true)
 	game.run.actors[0].hp = 93
 	for foe in game.run.tactics.enemies: foe.hp = 0
 	game.run.tactics.sync_totals()
 	game.resolve_enemy()
 	game._process(1.3)
-	assert(game.state == "choice" and game.run.rooms_cleared == 12 and game.run.stage == 0)
-	assert(game.run.actors[0].hp == 93 and game.campaign.expedition_wins == 1)
+	assert(game.state == "choice" and game.run.rooms_cleared == 72 and game.run.stage == 0)
+	assert(game.run.actors[0].hp >= 93 and game.campaign.expedition_wins == 1)
 	await capture("endless_reward_mobile")
 	var key: String = game.run.offers.filter(func(id): return not id.begins_with("ally:"))[0]
 	game.select_relic(key)

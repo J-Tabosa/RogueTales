@@ -57,7 +57,7 @@ func clear_page() -> void:
 	ult_meters.clear()
 	card_health.clear()
 	super.clear_page()
-	page.get_child(0).color = Color("111624")
+	page.get_child(0).color = Color("0d201e")
 	center_content()
 
 
@@ -65,9 +65,10 @@ func panel(parent: Node, rect: Rect2, color := INK) -> Panel:
 	var node := Panel.new()
 	node.position = rect.position
 	node.size = rect.size
-	node.add_theme_stylebox_override("panel", box(Color("20263b"), Color("42465d"), 18))
+	node.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	node.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(node)
+	UISkin.decorate(node)
 	register_layout(node)
 	return node
 
@@ -80,13 +81,14 @@ func button(parent: Node, text: String, rect: Rect2, callback: Callable, primary
 	node.size = Vector2(rect.size.x, maxf(44, rect.size.y))
 	node.custom_minimum_size.y = 44
 	node.add_theme_font_size_override("font_size", 18)
-	node.add_theme_color_override("font_color", Color("172124") if primary else Color("e3e9e8"))
+	node.add_theme_color_override("font_color", Color("fff0ce") if primary else Color("e3e9d7"))
 	node.add_theme_color_override("font_disabled_color", Color("84918f"))
-	node.add_theme_stylebox_override("normal", box(Color("e7c78b") if primary else Color("2a3048"), Color("82705c") if primary else Color("50546a"), 14))
-	node.add_theme_stylebox_override("hover", box(Color("f9deb0") if primary else Color("3b4260"), Color("a2bcaf"), 8))
+	node.add_theme_stylebox_override("normal", box(Color("685034", 0.12) if primary else Color("263c30", 0.12), Color("82705c") if primary else Color("50546a"), 14))
+	node.add_theme_stylebox_override("hover", box(Color("806542", 0.25) if primary else Color("38523e", 0.25), Color("a2bcaf"), 8))
 	node.add_theme_stylebox_override("pressed", box(Color("9b946e"), GOLD, 8))
-	node.add_theme_stylebox_override("disabled", box(Color("1c2234"), Color("353b51"), 14))
+	node.add_theme_stylebox_override("disabled", box(Color("1a2921"), Color("353b51"), 14))
 	node.add_theme_stylebox_override("focus", box(Color(0, 0, 0, 0), GOLD, 8))
+	UISkin.decorate(node, true)
 	node.pressed.connect(func():
 		if is_instance_valid(audio):
 			audio.play_effect("click")
@@ -232,6 +234,8 @@ func build_battle() -> void:
 	ally_bars.clear()
 	ally_labels.clear()
 	ally_clocks.clear()
+	var header_frame := panel(page, Rect2(8, 6, 524, 150))
+	battle_place(header_frame, Rect2(8, 6, 524, 150), Rect2(12, 5, 1256, 129))
 	stage_label = label(page, "%02d / 12   %s" % [run.stage + 1, TaleCatalog.STAGES[run.stage].name], Rect2(20, 10, 412, 53), 20)
 	battle_place(stage_label, Rect2(20, 10, 412, 53), Rect2(24, 12, 830, 43))
 	var pause := button(page, "Ⅱ", Rect2(), toggle_pause)
@@ -254,6 +258,7 @@ func build_battle() -> void:
 	for id in run.actor_ids():
 		arena.party_scenes.append(HERO_SCENES[id])
 	battle_viewport.add_child(arena)
+	UISkin.decorate(battle_viewport, false, true).z_index = 1600
 	arena.attack_hit.connect(on_attack_hit)
 	arena.attack_started.connect(on_attack_started)
 	arena.enemy_attack_hit.connect(on_enemy_attack_hit)
@@ -564,6 +569,24 @@ func gradient(parent: Node, rect: Rect2, top: Color, bottom: Color) -> void:
 
 
 func face_portrait(parent: Node, id: String, rect: Rect2) -> Control:
+	if id in ["alice", "rapunzel"]:
+		var slot := Panel.new()
+		slot.position = rect.position
+		slot.size = rect.size
+		slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		slot.add_theme_stylebox_override("panel", box(Color("23352b"), GOLD, 8))
+		parent.add_child(slot)
+		register_layout(slot)
+		var source: Texture2D = preload("res://assets/portraits/heroes_hd.png")
+		var half := source.get_size() / Vector2(2, 1)
+		var atlas := AtlasTexture.new()
+		atlas.atlas = source
+		atlas.region = Rect2(Vector2(half.x if id == "rapunzel" else 0, 0) + half * (Vector2(0.23, 0.06) if id == "rapunzel" else Vector2(0.21, 0)), half * (Vector2(0.70, 0.70) if id == "rapunzel" else Vector2(0.69, 0.69)))
+		atlas.filter_clip = true
+		var face := UISkin.picture(slot, atlas, Rect2(Vector2(3, 3), slot.size - Vector2(6, 6)))
+		face.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		slot.resized.connect(func(): face.size = slot.size - Vector2(6, 6))
+		return slot
 	cache_portrait(id)
 	var data: Dictionary = static_portraits[id]
 	var slot := Panel.new()
@@ -576,7 +599,7 @@ func face_portrait(parent: Node, id: String, rect: Rect2) -> Control:
 	register_layout(slot)
 	var bounds: Rect2 = Rect2(data.bounds)
 	var focuses := {"scarlet":Vector2(0.58,0.18),"rapunzel":Vector2(0.57,0.18),"snow_white":Vector2(0.52,0.17),"mulan":Vector2(0.5,0.17),"ariel":Vector2(0.52,0.16),"joao":Vector2(0.52,0.17),"maria":Vector2(0.58,0.18),"alice":Vector2(0.58,0.30),"puss":Vector2(0.53,0.38),"matches":Vector2(0.58,0.22),"peter":Vector2(0.58,0.24),"aladin":Vector2(0.35,0.25)}
-	var extent := Vector2.ONE * bounds.size.y * 0.34
+	var extent := Vector2.ONE * bounds.size.y * 0.44
 	var center: Vector2 = bounds.position + bounds.size * focuses.get(id,Vector2(0.5,0.2))
 	var face := Sprite2D.new()
 	face.texture = data.texture

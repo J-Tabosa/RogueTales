@@ -18,6 +18,8 @@ var hurt_left := 0.0
 var dot_cooldown := 0.0
 var strike_left := 0.0
 var illustrated := false
+var biome_id := 0
+var variant_id := 0
 var body_height := 210.0
 
 
@@ -107,5 +109,6 @@ func seek(id: String, seconds: float) -> void:
 		var duration := sprite_frames.get_frame_duration(id, index)
 		if remaining < duration:
 			set_frame_and_progress(index, remaining / duration)
+			if illustrated: flip_h = preload("res://scripts/biomes.gd").flip_for(biome_id, variant_id, index if id.ends_with("attack") else 0)
 			return
 		remaining -= duration

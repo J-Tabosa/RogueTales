@@ -186,6 +186,8 @@ func checks() -> void:
 	assert(acted.size() == 6, "Every living hero and enemy must get to act")
 	# Complete normal run; the same build is converted only at its earned ending.
 	prepare(["scarlet", "rapunzel"], 11)
+	game.run.phase = 5
+	game.run.rooms_cleared = 71
 	game.run.apply_relic("heart")
 	game.run.apply_relic("power")
 	game.run.apply_relic("power")
@@ -198,19 +200,19 @@ func checks() -> void:
 	var damage: float = game.run.actors[0].damage
 	var old_id: int = game.run.run_id
 	game.continue_into_endless()
-	assert(game.state == "choice" and game.run.endless and game.run.rooms_cleared == 12)
+	assert(game.state == "choice" and game.run.endless and game.run.rooms_cleared == 72)
 	assert(game.run.run_id != old_id and game.run.actors[0].hp == 73 and game.run.actors[0].damage == damage)
 	assert(game.run.upgrade_count("power") == 2 and game.run.upgrade_count("heart") == 1)
 	var resumed := IdleRun.new()
 	resumed.restore(game.campaign, game.campaign.checkpoint)
 	assert(resumed.endless and resumed.actors[0].hp == 73 and resumed.actors[0].damage == damage)
-	assert(resumed.continuation_from == 12)
+	assert(resumed.continuation_from == 72)
 	game.run.pending_choice = true
 	game.run.offers.assign(["ally:alice", "power", "heart"])
 	assert(game.run.recruit(game.campaign, "alice"))
-	assert(game.run.actors[2].damage == TaleCatalog.HEROES.alice.damage * 1.2 * 1.2)
+	assert(is_equal_approx(game.run.actors[2].damage, TaleCatalog.HEROES.alice.damage * 1.2 * (1.0 + 0.2 / 1.08)))
 	var continuation_reward: Dictionary = game.campaign.finish_expedition(game.run.to_checkpoint(), false)
-	assert(continuation_reward.reward == 20 and game.campaign.expedition_wins == 1, "Only the new endless milestone pays; normal floors are already settled")
+	assert(continuation_reward.reward == 0 and game.campaign.expedition_wins == 1, "Only the new endless milestone pays; normal floors are already settled")
 	# Desktop and narrow mobile layouts retain visible numeric bars.
 	root.content_scale_size = Vector2i(1280, 800)
 	root.size = Vector2i(1280, 800)

@@ -8,7 +8,7 @@ const DESCRIPTIONS := {
 }
 
 static func description(stage: int) -> String:
-	return DESCRIPTIONS.get(stage, "")
+	return DESCRIPTIONS.get(ExpeditionContent.boss_rule(stage), "")
 
 static func setup(tactics) -> void:
 	var owner = tactics.run()
@@ -22,10 +22,10 @@ static func setup(tactics) -> void:
 	for foe in tactics.enemies:
 		foe["action_count"] = 0
 		foe["intent"] = {}
-	if not ExpeditionContent.is_boss(owner.stage) or tactics.enemies.is_empty(): return
+	if not (ExpeditionContent.is_boss(owner.stage, owner.phase) if owner.expedition else ExpeditionContent.is_boss(owner.stage)) or tactics.enemies.is_empty(): return
 	var boss: Dictionary = tactics.enemies[0]
-	boss["mechanic"] = owner.stage
-	if owner.stage == 3 and tactics.enemies.size() > 1:
+	boss["mechanic"] = ExpeditionContent.boss_rule(owner.stage) if owner.expedition else owner.stage
+	if (ExpeditionContent.boss_rule(owner.stage) if owner.expedition else owner.stage) == 3 and tactics.enemies.size() > 1:
 		boss["class"] = "vanguard"
 		boss.row = "front"
 		boss["guarded_by_banner"] = true
@@ -34,7 +34,7 @@ static func setup(tactics) -> void:
 		tactics.enemies[1].row = "back"
 		tactics.enemies[1].damage = 0.0
 		tactics.enemies[1].evasion = 0.0
-	elif owner.stage == 11:
+	elif (ExpeditionContent.boss_rule(owner.stage) if owner.expedition else owner.stage) == 11:
 		for index in range(1, tactics.enemies.size()):
 			var thread: Dictionary = tactics.enemies[index]
 			thread.name = "Fio Rubro" if index == 1 else "Fio Violeta"
@@ -52,7 +52,7 @@ static func refresh(tactics) -> void:
 		if foe.hp > 0 and foe.has("binds"):
 			for actor in owner.actors:
 				if actor.id == foe.binds: actor.sealed = true
-	if owner.stage == 3 and not tactics.enemies.is_empty():
+	if (ExpeditionContent.boss_rule(owner.stage) if owner.expedition else owner.stage) == 3 and not tactics.enemies.is_empty():
 		var boss: Dictionary = tactics.enemies[0]
 		if boss.get("guarded_by_banner", false):
 			var protected := false

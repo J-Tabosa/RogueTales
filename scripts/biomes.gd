@@ -40,12 +40,22 @@ static func scenery(stage: int) -> Texture2D:
 	atlas.region = Rect2(Vector2(id % 2, id / 2) * cell, cell)
 	return atlas
 
-static func pick(stage: int, depth: int, slot: int, rng: RandomNumberGenerator, chosen: Array[int]) -> int:
-	var available: Array[int] = []
-	for id in 6:
-		if not chosen.has(id): available.append(id)
-	# A seeded shuffle makes every archetype eligible, including the first phases.
-	return available[rng.randi_range(0, available.size() - 1)]
+static func pick(stage: int, phase: int, slot: int, rng: RandomNumberGenerator, chosen: Array[int]) -> int:
+	var deck: Array[int] = [0, 1, 2, 3, 4, 5]
+	var shuffle := RandomNumberGenerator.new()
+	shuffle.seed = rng.seed ^ ((stage + 1) * 7919)
+	for at in range(5, 0, -1):
+		var other := shuffle.randi_range(0, at)
+		var swap := deck[at]
+		deck[at] = deck[other]
+		deck[other] = swap
+	for offset in 6:
+		var candidate := deck[(phase * 2 + slot + offset) % 6]
+		if not chosen.has(candidate): return candidate
+	return deck[0]
+
+static func flip_for(biome_id: int, variant: int, pose: int) -> bool:
+	return (biome_id in [0, 4] and variant == 2 and pose in [1, 2]) or (biome_id == 5 and variant == 0 and pose == 2)
 
 static func profile(stage: int, variant: int) -> Dictionary:
 	var id := biome(stage)

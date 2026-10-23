@@ -1,6 +1,10 @@
 class_name ExpeditionContent
 extends RefCounted
 ## Data for runs. Permanent training never changes these starting kits.
+const WORLD_COUNT := 12
+const PHASES_PER_WORLD := 6
+const TOTAL_PHASES := 72
+const WORLD_FORMAT := 2
 const RECRUIT_CHANCE := 0.25
 const BOSSES := [3, 7, 11]
 const BLESSINGS := {
@@ -62,5 +66,16 @@ static func offer(id: String) -> Dictionary:
 static func has(actor: Dictionary, mutation: String) -> bool:
 	return actor.get("mutations", []).has(mutation)
 
-static func is_boss(stage: int) -> bool:
-	return BOSSES.has(stage)
+static func is_boss(stage: int, phase: int = -1) -> bool:
+	return phase == PHASES_PER_WORLD - 1 if phase >= 0 else BOSSES.has(stage)
+
+static func boss_rule(world: int) -> int:
+	return [3, 3, 7, 3, 3, 7, 11, 7, 11, 7, 3, 11][clampi(world, 0, 11)]
+
+static func location(data: Dictionary) -> Vector2i:
+	var old := int(data.get("stage", 0))
+	return Vector2i(clampi(old, 0, 11), clampi(int(data.get("phase", 0)), 0, 5)) if int(data.get("world_format", 1)) >= WORLD_FORMAT else Vector2i(clampi(old / 6, 0, 11), old % 6)
+
+static func location_label(data: Dictionary) -> String:
+	var at := location(data)
+	return "Mundo %02d / 12 · Fase %d / 6" % [at.x + 1, at.y + 1]

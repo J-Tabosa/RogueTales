@@ -82,26 +82,26 @@ func checks() -> void:
 	run = IdleRun.new()
 	assert(run.start_expedition(fresh, "scarlet", "fury"))
 	run.actors[0].hp = 97
-	for stage in 12:
-		assert(run.stage == stage)
-		assert((run.wave == 2) == ExpeditionContent.is_boss(stage))
+	for stage in 72:
+		assert(run.stage == stage / 6 and run.phase == stage % 6)
+		assert((run.wave == 2) == ExpeditionContent.is_boss(run.stage, run.phase))
 		var health_before: float = run.actors[0].hp
 		var terminal := run.clear_encounter()
-		assert(terminal == (stage == 11))
-		assert(run.actors[0].hp == health_before)
+		assert(terminal == (stage == 71))
+		assert(run.actors[0].hp == health_before if stage % 6 != 5 or terminal else run.actors[0].hp >= health_before)
 		if not terminal:
 			assert(run.interlude == "reward" and run.offers.size() == 3)
 			var key: String = run.offers.filter(func(id): return not id.begins_with("ally:"))[0]
 			assert(run.apply_relic(key))
 			assert(run.interlude == "route" and run.choose_route("battle"))
-	assert(run.rooms_cleared == 12)
+	assert(run.rooms_cleared == 72)
 	var gold_before := fresh.gold
 	var terminal_data := run.to_checkpoint()
 	var result := fresh.finish_expedition(terminal_data, true)
-	assert(result.won and result.depth == 12 and fresh.expedition_wins == 1)
-	assert(fresh.gold == gold_before + 78 and fresh.checkpoint.is_empty())
+	assert(result.won and result.depth == 72 and fresh.expedition_wins == 1)
+	assert(fresh.gold == gold_before + 318 and fresh.checkpoint.is_empty())
 	assert(fresh.finish_expedition(terminal_data, true).is_empty())
-	assert(fresh.gold == gold_before + 78 and fresh.expedition_wins == 1)
+	assert(fresh.gold == gold_before + 318 and fresh.expedition_wins == 1)
 	# A new run resets the whole temporary build even on a developed account.
 	run = IdleRun.new()
 	assert(run.start_expedition(fresh, "scarlet", "vigor"))
@@ -127,6 +127,7 @@ func checks() -> void:
 		assert(journey.recruit(guests, id))
 	for boss in [3, 7]:
 		journey.stage = boss
+		journey.phase = 5
 		journey.clear_encounter()
 	var end := journey.to_checkpoint()
 	guests.finish_expedition(end, false)
@@ -138,5 +139,5 @@ func checks() -> void:
 	assert(old.unlocked.has("mulan") and old.gold == 388 and old.party == ["mulan"])
 	for suffix in ["", ".bak", ".tmp"]:
 		if FileAccess.file_exists(SAVE + suffix): DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE + suffix))
-	print("EXPEDITION PASS: 12 phases, solo base stats, 25% per screen, deep checkpoint/RNG, nonrepeatable shop, reset, idempotent victory/defeat, guest unlocks and v4 migration")
+	print("EXPEDITION PASS: 12 worlds / 72 phases, solo base stats, 25% per screen, deep checkpoint/RNG, nonrepeatable shop, reset, idempotent victory/defeat, guest unlocks and v4 migration")
 	quit()

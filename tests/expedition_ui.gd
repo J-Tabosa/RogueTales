@@ -79,7 +79,7 @@ func checks() -> void:
 		game._process(0.05)
 		if is_instance_valid(game.arena): game.arena._process(0.05)
 		if game.state in ["choice", "result"]: break
-	assert(game.state == "choice" and game.run.stage == 1)
+	assert(game.state == "choice" and game.run.stage == 0 and game.run.phase == 1)
 	assert(game.run.actors[0].hits > 0)
 	await capture("run_reward_mobile")
 	var offers: Array = game.run.offers.duplicate()
@@ -93,12 +93,12 @@ func checks() -> void:
 	await capture("run_routes_mobile")
 	# Walk every boundary, including all three bosses, without creating a new run.
 	var number: int = game.run.run_id
-	for stage in range(1, 12):
-		assert(game.run.stage == stage and game.run.run_id == number)
+	for stage in range(1, 72):
+		assert(game.run.stage == stage / 6 and game.run.phase == stage % 6 and game.run.run_id == number)
 		game.select_route("battle")
 		assert(game.state == "travel")
 		finish_room()
-		if stage < 11:
+		if stage < 71:
 			assert(game.state == "choice")
 			key = game.run.offers.filter(func(id): return not id.begins_with("ally:"))[0]
 			game.select_relic(key)

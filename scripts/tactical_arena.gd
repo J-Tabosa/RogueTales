@@ -5,6 +5,7 @@ signal attack_started(index: int)
 signal enemy_attack_hit(index: int)
 const Biomes = preload("res://scripts/biomes.gd")
 const UltimateArt = preload("res://scripts/ultimate_art.gd")
+const EnemyArt = preload("res://scripts/enemy_art.gd")
 const Enemy = preload("res://scripts/enemy.gd")
 var party_scenes: Array = []
 var simulation
@@ -41,12 +42,19 @@ var travel_progress := 0.0
 var entrance_left := 0.0
 var bursts: Array[Dictionary] = []
 var feedback: Control
+var vfx: Node2D
+var enemy_impacts: Array[Dictionary] = []
 var enemy_areas: Array[Dictionary] = []
 static var hero_shape_cache: Dictionary = {}
 
 
 
 func _ready() -> void:
+	vfx = Node2D.new()
+	vfx.set_script(preload("res://scripts/combat_vfx.gd"))
+	vfx.arena = self
+	vfx.z_index = 1000
+	add_child(vfx)
 	backdrop = TextureRect.new()
 	backdrop.texture = Biomes.scenery(stage)
 	backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -66,7 +74,7 @@ func _ready() -> void:
 		heroes.append(actor)
 		var home := home_for(simulation.actors[index].row, index, false)
 		actor.position = home
-		actor.z_index = int(home.y)
+		actor.z_index = 925 if simulation.actors[index].id in ["puss", "matches"] else int(home.y)
 		actor.show_animation("idle")
 		tracks.append({"home": home, "time": -1.0, "duration": 1.0, "hit": false, "hurt": 0.0, "alive": true, "target": -1, "ultimate": false})
 		unit_widgets.append(widget(home, TaleCatalog.hero_class_name(simulation.actors[index].id), Color("a3d9c3")))
@@ -99,6 +107,9 @@ func home_for(row: String, index: int, hostile: bool) -> Vector2:
 			model.free()
 		var bounds: Rect2 = hero_shape_cache[id]
 		half_width = bounds.size.x / maxf(1, bounds.size.y) * human_height() * (0.25 if id in ["puss", "matches"] else 0.5)
+	if not hostile and units[index].id in ["puss", "matches"]:
+		y = 0.92
+		if units[index].id == "matches" and same.size() == 1: x += 0.06
 	return Vector2(clampf((1.0 - x if hostile else x) * field_width, half_width + 8, field_width - half_width - 8), field_height * y)
 
 func hero_bounds(actor: AnimatedSprite2D) -> Rect2:
@@ -175,7 +186,9 @@ func sync_enemies() -> void:
 			model.sprite_frames = Biomes.frames(int(data.biome), int(data.variant))
 			model.body_height = model.sprite_frames.get_frame_texture("idle", 0).get_image().get_used_rect().size.y
 			model.illustrated = true
-			model.flip_h = true
+			model.biome_id = int(data.biome)
+			model.variant_id = int(data.variant)
+			model.flip_h = false
 		else: model = Enemy.warm(stage).instantiate()
 		model.regular_height = human_height() * (Biomes.height_factor(int(data.biome), int(data.variant)) if simulation.expedition else 1.0)
 		model.boss_height = human_height() * (1.0 if simulation.expedition else 1.22)
@@ -296,7 +309,7 @@ func _process(delta: float) -> void:
 	clock += dt
 	for index in heroes.size():
 		var actor: AnimatedSprite2D = heroes[index]
-		actor.z_index = int(actor.position.y)
+		actor.z_index = 950 if tracks[index].time >= 0 else (925 if simulation.actors[index].id in ["puss", "matches"] else int(actor.position.y))
 		var track: Dictionary = tracks[index]
 		actor.speed_scale = 0.0 if frozen or hit_stop > 0 or intro_left > 0 or not track.alive else speed
 		track.hurt = maxf(0, track.hurt - dt)
@@ -376,8 +389,11 @@ func _process(delta: float) -> void:
 	if health_tick <= 0:
 		health_tick = 0.08
 		sync_health(simulation.actors)
+	for impact in enemy_impacts: impact.left -= dt
+	enemy_impacts = enemy_impacts.filter(func(impact): return impact.left > 0)
 	if dt > 0:
 		queue_redraw()
+		vfx.queue_redraw()
 
 
 func _draw() -> void:
@@ -389,6 +405,9 @@ func _draw() -> void:
 		draw_set_transform(at, 0, Vector2(1, 0.23))
 		draw_circle(Vector2.ZERO, 38, Color("0a151b", 0.5), true, -1, true)
 	draw_set_transform(Vector2.ZERO)
+
+
+func draw_combat_effects(canvas: Node2D) -> void:
 	for index in tracks.size():
 		var track: Dictionary = tracks[index]
 		if track.time < 0 or track.hit or track.target < 0 or track.target >= foe_homes.size():
@@ -403,37 +422,37 @@ func _draw() -> void:
 		var tint: Color = TaleCatalog.HEROES[simulation.actors[index].id].color
 		if heroes[index].is_melee_attack():
 			if phase > heroes[index].impact_ratio * 0.65:
-				draw_arc(to, 25 if not track.ultimate else 48, -1.8, 1.2, 18, tint, 3, true)
+				canvas.draw_arc(to, 25 if not track.ultimate else 48, -1.8, 1.2, 18, tint, 3, true)
 		else:
 			var point := from.lerp(to, t)
 			if heroes[index].attack_style == 0:
 				point.y -= sin(t * PI) * 50
-				draw_circle(point, 9, Color("242127"), true, -1, true)
-				draw_line(point + Vector2(3, -8), point + Vector2(7, -14), tint, 3, true)
+				canvas.draw_circle(point, 9, Color("242127"), true, -1, true)
+				canvas.draw_line(point + Vector2(3, -8), point + Vector2(7, -14), tint, 3, true)
 			elif heroes[index].attack_style == 2:
-				draw_circle(point - Vector2(3, 0), 6, Color("dc3f56"), true, -1, true)
-				draw_circle(point + Vector2(3, 0), 6, Color("e95062"), true, -1, true)
-				draw_line(point + Vector2(0, -5), point + Vector2(2, -10), Color("b4c793"), 2)
+				canvas.draw_circle(point - Vector2(3, 0), 6, Color("dc3f56"), true, -1, true)
+				canvas.draw_circle(point + Vector2(3, 0), 6, Color("e95062"), true, -1, true)
+				canvas.draw_line(point + Vector2(0, -5), point + Vector2(2, -10), Color("b4c793"), 2)
 			elif heroes[index].attack_style == 5:
 				var direction := (to - from).normalized()
 				for bolt in (3 if track.ultimate else 1):
 					var at := point + Vector2(0, (bolt - (1 if track.ultimate else 0)) * 9)
-					draw_line(at - direction * 24, at, Color("eee5cf"), 3, true)
+					canvas.draw_line(at - direction * 24, at, Color("eee5cf"), 3, true)
 			elif heroes[index].attack_style == 7:
-				draw_set_transform(point, t * TAU, Vector2.ONE)
-				draw_rect(Rect2(-6, -9, 12, 18), Color("f9edce"))
-				draw_circle(Vector2.ZERO, 3, Color("d94764"))
-				draw_set_transform(Vector2.ZERO)
+				canvas.draw_set_transform(point, t * TAU, Vector2.ONE)
+				canvas.draw_rect(Rect2(-6, -9, 12, 18), Color("f9edce"))
+				canvas.draw_circle(Vector2.ZERO, 3, Color("d94764"))
+				canvas.draw_set_transform(Vector2.ZERO)
 			elif heroes[index].attack_style == 9:
-				draw_line(from.lerp(to, maxf(0, t - 0.12)), point, Color("ed6f3b"), 7, true)
-				draw_circle(point, 5, Color("ffe2a0"), true, -1, true)
+				canvas.draw_line(from.lerp(to, maxf(0, t - 0.12)), point, Color("ed6f3b"), 7, true)
+				canvas.draw_circle(point, 5, Color("ffe2a0"), true, -1, true)
 			elif heroes[index].attack_style == 11:
-				draw_arc(point, 9, 0, TAU, 20, tint, 3, true)
-				draw_circle(point, 4, Color("e7fff5"), true, -1, true)
+				canvas.draw_arc(point, 9, 0, TAU, 20, tint, 3, true)
+				canvas.draw_circle(point, 4, Color("e7fff5"), true, -1, true)
 			else:
-				draw_line(from.lerp(to, maxf(0, t - 0.18)), point, tint, 6, true)
+				canvas.draw_line(from.lerp(to, maxf(0, t - 0.18)), point, tint, 6, true)
 		if track.ultimate:
-			draw_arc(to, 32 + t * 16, 0, TAU, 32, Color(tint, 0.65), 3, true)
+			canvas.draw_arc(to, 32 + t * 16, 0, TAU, 32, Color(tint, 0.65), 3, true)
 	if enemy_track.time >= 0 and not enemy_track.get("support", false) and enemy_track.target >= 0:
 		var index: int = enemy_track.index
 		var phase: float = enemy_track.time / enemy_track.duration
@@ -442,30 +461,44 @@ func _draw() -> void:
 			var to: Vector2 = tracks[enemy_track.target].home + Vector2(0, -65)
 			var t := clampf((phase - 0.2) / 0.35, 0, 1)
 			var point := from.lerp(to, t)
-			draw_line(from.lerp(to, maxf(0, t - 0.20)), point, Color("f09fa6"), 5, true)
-			draw_circle(point, 8, Color("ffd4bd"), true, -1, true)
+			var tint: Color = Biomes.COLORS[Biomes.biome(stage)]
+			if simulation.tactics.enemies[index]["class"] == "ranger":
+				var direction := (to - from).normalized()
+				canvas.draw_line(point - direction * 30, point, Color("fbe5b1"), 4, true)
+				canvas.draw_line(point, point - direction.rotated(0.55) * 12, tint, 3, true)
+				canvas.draw_line(point, point - direction.rotated(-0.55) * 12, tint, 3, true)
+			else:
+				canvas.draw_line(from.lerp(to, maxf(0, t - 0.2)), point, Color(tint, 0.7), 8, true)
+				canvas.draw_circle(point, 13, Color(tint, 0.3), true, -1, true)
+				canvas.draw_circle(point, 7, Color("fff2da"), true, -1, true)
 	for area in enemy_areas:
 		var tint := Color(Biomes.COLORS[Biomes.biome(stage)], minf(1, area.left * 2))
 		var radius: float = 26 + (1.0 - area.left) * 42
-		draw_set_transform(area.at, 0, Vector2(1, 0.35))
-		draw_arc(Vector2.ZERO, radius, 0, TAU, 30, tint, 4, true)
+		canvas.draw_set_transform(area.at, 0, Vector2(1, 0.35))
+		canvas.draw_arc(Vector2.ZERO, radius, 0, TAU, 30, tint, 4, true)
 		for point in 6:
 			var dir := Vector2.from_angle(point * TAU / 6)
-			draw_line(dir * 10, dir * radius, tint, 3, true)
-		draw_set_transform(Vector2.ZERO)
-	for burst in bursts: draw_burst(burst)
+			canvas.draw_line(dir * 10, dir * radius, tint, 3, true)
+		canvas.draw_set_transform(Vector2.ZERO)
+	for burst in bursts: draw_burst(canvas, burst)
 	if walking:
 		for step in 9:
 			var x := fposmod(step * 83.0 - clock * 90.0, field_width)
-			draw_line(Vector2(x, field_height * 0.9), Vector2(x + 23, field_height * 0.9), Color("d6be88", 0.18), 2)
+			canvas.draw_line(Vector2(x, field_height * 0.9), Vector2(x + 23, field_height * 0.9), Color("d6be88", 0.18), 2)
 	for item in effects:
-		draw_line(item.from, item.to, Color(item.color, item.time / item.duration), 3, true)
+		canvas.draw_line(item.from, item.to, Color(item.color, item.time / item.duration), 3, true)
 	for index in foe_homes.size():
 		var foe: Dictionary = simulation.tactics.enemies[index]
 		if not enemy_visible or foe.hp <= 0 or not foe.has("binds"): continue
 		for at in simulation.actors.size():
 			if simulation.actors[at].id == foe.binds and simulation.actors[at].hp > 0:
-				draw_line(foe_homes[index] + Vector2(0, -80), tracks[at].home + Vector2(0, -70), Color("c885b8", 0.55), 2, true)
+				canvas.draw_line(foe_homes[index] + Vector2(0, -80), tracks[at].home + Vector2(0, -70), Color("c885b8", 0.55), 2, true)
+
+	for impact in enemy_impacts:
+		var progress: float = 1.0 - impact.left / 0.85
+		var texture := EnemyArt.frame(int(impact.biome), progress)
+		var extent := Vector2.ONE * human_height() * 1.15
+		canvas.draw_texture_rect(texture, Rect2(impact.at - extent * 0.5, extent), false, Color(1, 1, 1, minf(1, impact.left * 4)))
 
 
 func set_home(index: int, at: Vector2) -> void:
@@ -515,10 +548,12 @@ func begin_enemy_attack(index: int, target: int) -> bool:
 func damage_number(message: String, at: Vector2, tint: Color) -> void:
 	var text := Label.new()
 	text.text = message
-	text.position = at + Vector2(-38, -110)
-	text.position.x = clampf(text.position.x, 6, field_width - 155)
-	text.size = Vector2(160, 36)
-	text.add_theme_font_size_override("font_size", 15 if message.contains("ESCUDO") else (18 if message.begins_with("+") else 22))
+	text.position = at + Vector2(-80, -110)
+	text.position.x = clampf(text.position.x, 6, field_width - 166)
+	text.size = Vector2(160, 44)
+	text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	text.add_theme_font_size_override("font_size", 13 if message.length() > 12 else 15 if message.contains("ESCUDO") else (18 if message.begins_with("+") else 22))
 	text.add_theme_color_override("font_color", tint)
 	text.add_theme_color_override("font_outline_color", Color("101321"))
 	text.add_theme_constant_override("outline_size", 5)
@@ -528,6 +563,10 @@ func damage_number(message: String, at: Vector2, tint: Color) -> void:
 
 
 func present_result(result: Dictionary, hostile: bool, attacker: int) -> void:
+	if hostile and not result.get("non_attack", false):
+		for target in result.get("targets", [result.get("target", -1)]):
+			if target >= 0 and target < tracks.size():
+				enemy_impacts.append({"at": tracks[target].home + Vector2(0, -human_height() * 0.45), "biome": Biomes.biome(stage), "left": 0.85})
 	if hostile and simulation.tactics.enemies[attacker]["class"] == "mage" and not result.get("non_attack", false):
 		for target in result.get("targets", [result.get("target", -1)]):
 			if target >= 0: enemy_areas.append({"at": tracks[target].home, "left": 1.0})
@@ -583,12 +622,12 @@ func ultimate_effect(index: int, result: Dictionary) -> void:
 		bursts.append({"id": id, "from": tracks[index].home + Vector2(0, -human_height() * 0.5), "at": at, "left": 1.5, "duration": 1.5})
 	if not reduced_motion: hit_stop = 0.10
 
-func draw_burst(burst: Dictionary) -> void:
+func draw_burst(canvas: Node2D, burst: Dictionary) -> void:
 	var t: float = 1 - burst.left / burst.duration
 	var at: Vector2 = burst.at if reduced_motion else Vector2(burst.from).lerp(burst.at, smoothstep(0, 0.65, t))
 	var extent := Vector2.ONE * human_height() * (1.25 if str(burst.id) == "alice" else 1.15)
 	var texture := UltimateArt.frame(str(burst.id), t)
-	draw_texture_rect(texture, Rect2(at - extent * 0.5, extent), false, Color(1, 1, 1, minf(1, (1 - t) * 5)))
+	canvas.draw_texture_rect(texture, Rect2(at - extent * 0.5, extent), false, Color(1, 1, 1, minf(1, (1 - t) * 5)))
 
 
 func compact_hp(value: float) -> String:

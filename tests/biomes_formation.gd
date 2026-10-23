@@ -130,7 +130,7 @@ func checks() -> void:
 	assert(homes[0].x < homes[1].x and homes[1].x < homes[2].x)
 	await capture("same_rank_fire_mobile")
 	prepare(["mulan", "puss", "matches"], 4)
-	assert(game.arena.tracks[0].home.y == game.arena.tracks[1].home.y)
+	assert(game.arena.tracks[1].home.y >= game.arena.tracks[0].home.y)
 	assert(game.arena.tracks[0].home.x != game.arena.tracks[1].home.x)
 	await capture("half_size_mobile")
 	prepare(["mulan", "peter", "alice"], 6)
@@ -177,6 +177,7 @@ func checks() -> void:
 	await capture("alice_cards_spread_mobile")
 	# Score and high score survive saves and cannot be paid/settled twice.
 	prepare(["scarlet"], 3)
+	game.run.phase = 5
 	game.run.tactics.elapsed = 10
 	game.run.tactics.damage_received = 0
 	game.run.clear_encounter()

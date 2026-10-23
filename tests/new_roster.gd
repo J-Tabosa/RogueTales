@@ -22,10 +22,15 @@ func checks() -> void:
 			assert(actor.sprite_frames.get_frame_count(anim) == scarlet.sprite_frames.get_frame_count(anim))
 			assert(actor.sprite_frames.get_animation_speed(anim) == scarlet.sprite_frames.get_animation_speed(anim))
 			for frame in actor.sprite_frames.get_frame_count(anim):
-				var texture: AtlasTexture = actor.sprite_frames.get_frame_texture(anim, frame)
-				assert(texture.get_size().is_equal_approx(Vector2(720, 640)))
-				assert(Rect2(Vector2.ZERO, texture.atlas.get_size()).encloses(texture.region))
-				var key := str(texture.atlas.resource_path) + str(texture.region)
+				var texture: Texture2D = actor.sprite_frames.get_frame_texture(anim, frame)
+				var key: String
+				if texture is MeshTexture:
+					assert(texture.mesh.get_aabb().size.y > 0)
+					key = str(texture.base_texture.resource_path) + str(texture.mesh.surface_get_arrays(0)[Mesh.ARRAY_TEX_UV])
+				else:
+					assert(texture.get_size().is_equal_approx(Vector2(720,640)))
+					assert(Rect2(Vector2.ZERO,texture.atlas.get_size()).encloses(texture.region))
+					key = str(texture.atlas.resource_path) + str(texture.region)
 				assert(not source_regions.has(key), "Each frame has its own source art")
 				source_regions[key] = true
 			actor.seek_animation(anim, 0.2)

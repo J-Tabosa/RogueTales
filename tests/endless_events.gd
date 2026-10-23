@@ -40,7 +40,7 @@ func checks() -> void:
 	assert(run.start_expedition(account, "scarlet", "vigor", true))
 	run.rng.seed = 8381
 	for phase in 180:
-		assert(run.stage == phase % 12)
+		assert(run.stage == (phase / 6) % 12 and run.phase == phase % 6)
 		assert(not run.clear_encounter())
 		assert(run.rooms_cleared == phase + 1 and run.offers.size() == 3)
 		var choice: String = run.offers.filter(func(id): return not id.begins_with("ally:"))[0]

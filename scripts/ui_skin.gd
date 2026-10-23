@@ -65,7 +65,7 @@ static func decorate(node: Control, button_style := false, frame_only := false) 
 	var texture_size := patch.texture.get_size()
 	# Scale the drawing coordinate system, preserving high-resolution source corners.
 	# The border stays thin at any card size; the source PNG is never resampled in code.
-	var factor := 0.075 if button_style else 0.065
+	var factor := 0.16 if button_style else 0.15
 	patch.scale = Vector2.ONE * factor
 	patch.patch_margin_left = int(texture_size.x * (0.12 if button_style else 0.18))
 	patch.patch_margin_right = patch.patch_margin_left

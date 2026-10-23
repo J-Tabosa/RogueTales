@@ -14,6 +14,7 @@ func model(ids: Array, stage := 8) -> IdleRun:
 		run.offers.assign(["ally:" + id, "power", "heart"])
 		assert(run.recruit(account, id))
 	run.stage = stage
+	run.phase = 5 if ExpeditionContent.is_boss(stage) else 0
 	run.wave = 2 if ExpeditionContent.is_boss(stage) else 0
 	run.spawn_enemy()
 	var flow := Flow.new()

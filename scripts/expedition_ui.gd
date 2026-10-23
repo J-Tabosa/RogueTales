@@ -66,7 +66,7 @@ func show_map() -> void:
 	header("Antes da primeira página", "Escolha o protagonista e a bênção desta run.")
 	if not campaign.checkpoint.is_empty():
 		label(page, "Uma tentativa em andamento", Rect2(24, 219, 492, 48), 25, GOLD)
-		var phase := "Infinito · fase %d" % (int(campaign.checkpoint.get("rooms_cleared", 0)) + 1) if campaign.checkpoint.get("endless", false) else "Conto · fase %02d / 12" % (int(campaign.checkpoint.stage) + 1)
+		var phase := "Infinito · fase %d" % (int(campaign.checkpoint.get("rooms_cleared", 0)) + 1) if campaign.checkpoint.get("endless", false) else Content.location_label(campaign.checkpoint)
 		label(page, phase + "\nRetome sua equipe e sua build, ou encerre a tentativa para começar outra.", Rect2(24, 287, 492, 124), 20)
 		button(page, "Retomar run", Rect2(24, 487, 492, 64), resume_checkpoint, true)
 		button(page, "Encerrar tentativa", Rect2(24, 570, 492, 56), request_abandon)
@@ -152,8 +152,8 @@ func spawn_enemy() -> void:
 	if not is_expedition(): return
 	state = "encounter_intro"
 	encounter_left = 1.15
-	current_action("CHEFE À VISTA" if Content.is_boss(run.stage) else "ENCONTRO · prepare-se!")
-	arena.damage_number("CHEFE À VISTA" if Content.is_boss(run.stage) else "INIMIGOS À VISTA", Vector2(arena.field_width * 0.45, arena.field_height * 0.44), GOLD)
+	current_action("CHEFE À VISTA" if Content.is_boss(run.stage, run.phase) else "ENCONTRO · prepare-se!")
+	arena.damage_number("CHEFE À VISTA" if Content.is_boss(run.stage, run.phase) else "INIMIGOS À VISTA", Vector2(arena.field_width * 0.45, arena.field_height * 0.44), GOLD)
 
 func _process(delta: float) -> void:
 	if state == "route_travel" and not paused:
@@ -275,7 +275,7 @@ func show_routes() -> void:
 	arena.frozen = true
 	if is_instance_valid(feedback): feedback.frozen = true
 	journey_modal("Uma encruzilhada", "%s · %d ouro · escolha o próximo caminho." % [run.phase_label(), run.run_gold])
-	if Content.is_boss(run.stage):
+	if Content.is_boss(run.stage, run.phase):
 		label(overlay, TaleCatalog.STAGES[run.stage].boss, Rect2(32, 390, 476, 75), 28, GOLD)
 		label(overlay, BossRules.description(run.stage), Rect2(32, 482, 476, 166), 18, MUTED)
 		button(overlay, "Enfrentar o chefe  →", Rect2(32, 673, 476, 58), select_route.bind("battle"), true)
@@ -425,7 +425,7 @@ func show_run_result(result: Dictionary) -> void:
 	audio.play_effect("win" if won else "loss")
 	header("O final é seu." if won else "Uma página se fecha.", "RUN CONCLUÍDA" if won else "FIM DA TENTATIVA · NOVO COMEÇO")
 	portrait_fitted(page, run.leader, Vector2(270, 479), 273)
-	label(page, "%d páginas · infinito" % result.get("depth", 0) if result.get("endless", false) else "%02d / 12 fases vencidas" % result.get("depth", 0), Rect2(24, 513, 492, 54), 30, GOLD)
+	label(page, "%d páginas · infinito" % result.get("depth", 0) if result.get("endless", false) else "%02d / 72 fases vencidas" % result.get("depth", 0), Rect2(24, 513, 492, 54), 30, GOLD)
 	var record := "recorde infinito: %d" % campaign.best_endless if result.get("endless", false) else "recorde %02d / 12" % campaign.best_depth
 	label(page, "%d PONTOS · RECORDE %d\n+%d memórias · %s" % [run.score, campaign.best_score, result.get("reward", 0), record], Rect2(24, 585, 492, 89), 17, MUTED)
 	var unlocked_now: Array = result.get("unlocks", [])
@@ -463,9 +463,9 @@ func abandon_expedition() -> void:
 func update_hud() -> void:
 	super.update_hud()
 	if is_expedition() and battle_view and is_instance_valid(enemy_label):
-		enemy_label.text = "%s · %s · %d OURO" % [run.phase_label(), "PRESSÃO +%d%%" % int((run.tactics.pressure() - 1) * 100) if run.tactics.pressure() > 1 else ("CHEFE" if Content.is_boss(run.stage) else ("ELITE" if run.room_kind == "elite" else "COMBATE")), run.run_gold]
+		enemy_label.text = "%s · %s · %d OURO" % [run.phase_label(), "PRESSÃO +%d%%" % int((run.tactics.pressure() - 1) * 100) if run.tactics.pressure() > 1 else ("CHEFE" if Content.is_boss(run.stage, run.phase) else ("ELITE" if run.room_kind == "elite" else "COMBATE")), run.run_gold]
 		power_label.text = "%d PONTOS · RECORDE %d" % [run.score, campaign.best_score]
-		stage_label.text = "%02d   %s" % [run.rooms_cleared + 1, TaleCatalog.STAGES[run.stage].name]
+		stage_label.text = "%02d   %s" % [run.stage + 1, TaleCatalog.STAGES[run.stage].name]
 		for i in mini(ult_buttons.size(), run.actors.size()):
 			var actor: Dictionary = run.actors[i]
 			ult_buttons[i].tooltip_text = ("HABILIDADE SELADA · destrua seu fio para libertá-la.\n\n" if actor.get("sealed", false) else "") + "%s (automática)\n%s\n\n%s (passiva · 6 s)\n%s\n\nULT: %s" % [Content.KITS[actor.id][0], Content.KITS[actor.id][1], Content.KITS[actor.id][2], Content.KITS[actor.id][3], TaleCatalog.HERO_TACTICS[actor.id].ult]
@@ -476,7 +476,7 @@ func navigation(active: String) -> void:
 	for i in entries.size():
 		var entry: Array = entries[i]
 		var item := button(page, "", Rect2(22 + i * 100, 887, 96, 58), entry[3])
-		item.add_theme_stylebox_override("normal", box(Color("383346") if active == entry[0] else Color(0, 0, 0, 0), Color(0, 0, 0, 0), 12))
+		item.add_theme_stylebox_override("normal", box(Color("695b35") if active == entry[0] else Color(0, 0, 0, 0), Color(0, 0, 0, 0), 12))
 		icon(item, entry[2], Rect2(37, 6, 22, 22), GOLD if active == entry[0] else MUTED)
 		label(item, entry[1], Rect2(0, 32, 96, 22), 11, GOLD if active == entry[0] else MUTED).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
@@ -648,7 +648,7 @@ func show_profile() -> void:
 	clear_page()
 	header(campaign.player_name, "Sua coleção e suas memórias atravessam as runs.")
 	face_portrait(page, campaign.avatar, Rect2(200, 198, 140, 142))
-	label(page, "RECORDE · %d pontos\n%d runs iniciadas\n%d vitórias completas\n%d tentativas encerradas\nConto: %02d / 12 fases\nInfinito: %d páginas\n%d personagens revelados" % [campaign.best_score, campaign.run_counter, campaign.expedition_wins, campaign.total_defeats, campaign.best_depth, campaign.best_endless, campaign.unlocked.size()], Rect2(54, 382, 432, 245), 23, GOLD)
+	label(page, "RECORDE · %d pontos\n%d runs iniciadas\n%d vitórias completas\n%d tentativas encerradas\nConto: %02d / 12 mundos\nInfinito: %d páginas\n%d personagens revelados" % [campaign.best_score, campaign.run_counter, campaign.expedition_wins, campaign.total_defeats, campaign.best_depth, campaign.best_endless, campaign.unlocked.size()], Rect2(54, 382, 432, 245), 23, GOLD)
 	button(page, "Nome e avatar", Rect2(24, 698, 492, 56), edit_profile)
 	button(page, "Configurações", Rect2(24, 776, 492, 56), show_settings)
 	navigation("profile")
@@ -681,7 +681,7 @@ func show_help() -> void:
 	clear_page()
 	header("Uma run, doze páginas", "Prepare o protagonista; descubra o restante durante a tentativa.")
 	var inner := scroll_area(190, 674, 1290)
-	label(inner, "1. MODOS\nConto: 12 fases, com chefes em 4, 8 e 12. Após vencer a run de 12 fases, escolha continuar no infinito com a mesma build e dificuldade crescente. Novos marcos de 12 páginas concedem memórias no fim da tentativa.\n\n2. COMBATE\nAtaques automáticos seguem o intervalo de cada personagem. ULTs gastam 100 mana e têm apresentação própria. Passivas ativam automaticamente com recarga de 6 s e avisam no canto. Histórico pausa e mostra dano, cura e efeitos. Vanguardas ficam na frente, assassinos no meio e magos/atiradores atrás. A classe define a formação.\n\n3. SINERGIAS\nJoão e Maria, Peter e Mulan, Scarlet e Vendedora combinam efeitos. As três duplas exigem os dois viajantes vivos, o gatilho e a passiva do parceiro pronta. Cada dupla tem recarga de 6 s. Veja os gatilhos em Ver build da equipe.\n\n4. CHEFES\nQuebre o estandarte do General para interrompê-lo. A Guardiã copia a última ULT deste combate: pense antes de usar cura e escudo. Destrua os fios da Costureira para libertar as ativas seladas. Ataques básicos e ULTs continuam disponíveis.\n\n5. BUILD E EVENTOS\nEscolha uma de três melhorias após vencer. Convites têm 25% de chance por tela. Rotas oferecem elites, descanso, loja e eventos. A equipe muda as falas e libera opções especiais. No infinito, relíquias continuam acumulando com ganhos decrescentes; a build não acaba quando as opções exclusivas se esgotam.\n\n6. FIM E RETOMADA\nOuro, relíquias e convidados são da run. Feitos, coleção, descobertas, recordes e memórias permanecem. Pontos vêm das vitórias, chefes, elites, rapidez e aliados sobreviventes; vencer sem perder PV concede um bônus. Salvar e sair retoma no início do combate atual ou na escolha salva, sem sortear outras opções.\n\nCONTROLES\nToque nos retratos ou use 1–3 para a ULT. Espaço/ESC pausa; A alterna ULT automática; F11 alterna tela cheia.", Rect2(0, 0, 476, 1270), 17)
+	label(inner, "1. MODOS\nConto: 12 mundos com 6 fases cada, totalizando 72 combates. Cada mundo termina em um chefe e cura 12% dos PV dos sobreviventes. Após vencer os 12 mundos, escolha continuar no infinito com a mesma build e dificuldade crescente. Novos marcos de 12 páginas concedem memórias no fim da tentativa.\n\n2. COMBATE\nAtaques automáticos seguem o intervalo de cada personagem. ULTs gastam 100 mana e têm apresentação própria. Passivas ativam automaticamente com recarga de 6 s e avisam no canto. Histórico pausa e mostra dano, cura e efeitos. Vanguardas ficam na frente, assassinos no meio e magos/atiradores atrás. A classe define a formação.\n\n3. SINERGIAS\nJoão e Maria, Peter e Mulan, Scarlet e Vendedora combinam efeitos. As três duplas exigem os dois viajantes vivos, o gatilho e a passiva do parceiro pronta. Cada dupla tem recarga de 6 s. Veja os gatilhos em Ver build da equipe.\n\n4. CHEFES\nQuebre o estandarte do General para interrompê-lo. A Guardiã copia a última ULT deste combate: pense antes de usar cura e escudo. Destrua os fios da Costureira para libertar as ativas seladas. Ataques básicos e ULTs continuam disponíveis.\n\n5. BUILD E EVENTOS\nEscolha uma de três melhorias após vencer. Convites têm 25% de chance por tela. Rotas oferecem elites, descanso, loja e eventos. A equipe muda as falas e libera opções especiais. No infinito, relíquias continuam acumulando com ganhos decrescentes; a build não acaba quando as opções exclusivas se esgotam.\n\n6. FIM E RETOMADA\nOuro, relíquias e convidados são da run. Feitos, coleção, descobertas, recordes e memórias permanecem. Pontos vêm das vitórias, chefes, elites, rapidez e aliados sobreviventes; vencer sem perder PV concede um bônus. Salvar e sair retoma no início do combate atual ou na escolha salva, sem sortear outras opções.\n\nCONTROLES\nToque nos retratos ou use 1–3 para a ULT. Espaço/ESC pausa; A alterna ULT automática; F11 alterna tela cheia.", Rect2(0, 0, 476, 1270), 17)
 	navigation("profile")
 
 func show_preview() -> void:
