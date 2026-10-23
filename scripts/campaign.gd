@@ -39,7 +39,8 @@ var auto_repeat := false
 var unlock_progress: Dictionary = initial_unlock_progress()
 var formation_rows: Dictionary = {}
 var auto_ult := true
-var window_mode := "windowed"
+var window_mode := "fullscreen"
+var window_mode_selected := false
 var run_counter := 0
 var last_resolved_run := 0
 var best_depth := 0
@@ -180,6 +181,7 @@ func to_dict() -> Dictionary:
 		"formation_rows": formation_rows,
 		"auto_ult": auto_ult,
 		"window_mode": window_mode,
+		"window_mode_selected":window_mode_selected,
 		"gold": gold,
 		"unlocked": unlocked,
 		"party": party,
@@ -362,7 +364,8 @@ func load_data(data: Dictionary) -> void:
 			formation_rows[id] = TaleCatalog.HERO_TACTICS[id].row
 	ensure_front()
 	auto_ult = bool(data.get("auto_ult", true))
-	window_mode = "fullscreen" if data.get("window_mode") == "fullscreen" else "windowed"
+	window_mode_selected=bool(data.get("window_mode_selected",false))
+	window_mode="windowed" if window_mode_selected and data.get("window_mode")=="windowed" else "fullscreen"
 	if int(data.get("version", 1)) < 4:
 		claimed.erase("ending")
 	last_resolved_run = clampi(int(data.get("last_resolved_run", 0)), 0, run_counter)

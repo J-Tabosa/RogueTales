@@ -24,4 +24,5 @@ static func home(units: Array,index: int,hostile: bool) -> Vector2:
 	assert(peers.size() <= MAX_PER_ROW,"Each row supports at most three units")
 	var y: float = SINGLE_DEPTH[row] if peers.size()==1 else DEPTHS[peers.size()][peers.find(index)]
 	var x: float = COLUMNS[row]
+	if peers.size()==3:x += ([0,.035,.07] if row=="back" else [-.035,0,.035])[peers.find(index)]
 	return Vector2(1.0-x if hostile else x,y)

@@ -7,7 +7,7 @@
       2
     ],
     "count": 8,
-    "source": "old/assets/revision/mulan_actions.webp",
+    "source": "old/source/revision_3/mulan_actions.png",
     "output": "assets/characters/mulan/actions.jpg"
   },
   {
@@ -18,7 +18,7 @@
       4
     ],
     "count": 16,
-    "source": "old/source/revision_2/mulan_walk.png",
+    "source": "old/source/revision_3/mulan_walk.png",
     "output": "assets/characters/mulan/walk.jpg"
   },
   {
@@ -29,7 +29,7 @@
       2
     ],
     "count": 10,
-    "source": "old/assets/revision/mulan_attack.webp",
+    "source": "old/source/revision_3/mulan_attack.png",
     "output": "assets/characters/mulan/attack.jpg"
   },
   {
@@ -96,20 +96,8 @@
       2
     ],
     "count": 8,
-    "source": "old/assets/revision/ariel_actions.webp",
+    "source": "old/source/revision_3/ariel_actions.png",
     "output": "assets/characters/ariel/actions.jpg"
-  },
-  {
-    "hero": "ariel",
-    "kind": "motion",
-    "grid": [
-      4,
-      7
-    ],
-    "walk_count": 16,
-    "count": 26,
-    "source": "old/source/ariel_motion.png",
-    "output": "assets/characters/ariel/motion.jpg"
   },
   {
     "hero": "puss",
@@ -399,7 +387,7 @@
       2
     ],
     "count": 8,
-    "source": "old/source/revision_2/snow_actions_fixed.png",
+    "source": "old/source/revision_3/snow_white_actions.png",
     "output": "assets/characters/snow_white/actions.jpg"
   },
   {
@@ -410,7 +398,7 @@
       4
     ],
     "count": 16,
-    "source": "old/source/revision_2/snow_walk.png",
+    "source": "old/source/revision_3/snow_white_walk.png",
     "output": "assets/characters/snow_white/walk.jpg"
   },
   {
@@ -421,7 +409,7 @@
       2
     ],
     "count": 10,
-    "source": "old/source/revision_2/snow_attack_fixed.png",
+    "source": "old/source/revision_3/snow_white_attack.png",
     "output": "assets/characters/snow_white/attack.jpg"
   },
   {
@@ -456,5 +444,49 @@
     "count": 20,
     "source": "old/source/revision_2/secret_c.png",
     "output": "assets/secrets/c.jpg"
+  },
+  {
+    "hero": "ariel",
+    "kind": "walk",
+    "grid": [
+      4,
+      4
+    ],
+    "count": 16,
+    "source": "old/source/revision_3/ariel_walk_fixed.png",
+    "output": "assets/characters/ariel/walk.jpg"
+  },
+  {
+    "hero": "ariel",
+    "kind": "attack",
+    "grid": [
+      5,
+      2
+    ],
+    "count": 10,
+    "source": "old/source/revision_3/ariel_attack.png",
+    "output": "assets/characters/ariel/attack.jpg"
+  },
+  {
+    "hero": "joao",
+    "kind": "attack",
+    "grid": [
+      5,
+      2
+    ],
+    "count": 10,
+    "source": "old/source/revision_3/joao_attack.png",
+    "output": "assets/characters/joao/attack.jpg"
+  },
+  {
+    "hero": "scarlet",
+    "kind": "portraits",
+    "grid": [
+      5,
+      2
+    ],
+    "count": 10,
+    "source": "assets/hero/idle.png",
+    "output": "assets/characters/scarlet/display.jpg"
   }
 ]

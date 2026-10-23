@@ -21,6 +21,7 @@ var travel_timer := 0.0
 var hud_timer := 0.0
 var combat_flow: RefCounted
 var debug_enabled := false
+var debug_roster_all := false
 var debug_panel: Control
 var content: Control
 var page: Control
@@ -294,29 +295,26 @@ func make_arena(y: float, ids: Array = [], target_stage: int = 0) -> void:
 func cache_portrait(id: String) -> void:
 	if static_portraits.has(id):return
 	var model: AnimatedSprite2D=HERO_SCENES[id].instantiate()
-	var texture: Texture2D=model.sprite_frames.get_frame_texture("idle",0)
-	var bounds:=Rect2(Vector2.ZERO,texture.get_size())
-	var scale:Vector2=model.scale
-	var offset:Vector2=model.offset
-	if texture is MeshTexture:
-		var volume:AABB=texture.mesh.get_aabb()
-		bounds=Rect2(Vector2(volume.position.x,volume.position.y),Vector2(volume.size.x,volume.size.y))
-		if texture.base_texture.resource_path.ends_with(".jpg"):
-			var uv:PackedVector2Array=texture.mesh.surface_get_arrays(0)[Mesh.ARRAY_TEX_UV]
-			var region:=Rect2(uv[0],Vector2.ZERO)
-			for point in uv:region=region.expand(point)
-			var extent:Vector2=texture.base_texture.get_size()
-			region=Rect2(region.position*extent,region.size*extent)
-			var portrait:=AtlasTexture.new()
-			portrait.atlas=preload("res://scripts/jpeg_alpha.gd").texture(texture.base_texture.resource_path)
-			portrait.region=region
-			portrait.filter_clip=true
-			texture=portrait
-			scale*=bounds.size.y/region.size.y
-			bounds=Rect2(Vector2.ZERO,region.size)
-			offset=-Vector2(region.size.x*0.5,region.size.y)
-	elif texture is AtlasTexture:bounds=Rect2(texture.margin.position,texture.region.size)
-	static_portraits[id]={"texture":texture,"scale":scale,"offset":offset,"centered":model.centered,"bounds":bounds}
+	var path:="res://assets/characters/%s/display.jpg"%id
+	var texture: Texture2D
+	var bounds: Rect2
+	var scale: Vector2
+	var offset: Vector2
+	if ResourceLoader.exists(path):
+		texture=preload("res://scripts/jpeg_alpha.gd").texture(path)
+		bounds=Rect2(Vector2.ZERO,texture.get_size())
+		scale=Vector2(preload("res://scripts/character_visuals.gd").width(id),1)*400.0/bounds.size.y*model.scale.y
+		offset=-Vector2(bounds.size.x*.5,bounds.size.y)
+	else:
+		texture=model.sprite_frames.get_frame_texture("idle",0)
+		bounds=Rect2(Vector2.ZERO,texture.get_size())
+		scale=model.scale
+		offset=model.offset
+		if texture is MeshTexture:
+			var volume:AABB=texture.mesh.get_aabb()
+			bounds=Rect2(Vector2(volume.position.x,volume.position.y),Vector2(volume.size.x,volume.size.y))
+		elif texture is AtlasTexture:bounds=Rect2(texture.margin.position,texture.region.size)
+	static_portraits[id]={"texture":texture,"scale":scale,"offset":offset,"centered":false,"bounds":bounds}
 	model.free()
 
 
@@ -1475,7 +1473,9 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 	if event.is_action_pressed("ui_cancel"):
-		if is_instance_valid(debug_panel):
+		if is_instance_valid(overlay) and overlay.has_meta("character_inspector"):
+			call("close_character_information")
+		elif is_instance_valid(debug_panel):
 			debug_panel.queue_free()
 			debug_panel = null
 		elif state == "preview":
@@ -1489,9 +1489,19 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
+func hero_revealed(id: String) -> bool:
+	return campaign.unlocked.has(id) or (debug_enabled and debug_roster_all)
+
+func reveal_debug_roster() -> void:
+	if not debug_enabled:return
+	debug_roster_all=not debug_roster_all
+	show_heroes()
+
 func toggle_debug() -> void:
 	debug_enabled = not debug_enabled
 	if not debug_enabled:
+		debug_roster_all=false
+		if state in ["heroes","hero_details"]:show_heroes()
 		if is_instance_valid(debug_panel):
 			debug_panel.queue_free()
 			debug_panel = null
@@ -1509,8 +1519,9 @@ func show_debug_panel() -> void:
 	debug_panel = Control.new()
 	debug_panel.z_index = 2000
 	debug_panel.size = Vector2(540, 960)
+	debug_panel.position.x=maxf(0,(content.size.x-540)*.5)
 	content.add_child(debug_panel)
-	panel(debug_panel, Rect2(24, 96, 492, 248), Color("273044"))
+	panel(debug_panel, Rect2(24, 96, 492, 420), Color("273044"))
 	label(debug_panel, "DEBUG  •  CTRL+B PARA DESATIVAR", Rect2(40, 112, 460, 32), 17, GOLD)
 	label(
 		debug_panel,
@@ -1531,9 +1542,13 @@ func show_debug_panel() -> void:
 	)
 	lab.disabled = (
 		state
-		in ["battle", "travel", "choice", "replacement", "story", "memory", "result", "loading"]
+		in ["battle","travel","route_travel","encounter_intro","battle_outro","choice","replacement","story","memory","result","loading"]
 	)
 
+	var reveal:=button(debug_panel,"Ocultar personagens DEBUG" if debug_roster_all else "Revelar todos os personagens",Rect2(40,315,460,56),reveal_debug_roster,true)
+	reveal.disabled=lab.disabled
+	label(debug_panel,"Temporário · não altera os desbloqueios salvos.",Rect2(40,386,460,44),13,MUTED)
+	button(debug_panel,"Desativar DEBUG",Rect2(40,448,460,48),toggle_debug)
 
 func show_preview() -> void:
 	if not debug_enabled:

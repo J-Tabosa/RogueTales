@@ -36,10 +36,15 @@ func checks() -> void:
 	root.add_child(game)
 	game.set_process(false)
 	game.campaign=TaleCampaign.new()
+	game.campaign.window_mode="windowed"
+	game.campaign.window_mode_selected=true
+	game.apply_window_mode()
+	await create_timer(.15).timeout
 	game.campaign.unlocked.assign(TaleCatalog.HEROES.keys())
 	for dimensions in [Vector2i(540,960),Vector2i(1280,800)]:
 		root.content_scale_size=dimensions
 		root.size=dimensions
+		await create_timer(.1).timeout
 		game.center_content()
 		var mode:="mobile" if dimensions.x==540 else "pc"
 		for ids in [["joao","mulan","alice"],["rapunzel","puss","snow_white"]]:
@@ -121,6 +126,21 @@ func checks() -> void:
 		await process_frame
 		assert(gallery.scroll_horizontal>40 and game.selected_hero==selected,"Touch swipes scroll without selecting a hero")
 		await capture("touch_gallery_"+mode)
+		gallery.scroll_horizontal=0
+		var tap_point:=gallery.get_global_rect().position+Vector2(360,180)
+		var tap:=InputEventScreenTouch.new()
+		tap.index=1
+		tap.position=tap_point
+		tap.pressed=true
+		Input.parse_input_event(tap)
+		await process_frame
+		tap=InputEventScreenTouch.new()
+		tap.index=1
+		tap.position=tap_point
+		tap.pressed=false
+		Input.parse_input_event(tap)
+		await process_frame
+		assert(game.selected_hero=="rapunzel","A touch tap still selects its card after a swipe")
 	root.content_scale_size=Vector2i(540,960)
 	root.size=Vector2i(540,960)
 	game.center_content()
@@ -177,7 +197,7 @@ func checks() -> void:
 	game.campaign.window_mode="windowed"
 	game.apply_embedded_fullscreen()
 	await process_frame
-	assert(game.get_parent()==root and game.fullscreen_host==null)
+	assert(game.get_parent()==game.fullscreen_host and game.fullscreen_host.mode==Window.MODE_WINDOWED)
 	print("CHARACTER VISUAL PASS: stable 16-frame walks mobile/PC, status pairs, info buttons, 3x, real touch drags, 12 secret bosses/dialogues, native fullscreen roundtrip")
 	game.queue_free()
 	await process_frame

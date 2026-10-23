@@ -21,7 +21,10 @@ func is_expedition() -> bool:
 
 func label(parent: Node, text: String, rect: Rect2, font_size := 18, color := Color("eeeae2")) -> Label:
 	var node := super.label(parent, text, rect, font_size, color)
-	if color.get_luminance() < 0.20: node.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	if color.get_luminance() < 0.55:
+		node.add_theme_color_override("font_shadow_color",Color.TRANSPARENT)
+		node.add_theme_color_override("font_outline_color",Color.TRANSPARENT)
+		node.add_theme_constant_override("outline_size",0)
 	return node
 
 func modal(title: String, subtitle: String) -> void:
@@ -528,10 +531,10 @@ func show_heroes() -> void:
 	label(page, "O LIVRO DOS VIAJANTES", Rect2(24, 20, w - 120, 28), 12, GOLD)
 	label(page, "Heróis dos contos", Rect2(24, 62, w - 120, 54), 32)
 	button(page, "Voltar", Rect2(w - 112, 23, 88, 44), show_menu)
-	label(page, "%02d / 12 revelados · os encontros escrevem sua coleção." % campaign.unlocked.size(), Rect2(24, 125, w - 48, 45), 15, MUTED)
+	label(page, "DEBUG · 12 visíveis · progresso da coleção preservado." if debug_enabled and debug_roster_all else "%02d / 12 revelados · os encontros escrevem sua coleção." % campaign.unlocked.size(), Rect2(24, 125, w - 48, 45), 15, MUTED)
 	button(page, "Todos", Rect2(24, 182, 154, 44), filter_roster.bind("all"), roster_filter == "all")
 	button(page, "Revelados", Rect2(190, 182, 154, 44), filter_roster.bind("owned"), roster_filter == "owned")
-	var ids: Array = TaleCatalog.HEROES.keys().filter(func(id): return roster_filter == "all" or campaign.unlocked.has(id))
+	var ids: Array = TaleCatalog.HEROES.keys().filter(func(id): return roster_filter == "all" or hero_revealed(id))
 	if not ids.has(selected_hero) and not ids.is_empty(): selected_hero = ids[0]
 	gallery_scroll = ScrollContainer.new()
 	gallery_scroll.set_script(preload("res://scripts/hero_carousel.gd"))
@@ -542,34 +545,37 @@ func show_heroes() -> void:
 	gallery_scroll.scroll_deadzone = 12
 	page.add_child(gallery_scroll)
 	var strip := Control.new()
-	strip.custom_minimum_size = Vector2(ids.size() * 236, 400)
+	strip.custom_minimum_size = Vector2(ids.size() * 282, 400)
 	gallery_scroll.add_child(strip)
 	for i in ids.size():
 		var id: String = ids[i]
-		var owned := campaign.unlocked.has(id)
+		var owned := hero_revealed(id)
 		var selected := selected_hero == id
-		var card := button(strip, "", Rect2(i * 236, 0, 222, 400), select_gallery_hero.bind(id))
+		var card := button(strip, "", Rect2(i * 282, 0, 268, 400), select_gallery_hero.bind(id))
 		card.set_meta("hero_id", id)
 		card.set_meta("silhouette", not owned)
 		card.clip_contents = true
 		card.add_theme_stylebox_override("normal", box(Color("e3cf9e") if selected else Color("c9b58d"), GOLD if selected else Color("806747"), 4))
 		card.add_theme_stylebox_override("hover", box(Color("eddbb3"), GOLD, 4))
-		gradient(card, Rect2(4, 4, 214, 330), Color("f4e4be"), Color("b79b78"))
-		banner_portrait(card, id, Rect2(6, 19, 210, 300), not owned)
-		label(card, "%02d" % (i + 1), Rect2(14, 12, 190, 21), 11, Color("746045"))
-		label(card, str(TaleCatalog.HEROES[id].get("short_name", TaleCatalog.HEROES[id].name)) if owned else "???", Rect2(14, 321, 194, 38), 21, Color("332c30")).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		label(card, TaleCatalog.hero_class_name(id) if owned else "CONTO NÃO REVELADO", Rect2(8, 369, 206, 23), 11, Color("5f5144")).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var owned := campaign.unlocked.has(selected_hero)
+		gradient(card, Rect2(4, 4, 260, 330), Color("f4e4be"), Color("b79b78"))
+		banner_portrait(card, id, Rect2(8, 20, 252, 294), not owned, true)
+		label(card, "%02d" % (i + 1), Rect2(14, 12, 236, 21), 11, Color("746045"))
+		label(card, str(TaleCatalog.HEROES[id].get("short_name", TaleCatalog.HEROES[id].name)) if owned else "???", Rect2(14, 321, 240, 38), 21, Color("332c30")).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label(card, TaleCatalog.hero_class_name(id) if owned else "CONTO NÃO REVELADO", Rect2(8, 369, 252, 23), 11, Color("5f5144")).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var owned := hero_revealed(selected_hero)
 	var note: String = "%s · %s\nAtiva: %s" % [TaleCatalog.HEROES[selected_hero].name, TaleCatalog.hero_class_name(selected_hero), Content.KITS[selected_hero][0]] if owned else "Uma silhueta aguarda sua história. Encontre-a numa run e cumpra seu feito para revelá-la."
 	label(page, note, Rect2(24, 682, w - 48, 52), 16, MUTED)
 	var bottom := 744.0 if desktop else 778.0
-	button(page, "Habilidades" if owned else "Vínculo desconhecido", Rect2(24, bottom, (w - 62) * 0.5, 54), show_hero_details.bind(selected_hero) if owned else show_unlock_details.bind(selected_hero))
-	button(page, "Escolher protagonista", Rect2(38 + (w - 62) * 0.5, bottom, (w - 62) * 0.5, 54), use_protagonist.bind(selected_hero), true).disabled = not owned or not campaign.checkpoint.is_empty()
-	gallery_scroll.set_deferred("scroll_horizontal", int(maxf(0, ids.find(selected_hero) * 236 - (w - 48 - 222) * 0.5)))
+	var action_w:=(w-72)/3
+	button(page,"Habilidades" if owned else "Desconhecido",Rect2(24,bottom,action_w,54),show_hero_details.bind(selected_hero) if owned else show_unlock_details.bind(selected_hero)).add_theme_font_size_override("font_size",14)
+	button(page,"Animações",Rect2(36+action_w,bottom,action_w,54),show_preview).disabled=not owned
+	button(page,"Protagonista",Rect2(48+action_w*2,bottom,action_w,54),use_protagonist.bind(selected_hero),true).disabled=not campaign.unlocked.has(selected_hero) or not campaign.checkpoint.is_empty()
+
+	gallery_scroll.set_deferred("scroll_horizontal", int(maxf(0, ids.find(selected_hero) * 282 - (w - 48 - 268) * 0.5)))
 	gallery_size = Vector2(logical_width, logical_height)
 	gallery_building = false
 
-func banner_portrait(parent: Node, id: String, rect: Rect2, hidden: bool) -> void:
+func banner_portrait(parent: Node, id: String, rect: Rect2, hidden: bool,standardized:=false) -> void:
 	cache_portrait(id)
 	var data: Dictionary = static_portraits[id]
 	var bounds: Rect2 = data.bounds
@@ -578,9 +584,11 @@ func banner_portrait(parent: Node, id: String, rect: Rect2, hidden: bool) -> voi
 	actor.texture = data.texture
 	actor.centered = false
 	var body_scale := Vector2(preload("res://scripts/character_visuals.gd").width(id),1)
-	var factor := minf(rect.size.x / maxf(1, bounds.size.x*body_scale.x), rect.size.y / maxf(1, bounds.size.y))
+	var height:float=(248.0 if standardized else rect.size.y*.92)*preload("res://scripts/character_visuals.gd").height(id)
+	if not standardized:height=minf(height,rect.size.x*bounds.size.y/maxf(1,bounds.size.x*body_scale.x))
+	var factor:=height/maxf(1,bounds.size.y)
 	actor.scale = body_scale * factor
-	actor.position = rect.position + (rect.size - bounds.size * actor.scale) * 0.5 - bounds.position * actor.scale
+	actor.position=rect.position+Vector2((rect.size.x-bounds.size.x*actor.scale.x)*.5,(rect.size.y-height) if standardized else (rect.size.y-height)*.5)-bounds.position*actor.scale
 	actor.self_modulate = Color.BLACK if hidden else Color.WHITE
 	parent.add_child(actor)
 	if parent == overlay:
@@ -603,10 +611,10 @@ func show_party() -> void:
 	show_map()
 
 func show_upgrades() -> void:
-	show_hero_details(selected_hero if campaign.unlocked.has(selected_hero) else "scarlet")
+	show_hero_details(selected_hero if hero_revealed(selected_hero) else "scarlet")
 
 func show_unlock_details(id: String) -> void:
-	if campaign.unlocked.has(id):
+	if hero_revealed(id):
 		show_hero_details(id)
 		return
 	modal("Um conto ainda desconhecido", "Encontre este viajante nas recompensas de uma run. Convites têm 25% de chance por tela de melhoria. Depois de convocá-lo, seus feitos contam para o desbloqueio permanente.")
@@ -614,7 +622,7 @@ func show_unlock_details(id: String) -> void:
 	button(overlay, "Voltar à coleção", Rect2(32, 721, 476, 56), show_heroes, true)
 
 func show_hero_details(id: String) -> void:
-	if not campaign.unlocked.has(id):
+	if not hero_revealed(id):
 		show_unlock_details(id)
 		return
 	selected_hero = id
@@ -708,23 +716,24 @@ func show_help() -> void:
 func show_preview() -> void:
 	state = "preview"
 	clear_page()
-	header("Livro animado", "Somente viajantes já revelados na coleção.")
-	if not campaign.unlocked.has(selected_hero): selected_hero = "scarlet"
+	header("Livro animado", "DEBUG · todos os viajantes · progresso preservado." if debug_enabled and debug_roster_all else "Somente viajantes já revelados na coleção.")
+	if not hero_revealed(selected_hero): selected_hero = "scarlet"
 	make_arena(286, [selected_hero], 0)
 	arena.set_animation("idle")
 	frame_label = label(page, "", Rect2(24, 651, 492, 42), 18, GOLD)
+	var ids:Array=TaleCatalog.HEROES.keys() if debug_enabled and debug_roster_all else campaign.unlocked
 	var inner := scroll_area(184, 94, 68)
-	for index in campaign.unlocked.size():
-		var id: String = campaign.unlocked[index]
+	for index in ids.size():
+		var id: String = ids[index]
 		button(inner, str(TaleCatalog.HEROES[id].get("short_name", TaleCatalog.HEROES[id].name)), Rect2(index * 155, 0, 146, 52), choose_preview.bind(id), selected_hero == id)
-	inner.custom_minimum_size.x = maxf(476, campaign.unlocked.size() * 155)
+	inner.custom_minimum_size.x = maxf(476, ids.size() * 155)
 	inner.get_parent().horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	for index in 4:
 		button(page, ["Parado", "Piscando", "Andar", "Ataque"][index], Rect2(24 + (index % 2) * 252, 714 + floori(index / 2.0) * 63, 240, 52), preview_anim.bind(["idle", "idle_blink", "walk", "attack"][index]))
 	navigation("heroes")
 
 func choose_preview(id: String) -> void:
-	if campaign.unlocked.has(id):
+	if hero_revealed(id):
 		selected_hero = id
 		show_preview()
 

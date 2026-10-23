@@ -238,6 +238,9 @@ func build_battle() -> void:
 	battle_place(header_frame, Rect2(8, 6, 524, 150), Rect2(12, 5, 1256, 129))
 	stage_label = label(page, "%02d / 12   %s" % [run.stage + 1, TaleCatalog.STAGES[run.stage].name], Rect2(20, 10, 412, 53), 20)
 	battle_place(stage_label, Rect2(20, 10, 412, 53), Rect2(24, 12, 830, 43))
+	var fullscreen:=button(page,"F11",Rect2(),toggle_fullscreen)
+	fullscreen.set_meta("desktop_fullscreen",true)
+	battle_place(fullscreen,Rect2(0,0,0,0),Rect2(1094,14,80,44))
 	var pause := button(page, "Ⅱ", Rect2(), toggle_pause)
 	battle_place(pause, Rect2(454, 14, 66, 44), Rect2(1186, 14, 68, 44))
 	enemy_label = label(page, "", Rect2(), 12, MUTED)
@@ -356,6 +359,7 @@ func relayout_battle() -> void:
 				"bottom": rect.position.y = logical_height - 67
 			if node == battle_viewport:
 				rect.size.y = logical_height - 480
+		if node.has_meta("desktop_fullscreen"):node.visible=desktop
 		node.position = rect.position
 		node.size = rect.size
 	for card in ult_buttons:
@@ -392,7 +396,10 @@ func relayout_battle() -> void:
 		feedback.size = battle_viewport.size
 		feedback.layout()
 	if is_instance_valid(overlay):
-		overlay.position.x = (logical_width - 540) * 0.5
+		if overlay.has_meta("character_inspector"):
+			overlay.position=Vector2.ZERO
+			overlay.size=Vector2(logical_width,logical_height)
+		else:overlay.position.x = (logical_width - 540) * 0.5
 
 
 func update_hud() -> void:
@@ -479,7 +486,12 @@ func show_settings() -> void:
 	button(inner, "Tela cheia / Janela  ·  F11", Rect2(0, 1500, 476, 52), toggle_fullscreen).disabled = OS.has_feature("mobile")
 	var reset := button(inner, "Resetar conta deste dispositivo", Rect2(0, 1600, 476, 56), request_reset)
 	reset.add_theme_color_override("font_color", Color("ecaaa3"))
+	button(inner,"Ferramentas DEBUG",Rect2(0,1680,476,52),open_debug_tools)
 
+
+func open_debug_tools() -> void:
+	debug_enabled=true
+	show_debug_panel()
 
 func settings_auto_ult() -> void:
 	campaign.auto_ult = not campaign.auto_ult
@@ -510,17 +522,32 @@ func confirm_reset() -> void:
 	show_menu()
 
 
-var windowed_size := Vector2i(1280,720)
-var windowed_position := Vector2i.ZERO
+var windowed_size:=Vector2i(1280,720)
+var windowed_position:=Vector2i.ZERO
 var fullscreen_host: Window
+var last_window_key:=0
+func hook_window_keys(window: Window) -> void:
+	if not window.window_input.is_connected(window_hotkeys):window.window_input.connect(window_hotkeys)
+func window_hotkeys(event: InputEvent) -> void:
+	if handle_window_key(event):get_viewport().set_input_as_handled()
+func handle_window_key(event: InputEvent) -> bool:
+	if not event is InputEventKey or not event.pressed or event.echo:return false
+	if KEY_F11 not in [event.keycode,event.physical_keycode,event.key_label]:return false
+	if last_window_key!=event.get_instance_id():
+		last_window_key=event.get_instance_id()
+		toggle_fullscreen()
+	return true
 func apply_window_mode() -> void:
-	if OS.has_feature("mobile") or DisplayServer.get_name()=="headless": return
-	# The editor's embedded Game view is an externally parented native window.
-	# Fullscreen that view in its own native Window instead of resizing the editor.
-	if OS.get_cmdline_args().has("--wid"):
+	if OS.has_feature("mobile") or DisplayServer.get_name()=="headless":return
+	hook_window_keys(get_tree().root)
+	# Keep the editor's externally parented Game view out of desktop fullscreen.
+	# A separate native game window retains keyboard focus in both modes.
+	if OS.get_cmdline_args().has("--wid") or is_instance_valid(fullscreen_host):
 		apply_embedded_fullscreen.call_deferred()
 		return
-	var window:=get_window()
+	set_game_window_mode(get_window())
+	if not get_tree().process_frame.is_connected(finalize_window_mode):get_tree().process_frame.connect(finalize_window_mode,CONNECT_ONE_SHOT)
+func set_game_window_mode(window: Window) -> void:
 	if campaign.window_mode=="fullscreen":
 		if window.mode==Window.MODE_WINDOWED:
 			windowed_size=window.size
@@ -532,37 +559,32 @@ func apply_window_mode() -> void:
 		if was_fullscreen:
 			window.size=windowed_size
 			window.position=windowed_position
+func finalize_window_mode() -> void:
+	if campaign.window_mode=="fullscreen" and DisplayServer.get_name()!="headless":get_window().mode=Window.MODE_EXCLUSIVE_FULLSCREEN
 func apply_embedded_fullscreen() -> void:
-	if campaign.window_mode=="fullscreen":
-		if is_instance_valid(fullscreen_host): return
+	if not is_instance_valid(fullscreen_host):
 		fullscreen_host=Window.new()
 		fullscreen_host.hide()
-		fullscreen_host.title="RogueTales · Tela cheia"
+		fullscreen_host.title="RogueTales"
 		fullscreen_host.force_native=true
+		fullscreen_host.size=windowed_size
 		fullscreen_host.content_scale_mode=Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
 		fullscreen_host.content_scale_size=Vector2i(1280,720)
 		get_tree().root.add_child(fullscreen_host)
 		reparent(fullscreen_host)
 		set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		fullscreen_host.close_requested.connect(toggle_fullscreen)
+		fullscreen_host.close_requested.connect(func():persist();get_tree().quit())
+		hook_window_keys(fullscreen_host)
 		fullscreen_host.show()
-		fullscreen_host.mode=Window.MODE_EXCLUSIVE_FULLSCREEN
-		fullscreen_host.grab_focus()
-		# Initial native-window configure notifications may report windowed mode.
-		# Apply the requested mode again once that first notification was processed.
-		get_tree().process_frame.connect(finalize_fullscreen_host,CONNECT_ONE_SHOT)
-	elif is_instance_valid(fullscreen_host):
-		reparent(get_tree().root)
-		set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		fullscreen_host.queue_free()
-		fullscreen_host=null
-
-func finalize_fullscreen_host() -> void:
-	if is_instance_valid(fullscreen_host) and campaign.window_mode=="fullscreen":
-		fullscreen_host.mode=Window.MODE_EXCLUSIVE_FULLSCREEN
-
+	set_game_window_mode(fullscreen_host)
+	fullscreen_host.grab_focus()
+	if not get_tree().process_frame.is_connected(finalize_window_mode):get_tree().process_frame.connect(finalize_window_mode,CONNECT_ONE_SHOT)
 func toggle_fullscreen() -> void:
-	campaign.window_mode = "windowed" if campaign.window_mode == "fullscreen" else "fullscreen"
+	if OS.has_feature("mobile"):return
+	var actual_fullscreen:=get_window().mode in [Window.MODE_FULLSCREEN,Window.MODE_EXCLUSIVE_FULLSCREEN]
+	if DisplayServer.get_name()=="headless":actual_fullscreen=campaign.window_mode=="fullscreen"
+	campaign.window_mode="windowed" if actual_fullscreen else "fullscreen"
+	campaign.window_mode_selected=true
 	apply_window_mode()
 	persist()
 
@@ -570,8 +592,7 @@ func toggle_fullscreen() -> void:
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		var key: int = event.physical_keycode if event.physical_keycode != 0 else event.keycode
-		if key == KEY_F11:
-			toggle_fullscreen()
+		if handle_window_key(event):
 			get_viewport().set_input_as_handled()
 			return
 		if state in ["battle", "travel", "route_travel", "encounter_intro", "battle_outro"] and not event.ctrl_pressed:
@@ -638,31 +659,19 @@ func gradient(parent: Node, rect: Rect2, top: Color, bottom: Color) -> void:
 	UISkin.picture(parent, texture, rect).stretch_mode = TextureRect.STRETCH_SCALE
 
 
-func face_portrait(parent: Node, id: String, rect: Rect2) -> Control:
-	cache_portrait(id)
-	var data: Dictionary = static_portraits[id]
-	var slot := Panel.new()
-	slot.position = rect.position
-	slot.size = rect.size
-	slot.clip_contents = true
-	slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	slot.add_theme_stylebox_override("panel", box(Color("30354c"), Color(TaleCatalog.HEROES[id].color, 0.65), 13))
+func face_portrait(parent: Node,id: String,rect: Rect2) -> Control:
+	var slot:=Panel.new()
+	slot.position=rect.position
+	slot.size=rect.size
+	slot.clip_contents=true
+	slot.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	slot.add_theme_stylebox_override("panel",box(Color("26372f"),Color(TaleCatalog.HEROES[id].color,.65),9))
 	parent.add_child(slot)
 	register_layout(slot)
-	var bounds: Rect2 = Rect2(data.bounds)
-	var focuses := {"scarlet":Vector2(0.58,0.18),"rapunzel":Vector2(0.75,0.20),"snow_white":Vector2(0.52,0.17),"mulan":Vector2(0.5,0.17),"ariel":Vector2(0.52,0.16),"joao":Vector2(0.52,0.17),"maria":Vector2(0.58,0.18),"alice":Vector2(0.55,0.18),"puss":Vector2(0.55,0.23),"matches":Vector2(0.58,0.22),"peter":Vector2(0.58,0.24),"aladin":Vector2(0.55,0.16)}
-	var extent := Vector2.ONE * bounds.size.y * 0.44
-	var center: Vector2 = bounds.position + bounds.size * focuses.get(id,Vector2(0.5,0.2))
-	var face := Sprite2D.new()
-	face.texture = data.texture
-	face.centered = false
-	face.offset = -(center-extent*0.5)
-	slot.add_child(face)
-	var fit := func():
-		face.position = Vector2.ZERO
-		face.scale = slot.size/extent
-	slot.resized.connect(fit)
-	fit.call()
+	var path:="res://assets/characters/%s/portrait.jpg"%id
+	if ResourceLoader.exists(path):
+		var face:=UISkin.picture(slot,preload("res://scripts/jpeg_alpha.gd").texture(path),Rect2(Vector2.ZERO,rect.size))
+		face.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	return slot
 
 
@@ -830,19 +839,13 @@ func show_character_information(index: int) -> void:
 	information_was_paused=paused
 	paused=true
 	arena.frozen=true
-	modal(TaleCatalog.HEROES[run.actors[index].id].name,"Atributos atuais · velocidade %d×"%int(game_speed))
-	var scroll:=ScrollContainer.new()
-	scroll.position=Vector2(32,338)
-	scroll.size=Vector2(476,398)
-	scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED
-	overlay.add_child(scroll)
-	var body:=Label.new()
-	body.custom_minimum_size=Vector2(452,0)
-	body.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
-	body.add_theme_font_size_override("font_size",17)
-	body.text=preload("res://scripts/combat_details.gd").sheet(run.actors[index])
-	scroll.add_child(body)
-	button(overlay,"Voltar ao combate",Rect2(32,768,476,58),close_character_information,true)
+	if is_instance_valid(overlay):overlay.queue_free()
+	var inspector:=preload("res://scripts/character_inspector.gd").new()
+	overlay=inspector
+	content.add_child(inspector)
+	inspector.size=Vector2(logical_width,logical_height)
+	inspector.setup(self,run.actors[index])
+
 func close_character_information() -> void:
 	if is_instance_valid(overlay): overlay.queue_free()
 	overlay=null

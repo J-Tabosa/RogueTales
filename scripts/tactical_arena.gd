@@ -90,7 +90,7 @@ func _ready() -> void:
 		actor.z_index = 925 if simulation.actors[index].id in ["puss", "matches"] else int(home.y)
 		actor.show_animation("idle")
 		tracks.append({"home": home, "time": -1.0, "duration": 1.0, "hit": false, "hurt": 0.0, "alive": true, "target": -1, "ultimate": false})
-		unit_widgets.append(widget(home, TaleCatalog.hero_class_name(simulation.actors[index].id), Color("a3d9c3")))
+		unit_widgets.append(widget(home, TaleCatalog.hero_class_name(simulation.actors[index].id), Color("a3d9c3"),false,index))
 	if not heroes.is_empty():
 		hero = heroes[0]
 	queue_redraw()
@@ -108,13 +108,17 @@ func max_row_size() -> int:
 
 func widget_size() -> Vector2:
 	var width := clampf(field_width*0.155,76,112)
-	if max_row_size()>=3: width=minf(width,field_width*0.135-9)
 	return Vector2(maxf(54,width),36)
 
 func place_widget(item: Dictionary,at: Vector2) -> void:
 	var extent := widget_size()
 	item.panel.size = extent
 	item.root.position = Vector2(clampf(at.x-extent.x*0.5+ (8 if item.hostile else -8),22,field_width-extent.x-22),clampf(at.y+9,9,field_height-extent.y-9))
+	var units:Array=simulation.tactics.enemies if item.hostile else simulation.actors
+	if item.index>=0 and units.filter(func(u):return u.row==units[item.index].row).size()==3:
+		var right:bool=(units[item.index].row=="back")!=item.hostile
+		var side:float=at.x+human_height()*.32 if right else at.x-human_height()*.32-extent.x
+		item.root.position=Vector2(clampf(side,22,field_width-extent.x-22),clampf(at.y-22,9,field_height-extent.y-9))
 	item.text.position=Vector2(6,3)
 	item.text.size=Vector2(extent.x-12,14)
 	item.text.add_theme_font_size_override("font_size",9 if extent.x<90 else 11)
@@ -131,7 +135,6 @@ func hero_bounds(actor: AnimatedSprite2D) -> Rect2:
 
 func human_height() -> float:
 	var height := clampf(minf(field_height*0.29,field_width*0.17),60,174)
-	if max_row_size()>=3: height=minf(height,maxf(36,field_height*0.22-46))
 	return height
 
 func normalize_hero(actor: AnimatedSprite2D, id: String) -> void:
@@ -143,7 +146,7 @@ func normalize_hero(actor: AnimatedSprite2D, id: String) -> void:
 
 
 
-func widget(at: Vector2,title: String,tint: Color,hostile:=false) -> Dictionary:
+func widget(at: Vector2,title: String,tint: Color,hostile:=false,unit_index:=-1) -> Dictionary:
 	var group:=Node2D.new()
 	group.z_index=900
 	add_child(group)
@@ -178,7 +181,7 @@ func widget(at: Vector2,title: String,tint: Color,hostile:=false) -> Dictionary:
 		bar.add_theme_stylebox_override("fill",fill)
 		panel.add_child(bar)
 		bars.append(bar)
-	var item:={"root":group,"panel":panel,"text":text,"health":bars[0],"energy":bars[1],"hostile":hostile,"badges":{}}
+	var item:={"root":group,"panel":panel,"text":text,"health":bars[0],"energy":bars[1],"hostile":hostile,"index":unit_index,"badges":{}}
 	place_widget(item,at)
 	return item
 
@@ -219,7 +222,7 @@ func sync_enemies() -> void:
 		model.z_index = int(home.y)
 		foes.append(model)
 		foe_homes.append(home)
-		foe_widgets.append(widget(home, ("★ " if data.boss else "") + str(TaleCatalog.CLASSES[data["class"]].name), Color("dd9691"),true))
+		foe_widgets.append(widget(home, ("★ " if data.boss else "") + str(TaleCatalog.CLASSES[data["class"]].name), Color("dd9691"),true,index))
 		data["death_left"] = 0.0
 		data["was_alive"] = true
 	if not foes.is_empty():
