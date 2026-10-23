@@ -10,6 +10,11 @@ var gallery_building := false
 var gallery_size := Vector2.ZERO
 var gallery_refresh := false
 var gallery_scroll: ScrollContainer
+var resolution_left := 0.0
+var defeated_pending := false
+var encounter_left := 0.0
+var route_walk_left := 0.0
+
 
 func is_expedition() -> bool:
 	return run != null and run.expedition
@@ -46,7 +51,7 @@ func show_menu() -> void:
 	label(page, "Escolha. Arrisque. Recomece.", Rect2(24, 565, 492, 43), 26)
 	label(page, "Um protagonista. Companheiros raros.\nHabilidades e relíquias que mudam a cada tentativa.", Rect2(24, 620, 492, 66), 17, MUTED)
 	var active := not campaign.checkpoint.is_empty()
-	var detail := "A vida, a build e os encontros da sua tentativa estão salvos." if active else "Conto de 12 fases ou modo infinito · chefes a cada 4 fases"
+	var detail := "A vida, a build e os encontros da sua tentativa estão salvos." if active else "12 fases · vença a run para continuar no infinito"
 	label(page, detail, Rect2(24, 704, 492, 48), 14, GOLD)
 	button(page, "Retomar run  →" if active else "Nova run  →", Rect2(24, 772, 492, 62), resume_checkpoint if active else show_map, true)
 	navigation("menu")
@@ -58,7 +63,7 @@ func continue_journey() -> void:
 func show_map() -> void:
 	state = "expedition_setup"
 	clear_page()
-	header("Antes da primeira página", "Escolha o modo, o protagonista e a bênção desta run.")
+	header("Antes da primeira página", "Escolha o protagonista e a bênção desta run.")
 	if not campaign.checkpoint.is_empty():
 		label(page, "Uma tentativa em andamento", Rect2(24, 219, 492, 48), 25, GOLD)
 		var phase := "Infinito · fase %d" % (int(campaign.checkpoint.get("rooms_cleared", 0)) + 1) if campaign.checkpoint.get("endless", false) else "Conto · fase %02d / 12" % (int(campaign.checkpoint.stage) + 1)
@@ -69,8 +74,8 @@ func show_map() -> void:
 		return
 	if not campaign.unlocked.has(selected_hero): selected_hero = campaign.party[0]
 	if not campaign.blessings_unlocked.has(chosen_blessing): chosen_blessing = "vigor"
-	button(page, "Conto · 12 fases", Rect2(24, 183, 238, 46), set_run_mode.bind(false), not chosen_endless)
-	button(page, "Infinito · sem fim", Rect2(278, 183, 238, 46), set_run_mode.bind(true), chosen_endless)
+	chosen_endless = false
+	label(page, "CONTO · 12 FASES  →  INFINITO APÓS VENCER", Rect2(24, 183, 492, 46), 14, GOLD)
 	var hero := button(page, "", Rect2(24, 246, 492, 118), show_heroes)
 	face_portrait(hero, selected_hero, Rect2(14, 14, 90, 90))
 	label(hero, "PROTAGONISTA", Rect2(123, 11, 350, 21), 10, GOLD)
@@ -101,7 +106,7 @@ func choose_blessing(id: String) -> void:
 
 func set_run_mode(infinite: bool) -> void:
 	if not campaign.checkpoint.is_empty(): return
-	chosen_endless = infinite
+	chosen_endless = false # Endless is offered only after this run is won.
 	show_map()
 
 func begin_expedition() -> void:
@@ -124,19 +129,49 @@ func enter_encounter() -> void:
 func build_battle() -> void:
 	super.build_battle()
 	if not is_expedition(): return
-	arena.enemy_intent_requested.connect(show_enemy_intents)
+	feedback = Control.new()
+	feedback.set_script(preload("res://scripts/combat_feedback.gd"))
+	feedback.reduced_motion = campaign.reduced_motion
+	battle_viewport.add_child(feedback)
+	arena.feedback = feedback
 	auto_button.add_theme_font_size_override("font_size", 15)
 	auto_button.set_meta("mobile_rect", Rect2(16, 0, 160, 46))
 	auto_button.set_meta("pc_rect", Rect2(958, 658, 142, 46))
 	speed_button.set_meta("mobile_rect", Rect2(364, 0, 160, 46))
-	var intentions := button(page, "Intenções", Rect2(), show_enemy_intents)
-	battle_place(intentions, Rect2(190, 0, 160, 46), Rect2(1112, 658, 142, 46), "bottom")
+	var history := button(page, "Histórico", Rect2(), show_battle_history)
+	battle_place(history, Rect2(190, 0, 160, 46), Rect2(1112, 658, 142, 46), "bottom")
 	relayout_battle()
 
 func begin_travel() -> void:
 	super.begin_travel()
 	if is_expedition():
-		log_label.text = "%s · %s" % [run.phase_label(), "o chefe aguarda" if Content.is_boss(run.stage) else ("rota de elite" if run.room_kind == "elite" else "a jornada continua")]
+		current_action("%s · a equipe segue pela trilha" % run.phase_label())
+
+func spawn_enemy() -> void:
+	super.spawn_enemy()
+	if not is_expedition(): return
+	state = "encounter_intro"
+	encounter_left = 1.15
+	current_action("CHEFE À VISTA" if Content.is_boss(run.stage) else "ENCONTRO · prepare-se!")
+	arena.damage_number("CHEFE À VISTA" if Content.is_boss(run.stage) else "INIMIGOS À VISTA", Vector2(arena.field_width * 0.45, arena.field_height * 0.44), GOLD)
+
+func _process(delta: float) -> void:
+	if state == "route_travel" and not paused:
+		route_walk_left -= delta * game_speed
+		if route_walk_left <= 0: show_routes()
+	if state == "encounter_intro" and not paused:
+		encounter_left -= delta
+		if encounter_left <= 0:
+			state = "battle"
+			current_action("Combate iniciado")
+		update_hud()
+	elif state == "battle_outro" and not paused:
+		resolution_left -= delta
+		if resolution_left <= 0:
+			if defeated_pending: finish_defeat_now()
+			else: finish_encounter_now()
+	super._process(delta)
+
 
 func restore_checkpoint_now() -> void:
 	if campaign.checkpoint.is_empty() or not campaign.checkpoint.get("expedition", false):
@@ -158,12 +193,21 @@ func resolve_enemy() -> void:
 	if not is_expedition():
 		super.resolve_enemy()
 		return
-	if state != "battle": return
+	if state != "battle" or arena.is_action_busy(): return
 	if not run.alive():
 		finish_defeat()
 		return
+	state = "battle_outro"
+	resolution_left = 1.2
+	defeated_pending = false
+	current_action("VITÓRIA · encontro concluído")
+	push_battle_log("Todos os inimigos foram derrotados")
+	arena.set_animation("idle")
+	update_hud()
+
+func finish_encounter_now() -> void:
+	if state != "battle_outro": return
 	state = "resolving"
-	arena.reset_effects()
 	campaign.total_kills += run.tactics.enemies.size()
 	if run.clear_encounter():
 		var result := campaign.finish_expedition(run.to_checkpoint(), true)
@@ -177,30 +221,31 @@ func show_relics() -> void:
 	if not is_expedition():
 		super.show_relics()
 		return
+	if not is_instance_valid(arena) or not battle_view:
+		build_battle()
+		arena.enemy_visible = false
 	state = "choice"
-	paused = false
-	clear_page()
-	header("Reescreva sua build", ("%d páginas vencidas · infinito" % run.rooms_cleared if run.endless else "%02d / 12 fases vencidas" % run.rooms_cleared) + " · escolha uma melhoria.")
-	label(page, "ESCOLHAS DESTA RUN", Rect2(24, 190, 492, 28), 12, GOLD)
+	paused = true
+	arena.frozen = true
+	if is_instance_valid(feedback): feedback.frozen = true
+	journey_modal("Encontro vencido", "%s · escolha uma melhoria para a equipe." % ("%d páginas vencidas" % run.rooms_cleared))
 	for index in run.offers.size():
 		var id: String = run.offers[index]
 		var offer := TaleCatalog.offer_data(id)
-		var card := button(page, "", Rect2(24, 238 + index * 174, 492, 158), select_relic.bind(id))
+		var card := button(overlay, "", Rect2(32, 390 + index * 126, 476, 116), select_relic.bind(id))
 		var title: String = offer.title
 		var detail: String = run.upgrade_detail(id)
-		var note := "RELÍQUIA · ACÚMULO %d · INFINITO" % (run.upgrade_count(id) + 1) if run.endless else "RELÍQUIA · %d / 3" % (run.upgrade_count(id) + 1)
-		if offer.has("owner"):
-			note = "HABILIDADE · " + str(TaleCatalog.HEROES[offer.owner].name)
+		var note := "RELÍQUIA · ACÚMULO %d" % (run.upgrade_count(id) + 1)
+		if offer.has("owner"): note = "HABILIDADE · " + str(TaleCatalog.HEROES[offer.owner].name)
 		elif offer.has("hero"):
 			var owned := campaign.unlocked.has(offer.hero)
 			title = str(TaleCatalog.HEROES[offer.hero].name) if owned else "Um viajante desconhecido"
-			detail = "%s · junta-se à equipe apenas nesta run." % TaleCatalog.hero_class_name(offer.hero)
-			note = "ENCONTRO RARO · 10% POR ESCOLHA DE RECOMPENSA"
-		label(card, note, Rect2(16, 12, 460, 25), 10, GOLD)
-		label(card, title, Rect2(16, 45, 460, 35), 22)
-		label(card, detail, Rect2(16, 88, 460, 58), 15, MUTED)
-	label(page, "Escolhas salvas: voltar ao início mantém estas opções.", Rect2(24, 782, 492, 40), 13, MUTED)
-	button(page, "Salvar e sair", Rect2(24, 837, 492, 52), leave_battle)
+			detail = "%s · junta-se à equipe nesta run." % TaleCatalog.hero_class_name(offer.hero)
+			note = "COMPANHEIRO · 25% POR RECOMPENSA"
+		label(card, note, Rect2(14, 7, 448, 19), 10, GOLD)
+		label(card, title, Rect2(14, 29, 448, 30), 20)
+		label(card, detail, Rect2(14, 65, 448, 44), 14, MUTED)
+	button(overlay, "Salvar e sair", Rect2(32, 798, 476, 48), leave_battle)
 
 func select_relic(id: String, replace_index: int = -1) -> void:
 	if not is_expedition():
@@ -215,32 +260,43 @@ func select_relic(id: String, replace_index: int = -1) -> void:
 	var applied: bool = run.recruit(campaign, offer.hero, replace_index) if offer.has("hero") else run.apply_relic(id)
 	if not applied: return
 	persist_run()
-	show_routes()
+	walk_to_routes()
 
 func show_routes() -> void:
+	if not is_instance_valid(arena) or not battle_view:
+		build_battle()
+		arena.enemy_visible = false
 	state = "route"
-	paused = false
-	clear_page()
-	header("A próxima página", "%s · %d ouro nesta run" % [run.phase_label(), run.run_gold])
+	paused = true
+	arena.walking = false
+	arena.set_animation("idle")
+	arena.frozen = true
+	if is_instance_valid(feedback): feedback.frozen = true
+	journey_modal("Uma encruzilhada", "%s · %d ouro · escolha o próximo caminho." % [run.phase_label(), run.run_gold])
 	if Content.is_boss(run.stage):
-		label(page, "O FIO LEVA A UM CHEFE", Rect2(24, 201, 492, 30), 13, GOLD)
-		label(page, TaleCatalog.STAGES[run.stage].boss, Rect2(24, 261, 492, 83), 32)
-		label(page, BossRules.description(run.stage), Rect2(24, 371, 492, 166), 18, MUTED)
-		button(page, "Enfrentar o chefe  →", Rect2(24, 570, 492, 65), select_route.bind("battle"), true)
+		label(overlay, TaleCatalog.STAGES[run.stage].boss, Rect2(32, 390, 476, 75), 28, GOLD)
+		label(overlay, BossRules.description(run.stage), Rect2(32, 482, 476, 166), 18, MUTED)
+		button(overlay, "Enfrentar o chefe  →", Rect2(32, 673, 476, 58), select_route.bind("battle"), true)
 	else:
-		label(page, "ESCOLHA SEU CAMINHO", Rect2(24, 201, 492, 30), 13, GOLD)
 		for index in run.route_offers.size():
 			var key: String = run.route_offers[index]
 			var data: Dictionary = Content.ROUTES[key]
-			var card := button(page, "", Rect2(24, 260 + index * 201, 492, 181), select_route.bind(key))
-			label(card, "ROTA %02d" % (index + 1), Rect2(18, 13, 456, 23), 11, GOLD)
-			label(card, data.title, Rect2(18, 49, 456, 38), 24)
-			label(card, data.detail, Rect2(18, 100, 456, 63), 16, MUTED)
-	button(page, "Ver build da equipe", Rect2(24, 738, 492, 52), show_run_build)
-	button(page, "Salvar e sair", Rect2(24, 810, 492, 52), leave_battle)
+			var card := button(overlay, "", Rect2(32, 390 + index * 116, 476, 106), select_route.bind(key))
+			label(card, data.title, Rect2(14, 9, 448, 33), 21, GOLD)
+			label(card, data.detail, Rect2(14, 48, 448, 50), 14, MUTED)
+	button(overlay, "Ver build", Rect2(32, 758, 230, 48), show_run_build)
+	button(overlay, "Salvar e sair", Rect2(278, 758, 230, 48), leave_battle)
+
+func walk_to_routes() -> void:
+	build_battle()
+	begin_travel()
+	state = "route_travel"
+	route_walk_left = 2.3
+	current_action("A equipe avança até a próxima encruzilhada…")
 
 func select_route(id: String) -> void:
 	if state != "route" or not run.choose_route(id): return
+	paused = false
 	persist_run()
 	if run.interlude == "shop": show_run_shop()
 	elif run.interlude == "event": show_team_event()
@@ -306,27 +362,8 @@ func select_team_event(choice: String) -> void:
 	persist_run()
 	enter_encounter()
 
-func show_enemy_intents(selected: int = -1) -> void:
-	if not is_expedition() or state not in ["battle", "travel"]: return
-	paused = true
-	arena.frozen = true
-	modal("Próximos movimentos", "Ações e alvos previstos. O combate fica pausado enquanto você lê.")
-	label(overlay, BossRules.description(run.stage) if Content.is_boss(run.stage) else "Os alvos ficam comprometidos durante a preparação do golpe. Se um alvo cair antes do impacto, o ataque procura outro alvo válido.", Rect2(32, 385, 476, 115), 15, GOLD)
-	var row := 0
-	for index in run.tactics.enemies.size():
-		var foe: Dictionary = run.tactics.enemies[index]
-		if foe.hp <= 0: continue
-		var intent: Dictionary = run.tactics.intent_for(index)
-		var y := 513 + row * 82
-		panel(overlay, Rect2(32, y, 476, 74))
-		icon(overlay, intent.get("glyph", "sword"), Rect2(44, y + 15, 28, 28), GOLD if selected == index else Color("eea7ad"))
-		label(overlay, str(foe.name) + " · " + str(intent.get("title", "")), Rect2(85, y + 5, 409, 30), 15, GOLD if selected == index else Color("e6e5df"))
-		var names: Array[String] = []
-		for at in intent.get("targets", []):
-			if at >= 0 and at < run.actors.size(): names.append(str(TaleCatalog.HEROES[run.actors[at].id].get("short_name", TaleCatalog.HEROES[run.actors[at].id].name)))
-		label(overlay, "Alvo: " + ", ".join(names) if not names.is_empty() else "Preparação / proteção", Rect2(85, y + 38, 409, 29), 13, MUTED)
-		row += 1
-	button(overlay, "Retomar combate", Rect2(32, 793, 476, 56), resume_battle, true)
+func show_enemy_intents(_selected: int = -1) -> void:
+	show_battle_history()
 
 func show_run_build() -> void:
 	state = "build"
@@ -357,6 +394,21 @@ func finish_defeat() -> void:
 	if not is_expedition():
 		super.finish_defeat()
 		return
+	if state in ["battle_outro", "result", "defeat"]: return
+	if is_instance_valid(arena) and arena.is_action_busy(): return
+	if not is_instance_valid(arena) or not battle_view:
+		finish_defeat_now()
+		return
+	state = "battle_outro"
+	resolution_left = 1.2
+	defeated_pending = true
+	current_action("A equipe caiu…")
+	push_battle_log("Fim do encontro · equipe derrotada")
+
+func finish_defeat_now() -> void:
+	if not is_expedition():
+		super.finish_defeat()
+		return
 	if state in ["result", "defeat"]: return
 	var result := campaign.finish_expedition(run.to_checkpoint(), false)
 	persist()
@@ -376,7 +428,11 @@ func show_run_result(result: Dictionary) -> void:
 	label(page, "+%d memórias · %s\n%d sinergias ativadas · %d novos marcos infinitos" % [result.get("reward", 0), record, run.synergy_activations, result.get("milestones", 0)], Rect2(24, 585, 492, 89), 17, MUTED)
 	var unlocked_now: Array = result.get("unlocks", [])
 	label(page, "Novo protagonista: " + hero_names(unlocked_now) if not unlocked_now.is_empty() else "Seus feitos e desbloqueios foram salvos.", Rect2(24, 700, 492, 63), 19, GOLD)
-	button(page, "Começar outra run  →", Rect2(24, 790, 492, 62), show_map, true)
+	if won and not run.endless:
+		button(page, "Continuar no infinito  →", Rect2(24, 775, 492, 54), continue_into_endless, true)
+		button(page, "Encerrar e voltar", Rect2(24, 838, 492, 44), show_menu)
+	else:
+		button(page, "Começar outra run  →", Rect2(24, 790, 492, 62), show_map, true)
 	navigation("menu")
 
 func request_abandon() -> void:
@@ -405,11 +461,11 @@ func abandon_expedition() -> void:
 func update_hud() -> void:
 	super.update_hud()
 	if is_expedition() and battle_view and is_instance_valid(enemy_label):
-		enemy_label.text = "%s · %s · %d OURO" % [run.phase_label(), "CHEFE" if Content.is_boss(run.stage) else ("ELITE" if run.room_kind == "elite" else "COMBATE"), run.run_gold]
-		stage_label.text = "%03d   %s" % [run.rooms_cleared + 1, TaleCatalog.STAGES[run.stage].name]
+		enemy_label.text = "%s · %s · %d OURO" % [run.phase_label(), "PRESSÃO +%d%%" % int((run.tactics.pressure() - 1) * 100) if run.tactics.pressure() > 1 else ("CHEFE" if Content.is_boss(run.stage) else ("ELITE" if run.room_kind == "elite" else "COMBATE")), run.run_gold]
+		stage_label.text = "%02d   %s" % [run.rooms_cleared + 1, TaleCatalog.STAGES[run.stage].name]
 		for i in mini(ult_buttons.size(), run.actors.size()):
 			var actor: Dictionary = run.actors[i]
-			ult_buttons[i].tooltip_text = ("HABILIDADE SELADA · destrua seu fio para libertá-la.\n\n" if actor.get("sealed", false) else "") + "%s (1 AP)\n%s\n\n%s (1 PP)\n%s\n\nULT: %s" % [Content.KITS[actor.id][0], Content.KITS[actor.id][1], Content.KITS[actor.id][2], Content.KITS[actor.id][3], TaleCatalog.HERO_TACTICS[actor.id].ult]
+			ult_buttons[i].tooltip_text = ("HABILIDADE SELADA · destrua seu fio para libertá-la.\n\n" if actor.get("sealed", false) else "") + "%s (automática)\n%s\n\n%s (passiva · 6 s)\n%s\n\nULT: %s" % [Content.KITS[actor.id][0], Content.KITS[actor.id][1], Content.KITS[actor.id][2], Content.KITS[actor.id][3], TaleCatalog.HERO_TACTICS[actor.id].ult]
 
 func navigation(active: String) -> void:
 	panel(page, Rect2(16, 882, 508, 68))
@@ -534,7 +590,7 @@ func show_unlock_details(id: String) -> void:
 	if campaign.unlocked.has(id):
 		show_hero_details(id)
 		return
-	modal("Um conto ainda desconhecido", "Encontre este viajante nas recompensas de uma run. Convites têm 10% de chance por tela de melhoria. Depois de convocá-lo, seus feitos contam para o desbloqueio permanente.")
+	modal("Um conto ainda desconhecido", "Encontre este viajante nas recompensas de uma run. Convites têm 25% de chance por tela de melhoria. Depois de convocá-lo, seus feitos contam para o desbloqueio permanente.")
 	banner_portrait(overlay, id, Rect2(177, 394, 186, 236), true)
 	button(overlay, "Voltar à coleção", Rect2(32, 721, 476, 56), show_heroes, true)
 
@@ -550,7 +606,7 @@ func show_hero_details(id: String) -> void:
 	var art := panel(inner, Rect2(0, 0, 476, 228))
 	gradient(art, Rect2(0, 0, 476, 228), Color(TaleCatalog.HEROES[id].color, 0.18), Color("212338"))
 	banner_portrait(art, id, Rect2(76, 4, 324, 217), false)
-	var descriptions := [["ATIVA · 1 AP", Content.KITS[id][0], Content.KITS[id][1]], ["REAÇÃO · 1 PP", Content.KITS[id][2], Content.KITS[id][3]], ["ULT · 100 ENERGIA", TaleCatalog.HERO_TACTICS[id].ult, TaleCatalog.HERO_TACTICS[id].detail]]
+	var descriptions := [["ATIVA · AUTOMÁTICA", Content.KITS[id][0], Content.KITS[id][1]], ["PASSIVA · RECARGA 6 s", Content.KITS[id][2], Content.KITS[id][3]], ["ULT · 100 MANA", TaleCatalog.HERO_TACTICS[id].ult, TaleCatalog.HERO_TACTICS[id].detail]]
 	for index in descriptions.size():
 		var data: Array = descriptions[index]
 		var y := 248 + index * 156
@@ -622,7 +678,7 @@ func show_help() -> void:
 	clear_page()
 	header("Uma run, doze páginas", "Prepare o protagonista; descubra o restante durante a tentativa.")
 	var inner := scroll_area(190, 674, 1290)
-	label(inner, "1. MODOS\nConto: 12 fases, com chefes em 4, 8 e 12. Infinito: continue além da fase 12 com a mesma build e dificuldade crescente. Novos marcos de 12 páginas concedem memórias no fim da tentativa.\n\n2. COMBATE\nAtivas gastam AP; reações gastam PP. Eles se renovam a cada rodada. As classes definem quais linhas podem ser atacadas. Toque numa intenção sobre o inimigo ou no botão Intenções para pausar e ver ações e alvos.\n\n3. SINERGIAS\nCertas duplas combinam efeitos. Elas exigem os dois viajantes vivos, o gatilho e 1 PP do parceiro. Cada dupla ativa uma vez por rodada. Veja os gatilhos em Ver build da equipe.\n\n4. CHEFES\nQuebre o estandarte do General para interrompê-lo. A Guardiã copia a última ULT deste combate: pense antes de usar cura e escudo. Destrua os fios da Costureira para libertar as ativas seladas. Ataques básicos e ULTs continuam disponíveis.\n\n5. BUILD E EVENTOS\nEscolha uma de três melhorias após vencer. Convites têm 10% de chance por tela. Rotas oferecem elites, descanso, loja e eventos. A equipe muda as falas e libera opções especiais. No infinito, relíquias continuam acumulando com ganhos decrescentes; a build não acaba quando as opções exclusivas se esgotam.\n\n6. FIM E RETOMADA\nOuro, relíquias e convidados são da run. Feitos, coleção, descobertas, recordes e memórias permanecem. Salvar e sair retoma no início do combate atual ou na escolha salva, sem sortear outras opções.\n\nCONTROLES\nToque nos retratos ou use 1–3 para a ULT. Espaço/ESC pausa; A alterna ULT automática; F11 alterna tela cheia.", Rect2(0, 0, 476, 1270), 17)
+	label(inner, "1. MODOS\nConto: 12 fases, com chefes em 4, 8 e 12. Após vencer a run de 12 fases, escolha continuar no infinito com a mesma build e dificuldade crescente. Novos marcos de 12 páginas concedem memórias no fim da tentativa.\n\n2. COMBATE\nAtaques automáticos seguem o intervalo de cada personagem. ULTs gastam 100 mana e têm apresentação própria. Passivas ativam automaticamente com recarga de 6 s e avisam no canto. Histórico pausa e mostra dano, cura e efeitos. A arena mantém as classes e as duas linhas.\n\n3. SINERGIAS\nCertas duplas combinam efeitos. Elas exigem os dois viajantes vivos, o gatilho e a passiva do parceiro pronta. Cada dupla tem recarga de 6 s. Veja os gatilhos em Ver build da equipe.\n\n4. CHEFES\nQuebre o estandarte do General para interrompê-lo. A Guardiã copia a última ULT deste combate: pense antes de usar cura e escudo. Destrua os fios da Costureira para libertar as ativas seladas. Ataques básicos e ULTs continuam disponíveis.\n\n5. BUILD E EVENTOS\nEscolha uma de três melhorias após vencer. Convites têm 25% de chance por tela. Rotas oferecem elites, descanso, loja e eventos. A equipe muda as falas e libera opções especiais. No infinito, relíquias continuam acumulando com ganhos decrescentes; a build não acaba quando as opções exclusivas se esgotam.\n\n6. FIM E RETOMADA\nOuro, relíquias e convidados são da run. Feitos, coleção, descobertas, recordes e memórias permanecem. Salvar e sair retoma no início do combate atual ou na escolha salva, sem sortear outras opções.\n\nCONTROLES\nToque nos retratos ou use 1–3 para a ULT. Espaço/ESC pausa; A alterna ULT automática; F11 alterna tela cheia.", Rect2(0, 0, 476, 1270), 17)
 	navigation("profile")
 
 func show_preview() -> void:
@@ -666,3 +722,22 @@ func update_desktop_shell() -> void:
 			if child is Label and child.text.begins_with("%02d / 12 capítulos" % campaign.cleared.size()):
 				child.text = "Recorde %02d / 12\n\n%d personagens\n\n%d vitórias completas" % [campaign.best_depth, campaign.unlocked.size(), campaign.expedition_wins]
 			elif child is Button and child.text == "Campanha": child.text = "Nova run"
+
+
+func continue_into_endless() -> void:
+	if state != "result" or not run.continue_endless(campaign): return
+	persist_run()
+	show_relics()
+
+
+func journey_modal(title: String, subtitle: String) -> void:
+	modal(title, subtitle)
+	overlay.get_child(0).color = Color(0.02, 0.03, 0.06, 0.60)
+	var card := Panel.new()
+	card.position = Vector2(16, 148)
+	card.size = Vector2(508, 718)
+	card.add_theme_stylebox_override("panel", box(Color("111a2b", 0.96), Color("947e50"), 19))
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.add_child(card)
+	register_layout(card, "center")
+	overlay.move_child(card, 1)

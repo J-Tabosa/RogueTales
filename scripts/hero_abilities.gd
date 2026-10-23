@@ -1,5 +1,5 @@
 extends RefCounted
-## The twelve run kits. Reactions spend PP and never call another attack recursively.
+## The twelve run kits. PP is an internal ready charge with a six-second cooldown.
 const Content = preload("res://scripts/expedition_content.gd")
 const Synergies = preload("res://scripts/team_synergies.gd")
 
@@ -96,9 +96,10 @@ static func attack(tactics, index: int, requested: int) -> Dictionary:
 						if has(actor, "spread"): ignite(tactics.enemies[at], actor.damage * 0.12, 5.0, "scarlet")
 					if has(actor, "shelter"): shield_group(owner, 0.12)
 					hit.message = "Explosão de pólvora"
-				if critical and actor.pp > 0:
+				if critical and actor.pp > 0 and tactics.enemies.any(func(unit): return unit.hp > 0):
 					actor.pp -= 1
 					actor.energy = minf(100, actor.energy + 20)
+					tactics.notify(actor.id, Content.KITS[actor.id][2], "+20 mana no acerto crítico")
 			"rapunzel":
 				var ally := weakest(owner)
 				if not ally.is_empty():
@@ -194,6 +195,7 @@ static func attack(tactics, index: int, requested: int) -> Dictionary:
 					hunter.pp -= 1
 					extra(tactics, target, hunter.damage * 0.6 + (foe.armor if has(hunter, "pierce") else 0), false, damages)
 					hit["followup"] = true
+					tactics.notify(hunter.id, Content.KITS[hunter.id][2], "Disparo extra na presa marcada")
 					break
 		if actor.leech > 0: healed += heal(owner, actor, actor.leech)
 	hit["target_damage"] = damages
@@ -220,16 +222,17 @@ static func incoming(tactics, enemy_index: int, requested := -1) -> Dictionary:
 				guard.pp -= 1
 				target = at
 				protected = true
+				tactics.notify(guard.id, Content.KITS[guard.id][2], "Interceptou o golpe de um aliado")
 				break
 	var actor: Dictionary = owner.actors[target]
 	var before_shield: float = actor.shield
 	var focused: bool = enemy["class"] == "mage" and int(enemy.get("pp", 0)) > 0
 	if focused: enemy.pp -= 1
-	var hit: Dictionary = tactics.deal(actor, enemy.damage * (0.75 if protected else 1.0) * (1.2 if focused else 1.0), enemy["class"] == "mage")
+	var hit: Dictionary = tactics.deal(actor, enemy.damage * tactics.pressure() * (0.75 if protected else 1.0) * (1.2 if focused else 1.0), enemy["class"] == "mage")
 	if focused: hit["focused"] = true
 	if not hit.evaded and actor.hp > 0 and enemy["class"] == "ranger" and int(enemy.get("pp", 0)) > 0:
 		enemy.pp -= 1
-		hit.damage += tactics.deal(actor, enemy.damage * 0.25, false, true).damage
+		hit.damage += tactics.deal(actor, enemy.damage * tactics.pressure() * 0.25, false, true).damage
 		hit["followup"] = true
 	hit["target"] = target
 	hit["enemy"] = enemy_index
@@ -238,18 +241,22 @@ static func incoming(tactics, enemy_index: int, requested := -1) -> Dictionary:
 		actor.pp -= 1
 		actor.shadows = mini(3, int(actor.get("shadows", 0)) + (2 if has(actor, "double") else 1))
 		hit["counter"] = tactics.deal(enemy, actor.damage * 0.6, false, true).damage
+		tactics.notify(actor.id, Content.KITS[actor.id][2], "Esquivou, criou sombra e contra-atacou")
 	elif not hit.evaded:
 		if actor.id == "mulan" and hit.get("guarded", false):
+			tactics.notify(actor.id, Content.KITS[actor.id][2], "Aparou e devolveu o corte")
 			hit["counter"] = tactics.deal(enemy, actor.damage * 0.45, false, true).damage
 			actor.shield = minf(actor.max_hp, actor.shield + actor.max_hp * 0.10)
 			if has(actor, "guard"): shield_group(owner, 0.08)
 		elif actor.id == "maria" and actor.pp > 0:
+			tactics.notify(actor.id, Content.KITS[actor.id][2], "Envenenou o agressor")
 			actor.pp -= 1
 			poison(enemy, actor.damage * 0.16)
 			if has(actor, "toxic"):
 				for foe in tactics.enemies:
 					if foe != enemy: poison(foe, actor.damage * 0.10)
 		elif actor.id == "alice" and actor.pp > 0:
+			tactics.notify(actor.id, Content.KITS[actor.id][2], "Avançou o naipe e ganhou 25 mana")
 			actor.pp -= 1
 			actor.suit = (int(actor.get("suit", 0)) + 1) % 4
 			actor.energy = minf(100, actor.energy + 25)
@@ -258,20 +265,24 @@ static func incoming(tactics, enemy_index: int, requested := -1) -> Dictionary:
 		# Survival effects happen once per run, before any rescue can heal the unit.
 		if actor.hp <= 0 and actor.id == "puss" and has(actor, "nine") and not actor.get("nine_used", false):
 			actor.nine_used = true
+			tactics.notify(actor.id, "Nove vidas", "Voltou com 30% da vida")
 			actor.hp = actor.max_hp * 0.30
 		if actor.hp <= 0 and actor.id == owner.leader and owner.blessing == "mercy" and not owner.mercy_used:
 			owner.mercy_used = true
+			tactics.notify(actor.id, "Uma última página", "A bênção impediu a queda")
 			actor.hp = actor.max_hp * 0.35
 		if actor.hp > 0:
 			for support in owner.actors:
 				if support.hp <= 0 or support.pp <= 0: continue
 				if support.id == "rapunzel" and actor.hp / actor.max_hp < (0.65 if has(support, "rescue") else 0.45):
 					support.pp -= 1
+					tactics.notify(support.id, Content.KITS[support.id][2], "Socorreu " + str(TaleCatalog.HEROES[actor.id].name))
 					hit["support_heal"] = heal(owner, actor, actor.max_hp * (0.20 if has(support, "rescue") else 0.10), "rapunzel")
 					actor.shield = minf(actor.max_hp, actor.shield + actor.max_hp * 0.08)
 					break
 				elif support.id == "ariel" and actor.hp / actor.max_hp < 0.50:
 					support.pp -= 1
+					tactics.notify(support.id, Content.KITS[support.id][2], "Socorreu " + str(TaleCatalog.HEROES[actor.id].name))
 					hit["support_heal"] = heal(owner, actor, actor.max_hp * 0.08)
 					tactics.slow_left = maxf(tactics.slow_left, 3.0)
 					break
@@ -279,6 +290,7 @@ static func incoming(tactics, enemy_index: int, requested := -1) -> Dictionary:
 			for support in owner.actors:
 				if support.id == "aladin" and support.hp > 0 and support.pp > 0:
 					support.pp -= 1
+					tactics.notify(support.id, Content.KITS[support.id][2], "+12 mana para a equipe")
 					for ally in owner.actors:
 						if ally.hp > 0: ally.energy = minf(100, ally.energy + 12)
 					if has(support, "reserve"): shield_group(owner, 0.08)
@@ -299,14 +311,16 @@ static func deaths(tactics) -> void:
 				if actor.hp <= 0: continue
 				if actor.id == "matches" and (foe.burn_left > 0 or foe.get("died_burning", false)):
 					if has(actor, "ash"): actor.energy = minf(100, actor.energy + 25)
-					if actor.pp > 0:
+					if actor.pp > 0 and tactics.enemies.any(func(unit): return unit.hp > 0):
 						actor.pp -= 1
+						tactics.notify(actor.id, Content.KITS[actor.id][2], "Espalhou fogo aos sobreviventes")
 						for survivor in tactics.enemies:
 							if survivor.hp > 0:
 								ignite(survivor, maxf(foe.burn, actor.damage * 0.12), 5.0, "matches")
 								if has(actor, "fuel"): tactics.deal(survivor, actor.damage * 0.6, true, true)
-				elif actor.id == "snow_white" and (foe.poison_left > 0 or foe.get("died_poisoned", false)) and actor.pp > 0:
+				elif actor.id == "snow_white" and (foe.poison_left > 0 or foe.get("died_poisoned", false)) and actor.pp > 0 and tactics.enemies.any(func(unit): return unit.hp > 0):
 					actor.pp -= 1
+					tactics.notify(actor.id, Content.KITS[actor.id][2], "Transferiu o veneno da vítima")
 					for survivor in tactics.enemies:
 						if survivor.hp > 0:
 							poison(survivor, maxf(foe.poison, actor.damage * 0.10))

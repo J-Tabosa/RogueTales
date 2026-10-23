@@ -9,7 +9,7 @@ static func safe(value: float, minimum := 0.0) -> float:
 	return clampf(value, minimum, 1.0e100) if is_finite(value) else minimum
 
 static func health_scale(depth: int) -> float:
-	return safe(pow(1.22, mini(depth, 60)) * (1.0 + maxi(0, depth - 60) * 0.15), 1.0)
+	return safe(pow(1.15, mini(depth, 60)) * (1.0 + maxi(0, depth - 60) * 0.15), 1.0)
 
 static func apply_template(owner, actor: Dictionary) -> void:
 	var data: Dictionary = owner.team_template
@@ -107,3 +107,30 @@ static func restore(owner, data: Dictionary) -> void:
 		for key in stats.get("mutations", []):
 			var mutation := ExpeditionContent.offer("skill:%s:%s" % [actor.id, key])
 			if not mutation.is_empty() and not actor.mutations.has(key): actor.mutations.append(key)
+
+
+static func promote(owner) -> void:
+	# Replay only the global modifiers into the recruit template. Existing actors stay exact.
+	owner.team_template = template()
+	owner.upgrade_counts.clear()
+	for key in owner.build_history:
+		match key:
+			"event:curse":
+				owner.team_template.hp_scale *= 0.9
+				owner.team_template.hp_flat *= 0.9
+				owner.team_template.damage_scale *= 1.18
+			"event:elite": owner.team_template.damage_scale *= 1.10
+			_:
+				owner.upgrade_counts[key] = int(owner.upgrade_counts.get(key, 0)) + 1
+				match key:
+					"power": owner.team_template.damage_scale *= 1.2
+					"heart": owner.team_template.hp_flat += 25
+					"haste": owner.team_template.interval_scale *= 0.88
+					"critical": owner.team_template.crit_flat += 0.12
+					"armor": owner.team_template.armor_flat += 3
+					"leech": owner.team_template.leech_flat += 3
+	var unique: Array[String] = []
+	for key in owner.relics:
+		if not unique.has(key): unique.append(key)
+	owner.relics = unique
+	owner.build_history.clear()

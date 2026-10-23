@@ -3,8 +3,6 @@ extends Node2D
 signal attack_hit(index: int)
 signal attack_started(index: int)
 signal enemy_attack_hit(index: int)
-signal enemy_intent_requested(index: int)
-const IntentIcon = preload("res://scripts/mobile_icon.gd")
 const FLOOR = preload("res://assets/ui/storybook_battle.png")
 const Enemy = preload("res://scripts/enemy.gd")
 var party_scenes: Array = []
@@ -37,6 +35,12 @@ var backdrop: TextureRect
 var enemy_track := {"time": -1.0, "duration": 0.9, "index": -1, "target": -1, "hit": false}
 var numbers: Array[Dictionary] = []
 var hit_stop := 0.0
+var intro_left := 0.0
+var travel_progress := 0.0
+var entrance_left := 0.0
+var bursts: Array[Dictionary] = []
+var feedback: Control
+
 
 
 func _ready() -> void:
@@ -52,7 +56,7 @@ func _ready() -> void:
 	for index in party_scenes.size():
 		var actor: AnimatedSprite2D = party_scenes[index].instantiate()
 		actor.return_to_idle = false
-		actor.scale *= 0.68
+		actor.scale *= 0.88
 		actor.set_meta("battle_scale", actor.scale)
 		actor.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		add_child(actor)
@@ -75,9 +79,9 @@ func home_for(row: String, index: int, hostile: bool) -> Vector2:
 		if units[at].row == row:
 			same.append(at)
 	var order := maxi(0, same.find(index))
-	var spacing := minf(125.0, field_height * 0.27)
-	var y := field_height * 0.70 + (order - (same.size() - 1) * 0.5) * spacing
-	var x := (332.0 if row == "front" else 422.0) if hostile else (196.0 if row == "front" else 80.0)
+	var spacing := minf(94.0, field_height * 0.19)
+	var y := field_height * 0.67 + (order - (same.size() - 1) * 0.5) * spacing
+	var x := ((332.0 if row == "front" else 422.0) if hostile else (196.0 if row == "front" else 80.0)) + (order - (same.size() - 1) * 0.5) * (28.0 if hostile else -30.0)
 	return Vector2(x * field_width / 492.0, y + (19.0 if row == "back" else 0.0))
 
 
@@ -110,7 +114,7 @@ func widget(at: Vector2, title: String, tint: Color) -> Dictionary:
 		bg.corner_radius_top_right = 2
 		bg.corner_radius_bottom_right = 2
 		var fill := bg.duplicate()
-		fill.bg_color = tint if index == 0 else Color("d9bc76")
+		fill.bg_color = tint if index == 0 else Color("8ab4f0")
 		bar.add_theme_stylebox_override("background", bg)
 		bar.add_theme_stylebox_override("fill", fill)
 		group.add_child(bar)
@@ -139,7 +143,8 @@ func sync_enemies() -> void:
 		foes.append(model)
 		foe_homes.append(home)
 		foe_widgets.append(widget(home, ("★ " if data.boss else "") + str(TaleCatalog.CLASSES[data["class"]].name), Color("dd9691")))
-		if simulation.expedition: add_intent_badge(index)
+		data["death_left"] = 0.0
+		data["was_alive"] = true
 	if not foes.is_empty():
 		enemy = foes[0]
 	sync_health(simulation.actors)
@@ -152,7 +157,10 @@ func attack(index: int = 0, target: int = -1, ultimate := false) -> bool:
 		return false
 	var actor: AnimatedSprite2D = heroes[index]
 	tracks[index].time = 0.0
-	tracks[index].duration = actor.get_animation_duration("attack") * (1.15 if ultimate else 1.0)
+	tracks[index].duration = maxf(1.7 if ultimate else 1.12, actor.get_animation_duration("attack") * (1.40 if ultimate else 1.20))
+	if ultimate:
+		intro_left = 1.35
+		if is_instance_valid(feedback): feedback.announce_ultimate(simulation.actors[index].id)
 	tracks[index].hit = false
 	tracks[index].target = target
 	tracks[index].ultimate = ultimate
@@ -170,6 +178,8 @@ func set_animation(id: String) -> void:
 
 func reset_effects() -> void:
 	walking = false
+	intro_left = 0.0
+	bursts.clear()
 	enemy_track.time = -1.0
 	hit_stop = 0.0
 	for item in numbers:
@@ -198,24 +208,16 @@ func sync_health(actors: Array[Dictionary]) -> void:
 		unit_widgets[index].health.max_value = actors[index].max_hp
 		unit_widgets[index].health.value = actors[index].hp
 		unit_widgets[index].energy.value = actors[index].energy
-		unit_widgets[index].text.text = "%s  %dAP %dPP" % ["SELADO" if actors[index].get("sealed", false) else TaleCatalog.hero_class_name(actors[index].id), actors[index].get("ap", 0), actors[index].get("pp", 0)]
+		unit_widgets[index].text.text = "%d / %d PV" % [ceili(actors[index].hp), ceili(actors[index].max_hp)]
 	for index in foes.size():
 		var data: Dictionary = simulation.tactics.enemies[index]
-		foes[index].visible = enemy_visible and data.hp > 0
+		foes[index].visible = enemy_visible and (data.hp > 0 or data.get("death_left", 0) > 0)
 		foe_widgets[index].root.visible = enemy_visible and data.hp > 0
 		foe_widgets[index].health.max_value = data.max_hp
 		foe_widgets[index].health.value = data.hp
-		foe_widgets[index].energy.value = float(data.get("ap", 0)) * 50.0
-		foe_widgets[index].text.text = "%s  %dAP %dPP" % [data.name if data.has("binds") or data.get("banner", false) else TaleCatalog.CLASSES[data["class"]].name, data.get("ap", 0), data.get("pp", 0)]
-		if foe_widgets[index].has("intent"):
-			var intent: Dictionary = simulation.tactics.intent_for(index)
-			foe_widgets[index].intent_title.text = str(intent.get("title", ""))
-			var names: Array[String] = []
-			for at in intent.get("targets", []):
-				if at >= 0 and at < simulation.actors.size(): names.append(str(TaleCatalog.HEROES[simulation.actors[at].id].get("short_name", TaleCatalog.HEROES[simulation.actors[at].id].name)))
-			foe_widgets[index].intent_target.text = ", ".join(names) if not names.is_empty() else "Preparação"
-			foe_widgets[index].intent_icon.glyph = str(intent.get("glyph", "sword"))
-			foe_widgets[index].intent_icon.queue_redraw()
+		foe_widgets[index].energy.visible = false
+		foe_widgets[index].text.text = "%d / %d PV" % [ceili(data.hp), ceili(data.max_hp)]
+
 
 
 func hurt(index: int) -> void:
@@ -237,7 +239,13 @@ func enemy_strike(index: int, target: int) -> void:
 
 
 func _process(delta: float) -> void:
-	var dt := 0.0 if frozen or hit_stop > 0 else minf(delta, 0.25) * speed
+	if is_instance_valid(feedback): feedback.frozen = frozen
+	var dt := 0.0 if frozen or hit_stop > 0 or intro_left > 0 else minf(delta, 0.25) * speed
+	if not frozen: intro_left = maxf(0, intro_left - delta)
+	if walking and dt > 0:
+		travel_progress = minf(1, travel_progress + dt / 2.8)
+		backdrop.position.x = 0 if reduced_motion else -18 * travel_progress
+	entrance_left = maxf(0, entrance_left - dt)
 	if not frozen:
 		hit_stop = maxf(0, hit_stop - delta * speed)
 	clock += dt
@@ -245,10 +253,12 @@ func _process(delta: float) -> void:
 		var actor: AnimatedSprite2D = heroes[index]
 		actor.z_index = int(actor.position.y)
 		var track: Dictionary = tracks[index]
-		actor.speed_scale = 0.0 if frozen or hit_stop > 0 or not track.alive else speed
+		actor.speed_scale = 0.0 if frozen or hit_stop > 0 or intro_left > 0 or not track.alive else speed
 		track.hurt = maxf(0, track.hurt - dt)
 		if track.alive:
 			actor.modulate = Enemy.hurt_color(track.hurt)
+		if walking and track.alive:
+			actor.position = track.home + Vector2(-90 * (1.0 - travel_progress), 0 if reduced_motion else sin(clock * 8 + index) * 2)
 		if track.time < 0 or dt <= 0:
 			continue
 		track.time += dt
@@ -277,30 +287,34 @@ func _process(delta: float) -> void:
 				actor.show_animation("idle")
 	if enemy_track.time >= 0 and dt > 0:
 		var index: int = enemy_track.index
-		if simulation.tactics.enemies[index].hp <= 0:
+		enemy_track.time += dt
+		if not enemy_track.hit and enemy_track.time >= enemy_track.duration * 0.55:
+			enemy_track.hit = true
+			enemy_attack_hit.emit(index)
+		if enemy_track.time >= enemy_track.duration:
 			enemy_track.time = -1.0
-		else:
-			enemy_track.time += dt
-			if not enemy_track.hit and enemy_track.time >= enemy_track.duration * 0.55:
-				enemy_track.hit = true
-				enemy_attack_hit.emit(index)
-			if enemy_track.time >= enemy_track.duration:
-				enemy_track.time = -1.0
 	for index in foes.size():
 		var data: Dictionary = simulation.tactics.enemies[index]
 		foes[index].advance(dt, data.boss, 0, simulation.tactics.interval_for(index))
-		foes[index].position = foe_homes[index]
+		foes[index].position = foe_homes[index] + Vector2(100 * entrance_left, 0)
+		if data.hp <= 0:
+			if data.get("was_alive", true): data.death_left = 0.75
+			data.was_alive = false
+			data.death_left = maxf(0, float(data.get("death_left", 0)) - dt)
+			foes[index].modulate.a = float(data.death_left) / 0.75
 		if enemy_track.time >= 0 and enemy_track.index == index:
 			var phase: float = clampf(enemy_track.time / enemy_track.duration, 0, 0.999)
 			var anim := "idle" if enemy_track.get("support", false) else ("boss_attack" if data.boss else "attack")
 			foes[index].seek(anim, phase * foes[index].animation_duration(anim))
 			if not enemy_track.get("support", false) and data["class"] in ["vanguard", "assassin"] and enemy_track.target >= 0:
-				var dash := sin(phase * PI)
+				var dash := smoothstep(0, 0.52, phase) if phase < 0.55 else (1.0 - smoothstep(0.55, 1, phase))
 				var to: Vector2 = tracks[enemy_track.target].home + Vector2(60, 0)
 				foes[index].position = foe_homes[index].lerp(to, dash)
 			foes[index].z_index = 950
 		else:
 			foes[index].z_index = int(foe_homes[index].y)
+	for burst in bursts: burst.left -= dt
+	bursts = bursts.filter(func(item): return item.left > 0)
 	for item in numbers:
 		item.left -= dt
 		item.node.position.y -= dt * 30
@@ -373,6 +387,21 @@ func _draw() -> void:
 				draw_line(from.lerp(to, maxf(0, t - 0.18)), point, tint, 6, true)
 		if track.ultimate:
 			draw_arc(to, 32 + t * 16, 0, TAU, 32, Color(tint, 0.65), 3, true)
+	if enemy_track.time >= 0 and not enemy_track.get("support", false) and enemy_track.target >= 0:
+		var index: int = enemy_track.index
+		var phase: float = enemy_track.time / enemy_track.duration
+		if phase >= 0.2 and phase < 0.55 and simulation.tactics.enemies[index]["class"] in ["mage", "ranger"]:
+			var from := foe_homes[index] + Vector2(0, -75)
+			var to: Vector2 = tracks[enemy_track.target].home + Vector2(0, -65)
+			var t := clampf((phase - 0.2) / 0.35, 0, 1)
+			var point := from.lerp(to, t)
+			draw_line(from.lerp(to, maxf(0, t - 0.20)), point, Color("f09fa6"), 5, true)
+			draw_circle(point, 8, Color("ffd4bd"), true, -1, true)
+	for burst in bursts: draw_burst(burst)
+	if walking:
+		for step in 9:
+			var x := fposmod(step * 83.0 - clock * 90.0, field_width)
+			draw_line(Vector2(x, field_height * 0.9), Vector2(x + 23, field_height * 0.9), Color("d6be88", 0.18), 2)
 	for item in effects:
 		draw_line(item.from, item.to, Color(item.color, item.time / item.duration), 3, true)
 	for index in foe_homes.size():
@@ -394,7 +423,7 @@ func fit_field(dimensions: Vector2) -> void:
 	field_width = dimensions.x
 	field_height = dimensions.y
 	if is_instance_valid(backdrop):
-		backdrop.size = dimensions
+		backdrop.size = dimensions + Vector2(24, 0)
 	for index in heroes.size():
 		heroes[index].position *= ratio
 		tracks[index].home = home_for(simulation.actors[index].row, index, false)
@@ -420,25 +449,28 @@ func is_action_busy() -> bool:
 func begin_enemy_attack(index: int, target: int) -> bool:
 	if is_action_busy() or index < 0 or index >= foes.size() or target < 0 or target >= heroes.size():
 		return false
-	enemy_track = {"time": 0.0, "duration": 0.9, "index": index, "target": target, "hit": false}
+	enemy_track = {"time": 0.0, "duration": 1.3, "index": index, "target": target, "hit": false}
 	return true
 
 
 func damage_number(message: String, at: Vector2, tint: Color) -> void:
 	var text := Label.new()
 	text.text = message
-	text.position = at + Vector2(-45, -155)
+	text.position = at + Vector2(-38, -110)
+	text.position.x = clampf(text.position.x, 6, field_width - 155)
 	text.size = Vector2(160, 36)
-	text.add_theme_font_size_override("font_size", 22)
+	text.add_theme_font_size_override("font_size", 15 if message.contains("ESCUDO") else (18 if message.begins_with("+") else 22))
 	text.add_theme_color_override("font_color", tint)
 	text.add_theme_color_override("font_outline_color", Color("101321"))
 	text.add_theme_constant_override("outline_size", 5)
 	text.z_index = 1500
 	add_child(text)
-	numbers.append({"node": text, "left": 0.95})
+	numbers.append({"node": text, "left": 1.35})
 
 
 func present_result(result: Dictionary, hostile: bool, attacker: int) -> void:
+	if result.get("ultimate", false) and not hostile:
+		ultimate_effect(attacker, result)
 	if result.get("non_attack", false):
 		damage_number("SUPORTE", foe_homes[attacker], Color("b1c5f6"))
 		return
@@ -450,56 +482,16 @@ func present_result(result: Dictionary, hostile: bool, attacker: int) -> void:
 		damage_number(text, at, Color("f8d38c") if not hostile else Color("ffb5b4"))
 		if result.get("target_guarded", {}).get(target, result.get("guarded", false)):
 			damage_number("GUARDA", at + Vector2(0, 32), Color("8bcce4"))
-		var healing: float = result.get("target_heal", {}).get(target, result.get("support_heal", 0))
-		if healing > 0:
-			damage_number("+%d PV" % int(healing), at + Vector2(0, 50), Color("9ce5b3"))
+
 	if result.get("counter", 0) > 0:
 		var at: Vector2 = foe_homes[attacker] if hostile else tracks[attacker].home
 		damage_number("CONTRA %d" % int(result.counter), at, Color("bca8f6"))
 	if result.get("followup", false) or result.get("focused", false):
 		damage_number("DISPARO EXTRA" if result.get("followup", false) else "CONCENTRAÇÃO", (foe_homes[attacker] if hostile else tracks[attacker].home) + Vector2(-10, 50), Color("a9c6ff"))
 	if not reduced_motion and not result.evaded:
-		hit_stop = 0.045
+		hit_stop = maxf(hit_stop, 0.045)
 	for key in result.get("synergies", []): show_synergy(key)
 
-
-func add_intent_badge(index: int) -> void:
-	var data: Dictionary = foe_widgets[index]
-	var badge := Button.new()
-	badge.position = Vector2(-22, -220)
-	badge.size = Vector2(130, 44)
-	badge.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color("171e30", 0.94)
-	style.border_color = Color("a47789")
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(7)
-	badge.add_theme_stylebox_override("normal", style)
-	badge.add_theme_stylebox_override("hover", style)
-	var slot := index
-	badge.pressed.connect(func(): enemy_intent_requested.emit(slot))
-	data.root.add_child(badge)
-	var symbol := Control.new()
-	symbol.set_script(IntentIcon)
-	symbol.position = Vector2(6, 5)
-	symbol.size = Vector2(18, 18)
-	symbol.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	badge.add_child(symbol)
-	var labels: Array[Label] = []
-	for row in 2:
-		var tag := Label.new()
-		tag.position = Vector2(28 if row == 0 else 6, 3 + row * 21)
-		tag.size = Vector2(96 if row == 0 else 118, 18)
-		tag.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-		tag.add_theme_font_size_override("font_size", 10)
-		tag.add_theme_color_override("font_color", Color("f1c394") if row == 0 else Color("d6dded"))
-		tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		badge.add_child(tag)
-		labels.append(tag)
-	data["intent"] = badge
-	data["intent_title"] = labels[0]
-	data["intent_target"] = labels[1]
-	data["intent_icon"] = symbol
 
 
 func show_synergy(key: String) -> void:
@@ -516,3 +508,52 @@ func show_synergy(key: String) -> void:
 	tag.size = Vector2(field_width - 40, 44)
 	tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	tag.add_theme_font_size_override("font_size", 18)
+
+
+func ultimate_effect(index: int, result: Dictionary) -> void:
+	var id: String = simulation.actors[index].id
+	var points: Array[Vector2] = []
+	for at in result.get("targets", []): points.append(foe_homes[at] + Vector2(0, -65))
+	if id in ["rapunzel", "ariel", "aladin"]:
+		for track in tracks:
+			if track.alive: points.append(track.home + Vector2(0, -65))
+	for at in points:
+		bursts.append({"id": id, "at": at, "left": 1.05, "duration": 1.05, "color": TaleCatalog.HEROES[id].color})
+	if not reduced_motion: hit_stop = 0.12
+
+func draw_burst(burst: Dictionary) -> void:
+	var t: float = 1 - burst.left / burst.duration
+	var at: Vector2 = burst.at
+	var tint: Color = Color(burst.color, 1 - t)
+	var radius: float = (30 + t * 80) if not reduced_motion else 40
+	draw_arc(at, radius, 0, TAU, 48, tint, 5, true)
+	match str(burst.id):
+		"scarlet", "matches":
+			for i in 12:
+				var dir := Vector2.from_angle(i * TAU / 12)
+				draw_line(at + dir * radius * 0.3, at + dir * radius, tint, 6, true)
+				if burst.id == "matches": draw_line(at + Vector2((i - 6) * 10, 35), at + Vector2((i - 6) * 10, -radius), tint, 4, true)
+		"rapunzel", "ariel", "aladin":
+			for i in 3:
+				draw_arc(at + Vector2(0, i * 17), radius * (1 - i * 0.15), -PI, 0, 36, tint, 4, true)
+			if burst.id == "rapunzel": draw_line(at + Vector2(-radius, 30), at + Vector2(radius, -30), tint, 7, true)
+			if burst.id == "aladin":
+				for i in 6:
+					var dir := Vector2.from_angle(i * TAU / 6 + t * 3)
+					draw_circle(at + dir * radius * 0.65, 7, tint, true, -1, true)
+		"alice":
+			for i in 8:
+				var pos := at + Vector2.from_angle(i * TAU / 8 + t * 2) * radius
+				draw_set_transform(pos, i * 0.7 + t, Vector2.ONE)
+				draw_rect(Rect2(-9, -14, 18, 28), tint)
+			draw_set_transform(Vector2.ZERO)
+		"joao", "snow_white":
+			for i in 5:
+				var pos := at + Vector2(-radius + i * 18, -radius + i * 12)
+				draw_line(pos, pos + Vector2(75, 80), tint, 5, true)
+			if burst.id == "snow_white": draw_circle(at, radius * 0.5, Color("87c87b", (1 - t) * 0.3), true, -1, true)
+		_:
+			for i in 3:
+				var offset := Vector2(i * 18 - 18, i * 14 - 14)
+				draw_line(at + offset - Vector2(radius, radius), at + offset + Vector2(radius, radius), tint, 5, true)
+				if burst.id in ["maria", "peter"]: draw_line(at + offset + Vector2(-radius, radius), at + offset + Vector2(radius, -radius), tint, 4, true)

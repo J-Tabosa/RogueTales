@@ -11,6 +11,7 @@ var elapsed := 0.0
 var synergy_used: Dictionary = {}
 var last_ultimate: Dictionary = {}
 var ultimate_serial := 0
+var feedback_events: Array[Dictionary] = []
 
 
 func run():
@@ -49,13 +50,16 @@ func ensure_front() -> void:
 func spawn() -> void:
 	var owner = run()
 	enemies.clear()
+	feedback_events.clear()
+	synergy_used.clear()
 	slow_left = 0
+	elapsed = 0
 	var count: int = 1 if owner.stage == 0 and owner.wave == 0 else (2 if owner.stage < 3 else 3)
 	var total: float = TaleCatalog.STAGES[owner.stage].hp * [1.0, 1.25, 2.4][owner.wave]
 	if owner.expedition:
 		var depth: int = owner.rooms_cleared if owner.endless else owner.stage
 		count = 1 if depth < 2 else (2 if depth < 5 else 3)
-		total = 76.0 * (owner.Endless.health_scale(depth) if owner.endless else pow(1.22, owner.stage)) * (1.5 if ExpeditionContent.is_boss(owner.stage) else 1.0) * (1.35 if owner.room_kind == "elite" else 1.0)
+		total = 86.0 * (owner.Endless.health_scale(depth) if owner.endless else pow(1.15, owner.stage)) * (1.5 if ExpeditionContent.is_boss(owner.stage) else 1.0) * (1.35 if owner.room_kind == "elite" else 1.0)
 	var roles: Array = ["vanguard", "ranger", "mage"]
 	if owner.stage % 4 == 2:
 		roles[1] = "assassin"
@@ -77,7 +81,7 @@ func spawn() -> void:
 			"burn": 0.0, "burn_left": 0.0, "poison": 0.0, "poison_left": 0.0
 		})
 		if owner.expedition:
-			enemies[-1].damage = (5.5 + (owner.rooms_cleared if owner.endless else owner.stage) * 1.8) * (1.2 if boss_unit else 1.0) * (1.15 if owner.room_kind == "elite" else 1.0) / sqrt(float(count))
+			enemies[-1].damage = (13.0 + (owner.rooms_cleared if owner.endless else owner.stage) * 3.5) * (1.2 if boss_unit else 1.0) * (1.15 if owner.room_kind == "elite" else 1.0) / pow(float(count), 0.25)
 	for actor in owner.actors:
 		actor.ult_pending = false
 		actor.ult_queued = false
@@ -146,7 +150,7 @@ func deal(target: Dictionary, amount: float, magical: bool, certain := false) ->
 	if guarded:
 		target.pp -= 1
 		amount *= 0.65
-	var raw := maxf(1, amount - float(target.armor) * (0.35 if magical else 1.0))
+	var raw := maxf(amount * 0.28 if owner.expedition else 1.0, amount - float(target.armor) * (0.35 if magical else 1.0))
 	var absorbed := minf(float(target.get("shield", 0.0)), raw)
 	if target.has("shield"):
 		target.shield -= absorbed
@@ -312,7 +316,7 @@ func tick(delta: float) -> void:
 			if actor.evasion_left == 0:
 				actor.evasion = actor.base_evasion
 		if actor.hp > 0 and not actor.ult_pending:
-			actor.energy = minf(100, actor.energy + delta * 3.0)
+			actor.energy = minf(100, actor.energy + delta * 1.4)
 	if run().expedition:
 		Abilities.deaths(self)
 		BossRules.refresh(self)
@@ -449,3 +453,10 @@ func commit_intent(index: int) -> Dictionary:
 	var intent := intent_for(index)
 	if not intent.is_empty(): intent.locked = true
 	return intent
+
+
+func notify(id: String, title: String, detail: String, kind := "passive") -> void:
+	feedback_events.append({"hero": id, "title": title, "detail": detail, "kind": kind})
+
+func pressure() -> float:
+	return 1.0 + minf(2.0, maxf(0, elapsed - 28.0) / 40.0)

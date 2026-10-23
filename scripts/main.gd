@@ -1018,14 +1018,15 @@ func build_battle() -> void:
 
 func begin_travel() -> void:
 	state = "travel"
-	travel_timer = 1.1
+	travel_timer = 2.8
+	arena.travel_progress = 0.0
 	arena.reset_effects()
 	arena.walking = true
 	arena.enemy_visible = false
 	arena.boss = run.wave == 2
 	arena.set_animation("walk")
 	arena.sync_health(run.actors)
-	log_label.text = "Seguindo para o encontro %d de 3…" % (run.wave + 1)
+	current_action("A equipe segue pela trilha…")
 	update_hud()
 
 
@@ -1042,7 +1043,9 @@ func spawn_enemy() -> void:
 	enemy_timer = run.enemy_interval()
 	for index in cooldowns.size():
 		cooldowns[index] = 0.15 + index * 0.28
-	log_label.text = "CHEFE À VISTA" if run.wave == 2 else "A formação encontrou resistência."
+	current_action("CHEFE À VISTA" if run.wave == 2 else "Inimigos surgem no caminho")
+	push_battle_log("Encontro iniciado")
+	arena.entrance_left = 1.0
 	update_hud()
 
 
@@ -1102,6 +1105,7 @@ func on_attack_started(index: int) -> void:
 func on_attack_hit(index: int) -> void:
 	if state != "battle" or paused or run == null:
 		return
+	var resources: Array = run.actors.map(func(actor): return {"hp": actor.hp, "shield": actor.shield})
 	var hit: Dictionary
 	if run.tactics != null:
 		var track: Dictionary = arena.tracks[index]
@@ -1120,11 +1124,10 @@ func on_attack_hit(index: int) -> void:
 		arena.present_result(hit, false, index)
 	audio.play_effect("explosion" if run.actors[index].id == "scarlet" else "hit")
 	if not str(hit.message).is_empty():
-		log_label.text = TaleCatalog.HEROES[run.actors[index].id].name + " · " + str(hit.message)
-	if run.enemy_hp <= 0:
-		resolve_enemy()
-	else:
-		update_hud()
+		current_action(TaleCatalog.HEROES[run.actors[index].id].name + " · " + str(hit.message))
+	record_result(hit, false, index, resources)
+	consume_feedback()
+	update_hud()
 
 
 func resolve_enemy() -> void:
@@ -1231,6 +1234,7 @@ func show_relics() -> void:
 		return
 	arena.reset_effects()
 	arena.frozen = true
+	if arena.feedback != null: arena.feedback.frozen = true
 	modal(
 		"Uma página, três destinos.",
 		"Escolha uma relíquia ou convoque uma heroína.\nO upgrade vale até o fim desta run."
@@ -1311,13 +1315,14 @@ func confirm_replacement(id: String, index: int) -> void:
 
 
 func toggle_pause() -> void:
-	if state not in ["battle", "travel"]:
+	if state not in ["battle", "travel", "route_travel", "encounter_intro", "battle_outro"]:
 		return
 	if paused:
 		resume_battle()
 		return
 	paused = true
 	arena.frozen = true
+	if arena.feedback != null: arena.feedback.frozen = true
 	modal(
 		"Uma pausa na jornada.",
 		"O combate está parado. O progresso é retomado no início do encontro atual após sair."
@@ -1336,6 +1341,7 @@ func resume_battle() -> void:
 		overlay = null
 	if is_instance_valid(arena):
 		arena.frozen = false
+		if arena.feedback != null: arena.feedback.frozen = false
 
 
 func leave_battle() -> void:
@@ -1468,7 +1474,7 @@ func _input(event: InputEvent) -> void:
 			debug_panel = null
 		elif state == "preview":
 			show_menu()
-		elif state in ["battle", "travel"]:
+		elif state in ["battle", "travel", "route_travel", "encounter_intro", "battle_outro"]:
 			toggle_pause()
 		elif state == "replacement":
 			show_relics()
@@ -2187,17 +2193,23 @@ func set_voice_volume(value: float) -> void:
 
 
 func process_tactical_combat(dt: float) -> void:
+	if arena.hit_stop > 0 or arena.intro_left > 0: return
 	if not run.alive():
-		finish_defeat()
+		if not arena.is_action_busy(): finish_defeat()
+		return
+	if run.enemy_hp <= 0:
+		if not arena.is_action_busy(): resolve_enemy()
 		return
 	run.tick_status(dt)
+	consume_feedback()
 	for target in run.tactics.last_dot_targets:
 		arena.hurt_enemy(target, true)
 	if run.enemy_hp <= 0:
-		resolve_enemy()
+		if not arena.is_action_busy(): resolve_enemy()
 		return
 	if combat_flow == null:
 		return
+	combat_flow.advance(dt)
 	if not combat_flow.active.is_empty():
 		if not arena.is_action_busy():
 			combat_flow.complete()
@@ -2220,20 +2232,21 @@ func process_tactical_combat(dt: float) -> void:
 				return
 			entry["ultimate"] = ultimate
 			combat_flow.begin(entry)
-			log_label.text = "%s · %s" % [TaleCatalog.HEROES[run.actors[index].id].name, TaleCatalog.HERO_TACTICS[run.actors[index].id].ult if ultimate else (ExpeditionContent.KITS[run.actors[index].id][0] if run.expedition else arena.heroes[index].get_weapon_label())]
+			current_action("%s · %s" % [TaleCatalog.HEROES[run.actors[index].id].name, TaleCatalog.HERO_TACTICS[run.actors[index].id].ult if ultimate else (ExpeditionContent.KITS[run.actors[index].id][0] if run.expedition else arena.heroes[index].get_weapon_label())])
 	else:
 		var intent: Dictionary = run.tactics.commit_intent(index) if run.expedition else {}
 		var target: int = int(intent.target) if not intent.is_empty() else run.tactics.choose_target(run.tactics.enemies[index], run.actors)
 		if arena.begin_enemy_attack(index, target):
 			arena.enemy_track["support"] = str(intent.get("key", "")) in ["prepare", "banner", "stagger", "pull"] or (intent.get("key") == "copy" and intent.get("copy") == "rapunzel")
 			combat_flow.begin(entry)
-			log_label.text = str(run.tactics.enemies[index].name) + " · " + str(intent.get("title", "Ataque"))
+			current_action(str(run.tactics.enemies[index].name) + " · " + str(intent.get("title", "Ataque")))
 	update_hud()
 
 
 func on_enemy_attack_hit(index: int) -> void:
 	if state != "battle" or paused or run == null:
 		return
+	var resources: Array = run.actors.map(func(actor): return {"hp": actor.hp, "shield": actor.shield})
 	var hit: Dictionary = run.hit_party(index)
 	if hit.is_empty():
 		return
@@ -2243,12 +2256,11 @@ func on_enemy_attack_hit(index: int) -> void:
 			for target in hit.get("targets", [hit.target]):
 				if float(hit.get("target_damage", {}).get(target, hit.damage)) > 0: arena.hurt(target)
 	arena.present_result(hit, true, index)
-	log_label.text = str(hit.message) if not str(hit.get("message", "")).is_empty() else "%s · %s" % [TaleCatalog.HEROES[run.actors[hit.target].id].name, "Esquiva" if hit.evaded else ("Guarda · −%d PV" % int(hit.damage) if hit.get("guarded", false) else "−%d PV" % int(hit.damage))]
+	if not hit.get("non_attack", false): audio.play_effect("hit")
+	record_result(hit, true, index, resources)
+	consume_feedback()
 	arena.sync_health(run.actors)
-	if not run.alive():
-		finish_defeat()
-	else:
-		update_hud()
+	update_hud()
 
 
 func try_ultimate(index: int) -> bool:
@@ -2270,6 +2282,19 @@ func try_ultimate(index: int) -> bool:
 		return false
 	if combat_flow != null:
 		combat_flow.begin({"side": "ally", "index": index, "manual": true, "ultimate": true})
-	log_label.text = str(TaleCatalog.HEROES[actor.id].name) + " · " + str(TaleCatalog.HERO_TACTICS[actor.id].ult)
+	current_action(str(TaleCatalog.HEROES[actor.id].name) + " · " + str(TaleCatalog.HERO_TACTICS[actor.id].ult))
 	update_hud()
 	return true
+
+
+func current_action(message: String) -> void:
+	if is_instance_valid(log_label): log_label.text = message
+
+func push_battle_log(message: String) -> void:
+	if is_instance_valid(log_label): log_label.text = message
+
+func consume_feedback() -> void:
+	pass
+
+func record_result(_hit: Dictionary, _hostile: bool, _index: int, _before: Array) -> void:
+	pass

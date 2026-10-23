@@ -1,12 +1,12 @@
 extends RefCounted
 ## Every pair has a real, conditional follow-up. One activation per pair per round.
 const PAIRS := {
-	"hunters": {"name": "Caçadores de Bruxas", "heroes": ["joao", "maria"], "detail": "Maria acerta a presa marcada: João gasta 1 PP num disparo de 80% e renova o veneno."},
-	"powder": {"name": "Pavio Compartilhado", "heroes": ["scarlet", "matches"], "detail": "Uma atinge o fogo da outra: a parceira gasta 1 PP para detonar duas parcelas de queimadura."},
-	"tide": {"name": "Maré dos Desejos", "heroes": ["ariel", "aladin"], "detail": "Aladin cura ou protege o grupo: Ariel gasta 1 PP e acrescenta escudo de 8% e 12 de energia."},
-	"threads": {"name": "Fios de Ferro", "heroes": ["rapunzel", "puss"], "detail": "O corte carregado do Gato faz Rapunzel gastar 1 PP para curá-lo em 6% e proteger o grupo em 10%."},
-	"dance": {"name": "Jade e Sombra", "heroes": ["mulan", "peter"], "detail": "Peter consome sombras: Mulan gasta 1 PP para acrescentar um corte de 70% na vanguarda."},
-	"tea": {"name": "Chá das Maçãs", "heroes": ["alice", "snow_white"], "detail": "Copas ou Paus atingem veneno: Branca gasta 1 PP, destila duas parcelas de veneno e cura 5% do grupo."}
+	"hunters": {"name": "Caçadores de Bruxas", "heroes": ["joao", "maria"], "detail": "Maria acerta a presa marcada: João ativa a combinação num disparo de 80% e renova o veneno."},
+	"powder": {"name": "Pavio Compartilhado", "heroes": ["scarlet", "matches"], "detail": "Uma atinge o fogo da outra: a parceira ativa a combinação para detonar duas parcelas de queimadura."},
+	"tide": {"name": "Maré dos Desejos", "heroes": ["ariel", "aladin"], "detail": "Aladin cura ou protege o grupo: Ariel ativa a combinação e acrescenta escudo de 8% e 12 de energia."},
+	"threads": {"name": "Fios de Ferro", "heroes": ["rapunzel", "puss"], "detail": "O corte carregado do Gato faz Rapunzel ativar a combinação para curá-lo em 6% e proteger o grupo em 10%."},
+	"dance": {"name": "Jade e Sombra", "heroes": ["mulan", "peter"], "detail": "Peter consome sombras: Mulan ativa a combinação para acrescentar um corte de 70% na vanguarda."},
+	"tea": {"name": "Chá das Maçãs", "heroes": ["alice", "snow_white"], "detail": "Copas ou Paus atingem veneno: Branca ativa a combinação, destila duas parcelas de veneno e cura 5% do grupo."}
 }
 
 static func member(owner, id: String) -> Dictionary:
@@ -49,6 +49,7 @@ static func after_attack(tactics, actor: Dictionary, target: int, context: Dicti
 		if supporter.is_empty() or int(supporter.get("pp", 0)) <= 0: continue
 		supporter.pp -= 1
 		tactics.synergy_used[key] = true
+		tactics.notify(supporter.id, PAIRS[key].name, "Combinação com " + str(TaleCatalog.HEROES[actor.id].name), "synergy")
 		if not owner.synergies_seen.has(key): owner.synergies_seen.append(key)
 		owner.synergy_activations += 1
 		if not hit.has("synergies"): hit["synergies"] = []

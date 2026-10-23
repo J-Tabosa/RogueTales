@@ -35,6 +35,7 @@ func checks() -> void:
 		assert(not Events.available(resumed).has(key))
 	# Hundreds of phases retain three choices; phase 12 is never a terminal transition.
 	var account := TaleCampaign.new()
+	account.expedition_wins = 1
 	var run := IdleRun.new()
 	assert(run.start_expedition(account, "scarlet", "vigor", true))
 	run.rng.seed = 8381
@@ -93,7 +94,7 @@ func checks() -> void:
 	resumed.rooms_cleared = 29
 	var result := loaded.finish_expedition(resumed.to_checkpoint(), false)
 	assert(result.endless and result.milestones == 2 and loaded.best_endless == 29)
-	assert(loaded.expedition_wins == 0 and loaded.endless_runs == 1)
+	assert(loaded.expedition_wins == 1 and loaded.endless_runs == 1)
 	assert(result.reward == 29 * 4 + 40 and loaded.checkpoint.is_empty())
 	assert(loaded.finish_expedition(resumed.to_checkpoint(), false).is_empty())
 	var fresh := IdleRun.new()

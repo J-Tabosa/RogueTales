@@ -648,13 +648,14 @@ func finish_expedition(data: Dictionary, won: bool) -> Dictionary:
 		best_endless = maxi(best_endless, depth)
 		endless_runs += 1
 	best_depth = maxi(best_depth, mini(depth, 12))
-	var fragments := mini(9999999, depth * 4 + (30 if won and not infinite else 0) + milestones * 20)
+	var new_depth := maxi(0, depth - (12 if infinite and int(data.get("continuation_from", 0)) == 12 else 0))
+	var fragments := mini(9999999, new_depth * 4 + (30 if won and not infinite else 0) + milestones * 20)
 	for key in data.get("synergies_seen", []):
 		if preload("res://scripts/team_synergies.gd").PAIRS.has(key) and not discovered_synergies.has(key): discovered_synergies.append(key)
 	for key in data.get("events_discovered", []):
 		if preload("res://scripts/team_events.gd").EVENTS.has(key) and not discovered_events.has(key): discovered_events.append(key)
 	earn_gold(fragments)
-	grant_xp(depth * 8, []) # Profile experience; starting combat stats always use level 1.
+	grant_xp(new_depth * 8, []) # Profile experience; starting combat stats always use level 1.
 	if won and not infinite:
 		expedition_wins += 1
 		total_wins += 1

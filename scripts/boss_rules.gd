@@ -78,6 +78,12 @@ static func plan(tactics, index: int) -> Dictionary:
 	var owner = tactics.run()
 	var target: int = tactics.choose_target(foe, owner.actors)
 	var result := {"key": "attack", "title": "Ataque", "glyph": "sword", "target": target, "targets": [target] if target >= 0 else [], "power": 1.0, "magical": foe["class"] == "mage", "locked": false}
+	if not foe.get("boss", false) and not foe.has("binds") and int(foe.get("action_count", 0)) % 3 == 2:
+		match str(foe["class"]):
+			"vanguard": result.merge({"key": "heavy", "title": "Investida brutal", "power": 1.45}, true)
+			"ranger": result.merge({"key": "volley", "title": "Rajada certeira", "power": 1.35}, true)
+			"mage": result.merge({"key": "storm", "title": "Pulso sombrio", "power": 0.85, "magical": true, "targets": living(owner.actors)}, true)
+			"assassin": result.merge({"key": "ambush", "title": "Emboscada", "power": 1.55}, true)
 	if foe.get("banner", false):
 		result.merge({"key": "banner", "title": "Proteger General", "glyph": "shield", "targets": []}, true)
 	elif foe.get("staggered", false):

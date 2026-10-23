@@ -17,6 +17,7 @@ func fixture(id: String, stage := 8) -> IdleRun:
 	for foe in run.tactics.enemies:
 		foe.evasion = 0
 		foe.armor = 0
+		foe.damage = 5
 		foe.pp = 0
 		foe.hp = 10000
 		foe.max_hp = 10000

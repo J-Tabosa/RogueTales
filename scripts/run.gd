@@ -43,6 +43,7 @@ var pending_event := ""
 var seen_events: Array[String] = []
 var events_discovered: Array[String] = []
 var endless := false
+var continuation_from := 0
 var upgrade_counts: Dictionary = {}
 var team_template: Dictionary = Endless.template()
 
@@ -265,7 +266,7 @@ func to_checkpoint() -> Dictionary:
 		"build_history": build_history.duplicate(),
 		"synergies_seen": synergies_seen.duplicate(), "synergy_activations": synergy_activations,
 		"pending_event": pending_event, "seen_events": seen_events.duplicate(), "events_discovered": events_discovered.duplicate(),
-		"endless": endless, "endless_build": Endless.snapshot(self) if endless else {},
+		"endless": endless, "continuation_from": continuation_from, "endless_build": Endless.snapshot(self) if endless else {},
 		"ability_state": ability_snapshot(),
 		"tactics": tactics.snapshot() if tactics != null else {},
 		"run_id": run_id,
@@ -288,6 +289,7 @@ func restore(campaign: TaleCampaign, data: Dictionary) -> void:
 	setup(campaign, int(data.stage), false)
 	expedition = bool(data.get("expedition", false))
 	endless = expedition and bool(data.get("endless", false))
+	continuation_from = 12 if endless and int(data.get("continuation_from", 0)) == 12 else 0
 	if expedition:
 		run_gold = clampi(int(data.get("run_gold", 0)), 0, 2147483647 if endless else 99999)
 		blessing = str(data.get("blessing", "vigor"))
@@ -440,7 +442,7 @@ func enable_tactics(campaign: TaleCampaign) -> void:
 
 
 func start_expedition(campaign: TaleCampaign, id: String, gift: String, infinite := false) -> bool:
-	if not campaign.checkpoint.is_empty() or not campaign.unlocked.has(id) or not campaign.blessings_unlocked.has(gift):
+	if (infinite and campaign.expedition_wins == 0) or not campaign.checkpoint.is_empty() or not campaign.unlocked.has(id) or not campaign.blessings_unlocked.has(gift):
 		return false
 	setup(campaign, 0)
 	expedition = true
@@ -703,3 +705,18 @@ func upgrade_detail(id: String) -> String:
 		"leech": return "Cada acerto passa a curar mais %.2f PV. Ganhos decrescentes por acúmulo." % (3.0 / (1 + count * 0.08))
 		"critical": return "+%.1f%% de chance crítica, até 95%%. Ganhos decrescentes por acúmulo." % (12.0 / (1 + count * 0.1))
 	return item.detail
+
+
+func continue_endless(campaign: TaleCampaign) -> bool:
+	if not expedition or endless or rooms_cleared != 12 or stage != 11 or not alive() or campaign.expedition_wins <= 0 or not campaign.checkpoint.is_empty(): return false
+	# Normal victory has already been settled. The continuation gets a distinct id.
+	run_id = campaign.new_run_id()
+	Endless.promote(self)
+	continuation_from = 12
+	unlock_stats = {"healing": 0.0, "combos": 0, "boss_guests": {}}
+	endless = true
+	stage = 0
+	wave = 0
+	seen_events.clear()
+	roll_run_offers()
+	return true

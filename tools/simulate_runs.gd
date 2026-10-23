@@ -26,7 +26,10 @@ func combat(run: IdleRun) -> void:
 	for action in 1800:
 		if not run.alive() or run.enemy_hp <= 0: break
 		var entry: Dictionary = flow.next_action()
-		if entry.is_empty(): continue
+		if entry.is_empty():
+			flow.advance(0.1)
+			run.tick_status(0.1)
+			continue
 		flow.begin(entry)
 		if entry.side == "ally":
 			if run.actors[entry.index].energy >= 100:
@@ -38,6 +41,7 @@ func combat(run: IdleRun) -> void:
 		# Approximate action animation/recovery time; this is not a rendered gameplay test.
 		for step in 12:
 			run.tick_status(0.10)
+			flow.advance(0.10)
 			if not run.alive() or run.enemy_hp <= 0: break
 
 func simulate() -> void:

@@ -25,10 +25,12 @@ func descendants(node: Node) -> Array[Node]:
 
 func finish_room() -> void:
 	game.spawn_enemy()
+	game._process(1.2)
 	game.arena.set_process(false)
 	for foe in game.run.tactics.enemies: foe.hp = 0
 	game.run.tactics.sync_totals()
 	game.resolve_enemy()
+	game._process(1.3)
 
 func checks() -> void:
 	root.content_scale_size = Vector2i(540, 960)
@@ -68,6 +70,7 @@ func checks() -> void:
 	assert(game.run.expedition and game.run.actors.size() == 1 and not game.campaign.checkpoint.is_empty())
 	game.enter_encounter()
 	game.spawn_enemy()
+	game._process(1.2)
 	game.arena.set_process(false)
 	game.run.rng.seed = 901
 	await capture("run_arena_mobile")
@@ -85,6 +88,7 @@ func checks() -> void:
 	assert(game.state == "choice" and game.run.offers == offers)
 	var key: String = game.run.offers.filter(func(id): return not id.begins_with("ally:"))[0]
 	game.select_relic(key)
+	game._process(2.4)
 	assert(game.state == "route" and game.run.interlude == "route")
 	await capture("run_routes_mobile")
 	# Walk every boundary, including all three bosses, without creating a new run.
@@ -98,6 +102,7 @@ func checks() -> void:
 			assert(game.state == "choice")
 			key = game.run.offers.filter(func(id): return not id.begins_with("ally:"))[0]
 			game.select_relic(key)
+			game._process(2.4)
 			assert(game.state == "route")
 	assert(game.state == "result" and game.campaign.expedition_wins == 1 and game.campaign.checkpoint.is_empty())
 	await capture("run_victory_mobile")
@@ -113,8 +118,10 @@ func checks() -> void:
 	game.begin_expedition()
 	game.enter_encounter()
 	game.spawn_enemy()
+	game._process(1.2)
 	for actor in game.run.actors: actor.hp = 0
 	game.finish_defeat()
+	game._process(1.3)
 	assert(game.state == "result" and game.campaign.checkpoint.is_empty())
 	game.show_settings()
 	assert(game.state == "settings")

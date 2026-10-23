@@ -16,7 +16,7 @@ func checks() -> void:
 	assert(run.actor_ids() == ["scarlet"])
 	assert(run.actors[0].damage == 24 and run.actors[0].max_hp == 250)
 	assert(run.run_gold == 35 and run.relics.is_empty())
-	# Exactly one 10% draw per screen, never a forced first invitation or three draws.
+	# Exactly one 25% draw per screen, never a forced first invitation or three draws.
 	run.rng.seed = 81234
 	var invited := 0
 	for trial in 20000:
@@ -28,7 +28,7 @@ func checks() -> void:
 			if id.begins_with("ally:"): guests += 1
 		assert(guests <= 1)
 		invited += guests
-	assert(invited > 1800 and invited < 2200)
+	assert(invited > 4700 and invited < 5300)
 	print("Recruit rate over 20000 screens: ", invited / 200.0, "%")
 	# Stacking and transformations preserve >2 choices on reload at later stages.
 	for key in ["power", "heart", "power", "leech", "haste", "critical", "armor", "skill:scarlet:quick", "skill:scarlet:shelter"]:
@@ -138,5 +138,5 @@ func checks() -> void:
 	assert(old.unlocked.has("mulan") and old.gold == 388 and old.party == ["mulan"])
 	for suffix in ["", ".bak", ".tmp"]:
 		if FileAccess.file_exists(SAVE + suffix): DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE + suffix))
-	print("EXPEDITION PASS: 12 phases, solo base stats, 10% per screen, deep checkpoint/RNG, nonrepeatable shop, reset, idempotent victory/defeat, guest unlocks and v4 migration")
+	print("EXPEDITION PASS: 12 phases, solo base stats, 25% per screen, deep checkpoint/RNG, nonrepeatable shop, reset, idempotent victory/defeat, guest unlocks and v4 migration")
 	quit()

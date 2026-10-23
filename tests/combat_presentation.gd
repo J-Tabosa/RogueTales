@@ -93,6 +93,7 @@ func checks() -> void:
 	game.arena.enemy.reset_damage()
 	game.run.tactics.enemies[0].burn = 3
 	game.run.tactics.enemies[0].burn_left = 2
+	game.arena._process(0.06) # Hit-stop freezes simulation, then status damage resumes.
 	game._process(0.05)
 	assert(game.arena.enemy.hurt_left > 0)
 	game.abandon_expedition()

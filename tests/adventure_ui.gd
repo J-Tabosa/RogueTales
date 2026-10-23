@@ -29,6 +29,7 @@ func prepare(ids: Array, stage: int, depth: int, infinite := false) -> void:
 	game.persist_run()
 	game.enter_encounter()
 	game.spawn_enemy()
+	game._process(1.2)
 	game.arena.set_process(false)
 
 func checks() -> void:
@@ -41,10 +42,11 @@ func checks() -> void:
 	game.campaign = TaleCampaign.new()
 	game.campaign.unlocked.assign(TaleCatalog.HEROES.keys())
 	game.set_run_mode(true)
-	assert(game.chosen_endless and game.state == "expedition_setup")
+	assert(not game.chosen_endless and game.state == "expedition_setup")
+	game.campaign.expedition_wins = 1
 	await capture("mode_mobile")
 	prepare(["scarlet", "matches", "puss"], 3, 3)
-	assert(game.arena.foe_widgets.size() == 2 and game.arena.foe_widgets[0].has("intent"))
+	assert(game.arena.foe_widgets.size() == 2 and not game.arena.foe_widgets[0].has("intent"))
 	for foe in game.run.tactics.enemies:
 		foe.hp = 20000
 		foe.max_hp = 20000
@@ -82,13 +84,16 @@ func checks() -> void:
 	for foe in game.run.tactics.enemies: foe.hp = 0
 	game.run.tactics.sync_totals()
 	game.resolve_enemy()
+	game._process(1.3)
 	assert(game.state == "choice" and game.run.rooms_cleared == 12 and game.run.stage == 0)
-	assert(game.run.actors[0].hp == 93 and game.campaign.expedition_wins == 0)
+	assert(game.run.actors[0].hp == 93 and game.campaign.expedition_wins == 1)
 	await capture("endless_reward_mobile")
 	var key: String = game.run.offers.filter(func(id): return not id.begins_with("ally:"))[0]
 	game.select_relic(key)
+	game._process(2.4)
 	game.select_route("battle")
 	game.spawn_enemy()
+	game._process(1.2)
 	game.arena.set_process(false)
 	assert(game.run.tactics.enemies.size() == 3 and game.run.enemy_max > 76)
 	assert(game.enemy_label.text.contains("INFINITO"))
@@ -125,5 +130,5 @@ func checks() -> void:
 	await process_frame
 	for suffix in ["", ".bak", ".tmp"]:
 		if FileAccess.file_exists(SAVE + suffix): DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE + suffix))
-	print("ADVENTURE UI PASS: mode choice, synergy toast, intent badges/pause, copy and threads, endless floor 13, persistent party event choices, synergy build and PC layout")
+	print("ADVENTURE UI PASS: earned endless gating, synergy toast, history/pause, copy and threads, endless floor 13, persistent party event choices, synergy build and PC layout")
 	quit()

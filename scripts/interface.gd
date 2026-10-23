@@ -8,6 +8,11 @@ var desktop_shell: Control
 var battle_nodes: Array[Control] = []
 var ult_buttons: Array[Button] = []
 var ult_meters: Array[ProgressBar] = []
+var card_health: Array[ProgressBar] = []
+var feedback: Control
+var battle_history: Array[String] = []
+var battle_last_action := ""
+
 var battle_viewport: Control
 var auto_button: Button
 var power_label: Label
@@ -50,6 +55,7 @@ func clear_page() -> void:
 	battle_nodes.clear()
 	ult_buttons.clear()
 	ult_meters.clear()
+	card_health.clear()
 	super.clear_page()
 	page.get_child(0).color = Color("111624")
 	center_content()
@@ -216,6 +222,7 @@ func show_tactical_details(id: String) -> void:
 
 func build_battle() -> void:
 	combat_flow = null
+	battle_history.clear()
 	run.enable_tactics(campaign)
 	state = "travel"
 	paused = false
@@ -257,7 +264,7 @@ func build_battle() -> void:
 	var action_panel := panel(page, Rect2())
 	battle_place(action_panel, Rect2(24,174,492,38), Rect2(40,148,878,40))
 	action_panel.modulate.a = 0.94
-	action_label = label(page, "Preparando encontro", Rect2(34,175,472,36), 13, GOLD)
+	action_label = label(page, "Preparando encontro", Rect2(34,175,472,36), 16, GOLD)
 	action_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	battle_place(action_label, Rect2(34,175,472,36), Rect2(54,149,850,38))
 	for index in run.actors.size():
@@ -266,15 +273,24 @@ func build_battle() -> void:
 		var card := button(page, "", Rect2(), try_ultimate.bind(index))
 		var slot := int(index)
 		battle_place(card, Rect2(16 + slot * 174, 0, 160, 148), Rect2(958, 142 + slot * 164, 296, 146), "deck")
-		var face := face_portrait(card, actor.id, Rect2(12,12,48,48))
+		var face := face_portrait(card, actor.id, Rect2(10,10,40,40))
 		face.set_meta("card_face",true)
-		var name_tag := label(card, str(TaleCatalog.HEROES[actor.id].get("short_name", TaleCatalog.HEROES[actor.id].name)), Rect2(63, 9, 88, 43), 14)
+		card.add_theme_color_override("font_disabled_color", Color("eeeae2"))
+		var name_tag := label(card, str(TaleCatalog.HEROES[actor.id].get("short_name", TaleCatalog.HEROES[actor.id].name)), Rect2(58, 6, 94, 43), 14)
 		name_tag.set_meta("card_name", true)
-		var ult_tag := label(card, str(TaleCatalog.HERO_TACTICS[actor.id].ult), Rect2(10, 82, 140, 35), 12, GOLD)
+		var ult_tag := label(card, str(TaleCatalog.HERO_TACTICS[actor.id].ult), Rect2(10, 101, 140, 21), 12, GOLD)
 		ult_tag.set_meta("card_ult", true)
-		var status := label(card, "", Rect2(10, 116, 140, 19), 11, MUTED)
+		var status := label(card, "", Rect2(10, 123, 140, 19), 11, MUTED)
 		status.set_meta("card_status", true)
-		var meter := bar(card, Rect2(10, 138, 140, 5), GOLD)
+		var hp_text := label(card, "", Rect2(10, 48, 140, 19), 12, Color("a2e2b2"))
+		hp_text.set_meta("card_hp", true)
+		var hp := bar(card, Rect2(10, 69, 140, 6), Color("88c8a0"))
+		hp.set_meta("card_hp_bar", true)
+		card_health.append(hp)
+		var mana_text := label(card, "", Rect2(10, 76, 140, 17), 11, Color("a9c9ff"))
+		mana_text.set_meta("card_mana", true)
+		var meter := bar(card, Rect2(10, 94, 140, 6), Color("8ab4f0"))
+		meter.set_meta("card_mana_bar", true)
 		ult_meters.append(meter)
 		ult_buttons.append(card)
 	for empty_slot in range(run.actors.size(), TaleCatalog.PARTY_LIMIT):
@@ -283,8 +299,8 @@ func build_battle() -> void:
 		icon(placeholder,"heroes",Rect2(16,18,28,28),Color("747e9b"))
 		label(placeholder,"Companheiro",Rect2(12,61,136,24),13,MUTED)
 		label(placeholder,"Convocação entre encontros",Rect2(12,91,136,40),11,Color("858fa9"))
-	log_label = label(page, "", Rect2(), 14, MUTED)
-	battle_place(log_label, Rect2(20, 0, 500, 41), Rect2(24, 716, 910, 40), "log")
+	log_label = label(page, "", Rect2(), 12, MUTED)
+	battle_place(log_label, Rect2(20, 0, 500, 64), Rect2(24, 710, 910, 65), "log")
 	auto_button = button(page, "", Rect2(), toggle_auto_ult)
 	battle_place(auto_button, Rect2(16, 0, 246, 46), Rect2(958, 658, 296, 46), "bottom")
 	speed_button = button(page, "%d×" % int(game_speed), Rect2(), toggle_speed)
@@ -310,31 +326,41 @@ func relayout_battle() -> void:
 		if not desktop:
 			match str(node.get_meta("battle_kind")):
 				"deck": rect.position.y = logical_height - 230
-				"log": rect.position.y = logical_height - 288
+				"log": rect.position.y = logical_height - 304
 				"bottom": rect.position.y = logical_height - 67
 			if node == battle_viewport:
-				rect.size.y = logical_height - 470
+				rect.size.y = logical_height - 480
 		node.position = rect.position
 		node.size = rect.size
 	for card in ult_buttons:
 		for child in card.get_children():
 			if child.has_meta("card_face"):
-				child.position = Vector2(16,18) if desktop else Vector2(12,12)
-				child.size = Vector2(82,82) if desktop else Vector2(48,48)
+				child.position = Vector2(16,18) if desktop else Vector2(10,10)
+				child.size = Vector2(82,82) if desktop else Vector2(40,40)
 			elif child.has_meta("card_name"):
-				child.position = Vector2(111, 15) if desktop else Vector2(63, 9)
-				child.size = Vector2(172, 43) if desktop else Vector2(88, 43)
+				child.position = Vector2(111, 15) if desktop else Vector2(58, 6)
+				child.size = Vector2(172, 43) if desktop else Vector2(94, 43)
 				child.add_theme_font_size_override("font_size", 20 if desktop else 14)
 			elif child.has_meta("card_ult"):
-				child.position = Vector2(111, 66) if desktop else Vector2(10, 82)
-				child.size = Vector2(172, 39) if desktop else Vector2(144, 34)
+				child.position = Vector2(111, 92) if desktop else Vector2(10, 101)
+				child.size = Vector2(172, 22) if desktop else Vector2(144, 21)
 			elif child.has_meta("card_status"):
-				child.position = Vector2(111, 105) if desktop else Vector2(10, 116)
-			elif child is ProgressBar:
-				child.position = Vector2(111, 133) if desktop else Vector2(10, 138)
+				child.position = Vector2(111, 119) if desktop else Vector2(10, 123)
+			elif child.has_meta("card_hp"):
+				child.position = Vector2(111, 48) if desktop else Vector2(10, 48)
+				child.size.x = 172 if desktop else 144
+			elif child.has_meta("card_mana"):
+				child.position = Vector2(111, 72) if desktop else Vector2(10, 76)
+				child.size.x = 172 if desktop else 144
+			elif child.has_meta("card_hp_bar") or child.has_meta("card_mana_bar"):
+				var health: bool = child.has_meta("card_hp_bar")
+				child.position = Vector2(111, 68 if health else 90) if desktop else Vector2(10, 69 if health else 94)
 				child.size.x = 172 if desktop else 144
 	if is_instance_valid(arena) and arena.get_script() == TacticalArena:
 		arena.fit_field(battle_viewport.size)
+	if is_instance_valid(feedback):
+		feedback.size = battle_viewport.size
+		feedback.layout()
 	if is_instance_valid(overlay):
 		overlay.position.x = (logical_width - 540) * 0.5
 
@@ -353,15 +379,21 @@ func update_hud() -> void:
 	for index in mini(ult_buttons.size(), run.actors.size()):
 		var actor: Dictionary = run.actors[index]
 		ult_meters[index].value = actor.energy
+		card_health[index].max_value = actor.max_hp
+		card_health[index].value = actor.hp
 		for child in ult_buttons[index].get_children():
 			if child.has_meta("card_status"):
-				child.text = "Caída" if actor.hp <= 0 else ("Na fila" if actor.get("ult_queued", false) else ("Em ação" if actor.ult_pending else ("TOQUE · ULT" if actor.energy >= 100 else "%dAP %dPP · %d%%" % [actor.get("ap",0),actor.get("pp",0),int(actor.energy)])))
+				child.text = "Caído" if actor.hp <= 0 else ("ULT na fila" if actor.get("ult_queued", false) else ("ULT em ação" if actor.ult_pending else ("TOQUE · ULT" if actor.energy >= 100 else ("Ativa selada" if actor.get("sealed", false) else "Carregando ULT"))))
+			elif child.has_meta("card_hp"):
+				child.text = "PV %d / %d%s" % [ceili(actor.hp), ceili(actor.max_hp), "  +%d" % ceili(actor.shield) if actor.shield > 0 else ""]
+			elif child.has_meta("card_mana"):
+				child.text = "MANA %d / 100" % int(actor.energy)
 		ult_buttons[index].disabled = paused or state != "battle" or actor.hp <= 0 or actor.energy < 100 or actor.ult_pending or actor.get("ult_queued", false) or arena.tracks[index].time >= 0
 		ult_buttons[index].tooltip_text = "%s · %d%%\n%s" % [TaleCatalog.HERO_TACTICS[actor.id].ult, int(actor.energy), TaleCatalog.HERO_TACTICS[actor.id].detail]
 	if is_instance_valid(auto_button):
 		auto_button.text = "AUTO ULT  " + ("ON" if campaign.auto_ult else "OFF")
 	if is_instance_valid(action_label) and is_instance_valid(log_label):
-		action_label.text = log_label.text
+		action_label.text = battle_last_action
 	refresh_timeline()
 	arena.sync_health(run.actors)
 
@@ -467,7 +499,7 @@ func _input(event: InputEvent) -> void:
 			toggle_fullscreen()
 			get_viewport().set_input_as_handled()
 			return
-		if state in ["battle", "travel"] and not event.ctrl_pressed:
+		if state in ["battle", "travel", "route_travel", "encounter_intro", "battle_outro"] and not event.ctrl_pressed:
 			if key == KEY_SPACE:
 				toggle_pause()
 				get_viewport().set_input_as_handled()
@@ -612,6 +644,10 @@ func filter_roster(value: String) -> void:
 
 
 func refresh_timeline() -> void:
+	if run != null and run.expedition:
+		if is_instance_valid(timeline) and timeline.get_child_count() == 0:
+			label(timeline, "AUTO COMBATE  ·  Toque em um herói com 100 mana para a ULT", Rect2(0, 0, 500, 44), 12, MUTED)
+		return
 	if combat_flow == null or not is_instance_valid(timeline):
 		return
 	var upcoming: Array = combat_flow.preview()
@@ -647,3 +683,68 @@ func install_controls_theme() -> void:
 			style.content_margin_top = 4
 			style.content_margin_bottom = 4
 			theme.set_stylebox(state_name,control,style)
+
+
+func current_action(message: String) -> void:
+	battle_last_action = message
+	if is_instance_valid(action_label): action_label.text = message
+
+func push_battle_log(message: String) -> void:
+	var seconds := int(run.tactics.elapsed) if run != null and run.tactics != null else 0
+	battle_history.append("%02d:%02d  %s" % [seconds / 60, seconds % 60, message])
+	if battle_history.size() > 150: battle_history.pop_front()
+	if is_instance_valid(log_label): log_label.text = "\n".join(battle_history.slice(maxi(0, battle_history.size() - 4)))
+
+func consume_feedback() -> void:
+	if run == null or run.tactics == null: return
+	for event in run.tactics.feedback_events:
+		if is_instance_valid(feedback): feedback.enqueue(event)
+		push_battle_log("%s · %s · %s" % [TaleCatalog.HEROES[event.hero].name, event.title, event.detail])
+	run.tactics.feedback_events.clear()
+
+func show_battle_history() -> void:
+	if state not in ["battle", "travel"]: return
+	paused = true
+	arena.frozen = true
+	if is_instance_valid(feedback): feedback.frozen = true
+	modal("Histórico da batalha", "Ataques, dano, cura, escudos, ULTs e passivas deste encontro.")
+	var scroll := ScrollContainer.new()
+	scroll.position = Vector2(32, 385)
+	scroll.size = Vector2(476, 350)
+	overlay.add_child(scroll)
+	register_layout(scroll, "center")
+	var text := Label.new()
+	text.custom_minimum_size = Vector2(450, 0)
+	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	text.add_theme_font_size_override("font_size", 16)
+	text.text = "\n\n".join(battle_history) if not battle_history.is_empty() else "A equipe está a caminho."
+	scroll.add_child(text)
+	button(overlay, "Continuar", Rect2(32, 776, 476, 58), resume_battle, true)
+
+
+func record_result(hit: Dictionary, hostile: bool, index: int, before: Array) -> void:
+	var name: String = str(run.tactics.enemies[index].name) if hostile else str(TaleCatalog.HEROES[run.actors[index].id].name)
+	var skill: String = str(hit.get("message", "Ataque"))
+	if hostile and skill.is_empty(): skill = "Ataque"
+	var parts: Array[String] = []
+	for target in hit.get("targets", [hit.get("target", -1)]):
+		if target < 0: continue
+		var target_name: String = str(TaleCatalog.HEROES[run.actors[target].id].get("short_name", TaleCatalog.HEROES[run.actors[target].id].name)) if hostile else str(run.tactics.enemies[target].name)
+		var damage: float = hit.get("target_damage", {}).get(target, hit.get("damage", 0))
+		var evaded: bool = hit.get("target_evaded", {}).get(target, hit.get("evaded", false))
+		parts.append("%s: %s" % [target_name, "esquiva" if evaded else "−%d PV" % ceili(damage)])
+	push_battle_log("%s · %s%s" % [name, skill, " → " + "; ".join(parts) if not parts.is_empty() else ""])
+	for at in mini(before.size(), run.actors.size()):
+		var actor: Dictionary = run.actors[at]
+		var received := 0.0
+		if hostile:
+			received = float(hit.get("target_damage", {}).get(at, hit.get("damage", 0) if hit.get("target", -1) == at else 0))
+		var healed: float = maxf(0, actor.hp - float(before[at].hp) + received)
+		var shield: float = maxf(0, actor.shield - float(before[at].shield))
+		if healed > 0:
+			push_battle_log("%s recuperou %d PV" % [TaleCatalog.HEROES[actor.id].name, ceili(healed)])
+			arena.damage_number("+%d PV" % ceili(healed), arena.tracks[at].home + Vector2(0, 30), Color("9ce5b3"))
+		if shield > 0:
+			push_battle_log("%s ganhou %d de escudo" % [TaleCatalog.HEROES[actor.id].name, ceili(shield)])
+			arena.damage_number("+%d ESCUDO" % ceili(shield), arena.tracks[at].home + Vector2(0, 58), Color("a9c9ff"))
+	if hit.get("absorbed", 0) > 0: push_battle_log("O escudo absorveu %d de dano" % ceili(hit.absorbed))
