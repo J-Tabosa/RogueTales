@@ -22,6 +22,7 @@ func model(ids: Array, stage := 8) -> IdleRun:
 		actor.crit = 0
 		actor.evasion = 0
 	for foe in run.tactics.enemies:
+		if stage == 8: foe.row = "front" if foe.slot == 0 else "back"
 		foe.hp = 10000
 		foe.max_hp = 10000
 		foe.armor = 0
@@ -56,25 +57,14 @@ func checks() -> void:
 	run.actors[1].hp = 0
 	run.tactics.enemies[fire.target].burn_owner = "matches"
 	assert(not run.hit_enemy(0, fire.target).has("synergies"), "Fallen partners cannot enable a combo")
-	run = model(["ariel", "aladin"])
-	run.actors[1].wish = 1
-	hit = run.hit_enemy(1)
-	assert(hit.synergies == ["tide"] and run.actors[0].shield >= run.actors[0].max_hp * 0.19)
-	run = model(["rapunzel", "puss"])
-	run.actors[1].charged = true
-	run.actors[1].hp = 40
-	hit = run.hit_enemy(1)
-	assert(hit.synergies == ["threads"] and run.unlock_stats.healing > 0 and run.actors[0].shield > 0)
 	run = model(["mulan", "peter"])
 	run.actors[1].shadows = 2
 	hit = run.hit_enemy(1)
 	assert(hit.synergies == ["dance"] and hit.targets.has(0) and hit.targets.size() > 1)
-	run = model(["alice", "snow_white"])
-	var poisoned := run.hit_enemy(1)
-	run.actors[0].suit = 1
-	run.actors[0].hp = 40
-	hit = run.hit_enemy(0, poisoned.target)
-	assert(hit.synergies == ["tea"] and hit.healed > 0)
+	for removed in [["ariel", "aladin"], ["rapunzel", "puss"], ["alice", "snow_white"]]:
+		run = model(removed)
+		assert(Synergies.available(run).is_empty())
+		assert(not run.hit_enemy(0).has("synergies"))
 	# General: protection is real; breaking the banner interrupts an action.
 	run = model(["scarlet", "mulan"], 3)
 	assert(run.tactics.enemies[1].banner)
@@ -132,5 +122,5 @@ func checks() -> void:
 	var next: int = run.tactics.intent_for(1).target
 	run.actors[next].hp = 0
 	assert(run.hit_party(1).target != next)
-	print("PARTY COMBAT PASS: six real pair effects, PP/round/death limits, banner break, committed ULT copy, healing copy, active seals/ULT escape and committed ordinary targets")
+	print("PARTY COMBAT PASS: three selected pair effects and three removed pairs, PP/round/death limits, banner break, committed ULT copy, healing copy, active seals/ULT escape and committed ordinary targets")
 	quit()

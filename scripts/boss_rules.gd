@@ -27,9 +27,11 @@ static func setup(tactics) -> void:
 	boss["mechanic"] = owner.stage
 	if owner.stage == 3 and tactics.enemies.size() > 1:
 		boss["class"] = "vanguard"
+		boss.row = "front"
 		boss["guarded_by_banner"] = true
 		tactics.enemies[1].name = "Estandarte de Ferro"
 		tactics.enemies[1]["banner"] = true
+		tactics.enemies[1].row = "back"
 		tactics.enemies[1].damage = 0.0
 		tactics.enemies[1].evasion = 0.0
 	elif owner.stage == 11:
@@ -38,6 +40,7 @@ static func setup(tactics) -> void:
 			thread.name = "Fio Rubro" if index == 1 else "Fio Violeta"
 			thread["binds"] = owner.actors[(index - 1) % owner.actors.size()].id
 			thread["exposed"] = true
+			thread.row = "back"
 			thread.evasion = 0.0
 			thread.damage *= 0.6
 	refresh(tactics)
@@ -78,6 +81,8 @@ static func plan(tactics, index: int) -> Dictionary:
 	var owner = tactics.run()
 	var target: int = tactics.choose_target(foe, owner.actors)
 	var result := {"key": "attack", "title": "Ataque", "glyph": "sword", "target": target, "targets": [target] if target >= 0 else [], "power": 1.0, "magical": foe["class"] == "mage", "locked": false}
+	if not foe.get("boss", false) and not foe.has("binds") and foe["class"] == "mage":
+		result.merge({"key": "storm", "title": "Conjuração em área", "power": 0.68, "magical": true, "targets": living(owner.actors)}, true)
 	if not foe.get("boss", false) and not foe.has("binds") and int(foe.get("action_count", 0)) % 3 == 2:
 		match str(foe["class"]):
 			"vanguard": result.merge({"key": "heavy", "title": "Investida brutal", "power": 1.45}, true)

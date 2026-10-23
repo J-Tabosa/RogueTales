@@ -100,7 +100,7 @@ func checks() -> void:
 		game.run.actors[0].energy = 100
 		game.run.actors[0].hp *= 0.6
 		assert(game.try_ultimate(0))
-		assert(game.feedback.cutin.visible and game.arena.intro_left >= 1.3)
+		assert(game.feedback.cutin.visible and game.arena.intro_left >= 0.5 and game.feedback.cutin.size.y <= 64)
 		var before: float = game.run.enemy_hp
 		game.arena._process(0.25)
 		assert(game.run.enemy_hp == before and game.arena.tracks[0].time == 0)
@@ -232,5 +232,5 @@ func checks() -> void:
 	await process_frame
 	for suffix in ["", ".bak", ".tmp"]:
 		if FileAccess.file_exists(SAVE + suffix): DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE + suffix))
-	print("IDLE FEEDBACK PASS: 12 ULT cut-ins/VFX, passive ribbons/log/pause, numeric HP/mana, lethal recovery/hold/reward popup, walking/routes, real enemy threat, healer pressure, earned endless continuation/save/build and mobile/PC")
+	print("IDLE FEEDBACK PASS: 12 subtle ULT ribbons/generated VFX, passive ribbons/log/pause, numeric HP/mana, lethal recovery/hold/reward popup, walking/routes, real enemy threat, healer pressure, earned endless continuation/save/build and mobile/PC")
 	quit()

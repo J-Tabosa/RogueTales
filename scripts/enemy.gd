@@ -17,6 +17,8 @@ var idle_clock := 0.0
 var hurt_left := 0.0
 var dot_cooldown := 0.0
 var strike_left := 0.0
+var illustrated := false
+var body_height := 210.0
 
 
 static func warm(chapter: int) -> PackedScene:
@@ -72,8 +74,8 @@ func advance(dt: float, is_boss: bool, windup: float, interval: float) -> void:
 	else:
 		seek(prefix + "idle", idle_clock)
 	var canvas := sprite_frames.get_frame_texture(animation, frame).get_size()
-	offset = Vector2(-canvas.x * 0.5, -canvas.y)
-	scale = Vector2.ONE * ((boss_height if is_boss else regular_height) / canvas.y)
+	offset = Vector2(-160, -304) if illustrated else Vector2(-canvas.x * 0.5, -canvas.y)
+	scale = Vector2.ONE * ((boss_height if is_boss else regular_height) / (body_height if illustrated else canvas.y))
 
 
 func begin_strike(is_boss: bool) -> void:

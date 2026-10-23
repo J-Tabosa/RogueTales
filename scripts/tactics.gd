@@ -1,5 +1,6 @@
 extends RefCounted
 const Abilities = preload("res://scripts/hero_abilities.gd")
+const Biomes = preload("res://scripts/biomes.gd")
 const BossRules = preload("res://scripts/boss_rules.gd")
 ## Formation rules and all combat results; contains no nodes or rendering logic.
 ## The weak owner avoids a Run -> Tactics -> Run reference cycle.
@@ -12,6 +13,7 @@ var synergy_used: Dictionary = {}
 var last_ultimate: Dictionary = {}
 var ultimate_serial := 0
 var feedback_events: Array[Dictionary] = []
+var damage_received := 0.0
 
 
 func run():
@@ -28,7 +30,7 @@ func bind(owner, campaign: TaleCampaign) -> void:
 func configure_actor(actor: Dictionary, row: String) -> void:
 	var profile: Dictionary = TaleCatalog.HERO_TACTICS[actor.id]
 	actor["class"] = profile["class"]
-	actor.row = row
+	actor.row = rank_for_class(actor["class"]) if run().expedition else row
 	actor.evasion = float(actor.get("evasion", TaleCatalog.CLASSES[profile["class"]].evasion))
 	actor.base_evasion = actor.evasion
 	actor.evasion_left = 0.0
@@ -39,7 +41,12 @@ func configure_actor(actor: Dictionary, row: String) -> void:
 	actor["pp"] = 0
 
 
+static func rank_for_class(job: String) -> String:
+	return "front" if job == "vanguard" else ("middle" if job == "assassin" else "back")
+
+
 func ensure_front() -> void:
+	if run().expedition: return
 	for actor in run().actors:
 		if actor.row == "front":
 			return
@@ -54,6 +61,7 @@ func spawn() -> void:
 	synergy_used.clear()
 	slow_left = 0
 	elapsed = 0
+	damage_received = 0
 	var count: int = 1 if owner.stage == 0 and owner.wave == 0 else (2 if owner.stage < 3 else 3)
 	var total: float = TaleCatalog.STAGES[owner.stage].hp * [1.0, 1.25, 2.4][owner.wave]
 	if owner.expedition:
@@ -65,11 +73,18 @@ func spawn() -> void:
 		roles[1] = "assassin"
 	elif owner.stage % 4 == 1:
 		roles[2] = "assassin"
+	var picked: Array[int] = []
 	for index in count:
 		var boss_unit: bool = owner.wave == 2 and index == 0
 		var weight := (0.6 if index == 0 else 0.4 / maxf(1, count - 1)) if owner.wave == 2 and count > 1 else 1.0 / count
 		var job: String = "mage" if boss_unit and owner.stage % 2 == 1 else str(roles[index])
 		var interval := 3.1 + index * 0.35
+		var variant := 0
+		if owner.expedition:
+			variant = (0 if owner.stage == 3 else (3 if owner.stage == 7 else 5)) if boss_unit else Biomes.pick(owner.stage, owner.rooms_cleared, index, owner.rng, picked)
+			picked.append(variant)
+			job = str(Biomes.CLASSES[variant]) if not boss_unit else job
+			interval = float(Biomes.INTERVALS[variant])
 		enemies.append({
 			"id": "enemy_%d" % index, "class": job,
 			"name": TaleCatalog.STAGES[owner.stage].boss if boss_unit else TaleCatalog.STAGES[owner.stage].enemy,
@@ -81,7 +96,13 @@ func spawn() -> void:
 			"burn": 0.0, "burn_left": 0.0, "poison": 0.0, "poison_left": 0.0
 		})
 		if owner.expedition:
-			enemies[-1].damage = (13.0 + (owner.rooms_cleared if owner.endless else owner.stage) * 3.5) * (1.2 if boss_unit else 1.0) * (1.15 if owner.room_kind == "elite" else 1.0) / pow(float(count), 0.25)
+			enemies[-1]["variant"] = variant
+			enemies[-1]["biome"] = Biomes.biome(owner.stage)
+			enemies[-1].row = rank_for_class(job)
+			if not boss_unit: enemies[-1].name = Biomes.ENEMIES[Biomes.biome(owner.stage)][variant]
+			enemies[-1].hp *= float(Biomes.HP[variant]) if not boss_unit else 1.0
+			enemies[-1].max_hp = enemies[-1].hp
+			enemies[-1].damage = (13.0 + (owner.rooms_cleared if owner.endless else owner.stage) * 3.5) * (1.2 if boss_unit else 1.0) * (1.15 if owner.room_kind == "elite" else 1.0) * (float(Biomes.POWER[variant]) if not boss_unit else 1.0) / pow(float(count), 0.25)
 	for actor in owner.actors:
 		actor.ult_pending = false
 		actor.ult_queued = false
@@ -103,20 +124,18 @@ static func eligible(attacker: Dictionary, defenders: Array) -> Array[int]:
 			if defenders[at].hp > 0 and defenders[at].get("binds", "") == attacker.get("id", ""): threads.append(at)
 		if not threads.is_empty(): return threads
 	var front: Array[int] = []
+	var middle: Array[int] = []
 	var back: Array[int] = []
 	for index in defenders.size():
-		if float(defenders[index].hp) <= 0:
-			continue
-		if defenders[index].row == "front":
-			front.append(index)
-		else:
-			back.append(index)
+		if float(defenders[index].hp) <= 0: continue
+		match str(defenders[index].row):
+			"front": front.append(index)
+			"middle": middle.append(index)
+			_: back.append(index)
 	match str(attacker["class"]):
-		"vanguard":
-			return front if not front.is_empty() else back
-		"ranger", "assassin":
-			return back if not back.is_empty() else front
-	return front + back
+		"vanguard": return front if not front.is_empty() else (middle if not middle.is_empty() else back)
+		"ranger", "assassin": return back if not back.is_empty() else (middle if not middle.is_empty() else front)
+	return front + middle + back
 
 
 static func choose_target(attacker: Dictionary, defenders: Array) -> int:
@@ -156,6 +175,7 @@ func deal(target: Dictionary, amount: float, magical: bool, certain := false) ->
 		target.shield -= absorbed
 	var actual := minf(float(target.hp), raw - absorbed)
 	target.hp = maxf(0, target.hp - actual)
+	if owner.expedition and owner.actor_ids().has(str(target.get("id", ""))): damage_received += actual
 	return {"damage": actual, "evaded": false, "absorbed": absorbed, "guarded": guarded}
 
 
@@ -309,7 +329,9 @@ func tick(delta: float) -> void:
 	for actor in run().actors:
 		if run().expedition and actor.hp > 0 and actor.get("hostile_dot_left", 0.0) > 0:
 			var duration := minf(delta, float(actor.hostile_dot_left))
+			var before: float = actor.hp
 			actor.hp = maxf(0, actor.hp - duration * (float(actor.get("hostile_burn", 0)) + float(actor.get("hostile_poison", 0))))
+			damage_received += before - float(actor.hp)
 			actor.hostile_dot_left = maxf(0, actor.hostile_dot_left - delta)
 		if actor.get("evasion_left", 0.0) > 0:
 			actor.evasion_left = maxf(0, actor.evasion_left - delta)
@@ -439,7 +461,8 @@ func restore(data: Dictionary) -> void:
 		var stored: Variant = units.get(actor.id, {}) if units is Dictionary else {}
 		if stored is Dictionary:
 			actor.row = str(stored.get("row", actor.row))
-			if actor.row not in ["front", "back"]:
+			if run().expedition: actor.row = rank_for_class(actor["class"])
+			if actor.row not in ["front", "middle", "back"]:
 				actor.row = "front"
 			actor.energy = clampf(float(stored.get("energy", 0)), 0, 100)
 	ensure_front()

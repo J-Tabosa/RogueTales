@@ -1,6 +1,6 @@
 # RogueTales: O Último Fio
 
-Roguelite de combate por esquadrões em **Godot 4.7 / GDScript**. Uma run atravessa **12 fases**, com 12 protagonistas, builds temporárias, encontros raros de companheiros e equipes de até três integrantes em duas linhas. Interface mobile, galeria de silhuetas, habilidades individuais, ataques automáticos por intervalo, passivas com recarga e ULTs. No PC, os controles ficam na lateral; no celular, na base.
+Roguelite de combate por esquadrões em **Godot 4.7 / GDScript**. Uma run atravessa **12 fases**, com 12 protagonistas, builds temporárias, encontros raros de companheiros e equipes de até três integrantes em três linhas. Interface mobile, galeria de silhuetas, habilidades individuais, ataques automáticos por intervalo, passivas com recarga e ULTs. No PC, os controles ficam na lateral; no celular, na base.
 
 ## Jogar
 
@@ -18,11 +18,11 @@ A coleção usa **faixas verticais com artes grandes e pergaminho**: carrossel n
 
 | Classe | Regra |
 | --- | --- |
-| Vanguarda | Ataca a linha de frente. Alcança a retaguarda quando não resta ninguém vivo na frente. |
-| Atiradora | Prioriza a retaguarda e usa a frente quando o fundo cai. |
-| Maga | Alcança as duas linhas; prioriza o alvo proporcionalmente mais ferido. Magia ignora 65% da armadura. |
-| Assassina | Busca a retaguarda mais ferida e tem 35% de esquiva. |
-| Artilheira | Alcança ambas as linhas e prioriza a menor armadura. |
+| Vanguarda | Fica na frente. Ataca a linha de frente. Avança ao meio e depois à retaguarda quando as linhas anteriores caem. |
+| Atiradora | Fica atrás. Prioriza a retaguarda e usa a frente quando o fundo cai. |
+| Maga | Fica atrás. Alcança as três linhas; prioriza o alvo proporcionalmente mais ferido. Magia ignora 65% da armadura. |
+| Assassina | Fica no meio. Busca a retaguarda mais ferida e tem 35% de esquiva. |
+| Artilheira | Fica atrás. Alcança todas as linhas e prioriza a menor armadura. |
 
 As regras também valem para os inimigos, que agora lutam em esquadrões de até três unidades, com classe, linha, vida, armadura, esquiva e relógio de ataque próprios. A morte de um alvo permite escolher outro elegível, incluindo durante a preparação do golpe. Cada acerto pertence a uma única animação. Mulan e Rapunzel avançam ao alvo; as maçãs de Branca de Neve viajam em linha reta.
 
@@ -31,7 +31,7 @@ As regras também valem para os inimigos, que agora lutam em esquadrões de até
 A referência de Unicorn Overlord é a apresentação da arena: equipes em lados opostos, personagens avançando para golpear e projéteis atravessando o campo. Nas runs, o combate é automático por intervalo individual, sem AP/PP na interface. Uma animação completa sua antecipação, impacto e retorno antes da próxima ação. Aliados e inimigos têm a mesma oportunidade de agir; a ordem prioriza quem está esperando há mais tempo.
 
 - **Ritmo:** caminhada de 2,8 s até o encontro, entrada dos inimigos, aviso de 1,15 s e início da luta. Golpes duram pelo menos 1,12 s, ataques inimigos 1,3 s, com recuperação entre ações.
-- **ULT:** abertura com nome e personagem por 1,35 s, seguida da animação e efeito próprio no impacto. Cortes, ondas, cartas, flechas, fogo e fios distinguem os kits. A abertura mantém a duração em 1×/2×. ULTs gastam 100 mana; comandos durante uma ação ficam na fila.
+- **ULT:** faixa de 62 px no canto, com nome e personagem; preparação de 0,55 s e efeito ilustrado de seis quadros no impacto. O aviso não cobre a arena. As doze ULTs usam folhas geradas com o criador de imagens: cortes, ondas, cartas, flechas, fogo e fios. Alice abre um leque dos quatro naipes e espalha as cartas até cada alvo real. A abertura mantém a duração em 1×/2×. ULTs gastam 100 mana; comandos durante uma ação ficam na fila.
 - **Passivas:** avisos laterais com personagem, habilidade e efeito. As reações recarregam 6 s depois de consumidas; sinergias compartilham esse recurso interno. Não exigem configuração tática do jogador.
 - **Vida e mana:** números e barras nos cartões laterais do PC e inferiores do celular, além dos PV sobre as unidades. Escudo aparece numericamente; cura, dano, guarda e esquiva aparecem no campo.
 - **Histórico:** quatro mensagens recentes no canto e até 150 entradas por encontro. O botão Histórico pausa para ler ataques, alvos reais atingidos, valores, cura, escudo, ULT e passivas. Não há previsão de alvo inimigo na tela.
@@ -40,18 +40,27 @@ A referência de Unicorn Overlord é a apresentação da arena: equipes em lados
 
 Os checkpoints legados mantêm suas rodadas anteriores para poderem ser concluídos.
 
+## Formação, escala e biomas
+
+A formação das runs segue a classe e corrige checkpoints antigos: **vanguarda à frente, assassinos no meio, magos/atiradores/artilheira atrás**. Personagens da mesma linha ficam lado a lado, com a mesma coordenada de profundidade. Humanos têm a mesma altura visível, medida pela arte em vez do tamanho do arquivo. Gato de Botas e Vendedora têm metade dessa altura. Os pés ficam ancorados durante ataque, caminhada e mudança de resolução.
+
+Oito biomas cobrem os doze atos: bosque (1/3), castelo (2/5), gelo/jade (4/10), marés (6), fogo (7), biblioteca/tear (8/12), pântano (9) e dunas (11). Cada um tem cenário próprio e **seis inimigos distintos**, totalizando 48 identidades com quatro poses de ataque por identidade. Encontros sorteiam variantes sem repetir a mesma dentro do grupo. Melee avança com dash e retorna; magos conjuram em área; assassinos procuram a retaguarda, com fallback pelo meio e frente.
+
+As artes foram feitas com **image_gen integrado**, usando Scarlet e Alice como referência de desenho, e empacotadas pelo Godot em WebP com alpha. Cenários e inimigos em `assets/biomes/`; ULTs em `assets/effects/`. Prompts completos em `assets/BIOME_ART_PROMPTS.json`. `tools/detect_biome_frames.py` identifica as regiões pela transparência e cria metadados de cada pose; `tools/prepare_biome_art.gd` usa esses metadados para empacotar as imagens no Godot, preservando a arte mesmo quando a folha não tem linhas uniformes. As imagens não dependem de caminhos temporários em runtime.
+
+## Pontuação e recorde
+
+Cada encontro vencido concede 100 pontos, mais 300 por chefe, 150 por elite, 25 por aliado sobrevivente, até 120 por tempo (`max(0, 120 - 2 × segundos de combate)`) e 100 se ninguém perdeu PV. Escudos podem preservar esse bônus; dano de status também é contado. A pontuação aparece na luta, na recompensa e no resultado. O maior total fica no perfil e na tela inicial, inclusive quando a tentativa termina em derrota. A continuação infinita mantém os pontos; uma nova run começa do zero. Saves antigos carregam com zero pontos e mantêm o restante do progresso.
+
 ## Sinergias da equipe
 
-As seis duplas têm efeitos concretos e nomes exibidos no impacto. Exigem os dois personagens vivos, um gatilho e a passiva do parceiro pronta, com recarga de **6 s**. Não criam ações recursivas ou ataques simultâneos. A build lista os vínculos ativos; as descobertas são guardadas ao encerrar a run.
+As três duplas escolhidas têm efeitos concretos e nomes exibidos no impacto. Exigem os dois personagens vivos, um gatilho e a passiva do parceiro pronta, com recarga de **6 s**. Não criam ações recursivas ou ataques simultâneos. A build lista os vínculos ativos; as descobertas são guardadas ao encerrar a run.
 
 | Dupla | Gatilho e efeito |
 | --- | --- |
 | João + Maria | Maria acerta uma presa marcada; João dispara um virote adicional de 80% e renova o veneno. |
 | Scarlet + Vendedora | Uma acerta o fogo aplicado pela outra; a parceira detona duas parcelas de queimadura. |
-| Ariel + Aladin | O desejo de cura/escudo acrescenta escudo de 8% e 12 de energia ao grupo. |
-| Rapunzel + Gato | O corte carregado recebe fios que curam o Gato em 6% e protegem o grupo em 10%. |
 | Mulan + Peter | Um golpe com sombras recebe um corte adicional de Mulan na vanguarda. |
-| Alice + Branca | Copas/Paus atingem veneno: destilam duas parcelas e curam 5% dos PV do grupo. |
 
 ## Chefes
 
@@ -207,6 +216,7 @@ Texturas, retratos, estilos e cenas usam cache; a arena tem até seis unidades e
 
 ```sh
 godot --headless --path . --editor --quit
+godot --headless --path . --script tests/biomes_formation.gd
 godot --headless --path . --script tests/idle_feedback.gd
 godot --headless --path . --script tests/party_combat.gd
 godot --headless --path . --script tests/endless_events.gd
@@ -224,6 +234,6 @@ godot --headless --path . --script tests/presentation.gd
 godot --headless --path . --script tests/combat_presentation.gd
 ```
 
-As suítes usam saves isolados. `idle_feedback.gd` verifica as 12 aberturas/efeitos de ULT, passivas reais, logs e pausa, PV/mana numéricos, animação fatal completa, pop-ups sobre a arena, caminhada, ameaça dos inimigos, derrota de uma composição de cura em luta prolongada e conversão/salvamento exatos da build após a vitória. As novas suítes verificam os seis efeitos de dupla, PP/rodadas/morte, estandarte, cópia comprometida de ULT ofensiva e de cura, selos, alvos fixos, todos os eventos solo/em dupla, retomada sem duplicação, 180 fases infinitas, acúmulos não esgotáveis, recrutamento com a build compacta e marcos pessoais. A interface valida o histórico/pausa, a fase 13, os eventos e layouts mobile/PC com capturas gráficas. Os testes de expedição cobrem as 12 fases contínuas, sorteio em 20 mil recompensas, retomada/RNG, ordem das melhorias/eventos, loja sem compras duplicadas, derrota/vitória, desbloqueios e migração. Os testes de habilidades cobrem todos os 12 kits e 36 opções, incluindo efeitos e gatilhos concretos. O teste de interface joga um encontro animado real e verifica os limites das 12 fases, silhuetas e layout de PC/celular. As suítes anteriores mantêm a cobertura do combate, animações, ULTs, áudio e checkpoints legados.
+As suítes usam saves isolados. `biomes_formation.gd` valida as 48 identidades/192 poses, seis variantes sorteáveis por bioma, alpha dos recortes, 72 quadros de ULT, formação e migração por classe, alturas humanas e meia escala, dash, área, retaguarda e recordes persistentes. `idle_feedback.gd` verifica as 12 aberturas/efeitos de ULT, passivas reais, logs e pausa, PV/mana numéricos, animação fatal completa, pop-ups sobre a arena, caminhada, ameaça dos inimigos, derrota de uma composição de cura em luta prolongada e conversão/salvamento exatos da build após a vitória. As novas suítes verificam os três efeitos de dupla e a remoção das outras combinações, PP/rodadas/morte, estandarte, cópia comprometida de ULT ofensiva e de cura, selos, alvos fixos, todos os eventos solo/em dupla, retomada sem duplicação, 180 fases infinitas, acúmulos não esgotáveis, recrutamento com a build compacta e marcos pessoais. A interface valida o histórico/pausa, a fase 13, os eventos e layouts mobile/PC com capturas gráficas. Os testes de expedição cobrem as 12 fases contínuas, sorteio em 20 mil recompensas, retomada/RNG, ordem das melhorias/eventos, loja sem compras duplicadas, derrota/vitória, desbloqueios e migração. Os testes de habilidades cobrem todos os 12 kits e 36 opções, incluindo efeitos e gatilhos concretos. O teste de interface joga um encontro animado real e verifica os limites das 12 fases, silhuetas e layout de PC/celular. As suítes anteriores mantêm a cobertura do combate, animações, ULTs, áudio e checkpoints legados.
 
 `godot --headless --path . --script tools/simulate_runs.gd` executa uma sondagem determinística de balanceamento com 20 seeds por protagonista. É uma aproximação das durações das animações, sem renderização; não substitui playtests. Esta atualização inclui apenas o projeto-fonte; gere os exports no Godot.

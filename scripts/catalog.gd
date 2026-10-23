@@ -20,7 +20,7 @@ const HERO_TACTICS = {
 	"ariel": {"class": "mage", "row": "back", "ult": "Sinfonia abissal", "detail": "Maré de 160% em todos; cura 20% do grupo e desacelera por 5 s."},
 	"joao": {"class": "assassin", "row": "back", "ult": "Caçada cruzada", "detail": "Rajada de 420% no alvo da retaguarda."},
 	"maria": {"class": "assassin", "row": "front", "ult": "Receita da bruxa", "detail": "Estocada de 280% e veneno fortalecido por 6 s."},
-	"alice": {"class": "mage", "row": "back", "ult": "Cortejo dos naipes", "detail": "Cartas mágicas atingem todos os inimigos (200%)."},
+	"alice": {"class": "mage", "row": "back", "ult": "Cortejo das cartas", "detail": "Cartas mágicas atingem todos os inimigos (200%)."},
 	"puss": {"class": "vanguard", "row": "front", "ult": "Nove vidas, um corte", "detail": "Corte de 360% na vanguarda e escudo de 25% para si."},
 	"matches": {"class": "ranger", "row": "back", "ult": "Último fósforo", "detail": "Disparo de 400% na retaguarda e queimadura por 5 s."},
 	"peter": {"class": "assassin", "row": "front", "ult": "Passo do outro lado", "detail": "Estocada de 300% na retaguarda e +25% de esquiva por 5 s."},

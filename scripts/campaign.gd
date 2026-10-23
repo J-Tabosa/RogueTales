@@ -43,6 +43,7 @@ var window_mode := "windowed"
 var run_counter := 0
 var last_resolved_run := 0
 var best_depth := 0
+var best_score := 0
 var expedition_wins := 0
 var blessings_unlocked: Array[String] = ["vigor", "fury", "echo"]
 var best_endless := 0
@@ -171,10 +172,10 @@ func choose_memory(index: int, choice: String) -> bool:
 
 func to_dict() -> Dictionary:
 	return {
-		"version": 6,
+		"version": 7,
 		"best_endless": best_endless, "endless_runs": endless_runs,
 		"discovered_synergies": discovered_synergies.duplicate(), "discovered_events": discovered_events.duplicate(),
-		"best_depth": best_depth, "expedition_wins": expedition_wins,
+		"best_score": best_score, "best_depth": best_depth, "expedition_wins": expedition_wins,
 		"blessings_unlocked": blessings_unlocked.duplicate(),
 		"formation_rows": formation_rows,
 		"auto_ult": auto_ult,
@@ -227,6 +228,7 @@ func load_data(data: Dictionary) -> void:
 		if preload("res://scripts/team_synergies.gd").PAIRS.has(key) and not discovered_synergies.has(key): discovered_synergies.append(key)
 	for key in data.get("discovered_events", []):
 		if preload("res://scripts/team_events.gd").EVENTS.has(key) and not discovered_events.has(key): discovered_events.append(key)
+	best_score = maxi(0, int(data.get("best_score", 0)))
 	best_depth = clampi(int(data.get("best_depth", 0)), 0, 12)
 	expedition_wins = maxi(0, int(data.get("expedition_wins", 0)))
 	blessings_unlocked.assign(["vigor", "fury", "echo"])
@@ -404,7 +406,7 @@ func load_from(path: String = SAVE_PATH) -> bool:
 			parser.parse(FileAccess.get_file_as_string(candidate)) == OK
 			and parser.data is Dictionary
 		):
-			if int(parser.data.get("version", 0)) in [1, 2, 3, 4, 5, 6]:
+			if int(parser.data.get("version", 0)) in [1, 2, 3, 4, 5, 6, 7]:
 				load_data(parser.data)
 				return true
 	return false
@@ -641,6 +643,7 @@ func finish_expedition(data: Dictionary, won: bool) -> Dictionary:
 	if not data.get("expedition", false) or number <= last_resolved_run or number > run_counter:
 		return {}
 	var newly_unlocked := resolve_run(data, won)
+	best_score = maxi(best_score, int(data.get("score", 0)))
 	var infinite := bool(data.get("endless", false))
 	var depth := clampi(int(data.get("rooms_cleared", 0)), 0, 2147483647 if infinite else 12)
 	var milestones := maxi(0, floori(depth / 12.0) - floori(best_endless / 12.0)) if infinite else 0
@@ -666,7 +669,7 @@ func finish_expedition(data: Dictionary, won: bool) -> Dictionary:
 			journal.append({"stage": chapter, "title": TaleCatalog.STAGES[chapter].name})
 	pending_story = -1
 	checkpoint.clear()
-	return {"unlocks": newly_unlocked, "depth": depth, "reward": fragments, "won": won, "endless": infinite, "milestones": milestones}
+	return {"unlocks": newly_unlocked, "depth": depth, "reward": fragments, "won": won, "endless": infinite, "milestones": milestones, "score": int(data.get("score", 0)), "best_score": best_score}
 
 
 func unlock_blessing(id: String) -> bool:

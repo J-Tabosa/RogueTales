@@ -44,6 +44,8 @@ var seen_events: Array[String] = []
 var events_discovered: Array[String] = []
 var endless := false
 var continuation_from := 0
+var score := 0
+var last_room_score := 0
 var upgrade_counts: Dictionary = {}
 var team_template: Dictionary = Endless.template()
 
@@ -51,6 +53,9 @@ var team_template: Dictionary = Endless.template()
 func setup(campaign: TaleCampaign, index: int, fresh: bool = true) -> void:
 	expedition = false
 	endless = false
+	score = 0
+	last_room_score = 0
+	continuation_from = 0
 	tactics = null
 	stage = index
 	run_id = campaign.new_run_id() if fresh else 0
@@ -266,6 +271,7 @@ func to_checkpoint() -> Dictionary:
 		"build_history": build_history.duplicate(),
 		"synergies_seen": synergies_seen.duplicate(), "synergy_activations": synergy_activations,
 		"pending_event": pending_event, "seen_events": seen_events.duplicate(), "events_discovered": events_discovered.duplicate(),
+		"score": score, "last_room_score": last_room_score,
 		"endless": endless, "continuation_from": continuation_from, "endless_build": Endless.snapshot(self) if endless else {},
 		"ability_state": ability_snapshot(),
 		"tactics": tactics.snapshot() if tactics != null else {},
@@ -288,6 +294,8 @@ func to_checkpoint() -> Dictionary:
 func restore(campaign: TaleCampaign, data: Dictionary) -> void:
 	setup(campaign, int(data.stage), false)
 	expedition = bool(data.get("expedition", false))
+	score = maxi(0, int(data.get("score", 0)))
+	last_room_score = maxi(0, int(data.get("last_room_score", 0)))
 	endless = expedition and bool(data.get("endless", false))
 	continuation_from = 12 if endless and int(data.get("continuation_from", 0)) == 12 else 0
 	if expedition:
@@ -559,6 +567,12 @@ func roll_run_offers() -> void:
 
 func clear_encounter() -> bool:
 	if not expedition: return false
+	last_room_score = 100 + (300 if ExpeditionContent.is_boss(stage) else 0) + (150 if room_kind == "elite" else 0)
+	if tactics != null:
+		last_room_score += maxi(0, 120 - int(tactics.elapsed * 2))
+		if tactics.damage_received <= 0: last_room_score += 100
+	last_room_score += actors.filter(func(actor): return actor.hp > 0).size() * 25
+	score += last_room_score
 	rooms_cleared = rooms_cleared + 1 if endless else stage + 1
 	kills += 1
 	run_gold += 16 + stage * 3 + (25 if room_kind == "elite" else 0)

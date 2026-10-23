@@ -50,10 +50,10 @@ func _ready() -> void:
 	cutin = Panel.new()
 	cutin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(cutin)
-	cutin_name = tag(cutin, Vector2(18, 12), Vector2(350, 25), 15)
-	cutin_title = tag(cutin, Vector2(18, 39), Vector2(350, 51), 29)
-	cutin_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	cutin_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	cutin_name = tag(cutin, Vector2(12, 6), Vector2(250, 18), 11)
+	cutin_title = tag(cutin, Vector2(12, 26), Vector2(250, 28), 17)
+	cutin_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	cutin_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	cutin.visible = false
 
 func enqueue(event: Dictionary) -> void:
@@ -80,7 +80,7 @@ func announce_ultimate(id: String) -> void:
 	cutin.add_theme_stylebox_override("panel", skin(TaleCatalog.HEROES[id].color))
 	cutin_name.text = str(TaleCatalog.HEROES[id].name).to_upper() + "  ·  ULT"
 	cutin_title.text = TaleCatalog.HERO_TACTICS[id].ult
-	cutin_left = 1.35
+	cutin_left = 1.55
 	cutin_age = 0
 	cutin.visible = true
 	layout()
@@ -91,11 +91,11 @@ func layout() -> void:
 	ribbon.size.x = width
 	ribbon.position = Vector2(size.x - width - 12, 56)
 	if not reduced_motion: ribbon.position.x += maxf(0, 1.0 - ribbon_age / 0.22) * (width + 12)
-	cutin.size = Vector2(minf(480, size.x - 32), 105)
-	cutin.position = Vector2((size.x - cutin.size.x) * 0.5, size.y * 0.34)
-	for node in [cutin_name, cutin_title]: node.size.x = cutin.size.x - 36
-	cutin_title.add_theme_font_size_override("font_size", 26 if size.x < 600 else 31)
-	if not reduced_motion: cutin.position.x -= maxf(0, 1.0 - cutin_age / 0.25) * size.x
+	cutin.size = Vector2(minf(290, size.x * 0.46), 62)
+	cutin.position = Vector2(12, 56)
+	for node in [cutin_name, cutin_title]: node.size.x = cutin.size.x - 24
+	cutin_title.add_theme_font_size_override("font_size", 16 if size.x < 600 else 18)
+	if not reduced_motion: cutin.position.x -= maxf(0, 1.0 - cutin_age / 0.18) * (cutin.size.x + 12)
 
 func _process(delta: float) -> void:
 	if frozen: return

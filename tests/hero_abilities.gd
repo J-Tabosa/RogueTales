@@ -15,6 +15,7 @@ func fixture(id: String, stage := 8) -> IdleRun:
 	var flow := Flow.new()
 	flow.bind(run)
 	for foe in run.tactics.enemies:
+		foe.row = "front" if foe.slot == 0 else "back"
 		foe.evasion = 0
 		foe.armor = 0
 		foe.damage = 5
