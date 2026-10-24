@@ -69,6 +69,11 @@ static func has(actor: Dictionary, mutation: String) -> bool:
 static func is_boss(stage: int, phase: int = -1) -> bool:
 	return phase == PHASES_PER_WORLD - 1 if phase >= 0 else BOSSES.has(stage)
 
+static func enemy_limit(stage: int, endless := false) -> int:
+	# Stages are zero-based. Endless continues after the campaign, even when
+	# its scenery cycles back to the first world.
+	return 9 if endless else mini(9, (maxi(0, stage) + 1) * 3)
+
 static func boss_rule(world: int) -> int:
 	return [3, 3, 7, 3, 3, 7, 11, 7, 11, 7, 3, 11][clampi(world, 0, 11)]
 

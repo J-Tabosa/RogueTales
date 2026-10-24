@@ -73,7 +73,7 @@ func checks() -> void:
 	for seed_value in 100:
 		var probe := RandomNumberGenerator.new()
 		probe.seed = seed_value
-		if probe.randi_range(1, 9) == 1:
+		if probe.randi_range(1, ExpeditionContent.enemy_limit(0)) == 1:
 			game.run.rng.seed = seed_value
 			break
 	game.spawn_enemy()

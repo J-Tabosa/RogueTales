@@ -51,6 +51,7 @@ func checks() -> void:
 			for seed_value in 30:
 				run.rng.seed = seed_value * 71 + world
 				run.spawn_enemy()
+				assert(run.tactics.enemies.size() <= [3,6,9][mini(world,2)], "Enemy count exceeded this world's difficulty cap")
 				var rows := {"front":0, "middle":0, "back":0}
 				for foe in run.tactics.enemies:
 					rows[foe.row] += 1

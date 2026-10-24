@@ -57,6 +57,7 @@ func checks() -> void:
 		assert(game.run.equip_item(0,"ember_pearl",0))
 		assert(game.run.equip_item(0,"winter_match",1))
 		game.run.interlude = ""
+		game.run.stage = 2 # Nine-enemy formations become available in stage 3.
 		game.enter_encounter()
 		game.spawn_enemy()
 		for attempt in 1000:
