@@ -75,7 +75,7 @@ func checks() -> void:
 		game.choose_preview(id)
 		assert(game.selected_hero==id and game.state=="preview")
 		var frames:SpriteFrames=game.arena.heroes[0].sprite_frames
-		assert(frames.get_frame_count("walk")==16 and frames.get_frame_count("attack")==10)
+		assert(frames.get_frame_count("walk")== (16 if id=="puss" else 8) and frames.get_frame_count("attack")== (10 if id=="puss" else 12))
 	game.toggle_debug()
 	assert(not game.debug_roster_all and not game.hero_revealed("mulan"))
 	game.campaign.unlocked.assign(TaleCatalog.HEROES.keys())

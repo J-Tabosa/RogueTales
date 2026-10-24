@@ -1,0 +1,207 @@
+[gd_resource type="SpriteFrames" load_steps=36 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/ults_v2/alice_idle.webp" id="idle"]
+
+[ext_resource type="Texture2D" path="res://assets/ults_v2/alice_attack.webp" id="attack"]
+
+[ext_resource type="Texture2D" path="res://assets/ults_v2/alice_ultimate.webp" id="ultimate"]
+
+[sub_resource type="AtlasTexture" id="idle_0"]
+atlas = ExtResource("idle")
+region = Rect2(166, 199, 179, 281)
+margin = Rect2(166, 199, 333, 231)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="idle_1"]
+atlas = ExtResource("idle")
+region = Rect2(667, 199, 190, 281)
+margin = Rect2(155, 199, 322, 231)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="idle_2"]
+atlas = ExtResource("idle")
+region = Rect2(1179, 200, 189, 280)
+margin = Rect2(155, 200, 323, 232)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="idle_3"]
+atlas = ExtResource("idle")
+region = Rect2(1694, 199, 184, 281)
+margin = Rect2(158, 199, 328, 231)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="idle_4"]
+atlas = ExtResource("idle")
+region = Rect2(172, 709, 173, 282)
+margin = Rect2(172, 197, 339, 230)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="idle_5"]
+atlas = ExtResource("idle")
+region = Rect2(668, 712, 189, 279)
+margin = Rect2(156, 200, 323, 233)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="idle_6"]
+atlas = ExtResource("idle")
+region = Rect2(1179, 712, 186, 279)
+margin = Rect2(155, 200, 326, 233)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="idle_7"]
+atlas = ExtResource("idle")
+region = Rect2(1694, 712, 181, 279)
+margin = Rect2(158, 200, 331, 233)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="attack_0"]
+atlas = ExtResource("attack")
+region = Rect2(138, 199, 235, 281)
+margin = Rect2(138, 199, 277, 231)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="attack_1"]
+atlas = ExtResource("attack")
+region = Rect2(645, 200, 244, 280)
+margin = Rect2(133, 200, 268, 232)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="attack_2"]
+atlas = ExtResource("attack")
+region = Rect2(1155, 200, 239, 280)
+margin = Rect2(131, 200, 273, 232)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="attack_3"]
+atlas = ExtResource("attack")
+region = Rect2(1669, 196, 267, 284)
+margin = Rect2(133, 196, 245, 228)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="attack_4"]
+atlas = ExtResource("attack")
+region = Rect2(117, 708, 283, 284)
+margin = Rect2(117, 196, 229, 228)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="attack_5"]
+atlas = ExtResource("attack")
+region = Rect2(628, 708, 281, 284)
+margin = Rect2(116, 196, 231, 228)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="attack_6"]
+atlas = ExtResource("attack")
+region = Rect2(1161, 708, 243, 284)
+margin = Rect2(137, 196, 269, 228)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="attack_7"]
+atlas = ExtResource("attack")
+region = Rect2(1672, 708, 241, 284)
+margin = Rect2(136, 196, 271, 228)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="attack_8"]
+atlas = ExtResource("attack")
+region = Rect2(135, 1220, 239, 284)
+margin = Rect2(135, 196, 273, 228)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="attack_9"]
+atlas = ExtResource("attack")
+region = Rect2(646, 1220, 247, 279)
+margin = Rect2(134, 196, 265, 233)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="attack_10"]
+atlas = ExtResource("attack")
+region = Rect2(1159, 1220, 245, 278)
+margin = Rect2(135, 196, 267, 234)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="attack_11"]
+atlas = ExtResource("attack")
+region = Rect2(1720, 1220, 182, 7)
+margin = Rect2(184, 196, 330, 505)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="ultimate_0"]
+atlas = ExtResource("ultimate")
+region = Rect2(156, 200, 310, 280)
+margin = Rect2(156, 200, 202, 232)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="ultimate_1"]
+atlas = ExtResource("ultimate")
+region = Rect2(625, 204, 353, 278)
+margin = Rect2(113, 204, 159, 234)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="ultimate_2"]
+atlas = ExtResource("ultimate")
+region = Rect2(1137, 204, 353, 278)
+margin = Rect2(113, 204, 159, 234)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="ultimate_3"]
+atlas = ExtResource("ultimate")
+region = Rect2(1649, 204, 345, 278)
+margin = Rect2(113, 204, 167, 234)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="ultimate_4"]
+atlas = ExtResource("ultimate")
+region = Rect2(120, 669, 339, 315)
+margin = Rect2(120, 157, 173, 197)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="ultimate_5"]
+atlas = ExtResource("ultimate")
+region = Rect2(641, 712, 337, 272)
+margin = Rect2(129, 200, 175, 240)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="ultimate_6"]
+atlas = ExtResource("ultimate")
+region = Rect2(1137, 641, 353, 332)
+margin = Rect2(113, 129, 159, 180)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="ultimate_7"]
+atlas = ExtResource("ultimate")
+region = Rect2(1649, 641, 353, 321)
+margin = Rect2(113, 129, 159, 191)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="ultimate_8"]
+atlas = ExtResource("ultimate")
+region = Rect2(117, 1204, 349, 243)
+margin = Rect2(117, 180, 163, 269)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="ultimate_9"]
+atlas = ExtResource("ultimate")
+region = Rect2(625, 1212, 353, 234)
+margin = Rect2(113, 188, 159, 278)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="ultimate_10"]
+atlas = ExtResource("ultimate")
+region = Rect2(1137, 1201, 353, 251)
+margin = Rect2(113, 177, 159, 261)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="ultimate_11"]
+atlas = ExtResource("ultimate")
+region = Rect2(1649, 1171, 327, 285)
+margin = Rect2(113, 147, 185, 227)
+filter_clip = true
+
+[resource]
+resource_local_to_scene = true
+animations = [{"frames": [{"duration": 1.0, "texture": SubResource("idle_0")}, {"duration": 1.0, "texture": SubResource("idle_1")}, {"duration": 1.0, "texture": SubResource("idle_2")}, {"duration": 1.0, "texture": SubResource("idle_3")}, {"duration": 1.0, "texture": SubResource("idle_4")}, {"duration": 1.0, "texture": SubResource("idle_5")}, {"duration": 1.0, "texture": SubResource("idle_6")}, {"duration": 1.0, "texture": SubResource("idle_7")}], "loop": false, "name": &"idle", "speed": 7.0},
+{"frames": [{"duration": 1.0, "texture": SubResource("idle_0")}, {"duration": 1.0, "texture": SubResource("idle_1")}, {"duration": 1.0, "texture": SubResource("idle_2")}, {"duration": 1.0, "texture": SubResource("idle_3")}, {"duration": 1.0, "texture": SubResource("idle_4")}, {"duration": 1.0, "texture": SubResource("idle_5")}, {"duration": 1.0, "texture": SubResource("idle_6")}, {"duration": 1.0, "texture": SubResource("idle_7")}], "loop": false, "name": &"idle_blink", "speed": 10.0},
+{"frames": [{"duration": 1.0, "texture": SubResource("idle_0")}, {"duration": 1.0, "texture": SubResource("idle_1")}, {"duration": 1.0, "texture": SubResource("idle_2")}, {"duration": 1.0, "texture": SubResource("idle_3")}, {"duration": 1.0, "texture": SubResource("idle_4")}, {"duration": 1.0, "texture": SubResource("idle_5")}, {"duration": 1.0, "texture": SubResource("idle_6")}, {"duration": 1.0, "texture": SubResource("idle_7")}], "loop": true, "name": &"walk", "speed": 8.0},
+{"frames": [{"duration": 1.0, "texture": SubResource("attack_0")}, {"duration": 1.0, "texture": SubResource("attack_1")}, {"duration": 1.0, "texture": SubResource("attack_2")}, {"duration": 1.0, "texture": SubResource("attack_3")}, {"duration": 1.0, "texture": SubResource("attack_4")}, {"duration": 1.0, "texture": SubResource("attack_5")}, {"duration": 1.0, "texture": SubResource("attack_6")}, {"duration": 1.0, "texture": SubResource("attack_7")}, {"duration": 1.0, "texture": SubResource("attack_8")}, {"duration": 1.0, "texture": SubResource("attack_9")}, {"duration": 1.0, "texture": SubResource("attack_10")}, {"duration": 1.0, "texture": SubResource("attack_11")}], "loop": false, "name": &"attack", "speed": 12.0},
+{"frames": [{"duration": 1.0, "texture": SubResource("ultimate_4")}, {"duration": 1.0, "texture": SubResource("ultimate_4")}, {"duration": 1.0, "texture": SubResource("ultimate_5")}, {"duration": 1.0, "texture": SubResource("ultimate_6")}, {"duration": 1.0, "texture": SubResource("ultimate_7")}, {"duration": 1.0, "texture": SubResource("ultimate_7")}, {"duration": 1.0, "texture": SubResource("ultimate_7")}, {"duration": 1.0, "texture": SubResource("ultimate_7")}, {"duration": 1.0, "texture": SubResource("ultimate_7")}, {"duration": 1.0, "texture": SubResource("ultimate_10")}, {"duration": 1.0, "texture": SubResource("ultimate_11")}, {"duration": 1.0, "texture": SubResource("ultimate_0")}], "loop": false, "name": &"ultimate", "speed": 6.0}]

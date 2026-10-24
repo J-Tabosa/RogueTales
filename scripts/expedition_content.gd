@@ -22,7 +22,7 @@ const KITS := {
 	"ariel": ["Maré que volta", "Cada terceiro acerto cura 12% dos PV de todos os aliados vivos.", "Corrente de retorno", "Ao ferir um aliado abaixo de 50% dos PV, ativa a passiva para curá-lo e atrasar os inimigos."],
 	"joao": ["Marca da caçada", "Marca a presa. Seus próximos acertos na mesma presa causam +40% de dano.", "Fogo de cobertura", "Após um aliado acertar sua presa, ativa a passiva para dar uma estocada adicional."],
 	"maria": ["Receita roubada", "Alterna entre aplicar veneno e consumi-lo numa onda que recupera vida.", "Gota de revanche", "Ao sofrer dano, ativa a passiva para envenenar o agressor."],
-	"alice": ["Baralho impossível", "Alterna quatro naipes: dano, cura, escudo e uma segunda carta em outro alvo.", "Carta na manga", "Ao sofrer dano, ativa a passiva para avançar um naipe e ganhar 25 de ULT."],
+	"alice": ["Baralho impossível", "Alterna quatro naipes: dano, cura, escudo e uma segunda carta em outro alvo.", "Carta na manga", "Ao sofrer dano, ativa a passiva para ganhar um escudo de cartas de 8% dos PV."],
 	"puss": ["Peso do crepúsculo", "Alterna um golpe de preparação com um corte de 240% na vanguarda.", "Guarda das botas", "Se um aliado abaixo de 45% dos PV for atacado, ativa a passiva para receber o golpe."],
 	"matches": ["Fósforo vivo", "Incendeia a linha inimiga. O fogo fica mais forte em alvos já incendiados.", "Incêndio em cadeia", "Quando um inimigo incendiado cai, ativa a passiva para espalhar fogo aos sobreviventes."],
 	"peter": ["Lâmina sem sombra", "Consome até três sombras; cada uma acrescenta 60% de dano ao golpe.", "Reflexo do outro lado", "Uma esquiva ativa a passiva, cria uma sombra e responde com um contra-ataque."],

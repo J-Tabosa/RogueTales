@@ -435,8 +435,11 @@ func restore(campaign: TaleCampaign, data: Dictionary) -> void:
 		for actor in actors:
 			var saved: Variant = states.get(actor.id, {}) if states is Dictionary else {}
 			if saved is Dictionary:
-				for key in ["shadows", "suit", "wish", "charged", "nine_used", "spirit_flames"]:
+				for key in ["shadows", "suit", "wish", "charged", "nine_used", "spirit_flames", "guardian_spirits", "card_charge"]:
 					if saved.has(key): actor[key] = saved[key]
+			actor["guardian_spirits"]=clampi(int(actor.get("guardian_spirits",0) if saved is Dictionary and saved.has("guardian_spirits") else actor.get("spirit_flames",0)),0,3)
+			actor["spirit_flames"]=0
+			actor["card_charge"]=clampi(int(actor.get("card_charge",0)),0,4)
 
 	# Preserve combos and the random stream at the encounter boundary.
 	var counts: Variant = data.get("hits", [])
@@ -540,6 +543,8 @@ func run_actor(id: String) -> Dictionary:
 	actor["mutations"] = []
 	actor["shadows"] = 0
 	actor["suit"] = 0
+	actor["card_charge"] = 0
+	actor["guardian_spirits"] = 0
 	actor["wish"] = 0
 	actor["charged"] = false
 	actor["nine_used"] = false
@@ -556,7 +561,7 @@ func ability_snapshot() -> Dictionary:
 	var saved := {}
 	for actor in actors:
 		var entry := {}
-		for key in ["shadows", "suit", "wish", "charged", "nine_used", "spirit_flames"]:
+		for key in ["shadows", "suit", "wish", "charged", "nine_used", "spirit_flames", "guardian_spirits", "card_charge"]:
 			if actor.has(key): entry[key] = actor[key]
 		saved[actor.id] = entry
 	return saved

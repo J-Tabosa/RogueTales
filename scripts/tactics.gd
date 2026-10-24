@@ -3,6 +3,7 @@ const Modifiers = preload("res://scripts/combat_modifiers.gd")
 const Abilities = preload("res://scripts/hero_abilities.gd")
 const Biomes = preload("res://scripts/biomes.gd")
 const BossRules = preload("res://scripts/boss_rules.gd")
+const UltRules = preload("res://scripts/ultimate_rules.gd")
 ## Formation rules and all combat results; contains no nodes or rendering logic.
 ## The weak owner avoids a Run -> Tactics -> Run reference cycle.
 var owner_ref: WeakRef
@@ -35,7 +36,7 @@ func configure_actor(actor: Dictionary, row: String) -> void:
 	actor.evasion = float(actor.get("evasion", TaleCatalog.CLASSES[profile["class"]].evasion))
 	actor.base_evasion = actor.evasion
 	actor.evasion_left = 0.0
-	actor.energy = clampf(float(actor.get("energy", 0.0)), 0, 100)
+	actor.energy = 0.0 if run().expedition and actor.id=="alice" else clampf(float(actor.get("energy", 0.0)), 0, 100)
 	actor["ult_pending"] = false
 	actor["ult_queued"] = false
 	actor["ap"] = 0
@@ -182,7 +183,8 @@ func deal(target: Dictionary, amount: float, magical: bool, certain := false) ->
 	if guarded:
 		target.pp -= 1
 		amount *= 0.65
-	var raw := maxf(amount * 0.28 if owner.expedition else 1.0, amount - float(target.armor) * (0.8 if target.get("armor_break_left",0.0)>0 else 1.0) * (0.35 if magical else 1.0))
+	var armor:float=float(target.armor)*(0.8 if float(target.get("curse_left",0))>0 else 1.0)
+	var raw := maxf(amount * 0.28 if owner.expedition else 1.0, amount - armor * (0.8 if target.get("armor_break_left",0.0)>0 else 1.0) * (0.35 if magical else 1.0))
 	var absorbed := minf(float(target.get("shield", 0.0)), raw)
 	if target.has("shield"):
 		target.shield -= absorbed
@@ -332,6 +334,7 @@ func tick(delta: float) -> void:
 		if enemy.hp <= 0:
 			continue
 		enemy["item_slow_left"]=maxf(0,float(enemy.get("item_slow_left",0))-delta)
+		enemy["curse_left"]=maxf(0,float(enemy.get("curse_left",0))-delta)
 		var fire_damage: float = enemy.burn * minf(delta, enemy.burn_left)
 		var poison_damage: float = enemy.poison * minf(delta, enemy.poison_left)
 		var damage: float = fire_damage + poison_damage
@@ -355,7 +358,9 @@ func tick(delta: float) -> void:
 			actor.evasion_left = maxf(0, actor.evasion_left - delta)
 			if actor.evasion_left == 0:
 				actor.evasion = actor.base_evasion
-		if actor.hp > 0 and not actor.ult_pending:
+		if run().expedition and actor.id=="alice":actor.energy=0.0
+		if actor.get("hair_guard",false) and actor.shield<=0:actor.hair_guard=false
+		if actor.hp > 0 and not actor.ult_pending and (not run().expedition or actor.id!="alice"):
 			actor.energy = minf(100, actor.energy + delta * 1.4)
 	if run().expedition:
 		Abilities.deaths(self)
@@ -380,11 +385,16 @@ func reserve_ultimate(index: int) -> bool:
 	if index < 0 or index >= run().actors.size():
 		return false
 	var actor: Dictionary = run().actors[index]
-	if actor.hp <= 0 or actor.energy < 100 or actor.ult_pending or target_for(index) < 0:
+	if actor.hp <= 0 or not ultimate_ready(index) or actor.ult_pending or target_for(index) < 0:
 		return false
-	actor.energy = 0.0
+	if run().expedition and actor.id=="alice":actor.card_charge=0
+	else:actor.energy = 0.0
 	actor.ult_pending = true
 	return true
+
+func ultimate_ready(index: int) -> bool:
+	if index<0 or index>=run().actors.size():return false
+	return UltRules.resource_ready(run().actors[index]) if run().expedition else run().actors[index].energy>=100
 
 
 func ultimate(index: int, requested := -1) -> Dictionary:
@@ -394,6 +404,7 @@ func ultimate(index: int, requested := -1) -> Dictionary:
 	var actor: Dictionary = owner.actors[index]
 	if not actor.ult_pending or actor.hp <= 0:
 		return {}
+	if owner.expedition and UltRules.IDS.has(str(actor.id)):return UltRules.execute(self,index,requested)
 	actor.ult_pending = false
 	var target := target_for(index)
 	if eligible(actor, enemies).has(requested):
@@ -483,7 +494,7 @@ func restore(data: Dictionary) -> void:
 			if run().expedition: actor.row = rank_for_class(actor["class"])
 			if actor.row not in ["front", "middle", "back"]:
 				actor.row = "front"
-			actor.energy = clampf(float(stored.get("energy", 0)), 0, 100)
+			actor.energy = 0.0 if run().expedition and actor.id=="alice" else clampf(float(stored.get("energy", 0)), 0, 100)
 	ensure_front()
 
 

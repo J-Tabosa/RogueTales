@@ -482,21 +482,22 @@ func update_hud() -> void:
 	power_label.text = "%d aliados   ×   %d inimigos" % [run.actors.filter(func(unit): return unit.hp > 0).size(), living]
 	for index in mini(ult_buttons.size(), run.actors.size()):
 		var actor: Dictionary = run.actors[index]
-		ult_meters[index].value = actor.energy
+		ult_meters[index].max_value=4 if run.expedition and actor.id=="alice" else 100
+		ult_meters[index].value = actor.get("card_charge",0) if run.expedition and actor.id=="alice" else actor.energy
 		card_health[index].max_value = actor.max_hp
 		card_health[index].value = actor.hp
 		for child in ult_buttons[index].get_children():
 			if child.has_meta("card_status"):
-				child.text = "Caído" if actor.hp <= 0 else ("ULT na fila" if actor.get("ult_queued", false) else ("ULT em ação" if actor.ult_pending else ("ULT pronta" if actor.energy >= 100 else ("Selada" if actor.get("sealed", false) else "Aguardando"))))
+				child.text = "Caído" if actor.hp <= 0 else ("ULT na fila" if actor.get("ult_queued", false) else ("ULT em ação" if actor.ult_pending else ("ULT pronta" if run.tactics.ultimate_ready(index) else ("Selada" if actor.get("sealed", false) else "Aguardando"))))
 			elif child.has_meta("card_hp"):
 				child.text = "PV %d / %d%s" % [ceili(actor.hp), ceili(actor.max_hp), "  +%d" % ceili(actor.shield) if actor.shield > 0 else ""]
 			elif child.has_meta("card_items"):
 				var equipment_slot: int = child.get_meta("card_items")
 				ItemArt.refresh(child, ItemArt.equipped(actor,equipment_slot))
 			elif child.has_meta("card_mana"):
-				child.text = "MANA %d / 100" % int(actor.energy)
-		ult_buttons[index].disabled = paused or state != "battle" or actor.hp <= 0 or actor.energy < 100 or actor.ult_pending or actor.get("ult_queued", false) or arena.tracks[index].time >= 0
-		ult_buttons[index].tooltip_text = "%s · %d%%\n%s" % [TaleCatalog.HERO_TACTICS[actor.id].ult, int(actor.energy), TaleCatalog.HERO_TACTICS[actor.id].detail]
+				child.text = ("CARTAS %d / 4"%int(actor.get("card_charge",0))) if run.expedition and actor.id=="alice" else "MANA %d / 100" % int(actor.energy)
+		ult_buttons[index].disabled = paused or state != "battle" or actor.hp <= 0 or not run.tactics.ultimate_ready(index) or actor.ult_pending or actor.get("ult_queued", false) or arena.tracks[index].time >= 0
+		ult_buttons[index].tooltip_text = "%s · %s\n%s" % [TaleCatalog.HERO_TACTICS[actor.id].ult, ("%d/4 cartas"%int(actor.get("card_charge",0))) if run.expedition and actor.id=="alice" else ("%d%%"%int(actor.energy)), TaleCatalog.HERO_TACTICS[actor.id].detail]
 	if is_instance_valid(auto_button):
 		auto_button.text = "AUTO ULT  " + ("ON" if campaign.auto_ult else "OFF")
 	if is_instance_valid(action_label) and is_instance_valid(log_label):

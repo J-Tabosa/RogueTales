@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/hero.gd" id="1_hero"]
-[ext_resource type="SpriteFrames" path="res://assets/characters/maria/frames.tres" id="2_frames"]
+[ext_resource type="SpriteFrames" path="res://assets/ults_v2/maria_frames.tres" id="2_frames"]
 [ext_resource type="Shader" path="res://assets/hero/shaders/idle_motion.gdshader" id="3_idle"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_idle"]
@@ -16,10 +16,11 @@ sprite_frames = ExtResource("2_frames")
 animation = &"idle"
 autoplay = "idle"
 centered = false
-offset = Vector2(-1400, -1400)
+offset = Vector2(-256, -480)
 script = ExtResource("1_hero")
 hero_name = "Maria"
 hero_title = "Lâmina e veneno"
 attack_style = 13
-impact_ratio = 0.65
 accent_color = Color(0.86275, 0.5098, 0.43529, 1)
+
+impact_ratio = 0.56

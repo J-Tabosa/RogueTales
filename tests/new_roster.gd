@@ -17,10 +17,10 @@ func checks() -> void:
 		assert(actor.hero_name == TaleCatalog.HEROES[id].name)
 		assert(TaleCatalog.HERO_TACTICS[id]["class"] == JOBS[id])
 		assert(TaleCatalog.HEROES[id].skills.size() == 3)
-		var source_regions := {}
 		for anim in ["idle", "idle_blink", "walk", "attack"]:
-			assert(actor.sprite_frames.get_frame_count(anim) == scarlet.sprite_frames.get_frame_count(anim))
-			assert(actor.sprite_frames.get_animation_speed(anim) == scarlet.sprite_frames.get_animation_speed(anim))
+			var source_regions := {}
+			assert(actor.sprite_frames.get_frame_count(anim) == ({"idle":4,"idle_blink":4,"walk":16,"attack":10}[anim] if id=="puss" else scarlet.sprite_frames.get_frame_count(anim)))
+			assert(actor.sprite_frames.get_animation_speed(anim)>0)
 			for frame in actor.sprite_frames.get_frame_count(anim):
 				var texture: Texture2D = actor.sprite_frames.get_frame_texture(anim, frame)
 				var key: String
@@ -28,14 +28,14 @@ func checks() -> void:
 					assert(texture.mesh.get_aabb().size.y > 0)
 					key = str(texture.base_texture.resource_path) + str(texture.mesh.surface_get_arrays(0)[Mesh.ARRAY_TEX_UV])
 				else:
-					assert(texture.get_size().is_equal_approx(Vector2(720,640)))
+					assert(texture.get_size().is_equal_approx(Vector2(512,512)))
 					assert(Rect2(Vector2.ZERO,texture.atlas.get_size()).encloses(texture.region))
 					key = str(texture.atlas.resource_path) + str(texture.region)
 				assert(not source_regions.has(key), "Each frame has its own source art")
 				source_regions[key] = true
 			actor.seek_animation(anim, 0.2)
 			assert(actor.animation == StringName(anim))
-		assert(source_regions.size() == 34)
+			assert(source_regions.size() == actor.sprite_frames.get_frame_count(anim))
 		actor.free()
 		campaign.party.assign([id, "scarlet"])
 		var run := IdleRun.new()

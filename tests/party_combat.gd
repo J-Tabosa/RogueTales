@@ -17,6 +17,7 @@ func model(ids: Array, stage := 8) -> IdleRun:
 	run.phase = 5 if ExpeditionContent.is_boss(stage) else 0
 	run.wave = 2 if ExpeditionContent.is_boss(stage) else 0
 	run.spawn_enemy()
+	while run.tactics.enemies.size()<2:run.spawn_enemy()
 	var flow := Flow.new()
 	flow.bind(run)
 	for actor in run.actors:

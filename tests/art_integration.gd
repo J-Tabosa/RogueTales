@@ -4,7 +4,7 @@ const Art = preload("res://scripts/character_effects.gd")
 const Biomes = preload("res://scripts/biomes.gd")
 func _initialize() -> void:call_deferred("checks")
 func checks() -> void:
-	for id in Art.IDS+["snow_white"]:
+	for id in ["puss"]:
 		var actor: AnimatedSprite2D=TaleCatalog.HERO_SCENES[id].instantiate()
 		root.add_child(actor)
 		actor.set_process(false)
@@ -27,6 +27,14 @@ func checks() -> void:
 		var effect:=Art.frame("alice" if id=="snow_white" else id,0.5)
 		assert(effect.get_image().get_pixel(0,0).a<0.02,"JPEG effects reconstruct their original alpha")
 		actor.free()
+	for id in preload("res://scripts/ultimate_rules.gd").IDS:
+		var frames:SpriteFrames=load("res://assets/ults_v2/%s_frames.tres"%id)
+		for animation in ["idle","walk","attack","ultimate"]:
+			assert(frames.get_frame_count(animation)==(8 if animation in ["idle","walk"] else 12))
+			for at in frames.get_frame_count(animation):
+				var texture:AtlasTexture=frames.get_frame_texture(animation,at)
+				assert(texture.atlas.resource_path.ends_with(".webp") and texture.get_size()==Vector2(512,512))
+		assert(preload("res://scripts/ultimate_vfx.gd").frame(id,.5).get_image().get_pixel(0,0).a<.02)
 	for world in 12:
 		var scenery:=Biomes.scenery(world)
 		assert(scenery.resource_path.ends_with(".jpg") and scenery.get_width()>=1500 and scenery.get_height()>=900)
@@ -41,5 +49,5 @@ func checks() -> void:
 		var first:=Layout.home(units,1,false)
 		units[0].hp=0
 		assert(Layout.home(units,1,false)==first,"Deaths never move the remaining formation")
-	print("ART INTEGRATION PASS: 374 padded JPEG mesh poses, lossless alpha, all effect atlases, 12 HD worlds, mirrored fixed 3-slot rows")
+	print("ART INTEGRATION PASS: 11 uploaded-roster WebP animations and legacy Gato mesh poses, lossless alpha, all effect atlases, 12 HD worlds, mirrored fixed 3-slot rows")
 	quit()

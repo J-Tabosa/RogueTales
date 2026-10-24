@@ -52,7 +52,7 @@ static func after(tactics,actor: Dictionary,targets: Array,damages: Dictionary,u
 			tactics.notify(actor.id,"Reverberação","%d de dano em outro inimigo"%roundi(hit.damage))
 			break
 	if not ultimate:
-		actor.energy=minf(100,actor.energy+float(e.get("mana_hit",0)))
+		actor.energy=0.0 if actor.id=="alice" else minf(100,actor.energy+float(e.get("mana_hit",0)))
 		actor.hp=minf(actor.max_hp,actor.hp+total*float(e.get("drain",0)))
 		if float(e.get("shield_on_hit",0))>0:
 			var weakest:Dictionary={}

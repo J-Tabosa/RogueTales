@@ -31,30 +31,27 @@ static func passive(a: Dictionary) -> String:
 		"ariel": return "Aliado atingido abaixo de 50% dos PV: cura 8% dos PV dele e atrasa inimigos em 3 s."
 		"joao": return "Outro aliado acerta sua presa marcada: estocada adicional de %s dano%s." % [n(d*.6)," + valor da armadura inimiga" if has(a,"pierce") else ""]
 		"maria": return "Ao receber dano: +%s veneno/s no agressor (5 s; até 4 aplicações).%s" % [n(d*.16)," Nos outros: "+n(d*.10)+"/s." if has(a,"toxic") else ""]
-		"alice": return "Ao receber dano: avança um naipe e ganha 25 mana.%s" % [" Ao completar o ciclo: +25 mana e recarrega a passiva." if has(a,"wild") else ""]
+		"alice": return "Ao receber dano: escudo de 8% dos PV máximos. Cada ataque avança um naipe e carrega uma das quatro cartas da ULT."
 		"puss": return "Intercepta golpe dirigido a outro aliado abaixo de 45%% dos PV; recebe 75%% do dano.%s" % [" Uma vez por combate: revive com 30% dos PV." if has(a,"nine") else ""]
 		"matches": return "Morte de alvo incendiado: espalha fogo por 5 s (mínimo %s/s) e causa %s dano imediato.%s" % [n(d*.12),n(d*(.6 if has(a,"fuel") else .3))," +25 mana." if has(a,"ash") else ""]
 		"peter": return "Esquiva: contra-ataca por %s dano e cria %d sombra(s), até 3." % [n(d*.6),2 if has(a,"double") else 1]
 		"aladin": return "Escudo de aliado se rompe: +12 mana para todos.%s" % [" Concede escudo coletivo de 8% dos PV." if has(a,"reserve") else ""]
 	return ""
 static func ultimate(a: Dictionary) -> String:
-	var d: float=a.damage
-	var factor: float={"scarlet":2.0,"snow_white":4.0,"mulan":3.2,"ariel":1.6,"joao":4.2,"maria":2.8,"alice":2.0,"puss":3.6,"matches":2.0,"peter":0.0,"aladin":2.0,"rapunzel":0.0}.get(a.id,1.0)
-	var ranks: Array=a.get("ranks",[0,0,0])
-	var extras: Dictionary={
-		"scarlet":"Todos os inimigos; fogo %s/s por 4 s."%n(6+int(ranks[1])*2),
-		"snow_white":"Um alvo; veneno %s/s por 6 s."%n(8+int(ranks[0])*2),
-		"mulan":"Inimigos da frente; escudo próprio de %s PV."%n(a.max_hp*.35),
-		"ariel":"Todos; cura coletiva 20% dos PV, remove condições e atrasa inimigos 5 s.",
-		"joao":"Um alvo: 5 estocadas de %s cada."%n(d*.84),
-		"maria":"Todos; veneno %s/s por 6 s e −20%% armadura por 6 s."%n(8+int(ranks[2])*2),
-		"alice":"Todos os inimigos; explosão do naipe atual.",
-		"puss":"Inimigos da frente; escudo próprio de %s PV."%n(a.max_hp*.25),
-		"matches":"Todos; fogo %s/s por 5 s."%n(8+int(ranks[0])*2),
-		"peter":"Sem dano inicial; escudo de %s PV e 3 chamas que retaliam por %s dano cada."%[n(a.max_hp*.3),n(d)],
-		"aladin":"Todos; cura e escudo coletivos de 15% dos PV máximos.",
-		"rapunzel":"Cura coletiva de 35% e escudo coletivo de 20% dos PV máximos de cada aliado."}
-	return "%s dano bruto. %s" % [n(d*factor),extras[a.id]]
+	var d:float=a.damage
+	match str(a.id):
+		"scarlet":return "%s dano em todos os inimigos; bombas em arco + fogo de %s/s por 4 s."%[n(d*2.2),n(d*.12)]
+		"ariel":return "Cavalga uma onda gigante até todos os inimigos: %s dano em cada alvo."%n(d*2)
+		"aladin":return "Sem dano. Nuvem roxa: 50% de chance por inimigo de fazê-lo dormir e perder seu próximo turno."
+		"joao":return "Dash e seis estocadas de %s dano bruto em um alvo (%s total)."%[n(d*.7),n(d*4.2)]
+		"maria":return "Sem dano. Amaldiçoa todos os inimigos por 8 s: −20% armadura e −20% dano de ataques."
+		"peter":return "Invoca um espírito, até três acumulados. Cada ataque recebido consome um espírito, anula o golpe inteiro e devolve o dano ao agressor."
+		"mulan":return "Gira e lança cortes horizontais contra a frente inimiga: %s dano por alvo."%n(d*3.2)
+		"snow_white":return "Carrega a picareta e esmaga um único alvo: %s dano bruto (800%% do ataque)."%n(d*8)
+		"rapunzel":return "Raízes de cabelo protegem a própria Rapunzel e até dois aliados mais feridos. Escudo de 30% dos PV máximos de cada um; sem cura."
+		"alice":return "Sem mana. Após quatro ataques e quatro trocas de naipe, lança automaticamente o cortejo: %s dano nos inimigos da mesma linha horizontal do alvo."%n(d*2.2)
+		"matches":return "Fogo em órbita vira um dragão até o centro inimigo: %s dano em todos + %s fogo/s por 6 s."%[n(d*2),n(d*.25)]
+	return "%s dano nos inimigos da frente; escudo próprio de %s PV."%[n(d*3.6),n(a.max_hp*.25)]
 static func conditions(a: Dictionary) -> String:
 	var lines: Array[String]=[]
 	for kind in ["burn","poison"]:
@@ -64,4 +61,11 @@ static func conditions(a: Dictionary) -> String:
 	return "\n".join(lines)
 static func sheet(a: Dictionary) -> String:
 	var interval: float=maxf(1.5,a.interval*1.25)*(1.3 if int(a.get("hindered_rounds",0))>0 else 1.0)
-	return TaleCatalog.hero_class_name(a.id)+" · "+str(TaleCatalog.CLASSES[a["class"]].rule)+"\n\n"+conditions(a)+("\n\n" if not conditions(a).is_empty() else "")+"PV %s / %s  ·  Escudo %s\nMana %d / 100  ·  +1,4/s e +%s por acerto\nAtaque %s  ·  Intervalo mínimo %.2f s em 1×\nArmadura %s  ·  Crítico %.0f%% (2× dano)\nEsquiva %.0f%%  ·  Cura por acerto %s PV\n\n%s — AUTOMÁTICA\n%s\n\n%s — PASSIVA (recarga 6 s)\n%s\n\n%s — ULT (100 mana)\n%s\n\nValores atuais com os buffs desta run. Dano bruto antes de armadura, guarda e esquiva. A fila de animações pode adiar o próximo ataque." % [n(a.hp),n(a.max_hp),n(a.shield),int(a.energy),n(18+a.energy_bonus),n(a.damage),interval,n(a.armor),a.crit*100,float(a.get("evasion",0))*100,n(a.leech),Content.KITS[a.id][0],active(a),Content.KITS[a.id][2],passive(a),TaleCatalog.HERO_TACTICS[a.id].ult,ultimate(a)]
+	var text:String = TaleCatalog.hero_class_name(a.id)+" · "+str(TaleCatalog.CLASSES[a["class"]].rule)+"\n\n"+conditions(a)+("\n\n" if not conditions(a).is_empty() else "")+"PV %s / %s  ·  Escudo %s\nMana %d / 100  ·  +1,4/s e +%s por acerto\nAtaque %s  ·  Intervalo mínimo %.2f s em 1×\nArmadura %s  ·  Crítico %.0f%% (2× dano)\nEsquiva %.0f%%  ·  Cura por acerto %s PV\n\n%s — AUTOMÁTICA\n%s\n\n%s — PASSIVA (recarga 6 s)\n%s\n\n%s — ULT (100 mana)\n%s\n\nValores atuais com os buffs desta run. Dano bruto antes de armadura, guarda e esquiva. A fila de animações pode adiar o próximo ataque." % [n(a.hp),n(a.max_hp),n(a.shield),int(a.energy),n(18+a.energy_bonus),n(a.damage),interval,n(a.armor),a.crit*100,float(a.get("evasion",0))*100,n(a.leech),Content.KITS[a.id][0],active(a),Content.KITS[a.id][2],passive(a),TaleCatalog.HERO_TACTICS[a.id].ult,ultimate(a)]
+
+	if a.id=="alice":
+		var begin:=text.find("Mana ")
+		var end:=text.find("\nAtaque ",begin)
+		text=text.substr(0,begin)+"Cartas %d / 4 · +1 por ataque · sem mana"%int(a.get("card_charge",0))+text.substr(end)
+		text=text.replace("ULT (100 mana)","ULT (4 ataques · automática)")
+	return text

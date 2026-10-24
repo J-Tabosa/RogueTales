@@ -8,6 +8,7 @@ const Formation = preload("res://scripts/formation_layout.gd")
 const ArenaSkin = preload("res://scripts/ui_skin.gd")
 const Biomes = preload("res://scripts/biomes.gd")
 const CharacterEffects = preload("res://scripts/character_effects.gd")
+const UltVFX = preload("res://scripts/ultimate_vfx.gd")
 const UltimateArt = preload("res://scripts/ultimate_art.gd")
 const EnemyArt = preload("res://scripts/enemy_art.gd")
 const Enemy = preload("res://scripts/enemy.gd")
@@ -236,14 +237,21 @@ func attack(index: int = 0, target: int = -1, ultimate := false) -> bool:
 	var actor: AnimatedSprite2D = heroes[index]
 	tracks[index].time = 0.0
 	tracks[index].duration = maxf(1.7 if ultimate else 1.12, actor.get_animation_duration("attack") * (1.40 if ultimate else 1.20))
+	var id:String=simulation.actors[index].id
+	var fresh:bool=ultimate and simulation.expedition and UltVFX.supported(id)
+	tracks[index]["fresh_ult"]=fresh
+	if fresh:
+		tracks[index].duration=UltVFX.duration(id)
+		tracks[index]["effect_targets"]=UltVFX.Rules.targets(simulation.tactics,index,target)
+		tracks[index]["ally_targets"]=UltVFX.Rules.allies(simulation,index) if id=="rapunzel" else []
 	if ultimate:
 		intro_left = 0.55
 		if is_instance_valid(feedback): feedback.announce_ultimate(simulation.actors[index].id)
 	tracks[index].hit = false
 	tracks[index].target = target
 	tracks[index].ultimate = ultimate
-	actor.show_animation("attack")
-	actor.seek_animation("attack", 0)
+	actor.show_animation("ultimate" if fresh else "attack")
+	actor.seek_animation("ultimate" if fresh else "attack", 0)
 	attack_started.emit(index)
 	return true
 
@@ -268,7 +276,8 @@ func reset_effects() -> void:
 	effects.clear()
 	for index in tracks.size():
 		if simulation.actors[index].ult_pending:
-			simulation.actors[index].energy = 100.0
+			if simulation.expedition and simulation.actors[index].id=="alice":simulation.actors[index].card_charge=4
+			else:simulation.actors[index].energy = 100.0
 			simulation.actors[index].ult_pending = false
 		tracks[index].time = -1.0
 		heroes[index].position = tracks[index].home
@@ -288,7 +297,8 @@ func sync_health(actors: Array[Dictionary]) -> void:
 		unit_widgets[index].root.visible = actors[index].hp > 0
 		unit_widgets[index].health.max_value = actors[index].max_hp
 		unit_widgets[index].health.value = actors[index].hp
-		unit_widgets[index].energy.value = actors[index].energy
+		unit_widgets[index].energy.max_value = 4 if simulation.expedition and actors[index].id=="alice" else 100
+		unit_widgets[index].energy.value = actors[index].get("card_charge",0) if simulation.expedition and actors[index].id=="alice" else actors[index].energy
 		sync_conditions(unit_widgets[index],actors[index],index,false)
 		unit_widgets[index].text.text = ("%s/%s" if unit_widgets[index].panel.size.x<90 else "%s/%s PV") % [compact_hp(actors[index].hp),compact_hp(actors[index].max_hp)]
 		if actors[index].id=="alice":unit_widgets[index].text.text=CharacterEffects.SUITS[int(actors[index].get("suit",0))%4]+" "+unit_widgets[index].text.text
@@ -359,19 +369,22 @@ func _process(delta: float) -> void:
 		if target >= 0 and target < simulation.tactics.enemies.size() and simulation.tactics.enemies[target].hp <= 0 and not track.hit:
 			track.target = simulation.tactics.target_for(index)
 			target = track.target
-		var impact: float = actor.impact_ratio
-		var visual_phase:=phase
-		if track.ultimate and hero_id in ["mulan","joao"] and phase<impact: visual_phase=fposmod(phase/impact*(3.0 if hero_id=="mulan" else 5.0),1.0)
-		if track.ultimate and hero_id=="puss":visual_phase=1.0-phase
-		actor.seek_animation("attack",visual_phase*actor.get_animation_duration("attack"))
-		if actor.is_melee_attack() and not (actor.is_hair_attack() and track.ultimate):
-			if target >= 0:
-				var contact := foe_homes[target] + Vector2(-62, 8)
-				var dash := smoothstep(0, 1, phase / maxf(0.1, impact * 0.65)) if phase < impact else (1.0 - smoothstep(impact, 1, phase))
-				if track.ultimate and hero_id in ["mulan","joao"] and phase<impact: dash=0.3+sin(fposmod(phase/impact*(3.0 if hero_id=="mulan" else 5.0),1.0)*PI)*0.7
-				actor.position = track.home.lerp(contact, dash)
-				if track.ultimate and hero_id=="mulan" and phase>impact*0.65 and phase<impact:actor.position.y-=sin((phase-impact*0.65)/(impact*0.35)*PI)*human_height()*0.7
-				if track.ultimate and hero_id=="puss" and not reduced_motion:actor.rotation=TAU*smoothstep(0.15,impact,phase) if phase<impact else 0.0
+		var impact: float = UltVFX.impact(hero_id) if track.get("fresh_ult",false) else actor.impact_ratio
+		if track.get("fresh_ult",false):
+			UltVFX.pose(self,index,phase)
+		else:
+			var visual_phase:=phase
+			if track.ultimate and hero_id in ["mulan","joao"] and phase<impact: visual_phase=fposmod(phase/impact*(3.0 if hero_id=="mulan" else 5.0),1.0)
+			if track.ultimate and hero_id=="puss":visual_phase=1.0-phase
+			actor.seek_animation("attack",visual_phase*actor.get_animation_duration("attack"))
+			if actor.is_melee_attack() and not (actor.is_hair_attack() and track.ultimate):
+				if target >= 0:
+					var contact := foe_homes[target] + Vector2(-62, 8)
+					var dash := smoothstep(0, 1, phase / maxf(0.1, impact * 0.65)) if phase < impact else (1.0 - smoothstep(impact, 1, phase))
+					if track.ultimate and hero_id in ["mulan","joao"] and phase<impact: dash=0.3+sin(fposmod(phase/impact*(3.0 if hero_id=="mulan" else 5.0),1.0)*PI)*0.7
+					actor.position = track.home.lerp(contact, dash)
+					if track.ultimate and hero_id=="mulan" and phase>impact*0.65 and phase<impact:actor.position.y-=sin((phase-impact*0.65)/(impact*0.35)*PI)*human_height()*0.7
+					if track.ultimate and hero_id=="puss" and not reduced_motion:actor.rotation=TAU*smoothstep(0.15,impact,phase) if phase<impact else 0.0
 		if not track.hit and phase >= impact:
 			track.hit = true
 			# Emit before starting recovery: the controller applies exactly one result.
@@ -381,6 +394,7 @@ func _process(delta: float) -> void:
 		if track.time >= track.duration:
 			track.time = -1.0
 			actor.rotation=0.0
+			actor.scale=actor.get_meta("battle_scale")
 			actor.position = track.home
 			if track.alive:
 				actor.show_animation("idle")
@@ -450,9 +464,10 @@ func _draw() -> void:
 
 
 func draw_combat_effects(canvas: Node2D) -> void:
+	UltVFX.draw(self,canvas)
 	for index in tracks.size():
 		var track: Dictionary = tracks[index]
-		if track.time < 0 or track.hit or track.target < 0 or track.target >= foe_homes.size():
+		if track.get("fresh_ult",false) or track.time < 0 or track.hit or track.target < 0 or track.target >= foe_homes.size():
 			continue
 		var phase: float = track.time / track.duration
 		var id: String=simulation.actors[index].id
@@ -618,7 +633,11 @@ func damage_number(message: String, at: Vector2, tint: Color) -> void:
 
 
 func present_result(result: Dictionary, hostile: bool, attacker: int) -> void:
-	if hostile and not result.get("non_attack", false):
+	if hostile and result.get("blocked_spirit",false):
+		var guarded:int=result.get("blocked_target",result.get("target",-1))
+		if guarded>=0:
+			bursts.append({"id":"peter","spirit_return":true,"from":tracks[guarded].home+Vector2(0,-human_height()*.5),"at":foe_homes[attacker]+Vector2(0,-human_height()*.5),"left":.65,"duration":.65})
+	if hostile and not result.get("non_attack", false) and not result.get("blocked_spirit",false):
 		for target in result.get("targets", [result.get("target", -1)]):
 			if target >= 0 and target < tracks.size():
 				enemy_impacts.append({"at": tracks[target].home + Vector2(0, -human_height() * 0.45), "biome": Biomes.biome(stage), "left": 0.85})
@@ -635,7 +654,11 @@ func present_result(result: Dictionary, hostile: bool, attacker: int) -> void:
 		var at: Vector2 = tracks[target].home if hostile else foe_homes[target]
 		var amount: float = float(result.get("target_damage", {}).get(target, result.damage))
 		var text := "ESQUIVA" if result.get("target_evaded", {}).get(target, result.evaded) else ("CRÍTICO  %d" % int(amount) if result.get("critical", false) else str(int(amount)))
-		damage_number(text, at, Color("f8d38c") if not hostile else Color("ffb5b4"))
+		if amount>0 or result.get("evaded",false):damage_number(text, at, Color("f8d38c") if not hostile else Color("ffb5b4"))
+		elif not hostile and result.get("ultimate",false):
+			var id:String=simulation.actors[attacker].id
+			if id=="aladin":damage_number("SONO" if target in result.get("status_targets",[]) else "RESISTIU",at,Color("c5b0ef"))
+			elif id=="maria":damage_number("MALDIÇÃO −20%",at,Color("c5b0ef"))
 		if result.get("target_guarded", {}).get(target, result.get("guarded", false)):
 			damage_number("GUARDA", at + Vector2(0, 32), Color("8bcce4"))
 
@@ -668,6 +691,9 @@ func show_synergy(key: String) -> void:
 
 func ultimate_effect(index: int, result: Dictionary) -> void:
 	var id: String = simulation.actors[index].id
+	if simulation.expedition and UltVFX.supported(id) and tracks[index].get("fresh_ult",false) and tracks[index].time>=0:
+		tracks[index]["effect_targets"]=result.get("targets",[])
+		return
 	var points: Array[Vector2] = []
 	for at in result.get("targets", []): points.append(foe_homes[at] + Vector2(0, -human_height() * 0.5))
 	if id=="rapunzel":
@@ -682,6 +708,10 @@ func ultimate_effect(index: int, result: Dictionary) -> void:
 	if is_instance_valid(vfx): vfx.queue_redraw()
 
 func draw_burst(canvas: Node2D, burst: Dictionary) -> void:
+	if burst.get("spirit_return",false):
+		var t:float=1-burst.left/burst.duration
+		UltVFX.stamp(canvas,"peter",Vector2(burst.from).lerp(burst.at,smoothstep(0,.80,t)),Vector2.ONE*human_height()*.65,t,minf(1,(1-t)*6))
+		return
 	if CharacterEffects.IDS.has(str(burst.id)):
 		CharacterEffects.burst(self,canvas,burst)
 		return

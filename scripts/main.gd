@@ -300,7 +300,13 @@ func cache_portrait(id: String) -> void:
 	var bounds: Rect2
 	var scale: Vector2
 	var offset: Vector2
-	if ResourceLoader.exists(path):
+	var uploaded:="res://assets/ults_v2/%s_portrait.webp"%id
+	if ResourceLoader.exists(uploaded):
+		texture=load(uploaded)
+		bounds=Rect2(Vector2.ZERO,texture.get_size())
+		scale=Vector2.ONE*400.0/bounds.size.y*model.scale.y
+		offset=-Vector2(bounds.size.x*.5,bounds.size.y)
+	elif ResourceLoader.exists(path):
 		texture=preload("res://scripts/jpeg_alpha.gd").texture(path)
 		bounds=Rect2(Vector2.ZERO,texture.get_size())
 		scale=Vector2(preload("res://scripts/character_visuals.gd").width(id),1)*400.0/bounds.size.y*model.scale.y
@@ -1116,7 +1122,7 @@ func on_attack_hit(index: int) -> void:
 		hit = run.tactics.ultimate(index, track.target) if track.ultimate else run.hit_enemy(index, track.target)
 		if not hit.is_empty():
 			for target in hit.get("targets", []):
-				if not hit.get("evaded", false):
+				if not hit.get("evaded", false) and hit.get("target_damage",{}).get(target,hit.damage)>0:
 					arena.hurt_enemy(target)
 	else:
 		hit = run.hit_enemy(index)
@@ -1126,7 +1132,7 @@ func on_attack_hit(index: int) -> void:
 		return
 	if run.tactics != null:
 		arena.present_result(hit, false, index)
-	audio.play_effect("explosion" if run.actors[index].id == "scarlet" else "hit")
+	if hit.damage>0:audio.play_effect("explosion" if run.actors[index].id == "scarlet" else "hit")
 	if not str(hit.message).is_empty():
 		current_action(TaleCatalog.HEROES[run.actors[index].id].name)
 	record_result(hit, false, index, resources)
@@ -2242,7 +2248,7 @@ func process_tactical_combat(dt: float) -> void:
 		return
 	var index: int = entry.index
 	if entry.side == "ally":
-		var ultimate: bool = entry.get("ultimate", false) or (campaign.auto_ult and run.actors[index].energy >= 100)
+		var ultimate: bool = entry.get("ultimate", false) or ((campaign.auto_ult or (run.expedition and run.actors[index].id=="alice")) and run.tactics.ultimate_ready(index))
 		var target: int = run.tactics.target_for(index)
 		if arena.attack(index, target, ultimate):
 			if ultimate and not run.tactics.reserve_ultimate(index):
@@ -2253,6 +2259,14 @@ func process_tactical_combat(dt: float) -> void:
 			current_action(TaleCatalog.HEROES[run.actors[index].id].name)
 	else:
 		var intent: Dictionary = run.tactics.commit_intent(index) if run.expedition else {}
+		if intent.get("key","")=="sleep":
+			combat_flow.begin(entry)
+			var skipped:Dictionary=run.hit_party(index)
+			arena.damage_number("SONO · TURNO PERDIDO",arena.foe_homes[index]+Vector2(0,-arena.human_height()),Color("c5a4f1"))
+			push_battle_log(str(run.tactics.enemies[index].name)+" perdeu o turno por Sono")
+			combat_flow.complete()
+			update_hud()
+			return
 		var target: int = int(intent.target) if not intent.is_empty() else run.tactics.choose_target(run.tactics.enemies[index], run.actors)
 		if arena.begin_enemy_attack(index, target):
 			arena.enemy_track["support"] = str(intent.get("key", "")) in ["prepare", "banner", "stagger", "pull"] or (intent.get("key") == "copy" and intent.get("copy") == "rapunzel")
@@ -2285,7 +2299,7 @@ func try_ultimate(index: int) -> bool:
 	if state != "battle" or paused or run == null or run.tactics == null or index < 0 or index >= run.actors.size():
 		return false
 	var actor: Dictionary = run.actors[index]
-	if actor.hp <= 0 or actor.energy < 100 or actor.ult_pending or actor.get("ult_queued", false) or arena.tracks[index].time >= 0:
+	if actor.hp <= 0 or not run.tactics.ultimate_ready(index) or actor.ult_pending or actor.get("ult_queued", false) or arena.tracks[index].time >= 0:
 		return false
 	if arena.is_action_busy():
 		if combat_flow == null or not combat_flow.queue_ultimate(index):

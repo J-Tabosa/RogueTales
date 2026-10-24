@@ -69,7 +69,7 @@ func next_action() -> Dictionary:
 		if index < owner.actors.size():
 			var actor: Dictionary = owner.actors[index]
 			actor.ult_queued = false
-			if actor.hp > 0 and actor.energy >= 100:
+			if actor.hp > 0 and owner.tactics.ultimate_ready(index):
 				return {"side": "ally", "index": index, "ultimate": true, "manual": true}
 	if owner.expedition: return cooldown_action()
 	if order.is_empty():
@@ -95,7 +95,12 @@ func begin(entry: Dictionary) -> void:
 		unit(entry).ap = maxi(0, int(unit(entry).ap) - 1)
 
 func complete() -> void:
+	var finished:=active.duplicate()
 	active.clear()
+	var owner=owner_ref.get_ref()
+	if owner.expedition and finished.get("side","")=="ally":
+		var index:int=finished.index
+		if owner.actors[index].id=="alice" and owner.actors[index].hp>0 and owner.tactics.ultimate_ready(index):queue_ultimate(index)
 	waiting = 0.46
 
 func queue_ultimate(index: int) -> bool:

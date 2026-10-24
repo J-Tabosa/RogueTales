@@ -252,9 +252,9 @@ As suítes usam saves isolados. `biomes_formation.gd` valida as 48 identidades/1
 `godot --headless --path . --script tools/simulate_runs.gd` executa uma sondagem determinística de balanceamento com 20 seeds por protagonista. É uma aproximação das durações das animações, sem renderização; não substitui playtests. Esta atualização inclui apenas o projeto-fonte; gere os exports no Godot.
 
 
-### Android 0.8.1-teste
+### Android 0.9.0-teste
 
-O preset **Android Teste** exporta um APK ARM64, Android 7 ou superior, com o pacote `com.jtabosa.roguetales.preview.v07` e nome **RogueTales Teste 0.8.1**. Mantendo a mesma chave das versões 0.7 e 0.8, atualiza a instalação de teste e preserva o progresso. O pacote anterior sem o sufixo `.v07` continua separado. A chave de debug deve ser mantida fora do repositório e informada pelas variáveis `GODOT_ANDROID_KEYSTORE_DEBUG_PATH`, `GODOT_ANDROID_KEYSTORE_DEBUG_USER` e `GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD`.
+O preset **Android Teste** exporta um APK ARM64, Android 7 ou superior, com o pacote `com.jtabosa.roguetales.preview.v07` e nome **RogueTales Teste 0.9.0**. Mantendo a mesma chave das versões 0.7 e 0.8, atualiza a instalação de teste e preserva o progresso. O pacote anterior sem o sufixo `.v07` continua separado. A chave de debug deve ser mantida fora do repositório e informada pelas variáveis `GODOT_ANDROID_KEYSTORE_DEBUG_PATH`, `GODOT_ANDROID_KEYSTORE_DEBUG_USER` e `GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD`.
 
 A campanha tem 12 mundos e seis encontros por mundo, com chefe no sexto encontro. Os 48 inimigos dos oito biomas têm cobertura de seis identidades em cada mundo. O infinito só é oferecido após os 72 encontros, preservando os atributos da equipe. Checkpoints anteriores são convertidos do índice de encontro para mundo/fase. Builds normais também usam snapshots compactos e melhorias genéricas contínuas.
 
@@ -275,3 +275,7 @@ Reconstrução das artes: `GODOT=/caminho/godot python tools/build_art.py`. Deta
 As 22 artes individuais dos equipamentos e troféus ficam em `assets/items/`, com os prompts completos em `assets/items/ART_PROMPTS.json`; geração pelo ImageGen integrado. `arena_equipment_layout.gd` verifica nove contra nove com placas separadas, sobreposição parcial e alvos visíveis em PC/celular, os dois espaços equipados e o pop-up Aparência/Descrição. Para capturas renderizadas, execute sem `--headless` e acrescente `-- /caminho/capturas`.
 
 O HUD de combate e os cartões usam a fonte Nunito, distribuída sob OFL em `assets/fonts/`. Os nomes, PV, mana, ULT e estado ficam em caixas temáticas. O aviso de ação exibe apenas o nome de quem ataca; pontuação continua sendo calculada e aparece no resultado. A moldura dos avisos com retrato usa `assets/ui/ability_ribbon.png`, gerada com ImageGen a partir da referência de interface; o prompt está em `assets/ui/ability_ribbon_prompt.json`.
+
+### ULTs 0.9.0
+
+As onze ULTs do elenco enviado usam poses próprias e efeitos animados que viajam até seus alvos. Alice carrega quatro cartas sem mana; Peter acumula até três espíritos que anulam golpes; Aladin adormece e Maria amaldiçoa sem dano direto. Regras, valores e validação em [docs/ULTS.md](docs/ULTS.md).

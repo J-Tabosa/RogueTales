@@ -1,6 +1,6 @@
 extends RefCounted
 ## Width is shared by battle, gallery and editable scenes. Height stays independent.
-const WIDTH := {"mulan": 1.2, "aladin": 1.25, "ariel": 1.08, "alice": 1.2, "joao": 1.4, "maria": 1.25, "puss": 1.25}
+const WIDTH := {"puss": 1.25}
 static func width(id: String) -> float:
 	return float(WIDTH.get(id,1.0))
 static func height(id: String) -> float:

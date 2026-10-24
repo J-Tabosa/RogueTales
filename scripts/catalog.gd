@@ -13,18 +13,18 @@ const CLASSES = {
 	"artificer": {"name": "Artilheira", "rule": "Alcança ambas as linhas e prioriza a menor armadura.", "evasion": 0.08}
 }
 const HERO_TACTICS = {
-	"scarlet": {"class": "artificer", "row": "back", "ult": "Final explosivo", "detail": "Explode todos os inimigos (200%) e aplica queimadura."},
-	"rapunzel": {"class": "vanguard", "row": "front", "ult": "Coroa de fios", "detail": "Cura 35% dos PV e concede 20% de escudo a todas as aliadas vivas."},
-	"snow_white": {"class": "ranger", "row": "back", "ult": "Maçã da sentença", "detail": "Disparo de 400% na retaguarda e veneno fortalecido."},
-	"mulan": {"class": "assassin", "row": "middle", "ult": "Dragão de jade", "detail": "Corte de 320% na linha de frente e escudo de 35% para si."},
-	"ariel": {"class": "mage", "row": "back", "ult": "Sinfonia abissal", "detail": "Maré de 160% em todos; cura 20% do grupo e limpa os efeitos negativos e desacelera por 5 s."},
-	"joao": {"class": "vanguard", "row": "front", "ult": "Cinco estocadas", "detail": "Cinco estocadas de 84% no alvo da vanguarda."},
-	"maria": {"class": "assassin", "row": "middle", "ult": "Brinde sombrio", "detail": "Onda sombria em todos (280%); reduz a armadura em 20% por 6 s."},
-	"alice": {"class": "ranger", "row": "back", "ult": "Cortejo das cartas", "detail": "Cartas mágicas atingem todos os inimigos (200%)."},
+	"scarlet": {"class": "artificer", "row": "back", "ult": "Chuva de pólvora", "detail": "Lança a cesta como catapulta. Bombas caem em todos os inimigos (220%) e aplicam fogo."},
+	"rapunzel": {"class": "vanguard", "row": "front", "ult": "Raízes protetoras", "detail": "Protege a si e mais dois aliados com raízes de cabelo e escudo de 30% dos PV de cada um."},
+	"snow_white": {"class": "ranger", "row": "back", "ult": "Quebra-mundo", "detail": "Carrega a picareta e desfere um único golpe de 800% em um alvo, rachando o chão."},
+	"mulan": {"class": "assassin", "row": "middle", "ult": "Vendaval de jade", "detail": "Gira rapidamente e lança cortes horizontais nos inimigos da frente (320%)."},
+	"ariel": {"class": "mage", "row": "back", "ult": "Maré de fúria", "detail": "Surfa em uma onda gigante que atinge todos os inimigos (200%)."},
+	"joao": {"class": "vanguard", "row": "front", "ult": "Seis saudações", "detail": "Dash seguido de seis estocadas de 70% em um alvo (420% no total)."},
+	"maria": {"class": "assassin", "row": "middle", "ult": "Caveira negra", "detail": "Sem dano direto. A caveira amaldiçoa todos: −20% de defesa e dano de ataques por 8 s."},
+	"alice": {"class": "ranger", "row": "back", "ult": "Cortejo de cartas", "detail": "Sem mana: após quatro ataques, cartas atravessam a linha horizontal do alvo (220%)."},
 	"puss": {"class": "vanguard", "row": "front", "ult": "Nove vidas, um corte", "detail": "Corte de 360% na vanguarda e escudo de 25% para si."},
-	"matches": {"class": "mage", "row": "back", "ult": "Último fósforo", "detail": "Círculos de fogo atingem todos os inimigos (200%) e queimam por 5 s."},
-	"peter": {"class": "assassin", "row": "middle", "ult": "Três chamas guardiãs", "detail": "Três chamas concedem 30% de escudo e retaliam os próximos três ataques."},
-	"aladin": {"class": "mage", "row": "back", "ult": "Três desejos", "detail": "Magia de 200% em todos; cura e escudo de 15% para o grupo."}
+	"matches": {"class": "mage", "row": "back", "ult": "Dragão de brasa", "detail": "Fogo orbita a Vendedora, vira um dragão e atinge todos (200%); queimadura de 25%/s por 6 s."},
+	"peter": {"class": "assassin", "row": "middle", "ult": "Guarda do Nunca", "detail": "Invoca um espírito, até três. Cada ataque consome um, anula o golpe e devolve seu dano ao agressor."},
+	"aladin": {"class": "mage", "row": "back", "ult": "Desejo sonolento", "detail": "Sem dano: uma nuvem roxa tem 50% de chance por inimigo de aplicar Sono e impedir o próximo turno."}
 }
 const HERO_SCENES = {
 	"scarlet": preload("res://scenes/heroes/scarlet.tscn"),

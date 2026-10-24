@@ -22,16 +22,16 @@ func checks() -> void:
 	one._process(2)
 	assert(one.frame == 0 and not one.is_playing() and one.idle_weight == 0)
 	one._start_idle_variation(HeroScript.IdleState.BLINK)
-	await create_timer(0.4).timeout
+	await create_timer(one.get_animation_duration("idle_blink")+.05).timeout
 	assert(one.is_idle_resting())
 	one.show_animation("walk")
 	one.set_frame_and_progress(4, 0.5)
 	one._process(0.1)
-	assert(is_equal_approx(one.material.get_shader_parameter("walk_phase"), 4.5 / 16.0 * TAU))
+	assert(is_equal_approx(one.material.get_shader_parameter("walk_phase"), 4.5 / one.sprite_frames.get_frame_count("walk") * TAU))
 	one.sprite_frames.set_animation_speed("attack", 5)
 	one.seek_animation("attack", 1.25)
 	assert(one.frame == 6 and one.sprite_frames.get_animation_speed("attack") == 5)
-	assert(two.sprite_frames.get_animation_speed("attack") == 10)
+	assert(two.sprite_frames.get_animation_speed("attack") == 12)
 	one.free()
 	two.free()
 	# Save roundtrip, backup recovery, validation and no upgrades during expeditions.

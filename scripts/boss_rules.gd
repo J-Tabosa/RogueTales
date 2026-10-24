@@ -77,6 +77,8 @@ static func plan(tactics, index: int) -> Dictionary:
 	if index < 0 or index >= tactics.enemies.size(): return {}
 	var foe: Dictionary = tactics.enemies[index]
 	if foe.hp <= 0: return {}
+	if int(foe.get("sleep_turns",0))>0:
+		return {"key":"sleep","title":"Sono","glyph":"magic","target":-1,"targets":[],"power":0.0,"magical":false,"locked":false}
 	var stored: Dictionary = foe.get("intent", {})
 	if stored.get("locked", false): return stored
 	var owner = tactics.run()
@@ -133,6 +135,10 @@ static func execute(tactics, index: int) -> Dictionary:
 	var intent := plan(tactics, index).duplicate(true)
 	if intent.is_empty() or not owner.alive(): return {}
 	var foe: Dictionary = tactics.enemies[index]
+	if intent.key=="sleep":
+		foe.sleep_turns=maxi(0,int(foe.get("sleep_turns",0))-1)
+		foe.intent={}
+		return {"target":-1,"targets":[],"target_damage":{},"damage":0.0,"evaded":false,"enemy":index,"message":"Sono · turno perdido","non_attack":true,"sleep_skipped":true}
 	foe.action_count = int(foe.get("action_count", 0)) + 1
 	foe.intent = {}
 	if intent.key == "attack": return Abilities.incoming(tactics, index, int(intent.target))
@@ -158,7 +164,7 @@ static func execute(tactics, index: int) -> Dictionary:
 		var multiplier: float = {"scarlet": 2.0, "snow_white": 4.0, "mulan": 3.2, "ariel": 1.6, "joao": 4.2, "maria": 2.8, "alice": 2.0, "puss": 3.6, "peter": 3.0, "matches": 4.0, "aladin": 2.0}.get(id, 1.0)
 		for at in targets:
 			var hit := strike(tactics, foe, at, multiplier * 0.65, id in ["scarlet", "alice", "ariel", "aladin"], result)
-			if hit.is_empty() or hit.evaded: continue
+			if hit.is_empty() or hit.evaded or hit.get("blocked_spirit",false): continue
 			var actual: int = hit.target
 			if id in ["scarlet", "matches", "snow_white", "maria"]:
 				owner.actors[actual]["hostile_burn" if id in ["scarlet", "matches"] else "hostile_poison"] = foe.damage * 0.10
@@ -173,7 +179,7 @@ static func execute(tactics, index: int) -> Dictionary:
 	else:
 		for at in targets:
 			var hit:=strike(tactics, foe, at, float(intent.power), bool(intent.magical), result)
-			if not hit.is_empty() and not hit.evaded:
+			if not hit.is_empty() and not hit.evaded and not hit.get("blocked_spirit",false):
 				var victim: Dictionary=owner.actors[hit.target]
 				match str(intent.get("secret_effect","")):
 					"burn","poison":
@@ -200,6 +206,9 @@ static func strike(tactics, foe: Dictionary, at: int, power: float, magic: bool,
 	foe.damage = old_damage
 	foe["class"] = old_class
 	if not hit.is_empty():
+		if hit.get("blocked_spirit",false):
+			result["blocked_spirit"]=true
+			result["blocked_target"]=hit.target
 		if not result.has("target_evaded"): result["target_evaded"] = {}
 		if not result.has("target_guarded"): result["target_guarded"] = {}
 		result.target_evaded[hit.target] = hit.evaded

@@ -46,6 +46,8 @@ static func attack(tactics, index: int, requested: int) -> Dictionary:
 	var owner = tactics.run()
 	if index < 0 or index >= owner.actors.size() or owner.actors[index].hp <= 0: return {}
 	var actor: Dictionary = owner.actors[index]
+	if actor.id=="alice":
+		actor["card_charge"]=mini(4,int(actor.get("card_charge",0))+1)
 	var valid: Array = tactics.eligible(actor, tactics.enemies)
 	var target: int = requested if valid.has(requested) else tactics.target_for(index)
 	if target < 0: return {}
@@ -77,7 +79,7 @@ static func attack(tactics, index: int, requested: int) -> Dictionary:
 	hit.merge({"target": target, "targets": [target], "critical": critical, "message": "Esquiva" if hit.evaded else Content.KITS[actor.id][0]})
 	var damages := {target: hit.damage}
 	var healed := 0.0
-	actor.energy = minf(100, actor.energy + (8.0 if hit.evaded else 18.0 + actor.energy_bonus))
+	actor.energy = 0.0 if actor.id=="alice" else minf(100, actor.energy + (8.0 if hit.evaded else 18.0 + actor.energy_bonus))
 	if hit.evaded:
 		if foe["class"] == "assassin" and int(foe.get("pp", 0)) > 0:
 			foe.pp -= 1
@@ -154,10 +156,8 @@ static func attack(tactics, index: int, requested: int) -> Dictionary:
 						if at != target and tactics.enemies[at].hp > 0:
 							extra(tactics, at, actor.damage * 0.75, true, damages)
 							if not has(actor, "double"): break
-				actor.suit = (suit + 1) % 4
-				if actor.suit == 0 and has(actor, "wild"):
+				if (suit+1)%4 == 0 and has(actor, "wild"):
 					actor.pp = mini(2, actor.pp + 1)
-					actor.energy = minf(100, actor.energy + 25)
 				hit.message = ["Espadas", "Copas", "Ouros", "Paus"][suit]
 			"puss":
 				actor.charged = not charged
@@ -202,6 +202,9 @@ static func attack(tactics, index: int, requested: int) -> Dictionary:
 					break
 		if actor.leech > 0: healed += heal(owner, actor, actor.leech)
 	if not hit.evaded:Modifiers.after(tactics,actor,damages.keys(),damages)
+	if actor.id=="alice":
+		actor.suit=(suit+1)%4
+		actor.energy=0.0
 	hit["target_damage"] = damages
 	hit.targets = damages.keys()
 	hit.damage = 0.0
@@ -232,11 +235,19 @@ static func incoming(tactics, enemy_index: int, requested := -1) -> Dictionary:
 	var before_shield: float = actor.shield
 	var focused: bool = enemy["class"] == "mage" and int(enemy.get("pp", 0)) > 0
 	if focused: enemy.pp -= 1
-	var hit: Dictionary = tactics.deal(actor, enemy.damage * tactics.pressure() * (0.75 if protected else 1.0) * (1.2 if focused else 1.0), enemy["class"] == "mage")
+	var incoming_damage:float=enemy.damage*tactics.pressure()*(0.75 if protected else 1.0)*(1.2 if focused else 1.0)*(0.8 if float(enemy.get("curse_left",0))>0 else 1.0)
+	if actor.id=="peter" and int(actor.get("guardian_spirits",0))>0:
+		actor.guardian_spirits-=1
+		var reflected:Dictionary=tactics.deal(enemy,incoming_damage,true,true)
+		tactics.notify(actor.id,"Guarda do Nunca","Um espírito anulou o golpe e devolveu %d de dano"%ceili(reflected.damage))
+		deaths(tactics)
+		tactics.sync_totals()
+		return {"target":target,"enemy":enemy_index,"damage":0.0,"absorbed":0.0,"evaded":false,"guarded":true,"blocked_spirit":true,"counter":reflected.damage,"message":"Espírito guardião"}
+	var hit: Dictionary = tactics.deal(actor, incoming_damage, enemy["class"] == "mage")
 	if focused: hit["focused"] = true
 	if not hit.evaded and actor.hp > 0 and enemy["class"] == "ranger" and int(enemy.get("pp", 0)) > 0:
 		enemy.pp -= 1
-		hit.damage += tactics.deal(actor, enemy.damage * tactics.pressure() * 0.25, false, true).damage
+		hit.damage += tactics.deal(actor, incoming_damage * 0.25, false, true).damage
 		hit["followup"] = true
 	hit["target"] = target
 	hit["enemy"] = enemy_index
@@ -270,10 +281,9 @@ static func incoming(tactics, enemy_index: int, requested := -1) -> Dictionary:
 				for foe in tactics.enemies:
 					if foe != enemy: Modifiers.venom(actor,foe,actor.damage*0.10)
 		elif actor.id == "alice" and actor.pp > 0:
-			tactics.notify(actor.id, Content.KITS[actor.id][2], "Avançou o naipe e ganhou 25 mana")
+			tactics.notify(actor.id, Content.KITS[actor.id][2], "Preparou um escudo de cartas")
 			actor.pp -= 1
-			actor.suit = (int(actor.get("suit", 0)) + 1) % 4
-			actor.energy = minf(100, actor.energy + 25)
+			actor.shield=minf(actor.max_hp,actor.shield+actor.max_hp*.08)
 		if owner.blessing == "thorns" and hit.damage > 0:
 			hit["counter"] = float(hit.get("counter", 0.0)) + tactics.deal(enemy, hit.damage * 0.25, true, true).damage
 		# Survival effects happen once per run, before any rescue can heal the unit.
@@ -306,11 +316,11 @@ static func incoming(tactics, enemy_index: int, requested := -1) -> Dictionary:
 					support.pp -= 1
 					tactics.notify(support.id, Content.KITS[support.id][2], "+12 mana para a equipe")
 					for ally in owner.actors:
-						if ally.hp > 0: ally.energy = minf(100, ally.energy + 12)
+						if ally.hp > 0 and ally.id!="alice": ally.energy = minf(100, ally.energy + 12)
 					if has(support, "reserve"): shield_group(owner, 0.08)
 					break
 	Modifiers.incoming(tactics,actor,enemy,hit)
-	actor.energy = minf(100, actor.energy + hit.damage / actor.max_hp * 80)
+	actor.energy = 0.0 if actor.id=="alice" else minf(100, actor.energy + hit.damage / actor.max_hp * 80)
 	deaths(tactics)
 	tactics.sync_totals()
 	return hit
@@ -350,7 +360,8 @@ static func deaths(tactics) -> void:
 static func basic(tactics, actor: Dictionary, target: int) -> Dictionary:
 	var critical: bool = tactics.run().rng.randf() < actor.crit
 	var hit: Dictionary = tactics.deal(tactics.enemies[target], actor.damage * (2.0 if critical else 1.0), actor["class"] in ["mage", "artificer"])
-	actor.energy = minf(100, actor.energy + (8 if hit.evaded else 18 + actor.energy_bonus))
+	actor.energy = 0.0 if actor.id=="alice" else minf(100, actor.energy + (8 if hit.evaded else 18 + actor.energy_bonus))
+	if actor.id=="alice":actor.suit=(int(actor.get("suit",0))+1)%4
 	if not hit.evaded:
 		actor.hits += 1
 		if TaleCatalog.NEW_HERO_IDS.has(actor.id):
