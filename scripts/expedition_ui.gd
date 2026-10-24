@@ -6,6 +6,8 @@ const TeamEvents = preload("res://scripts/team_events.gd")
 const BossRules = preload("res://scripts/boss_rules.gd")
 const Blessings = preload("res://scripts/hero_blessings.gd")
 const Equipment = preload("res://scripts/equipment.gd")
+const EffectBadges = preload("res://scripts/effect_badges.gd")
+const SealedBlessing = preload("res://scripts/sealed_blessing.gd")
 var chosen_blessing := "blessing:scarlet:0"
 var chosen_endless := false
 var gallery_building := false
@@ -23,6 +25,8 @@ func is_expedition() -> bool:
 
 func label(parent: Node, text: String, rect: Rect2, font_size := 18, color := Color("eeeae2")) -> Label:
 	var node := super.label(parent, text, rect, font_size, color)
+	BattleType.apply(node,font_size>=20)
+	node.size=rect.size
 	if color.get_luminance() < 0.55:
 		node.add_theme_color_override("font_shadow_color",Color.TRANSPARENT)
 		node.add_theme_color_override("font_outline_color",Color.TRANSPARENT)
@@ -86,27 +90,50 @@ func show_map() -> void:
 	label(hero, "Selecionar Personagem", Rect2(123, 11, 350, 21), 10, GOLD)
 	label(hero, TaleCatalog.HEROES[selected_hero].name, Rect2(123, 38, 350, 35), 22)
 	label(hero, "%s · trocar →" % TaleCatalog.hero_class_name(selected_hero), Rect2(123, 81, 350, 26), 14, MUTED)
-	var inner := scroll_area(381,321,4*156)
+	var inner := scroll_area(381,321,4*140)
+	inner.get_parent().name="BlessingList"
 	for i in 4:
 		var key:=Blessings.id_for(selected_hero,i)
 		var data:=Blessings.data(key)
 		var owned:=Blessings.unlocked(campaign,key)
-		var card:=button(inner,"",Rect2(0,i*156,476,146),choose_blessing.bind(key),chosen_blessing==key and owned)
-		label(card,("LIBERADA · " if owned else "BLOQUEADA · ")+data.title,Rect2(14,9,448,30),18,GOLD)
-		label(card,data.detail,Rect2(14,44,448,53),14,MUTED)
-		label(card,Blessings.mission(campaign,key),Rect2(14,103,448,36),12,Color("9dc5a5") if owned else Color("d7b18c"))
+		var card:=button(inner,"",Rect2(0,i*140,476,130),choose_blessing.bind(key),chosen_blessing==key and owned)
+		card.set_meta("blessing_id",key)
+		card.set_meta("locked",not owned)
+		if owned:
+			label(card,data.title,Rect2(20,12,416,30),20,GOLD)
+			label(card,data.detail,Rect2(20,48,416,40),14,Color("cad5c1"))
+			label(card,"SELECIONADA" if chosen_blessing==key else "TOQUE PARA ESCOLHER",Rect2(20,97,416,20),10,Color("8fba9d"))
+		else:
+			for child in card.get_children():child.queue_free()
+			card.disabled=true
+			var seal:=Control.new()
+			seal.set_script(SealedBlessing)
+			seal.size=card.size
+			seal.mouse_filter=Control.MOUSE_FILTER_IGNORE
+			card.add_child(seal)
+			icon(card,"lock",Rect2(218,25,40,40),Color("c5b27e"))
+			var condition:=label(card,blessing_condition(key),Rect2(48,74,380,38),14,Color("c7c2b2"))
+			condition.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
 
-	label(page, "Ouro, habilidades e convidados pertencem a esta tentativa.\nDesbloqueios e memórias continuam depois dela.", Rect2(24, 724, 492, 55), 14, MUTED)
+	var note:=label(page, "Memórias e desbloqueios permanecem entre expedições.", Rect2(24, 722, 492, 44), 13, MUTED)
+	register_layout(note,"bottom")
 	button(page, "Iniciar expedição  →", Rect2(24, 798, 492, 60), begin_expedition, true)
 	navigation("map")
 
 func choose_blessing(id: String) -> void:
 	if not Blessings.unlocked(campaign,id):
-		modal("Bênção pessoal bloqueada",Blessings.data(id).detail+"\n\n"+Blessings.mission(campaign,id))
+		modal("Bênção pessoal bloqueada",blessing_condition(id))
 		button(overlay,"Voltar",Rect2(32,680,476,56),show_map,true)
 		return
 	chosen_blessing=id
 	show_map()
+
+func blessing_condition(id: String) -> String:
+	match int(Blessings.data(id).get("index",0)):
+		1:return "Desbloqueia ao vencer 12 fases com este herói · %d/12"%mini(12,int(campaign.hero_milestones.get(selected_hero,{}).get("rooms",0)))
+		2:return "Desbloqueia ao vencer o chefe secreto com este herói"
+		3:return "Desbloqueia ao concluir os 12 mundos com este herói"
+	return "Disponível desde o início"
 
 func set_run_mode(infinite: bool) -> void:
 	if not campaign.checkpoint.is_empty(): return
@@ -339,24 +366,64 @@ func select_route(id: String) -> void:
 func show_run_shop() -> void:
 	state="shop"
 	clear_page()
-	header("Mercador de histórias","%d ouro · equipe %d/%d · até 3 por posição."%[run.run_gold,run.actors.size(),run.party_capacity])
+	header("Mercador de histórias","%s ouro   ·   Equipe %d/%d"%[format_gold(run.run_gold),run.actors.size(),run.party_capacity])
 	var keys:Array[String]=["capacity"]
 	keys.append_array(run.shop_stock)
-	var inner:=scroll_area(196,548,keys.size()*154)
+	var inner:=scroll_area(190,548,keys.size()*150)
+	inner.get_parent().name="ShopList"
 	for index in keys.size():
 		var key:String=keys[index]
-		var data:Dictionary={"title":"Expandir equipe · +1 espaço","detail":"Capacidade %d → %d. Até 9 no total; cada posição continua com até 3 personagens."%[run.party_capacity,mini(9,run.party_capacity+1)]} if key=="capacity" else {"title":"Frasco de recomeço","detail":"Cure 35% dos PV e levante um aliado com 20%."} if key=="potion" else TaleCatalog.offer_data(key)
+		var data:=supply_data(key)
 		var cost:int=run.supply_cost(key)
 		var bought:bool=run.shop_bought.has(key)
-		var card:=button(inner,"",Rect2(0,index*154,476,144),buy_run_supply.bind(key))
+		var card:=button(inner,"",Rect2(0,index*150,476,140),buy_run_supply.bind(key))
 		card.set_meta("shop_item",key)
 		card.disabled=bought or cost<0 or run.run_gold<cost
-		label(card,data.title,Rect2(14,9,448,32),21,GOLD)
-		label(card,data.detail,Rect2(14,48,448,61),14,MUTED)
-		label(card,"EQUIPE NO MÁXIMO" if cost<0 else "COMPRADO" if bought else "%d OURO"%cost,Rect2(14,113,448,23),12,GOLD)
-	button(page,"Equipar itens · %d no inventário"%run.inventory.size(),Rect2(24,756,492,48),show_equipment.bind(0))
+		for child in card.get_children():child.queue_free()
+		for skin in ["normal","disabled"]:card.add_theme_stylebox_override(skin,box(Color("142f27"),Color("486047"),12))
+		if key.begins_with("item:"):
+			ItemArt.picture(card,key.trim_prefix("item:"),Rect2(12,20,82,82))
+		else:
+			icon(card,EffectBadges.symbol(key),Rect2(28,35,48,48),GOLD)
+		var title:=label(card,data.title,Rect2(108,12,306,42),19,GOLD)
+		title.set_meta("shop_title",true)
+		effect_badges(card,EffectBadges.for_supply(key,run.party_capacity),Vector2(108,61),340)
+		label(card,"EQUIPE COMPLETA" if cost<0 else "COMPRADO" if bought else "%d OURO"%cost,Rect2(108,110,296,21),12,Color("92b99d") if bought else GOLD)
+		var info:=button(card,"i",Rect2(422,90,42,40),show_supply_details.bind(key))
+		info.tooltip_text="Ver todos os efeitos"
+	var inventory:=button(page,"Equipar itens · %d na bolsa"%run.inventory.size(),Rect2(24,752,492,48),show_equipment.bind(0))
+	register_layout(inventory,"bottom")
 	button(page,"Seguir viagem →",Rect2(24,818,316,56),leave_run_shop,true)
 	button(page,"Salvar e sair",Rect2(356,818,160,56),leave_battle)
+
+func supply_data(key: String) -> Dictionary:
+	if key=="capacity":return {"title":"Expandir equipe","detail":"Capacidade %d → %d. Até 9 no total, com no máximo 3 personagens por posição."%[run.party_capacity,mini(9,run.party_capacity+1)]}
+	if key=="potion":return {"title":"Frasco de recomeço","detail":"Cura 35% dos PV de todos os aliados e levanta um aliado com 20% dos PV."}
+	return TaleCatalog.offer_data(key)
+
+func effect_badges(parent: Node, entries: Array, at: Vector2, available: float) -> void:
+	var x:=at.x
+	for entry in entries:
+		var width:=BattleType.font().get_string_size(entry.text,HORIZONTAL_ALIGNMENT_LEFT,-1,12).x+34
+		if x+width>at.x+available:break
+		var badge:=Panel.new()
+		badge.position=Vector2(x,at.y)
+		badge.size=Vector2(width,30)
+		badge.mouse_filter=Control.MOUSE_FILTER_IGNORE
+		badge.set_meta("effect_badge",entry.glyph)
+		badge.add_theme_stylebox_override("panel",box(Color("0b231e"),Color("3e5947"),6))
+		parent.add_child(badge)
+		icon(badge,entry.glyph,Rect2(6,6,18,18),Color(entry.get("color","e2c487")))
+		label(badge,entry.text,Rect2(29,2,width-33,26),12,Color("cbd6bf"))
+		x+=width+7
+
+func show_supply_details(key: String) -> void:
+	var data:=supply_data(key)
+	modal(data.title,"SUPRIMENTO" if key in ["capacity","potion"] else "EQUIPAMENTO" if key.begins_with("item:") else "RELÍQUIA")
+	if key.begins_with("item:"):ItemArt.picture(overlay,key.trim_prefix("item:"),Rect2(180,388,180,160))
+	else:icon(overlay,EffectBadges.symbol(key),Rect2(230,410,80,80))
+	label(overlay,data.detail,Rect2(40,564,460,120),18)
+	button(overlay,"Voltar ao mercador",Rect2(32,740,476,56),show_run_shop,true)
 
 func buy_run_supply(id: String) -> void:
 	if state == "shop" and run.buy_supply(id):
@@ -516,6 +583,8 @@ func update_hud() -> void:
 		power_label.text = ""
 		if is_instance_valid(battle_gold):battle_gold.text="%s OURO"%format_gold(run.run_gold)
 		stage_label.text = ("INFINITO · FASE %d · %s"%[run.rooms_cleared+1,TaleCatalog.STAGES[run.stage].name]) if run.endless else "ESTÁGIO %02d · FASE %d/6 · %s" % [run.stage + 1,run.phase+1,TaleCatalog.STAGES[run.stage].name]
+		BattleType.fit_line(stage_label,20 if desktop else 14)
+		BattleType.fit_line(battle_gold,15)
 		for i in mini(ult_buttons.size(), run.actors.size()):
 			var actor: Dictionary = run.actors[i]
 			ult_buttons[i].tooltip_text = ("HABILIDADE SELADA · destrua seu fio para libertá-la.\n\n" if actor.get("sealed", false) else "") + "%s (automática)\n%s\n\n%s (passiva · 6 s)\n%s\n\nULT: %s" % [Content.KITS[actor.id][0], Content.KITS[actor.id][1], Content.KITS[actor.id][2], Content.KITS[actor.id][3], TaleCatalog.HERO_TACTICS[actor.id].ult]
@@ -525,8 +594,7 @@ func navigation(active: String) -> void:
 	var entries := [["menu", "Início", "home", show_menu], ["map", "Run", "map", show_map], ["heroes", "Heróis", "heroes", show_heroes], ["journal", "Diário", "book", show_journal], ["profile", "Perfil", "profile", show_profile]]
 	for i in entries.size():
 		var entry: Array = entries[i]
-		var item := button(page, "", Rect2(22 + i * 100, 887, 96, 58), entry[3])
-		item.add_theme_stylebox_override("normal", box(Color("695b35") if active == entry[0] else Color(0, 0, 0, 0), Color(0, 0, 0, 0), 12))
+		var item := button(page, "", Rect2(22 + i * 100, 887, 96, 58), entry[3],active == entry[0])
 		icon(item, entry[2], Rect2(37, 6, 22, 22), GOLD if active == entry[0] else MUTED)
 		label(item, entry[1], Rect2(0, 32, 96, 22), 11, GOLD if active == entry[0] else MUTED).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
@@ -559,54 +627,63 @@ func show_heroes() -> void:
 	clear_page()
 	page.size = Vector2(logical_width, logical_height)
 	page.get_child(0).size = page.size
-	gradient(page, Rect2(0, 0, logical_width, logical_height), Color("3f3030"), Color("171d2c"))
+	gradient(page, Rect2(0, 0, logical_width, logical_height), Color("18392e"), Color("0c1c1a"))
 	var w := logical_width
 	label(page, "O LIVRO DOS VIAJANTES", Rect2(24, 20, w - 120, 28), 12, GOLD)
-	label(page, "Heróis dos contos", Rect2(24, 62, w - 120, 54), 32)
+	label(page, "Heróis dos contos", Rect2(24, 57, w - 48, 54), 32)
 	button(page, "Voltar", Rect2(w - 112, 23, 88, 44), show_menu)
-	label(page, "DEBUG · 12 visíveis · progresso da coleção preservado." if debug_enabled and debug_roster_all else "%02d / 12 revelados · os encontros escrevem sua coleção." % campaign.unlocked.size(), Rect2(24, 125, w - 48, 45), 15, MUTED)
-	button(page, "Todos", Rect2(24, 182, 154, 44), filter_roster.bind("all"), roster_filter == "all")
-	button(page, "Revelados", Rect2(190, 182, 154, 44), filter_roster.bind("owned"), roster_filter == "owned")
+	label(page, "DEBUG · 12 visíveis · progresso da coleção preservado." if debug_enabled and debug_roster_all else "%02d / 12 revelados · arraste para explorar" % campaign.unlocked.size(), Rect2(24, 115, w - 48, 35), 14, MUTED)
+	button(page, "Todos", Rect2(24, 160, 154, 44), filter_roster.bind("all"), roster_filter == "all")
+	button(page, "Revelados", Rect2(190, 160, 154, 44), filter_roster.bind("owned"), roster_filter == "owned")
 	var ids: Array = TaleCatalog.HEROES.keys().filter(func(id): return roster_filter == "all" or hero_revealed(id))
 	if not ids.has(selected_hero) and not ids.is_empty(): selected_hero = ids[0]
 	gallery_scroll = ScrollContainer.new()
 	gallery_scroll.set_script(preload("res://scripts/hero_carousel.gd"))
-	gallery_scroll.position = Vector2(24, 246)
-	gallery_scroll.size = Vector2(w - 48, 416)
+	var gallery_height:=456.0 if desktop else minf(620,logical_height-432)
+	var card_width:=320.0 if desktop else 410.0
+	var card_height:=gallery_height-16
+	var pitch:=card_width+16
+	gallery_scroll.position = Vector2(24, 220)
+	gallery_scroll.size = Vector2(w - 48, gallery_height)
+	gallery_scroll.set_meta("gallery_height",gallery_height)
 	gallery_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	gallery_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	gallery_scroll.scroll_deadzone = 12
 	page.add_child(gallery_scroll)
 	var strip := Control.new()
-	strip.custom_minimum_size = Vector2(ids.size() * 282, 400)
+	strip.custom_minimum_size = Vector2(ids.size() * pitch-16, card_height)
 	gallery_scroll.add_child(strip)
 	for i in ids.size():
 		var id: String = ids[i]
 		var owned := hero_revealed(id)
 		var selected := selected_hero == id
-		var card := button(strip, "", Rect2(i * 282, 0, 268, 400), select_gallery_hero.bind(id))
+		var card := button(strip, "", Rect2(i * pitch, 0, card_width, card_height), select_gallery_hero.bind(id),selected)
 		card.set_meta("hero_id", id)
 		card.set_meta("silhouette", not owned)
 		card.clip_contents = true
-		card.add_theme_stylebox_override("normal", box(Color("e3cf9e") if selected else Color("c9b58d"), GOLD if selected else Color("806747"), 4))
-		card.add_theme_stylebox_override("hover", box(Color("eddbb3"), GOLD, 4))
-		gradient(card, Rect2(4, 4, 260, 330), Color("f4e4be"), Color("b79b78"))
-		banner_portrait(card, id, Rect2(8, 20, 252, 294), not owned, true)
-		label(card, "%02d" % (i + 1), Rect2(14, 12, 236, 21), 11, Color("746045"))
-		label(card, str(TaleCatalog.HEROES[id].get("short_name", TaleCatalog.HEROES[id].name)) if owned else "???", Rect2(14, 321, 240, 38), 21, Color("332c30")).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		label(card, TaleCatalog.hero_class_name(id) if owned else "CONTO NÃO REVELADO", Rect2(8, 369, 252, 23), 11, Color("5f5144")).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		card.add_theme_stylebox_override("normal", box(Color("092b22") if selected else Color("1c3d31"), GOLD if selected else Color("5b6e51"), 10))
+		gradient(card, Rect2(8, 8, card_width-16, card_height-88), Color("42664c"), Color("122f27"))
+		banner_portrait(card, id, Rect2(12, 24, card_width-24, card_height-114), not owned, true)
+		label(card, "%02d" % (i + 1), Rect2(20, 14, card_width-40, 21), 11, GOLD)
+		label(card, str(TaleCatalog.HEROES[id].get("short_name", TaleCatalog.HEROES[id].name)) if owned else "???", Rect2(16, card_height-76, card_width-32, 36), 24).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label(card, TaleCatalog.hero_class_name(id) if owned else "CONTO NÃO REVELADO", Rect2(16, card_height-36, card_width-32, 22), 12,Color("a7bea2")).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var owned := hero_revealed(selected_hero)
 	var note: String = "%s · %s\nAtiva: %s" % [TaleCatalog.HEROES[selected_hero].name, TaleCatalog.hero_class_name(selected_hero), Content.KITS[selected_hero][0]] if owned else "Uma silhueta aguarda sua história. Encontre-a numa run e cumpra seu feito para revelá-la."
-	label(page, note, Rect2(24, 682, w - 48, 52), 16, MUTED)
-	var bottom := 744.0 if desktop else 778.0
-	var action_w:=(w-72)/3
+	var note_y:=220+gallery_height+12
+	label(page, note, Rect2(24, note_y, w - 48, 54), 15, MUTED)
+	var bottom := 734.0 if desktop else note_y+76
+	var action_w:=(w-60)*.4
 	button(page,"Habilidades" if owned else "Desconhecido",Rect2(24,bottom,action_w,54),show_hero_details.bind(selected_hero) if owned else show_unlock_details.bind(selected_hero)).add_theme_font_size_override("font_size",14)
-	button(page,"Animações",Rect2(36+action_w,bottom,action_w,54),show_preview).disabled=not owned
-	var select_character := button(page,"Selecionar Personagem",Rect2(48+action_w*2,bottom,action_w,54),use_protagonist.bind(selected_hero),true)
-	select_character.add_theme_font_size_override("font_size",14 if desktop else 12)
+	var select_character := button(page,"Selecionar Personagem",Rect2(36+action_w,bottom,w-60-action_w,54),use_protagonist.bind(selected_hero),true)
+	select_character.add_theme_font_size_override("font_size",16 if desktop else 14)
 	select_character.disabled=not campaign.unlocked.has(selected_hero) or not campaign.checkpoint.is_empty()
+	# Gallery coordinates already use the full current logical height.
+	for child in page.get_children():
+		if child is Control and child.has_meta("layout_kind"):
+			child.set_meta("layout_kind","fixed")
+			place_control(child)
 
-	gallery_scroll.set_deferred("scroll_horizontal", int(maxf(0, ids.find(selected_hero) * 282 - (w - 48 - 268) * 0.5)))
+	gallery_scroll.set_deferred("scroll_horizontal", int(maxf(0, ids.find(selected_hero) * pitch - (w - 48 - card_width) * 0.5)))
 	gallery_size = Vector2(logical_width, logical_height)
 	gallery_building = false
 
@@ -619,12 +696,15 @@ func banner_portrait(parent: Node, id: String, rect: Rect2, hidden: bool,standar
 	actor.texture = data.texture
 	actor.centered = false
 	var body_scale := Vector2(preload("res://scripts/character_visuals.gd").width(id),1)
-	var height:float=(248.0 if standardized else rect.size.y*.92)*preload("res://scripts/character_visuals.gd").height(id)
-	if not standardized:height=minf(height,rect.size.x*bounds.size.y/maxf(1,bounds.size.x*body_scale.x))
+	var reference_height:float=rect.size.y*.98 if standardized else rect.size.y*.92
+	var height:float=reference_height*preload("res://scripts/character_visuals.gd").height(id)
+	height=minf(height,rect.size.x*bounds.size.y/maxf(1,bounds.size.x*body_scale.x))
 	var factor:=height/maxf(1,bounds.size.y)
 	actor.scale = body_scale * factor
 	actor.position=rect.position+Vector2((rect.size.x-bounds.size.x*actor.scale.x)*.5,(rect.size.y-height) if standardized else (rect.size.y-height)*.5)-bounds.position*actor.scale
 	actor.self_modulate = Color.BLACK if hidden else Color.WHITE
+	actor.set_meta("portrait_rect",rect)
+	actor.set_meta("visual_height",height)
 	parent.add_child(actor)
 	if parent == overlay:
 		actor.set_meta("portrait_base", actor.position)
@@ -735,9 +815,8 @@ func show_settings() -> void:
 	button(inner, "ULT automática: " + ("ON" if campaign.auto_ult else "OFF"), Rect2(0, 685, 476, 52), settings_auto_ult)
 	button(inner, "Tela cheia / Janela · F11", Rect2(0, 753, 476, 52), toggle_fullscreen).disabled = OS.has_feature("mobile")
 	button(inner, "Como jogar", Rect2(0, 835, 476, 52), show_help)
-	button(inner, "Animações dos revelados", Rect2(0, 903, 476, 52), show_preview)
-	button(inner, "Créditos", Rect2(0, 971, 476, 52), show_credits)
-	button(inner, "Resetar conta deste dispositivo", Rect2(0, 1100, 476, 56), request_reset).add_theme_color_override("font_color", Color("ecaaa3"))
+	button(inner, "Créditos", Rect2(0, 903, 476, 52), show_credits)
+	button(inner, "Resetar conta deste dispositivo", Rect2(0, 1032, 476, 56), request_reset).add_theme_color_override("font_color", Color("ecaaa3"))
 	navigation("profile")
 
 func show_help() -> void:

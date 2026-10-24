@@ -46,7 +46,7 @@ func checks() -> void:
 			if node is Button:
 				assert(node.size.y >= 44 and node.position.y + node.size.y <= game.logical_height)
 			if node is ScrollContainer:
-				assert(is_equal_approx(node.size.y, 416), "The horizontal banner strip keeps its artwork proportions")
+				assert(is_equal_approx(node.size.y, node.get_meta("gallery_height")), "The horizontal banner strip keeps its responsive artwork height")
 		game.show_unlock_details("snow_white")
 		var original: float = game.overlay.get_child(1).position.y
 		game.center_content()

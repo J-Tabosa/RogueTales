@@ -75,7 +75,7 @@ func panel(parent: Node, rect: Rect2, color := INK) -> Panel:
 	node.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	node.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(node)
-	UISkin.decorate(node)
+	UISkin.decorate(node,false,false,0.055 if rect.size.y>0 and rect.size.y<90 else 0.15)
 	register_layout(node)
 	return node
 
@@ -88,14 +88,16 @@ func button(parent: Node, text: String, rect: Rect2, callback: Callable, primary
 	node.size = Vector2(rect.size.x, maxf(44, rect.size.y))
 	node.custom_minimum_size.y = 44
 	node.add_theme_font_size_override("font_size", 18)
+	BattleType.apply(node,true)
 	node.add_theme_color_override("font_color", Color("fff0ce") if primary else Color("e3e9d7"))
 	node.add_theme_color_override("font_disabled_color", Color("84918f"))
-	node.add_theme_stylebox_override("normal", box(Color("685034", 0.12) if primary else Color("263c30", 0.12), Color("82705c") if primary else Color("50546a"), 14))
-	node.add_theme_stylebox_override("hover", box(Color("806542", 0.25) if primary else Color("38523e", 0.25), Color("a2bcaf"), 8))
-	node.add_theme_stylebox_override("pressed", box(Color("9b946e"), GOLD, 8))
-	node.add_theme_stylebox_override("disabled", box(Color("1a2921"), Color("353b51"), 14))
+	node.add_theme_stylebox_override("normal", box(Color("082e24") if primary else Color("214a3b"), Color("b39a60") if primary else Color("59795d"), 10))
+	node.add_theme_stylebox_override("hover", box(Color("123c2e") if primary else Color("2b5945"), GOLD, 10))
+	node.add_theme_stylebox_override("pressed", box(Color("061f18"), GOLD, 10))
+	node.add_theme_stylebox_override("disabled", box(Color("172c26"), Color("45554b"), 10))
 	node.add_theme_stylebox_override("focus", box(Color(0, 0, 0, 0), GOLD, 8))
-	UISkin.decorate(node, true)
+	node.set_meta("primary",primary)
+	UISkin.decorate(node, true, true,0.10)
 	node.pressed.connect(func():
 		if is_instance_valid(audio):
 			audio.play_effect("click")
@@ -242,12 +244,14 @@ func build_battle() -> void:
 	ally_labels.clear()
 	ally_clocks.clear()
 	var header_frame := panel(page, Rect2(8, 6, 524, 50))
+	header_frame.name="BattleHeader"
 	battle_place(header_frame, Rect2(8, 6, 524, 50), Rect2(12, 5, 1256, 50))
 	stage_label = label(page, "%02d / 12   %s" % [run.stage + 1, TaleCatalog.STAGES[run.stage].name], Rect2(20, 10, 412, 53), 20)
-	battle_place(stage_label, Rect2(20, 11, 422, 34), Rect2(24, 11, 1140, 36))
+	battle_place(stage_label, Rect2(27, 16, 408, 28), Rect2(40, 16, 1120, 28))
 	BattleType.apply(stage_label,true)
 	stage_label.autowrap_mode=TextServer.AUTOWRAP_OFF
 	stage_label.text_overrun_behavior=TextServer.OVERRUN_TRIM_ELLIPSIS
+	stage_label.clip_text=true
 	var pause := button(page, "Ⅱ", Rect2(), toggle_pause)
 	battle_place(pause, Rect2(454, 9, 66, 44), Rect2(1186, 8, 68, 44))
 	enemy_label = label(page, "", Rect2(), 12, MUTED)
@@ -277,15 +281,15 @@ func build_battle() -> void:
 	page.add_child(timeline)
 	timeline.visible = false
 	timeline_key = ""
-	var action_panel := panel(page, Rect2())
-	battle_place(action_panel, Rect2(14,72,512,32), Rect2(28,70,962,32))
+	var action_panel := panel(page, Rect2(0,0,512,36))
+	battle_place(action_panel, Rect2(14,72,512,36), Rect2(28,70,962,36))
 	action_panel.modulate.a = 0.94
 	action_panel.z_index=1700
-	action_label = label(page, "Preparando encontro", Rect2(34,175,472,36), 16, GOLD)
+	action_label = label(page, "Preparando encontro", Rect2(34,175,472,36), 14, GOLD)
 	action_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	action_label.z_index=1701
 	BattleType.apply(action_label,true)
-	battle_place(action_label, Rect2(24,73,492,30), Rect2(42,71,934,30))
+	battle_place(action_label, Rect2(30,77,480,26), Rect2(44,75,930,26))
 	hero_deck_scroll=ScrollContainer.new()
 	hero_deck_scroll.name="HeroDeck"
 	hero_deck_scroll.scroll_deadzone=10
@@ -353,13 +357,17 @@ func build_battle() -> void:
 	battle_place(speed_button, Rect2(278, 0, 246, 46), Rect2(1018, 744, 248, 44), "bottom")
 	var gold_box := panel(page, Rect2())
 	gold_box.name="BattleGoldBox"
+	for child in gold_box.get_children():child.queue_free()
+	gold_box.add_theme_stylebox_override("panel",box(Color("0b3027"),Color("b69a59"),8))
 	gold_box.z_index=1800
-	battle_place(gold_box,Rect2(14,0,156,32),Rect2(24,756,156,32),"gold")
-	battle_gold=label(page,"",Rect2(),16,GOLD)
+	battle_place(gold_box,Rect2(14,0,174,34),Rect2(24,746,174,34),"gold")
+	battle_gold=label(page,"",Rect2(),15,GOLD)
 	battle_gold.name="BattleGold"
 	battle_gold.z_index=1801
 	BattleType.apply(battle_gold,true)
-	battle_place(battle_gold,Rect2(25,0,134,30),Rect2(35,757,134,30),"gold_text")
+	battle_gold.autowrap_mode=TextServer.AUTOWRAP_OFF
+	battle_gold.clip_text=true
+	battle_place(battle_gold,Rect2(26,0,150,26),Rect2(36,750,150,26),"gold_text")
 	relayout_battle()
 	update_hud()
 
@@ -392,8 +400,8 @@ func relayout_battle() -> void:
 				"deck":
 					rect.position.y = logical_height - 258
 					rect.size.y = 184
-				"gold": rect.position.y = logical_height - 292
-				"gold_text": rect.position.y = logical_height - 291
+				"gold": rect.position.y = logical_height - 299
+				"gold_text": rect.position.y = logical_height - 295
 				"bottom": rect.position.y = logical_height - 67
 			if node == battle_viewport:
 				rect.size.y = logical_height - 334
@@ -446,7 +454,8 @@ func relayout_battle() -> void:
 			var field: Control=card.get_children().filter(func(node):return node.has_meta("card_"+key))[0]
 			child.position=field.position-Vector2(3,1)
 			child.size=field.size+Vector2(6,2)
-	if is_instance_valid(stage_label):stage_label.add_theme_font_size_override("font_size",22 if desktop else 15)
+	if is_instance_valid(stage_label):BattleType.fit_line(stage_label,20 if desktop else 14,9,stage_label.get_meta("pc_rect" if desktop else "mobile_rect").size)
+	if is_instance_valid(battle_gold):BattleType.fit_line(battle_gold,15)
 	if is_instance_valid(arena) and arena.get_script() == TacticalArena:
 		arena.fit_field(battle_viewport.size)
 	if is_instance_valid(feedback):

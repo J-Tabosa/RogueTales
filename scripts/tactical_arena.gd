@@ -132,7 +132,7 @@ func hero_bounds(actor: AnimatedSprite2D) -> Rect2:
 
 func human_height() -> float:
 	# Intentional partial overlap preserves the illustrated characters' presence.
-	return clampf(minf(field_height * .31,field_width * .18),64,184)
+	return clampf(minf(field_height * .31,field_width * (.195 if field_width < 700 else .18)),64,184)
 
 
 func normalize_hero(actor: AnimatedSprite2D, id: String) -> void:

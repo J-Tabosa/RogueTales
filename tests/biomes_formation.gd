@@ -137,6 +137,10 @@ func checks() -> void:
 	assert(game.arena.tracks[0].home.x == game.arena.tracks[1].home.x)
 	await capture("half_size_mobile")
 	prepare(["joao", "peter", "alice"], 6)
+	# This fixture changes one enemy's class/row several times. Keep it solo so
+	# a random full row cannot become four units when the fixture moves it.
+	game.run.tactics.enemies.resize(1)
+	game.arena.sync_enemies()
 	for actor in game.run.actors: actor.evasion = 0
 	var foe: Dictionary = game.run.tactics.enemies[0]
 	foe["class"] = "assassin"

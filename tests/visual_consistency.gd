@@ -90,9 +90,10 @@ func checks() -> void:
 			var id:String=card.get_meta("hero_id")
 			var sprite:Sprite2D=card.get_node("HeroArt")
 			var height:float=sprite.texture.get_height()*sprite.scale.y
-			assert(absf(height-248*Visuals.height(id))<.1,id+" fixed gallery height")
-			assert(absf(sprite.position.y+height-314)<.1,id+" common gallery baseline")
-			assert(sprite.position.x>=0 and sprite.position.x+sprite.texture.get_width()*sprite.scale.x<=268,id+" art fits inside card")
+			var area:Rect2=sprite.get_meta("portrait_rect")
+			assert(height>248*Visuals.height(id),id+" enlarged gallery height")
+			assert(absf(sprite.position.y+height-area.end.y)<.1,id+" common gallery baseline")
+			assert(sprite.position.x>=0 and sprite.position.x+sprite.texture.get_width()*sprite.scale.x<=card.size.x,id+" art fits inside card")
 		for id in ["scarlet","mulan","alice","matches","aladin"]:
 			game.select_gallery_hero(id)
 			await process_frame

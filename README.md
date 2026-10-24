@@ -12,11 +12,13 @@ Entre fases, escolha cartas de rota: combate comum, elite, fogueira, mercador ou
 
 No modo Conto, derrota, abandono ou vitória após os 12 mundos encerram a tentativa. O modo Infinito só fica disponível depois de concluir as 72 fases. **Ouro da run, relíquias, transformações e convidados são temporários**. Desbloqueios, feitos, recordes e memórias são permanentes. Cada protagonista possui quatro bênçãos pessoais: uma inicial, uma por vencer 12 fases vivo, uma por vencer seu chefe secreto vivo e uma por concluir a expedição vivo. Escolha uma ao iniciar a run; as bênçãos antigas continuam compatíveis com checkpoints legados. Bônus de níveis, treinamento e escolhas da campanha antiga não entram nos atributos de novas runs. Uma build forte pode vencer sem receber um convite.
 
-A coleção usa **faixas verticais com artes grandes e pergaminho**: carrossel no celular e uma faixa larga no PC. Personagens bloqueados são silhuetas pretas, com nome **???**, classe e habilidades ocultas. Um convite permite experimentar o viajante no combate, mas a ficha só é revelada com o desbloqueio permanente. Só um protagonista começa a próxima run.
+A coleção usa **cartas verdes com artes ampliadas**: carrossel no celular e uma faixa larga no PC. A seleção e os botões principais usam verde escuro, bordas douradas finas e a fonte Nunito. Personagens bloqueados são silhuetas pretas, com nome **???**, classe e habilidades ocultas. As bênçãos bloqueadas mostram somente um selo preto com correntes, cadeado e condição de desbloqueio, sem revelar nome ou efeito. Um convite permite experimentar o viajante no combate, mas a ficha só é revelada com o desbloqueio permanente. Só um protagonista começa a próxima run. A prévia de animações fica restrita ao laboratório de debug.
 
 ## Itens, recompensas e equipe
 
 Cada personagem mostra **dois espaços quadrados com as artes dos itens equipados**, junto aos seus PV e mana. Clique em um espaço para abrir sua bolsa: a grade de **Aparência** tem filtros de itens e troféus; **Descrição** mostra a arte ampliada, efeitos, cópias disponíveis e portadores. No PC, os dois painéis ficam lado a lado; no celular, use as abas. Escolher uma arte permite consultar o item; o botão Equipar confirma a troca no espaço selecionado. A bolsa também abre nas encruzilhadas, no mercador e após duelos secretos. Trocas acontecem entre encontros; abrir a bolsa durante a luta pausa o combate para consulta. No PC, os cartões da equipe rolam verticalmente; no celular, horizontalmente.
+
+O mercador apresenta a arte de cada equipamento, preço e efeitos resumidos em ícones de veneno, fogo, escudo, cura e alvos extras. O botão **i** abre a descrição completa sem efetuar a compra. Listas e rodapés respeitam a altura disponível em telas alongadas. No combate, ouro e título do mundo ajustam a fonte à área interna das molduras; os personagens ganham cerca de 8% de altura no celular, preservando placas separadas e ordem de camadas.
 
 Há dez equipamentos comuns e doze troféus de chefes secretos, com cópias físicas: o mesmo exemplar não pode estar em dois personagens. Os efeitos incluem a água de Ariel incendiando, conversão de fogo em veneno, reverberação, reflexão, escudos, cura, crítico e modificadores de ULT. Equipar PV máximos não cura. Itens pertencem à run e seus efeitos e portadores ficam salvos no checkpoint.
 
@@ -250,9 +252,9 @@ As suítes usam saves isolados. `biomes_formation.gd` valida as 48 identidades/1
 `godot --headless --path . --script tools/simulate_runs.gd` executa uma sondagem determinística de balanceamento com 20 seeds por protagonista. É uma aproximação das durações das animações, sem renderização; não substitui playtests. Esta atualização inclui apenas o projeto-fonte; gere os exports no Godot.
 
 
-### Android 0.6.0-teste
+### Android 0.8.0-teste
 
-O preset **Android Teste** exporta um APK ARM64, Android 7 ou superior, com o pacote `com.jtabosa.roguetales.preview` e nome **RogueTales Teste**. Instala ao lado do APK anterior; o progresso de um pacote não é compartilhado automaticamente com o outro. A chave de debug deve ser mantida fora do repositório e informada pelas variáveis `GODOT_ANDROID_KEYSTORE_DEBUG_PATH`, `GODOT_ANDROID_KEYSTORE_DEBUG_USER` e `GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD`.
+O preset **Android Teste** exporta um APK ARM64, Android 7 ou superior, com o pacote `com.jtabosa.roguetales.preview.v07` e nome **RogueTales Teste 0.8**. Mantendo a mesma chave da versão 0.7, atualiza a instalação de teste e preserva o progresso. O pacote anterior sem o sufixo `.v07` continua separado. A chave de debug deve ser mantida fora do repositório e informada pelas variáveis `GODOT_ANDROID_KEYSTORE_DEBUG_PATH`, `GODOT_ANDROID_KEYSTORE_DEBUG_USER` e `GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD`.
 
 A campanha tem 12 mundos e seis encontros por mundo, com chefe no sexto encontro. Os 48 inimigos dos oito biomas têm cobertura de seis identidades em cada mundo. O infinito só é oferecido após os 72 encontros, preservando os atributos da equipe. Checkpoints anteriores são convertidos do índice de encontro para mundo/fase. Builds normais também usam snapshots compactos e melhorias genéricas contínuas.
 
