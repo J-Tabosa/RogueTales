@@ -20,6 +20,38 @@ func fits(label: Label, rect: Rect2) -> void:
 	var point_size:=label.get_theme_font_size("font_size")
 	assert(font.get_string_size(label.text,HORIZONTAL_ALIGNMENT_LEFT,-1,point_size).x<=label.size.x,label.text+" exceeds its label width")
 	assert(font.get_height(point_size)<=label.size.y,label.text+" exceeds its label height")
+func touch(at: Vector2, pressed: bool) -> void:
+	var event:=InputEventScreenTouch.new()
+	event.window_id=game.get_window().get_window_id()
+	event.index=0
+	event.position=at
+	event.pressed=pressed
+	Input.parse_input_event(event)
+	await process_frame
+func check_gallery_touch() -> void:
+	var gallery:ScrollContainer=game.gallery_scroll
+	gallery.scroll_horizontal=0
+	await process_frame
+	var previous:String=game.selected_hero
+	var point:=gallery.get_global_rect().get_center()
+	await touch(point,true)
+	var drag:=InputEventScreenDrag.new()
+	drag.window_id=game.get_window().get_window_id()
+	drag.index=0
+	drag.position=point-Vector2(100,0)
+	drag.relative=Vector2(-100,0)
+	Input.parse_input_event(drag)
+	await process_frame
+	await touch(drag.position,false)
+	assert(gallery.scroll_horizontal>40 and game.selected_hero==previous,"Swiping must not select a card")
+	gallery.scroll_horizontal=0
+	await process_frame
+	var second:Control=gallery.get_child(0).get_child(1)
+	var visible:=second.get_global_rect().intersection(gallery.get_global_rect())
+	assert(visible.has_area())
+	await touch(visible.get_center(),true)
+	await touch(visible.get_center(),false)
+	assert(game.selected_hero=="rapunzel","A tap must select the visible second card")
 func checks() -> void:
 	if not OS.get_cmdline_user_args().is_empty():
 		destination=OS.get_cmdline_user_args()[0]
@@ -50,6 +82,7 @@ func checks() -> void:
 		var scarlet:Control=nodes.filter(func(node):return node.get_meta("hero_id","")=="scarlet")[0]
 		assert(scarlet.get_node("HeroArt").get_meta("visual_height")>290)
 		await capture("selection"+suffix)
+		await check_gallery_touch()
 		game.show_map()
 		await process_frame
 		nodes=descendants(game.page)
@@ -119,5 +152,5 @@ func checks() -> void:
 	for suffix in ["",".bak",".tmp"]:
 		var path:String="user://mobile_ui_polish_isolated.json"+suffix
 		if FileAccess.file_exists(path):DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
-	print("MOBILE UI POLISH PASS: large static collection, hidden locked effects, dark green selection, icon shop with inspect/buy, nonoverlapping footers and fitted gold/world labels at three resolutions")
+	print("MOBILE UI POLISH PASS: large static collection with touch swipe/tap, hidden locked effects, dark green selection, icon shop with inspect/buy, nonoverlapping footers and fitted gold/world labels at three resolutions")
 	quit()

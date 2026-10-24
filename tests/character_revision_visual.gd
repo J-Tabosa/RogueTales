@@ -127,7 +127,9 @@ func checks() -> void:
 		assert(gallery.scroll_horizontal>40 and game.selected_hero==selected,"Touch swipes scroll without selecting a hero")
 		await capture("touch_gallery_"+mode)
 		gallery.scroll_horizontal=0
-		var tap_point:=gallery.get_global_rect().position+Vector2(360,180)
+		await process_frame
+		var second_card:Control=gallery.get_child(0).get_child(1)
+		var tap_point:=second_card.get_global_rect().intersection(gallery.get_global_rect()).get_center()
 		var tap:=InputEventScreenTouch.new()
 		tap.index=1
 		tap.position=tap_point
