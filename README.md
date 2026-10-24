@@ -279,3 +279,7 @@ O HUD de combate e os cartões usam a fonte Nunito, distribuída sob OFL em `ass
 ### ULTs 0.9.0
 
 As onze ULTs do elenco enviado usam poses próprias e efeitos animados que viajam até seus alvos. Alice carrega quatro cartas sem mana; Peter acumula até três espíritos que anulam golpes; Aladin adormece e Maria amaldiçoa sem dano direto. Regras, valores e validação em [docs/ULTS.md](docs/ULTS.md).
+
+## Versão 0.9.1
+
+[Correções de animação e mobile](docs/MOBILE_091.md).

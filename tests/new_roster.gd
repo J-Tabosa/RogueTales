@@ -1,6 +1,6 @@
 extends SceneTree
 const SAVE := "user://roster_isolated.json"
-const JOBS := {"joao": "vanguard", "maria": "assassin", "alice": "ranger", "puss": "vanguard", "matches": "mage", "peter": "assassin", "aladin": "mage"}
+const JOBS := {"joao": "assassin", "maria": "assassin", "alice": "ranger", "puss": "vanguard", "matches": "mage", "peter": "assassin", "aladin": "mage"}
 
 func _initialize() -> void:
 	call_deferred("checks")

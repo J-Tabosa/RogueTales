@@ -1,4 +1,5 @@
 extends Node2D
+const HealthDisplay = preload("res://scripts/health_display.gd")
 ## Combat view. Every effect follows the target selected by the formation rules.
 signal attack_hit(index: int)
 signal attack_started(index: int)
@@ -143,6 +144,26 @@ func normalize_hero(actor: AnimatedSprite2D, id: String) -> void:
 	actor.offset = -Vector2(bounds.get_center().x, bounds.end.y)
 	actor.set_meta("visual_height", height)
 
+
+
+func fit_hero_in_view(actor:AnimatedSprite2D) -> void:
+	var texture:Texture2D=actor.sprite_frames.get_frame_texture(actor.animation,actor.frame)
+	if not texture is MeshTexture:return
+	var bounds:AABB=texture.mesh.get_aabb()
+	var corners:=PackedVector2Array()
+	for point in [Vector2(bounds.position.x,bounds.position.y),Vector2(bounds.end.x,bounds.position.y),Vector2(bounds.position.x,bounds.end.y),Vector2(bounds.end.x,bounds.end.y)]:
+		corners.append(actor.transform*(point+actor.offset))
+	var left:=INF
+	var right:=-INF
+	var top:=INF
+	var bottom:=-INF
+	for point in corners:
+		left=minf(left,point.x)
+		right=maxf(right,point.x)
+		top=minf(top,point.y)
+		bottom=maxf(bottom,point.y)
+	if right-left<field_width-4:actor.position.x+=maxf(0,2-left)-maxf(0,right-field_width+2)
+	if bottom-top<field_height-4:actor.position.y+=maxf(0,2-top)-maxf(0,bottom-field_height+2)
 
 
 func widget(at: Vector2,title: String,tint: Color,hostile:=false,unit_index:=-1) -> Dictionary:
@@ -295,22 +316,20 @@ func sync_health(actors: Array[Dictionary]) -> void:
 			tracks[index].time = -1.0
 			heroes[index].modulate = Color(0.4, 0.42, 0.48, 0.35)
 		unit_widgets[index].root.visible = actors[index].hp > 0
-		unit_widgets[index].health.max_value = actors[index].max_hp
-		unit_widgets[index].health.value = actors[index].hp
+		HealthDisplay.update(unit_widgets[index].health,actors[index])
 		unit_widgets[index].energy.max_value = 4 if simulation.expedition and actors[index].id=="alice" else 100
 		unit_widgets[index].energy.value = actors[index].get("card_charge",0) if simulation.expedition and actors[index].id=="alice" else actors[index].energy
 		sync_conditions(unit_widgets[index],actors[index],index,false)
-		unit_widgets[index].text.text = ("%s/%s" if unit_widgets[index].panel.size.x<90 else "%s/%s PV") % [compact_hp(actors[index].hp),compact_hp(actors[index].max_hp)]
+		unit_widgets[index].text.text = ("%s/%s" if unit_widgets[index].panel.size.x<90 else "%s/%s PV") % [compact_hp(actors[index].hp),compact_hp(HealthDisplay.capacity(actors[index]))]
 		if actors[index].id=="alice":unit_widgets[index].text.text=CharacterEffects.SUITS[int(actors[index].get("suit",0))%4]+" "+unit_widgets[index].text.text
 	for index in foes.size():
 		var data: Dictionary = simulation.tactics.enemies[index]
 		foes[index].visible = enemy_visible and (data.hp > 0 or data.get("death_left", 0) > 0)
 		foe_widgets[index].root.visible = enemy_visible and data.hp > 0
-		foe_widgets[index].health.max_value = data.max_hp
-		foe_widgets[index].health.value = data.hp
+		HealthDisplay.update(foe_widgets[index].health,data)
 		foe_widgets[index].energy.visible = false
 		sync_conditions(foe_widgets[index],data,index,true)
-		foe_widgets[index].text.text = ("%s/%s" if foe_widgets[index].panel.size.x<90 else "%s/%s PV") % [compact_hp(data.hp),compact_hp(data.max_hp)]
+		foe_widgets[index].text.text = ("%s/%s" if foe_widgets[index].panel.size.x<90 else "%s/%s PV") % [compact_hp(data.hp),compact_hp(HealthDisplay.capacity(data))]
 
 
 
@@ -398,6 +417,7 @@ func _process(delta: float) -> void:
 			actor.position = track.home
 			if track.alive:
 				actor.show_animation("idle")
+		fit_hero_in_view(actor)
 		actor.z_index = int(actor.position.y)
 	if enemy_track.time >= 0 and dt > 0:
 		var index: int = enemy_track.index
