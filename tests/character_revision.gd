@@ -56,9 +56,13 @@ func checks() -> void:
 	var fresh:=IdleRun.new()
 	assert(fresh.start_expedition(account,"snow_white","vigor"))
 	fresh.tactics.spawn()
-	var foe: Dictionary=fresh.tactics.enemies[0]
+	# Poison must hit a reachable, surviving target, regardless of the rolled group.
+	var foe_index: int=fresh.tactics.target_for(0)
+	var foe: Dictionary=fresh.tactics.enemies[foe_index]
 	foe.evasion=0
-	fresh.hit_enemy(0,0)
+	foe.hp=10000
+	foe.max_hp=10000
+	fresh.hit_enemy(0,foe_index)
 	assert(foe.poison>0 and foe.poison_left>0)
 	assert(Details.active(fresh.actors[0]).contains(Details.n(fresh.actors[0].damage*.10)))
 	var mulan_run:=IdleRun.new()

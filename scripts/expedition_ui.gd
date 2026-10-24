@@ -140,11 +140,9 @@ func build_battle() -> void:
 	battle_viewport.add_child(feedback)
 	arena.feedback = feedback
 	auto_button.add_theme_font_size_override("font_size", 15)
-	auto_button.set_meta("mobile_rect", Rect2(16, 0, 160, 46))
-	auto_button.set_meta("pc_rect", Rect2(958, 704, 142, 46))
-	speed_button.set_meta("mobile_rect", Rect2(364, 0, 160, 46))
-	var history := button(page, "Histórico", Rect2(), show_battle_history)
-	battle_place(history, Rect2(190, 0, 160, 46), Rect2(1112, 704, 142, 46), "bottom")
+	auto_button.set_meta("mobile_rect", Rect2(16, 0, 246, 46))
+	auto_button.set_meta("pc_rect", Rect2(1018, 694, 248, 44))
+	speed_button.set_meta("mobile_rect", Rect2(278, 0, 246, 46))
 	relayout_battle()
 
 func begin_travel() -> void:
@@ -515,8 +513,9 @@ func update_hud() -> void:
 	if is_expedition() and battle_view and is_instance_valid(enemy_label):
 		enemy_label.text = "%s · %s · %d OURO" % [run.phase_label(), "PRESSÃO +%d%%" % int((run.tactics.pressure() - 1) * 100) if run.tactics.pressure() > 1 else ("CHEFE" if Content.is_boss(run.stage, run.phase) else ("ELITE" if run.room_kind == "elite" else "COMBATE")), run.run_gold]
 		if not run.active_secret.is_empty(): enemy_label.text=run.phase_label()+" · SECRETO · "+str(preload("res://scripts/secret_encounters.gd").DATA[run.active_secret].name)
-		power_label.text = "%d PONTOS · RECORDE %d" % [run.score, campaign.best_score]
-		stage_label.text = "%02d   %s" % [run.stage + 1, TaleCatalog.STAGES[run.stage].name]
+		power_label.text = ""
+		if is_instance_valid(battle_gold):battle_gold.text="%s OURO"%format_gold(run.run_gold)
+		stage_label.text = ("INFINITO · FASE %d · %s"%[run.rooms_cleared+1,TaleCatalog.STAGES[run.stage].name]) if run.endless else "ESTÁGIO %02d · FASE %d/6 · %s" % [run.stage + 1,run.phase+1,TaleCatalog.STAGES[run.stage].name]
 		for i in mini(ult_buttons.size(), run.actors.size()):
 			var actor: Dictionary = run.actors[i]
 			ult_buttons[i].tooltip_text = ("HABILIDADE SELADA · destrua seu fio para libertá-la.\n\n" if actor.get("sealed", false) else "") + "%s (automática)\n%s\n\n%s (passiva · 6 s)\n%s\n\nULT: %s" % [Content.KITS[actor.id][0], Content.KITS[actor.id][1], Content.KITS[actor.id][2], Content.KITS[actor.id][3], TaleCatalog.HERO_TACTICS[actor.id].ult]

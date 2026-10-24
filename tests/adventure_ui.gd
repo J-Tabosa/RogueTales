@@ -97,7 +97,7 @@ func checks() -> void:
 	game._process(1.2)
 	game.arena.set_process(false)
 	assert(game.run.tactics.enemies.size() >= 1 and game.run.tactics.enemies.size() <= 9 and game.run.enemy_max > 76)
-	assert(game.enemy_label.text.contains("INFINITO"))
+	assert(game.stage_label.text.contains("INFINITO"))
 	await capture("endless_13_mobile")
 	# An actual event choice resumes the run; reloading before selection preserves it.
 	prepare(["scarlet", "matches"], 1, 1, true)

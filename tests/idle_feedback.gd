@@ -224,7 +224,7 @@ func checks() -> void:
 	game.consume_feedback()
 	game.feedback._process(0.3)
 	await capture("battle_pc")
-	assert(game.desktop and game.card_health[0].size.x == 158)
+	assert(game.desktop and game.card_health[0].size.x == 134)
 	root.content_scale_size = Vector2i(360, 800)
 	root.size = Vector2i(360, 800)
 	await process_frame

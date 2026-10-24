@@ -131,15 +131,9 @@ func hero_bounds(actor: AnimatedSprite2D) -> Rect2:
 	return Rect2(Vector2.ZERO, texture.get_size())
 
 func human_height() -> float:
-	var height := clampf(minf(field_height * .29, field_width * .17), 48, 174)
-	if max_row_size() > 1:
-		# Reserve the next lane's body, hover, plate and status badges. Two-unit
-		# rows share the outer lanes of the three-unit grid; single units stay centered.
-		var tallest := 1.14
-		for foe in simulation.tactics.enemies:
-			if foe.boss: tallest = maxf(tallest, 1.25 if foe.has("secret_id") else 1.40)
-		height = minf(height, maxf(28, field_height * .22 - 52) / tallest)
-	return height
+	# Intentional partial overlap preserves the illustrated characters' presence.
+	return clampf(minf(field_height * .31,field_width * .18),64,184)
+
 
 func normalize_hero(actor: AnimatedSprite2D, id: String) -> void:
 	var bounds := hero_bounds(actor)
@@ -342,7 +336,7 @@ func _process(delta: float) -> void:
 	clock += dt
 	for index in heroes.size():
 		var actor: AnimatedSprite2D = heroes[index]
-		actor.z_index = 950 if tracks[index].time >= 0 else int(actor.position.y)
+		actor.z_index = int(actor.position.y)
 		var track: Dictionary = tracks[index]
 		var hero_id: String=simulation.actors[index].id
 		if track.time<0 and not walking and track.alive:
@@ -356,6 +350,7 @@ func _process(delta: float) -> void:
 			actor.position = track.home + Vector2(-90 * (1.0 - travel_progress), 0)
 			if simulation.actors[index].id in ["ariel","aladin","peter"]:
 				actor.position.y-=human_height()*0.1+(0.0 if reduced_motion else sin(clock*2.5+index)*human_height()*0.025)
+		actor.z_index = int(actor.position.y)
 		if track.time < 0 or dt <= 0:
 			continue
 		track.time += dt
@@ -389,6 +384,7 @@ func _process(delta: float) -> void:
 			actor.position = track.home
 			if track.alive:
 				actor.show_animation("idle")
+		actor.z_index = int(actor.position.y)
 	if enemy_track.time >= 0 and dt > 0:
 		var index: int = enemy_track.index
 		enemy_track.time += dt
@@ -414,7 +410,7 @@ func _process(delta: float) -> void:
 				var dash := smoothstep(0, 0.52, phase) if phase < 0.55 else (1.0 - smoothstep(0.55, 1, phase))
 				var to: Vector2 = tracks[enemy_track.target].home + Vector2(60, 0)
 				foes[index].position = foe_homes[index].lerp(to, dash)
-			foes[index].z_index = 950
+			foes[index].z_index = int(foes[index].position.y)
 		else:
 			foes[index].z_index = int(foe_homes[index].y)
 	for area in enemy_areas: area.left -= dt

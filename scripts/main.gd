@@ -1128,7 +1128,7 @@ func on_attack_hit(index: int) -> void:
 		arena.present_result(hit, false, index)
 	audio.play_effect("explosion" if run.actors[index].id == "scarlet" else "hit")
 	if not str(hit.message).is_empty():
-		current_action(TaleCatalog.HEROES[run.actors[index].id].name + " · " + str(hit.message))
+		current_action(TaleCatalog.HEROES[run.actors[index].id].name)
 	record_result(hit, false, index, resources)
 	consume_feedback()
 	update_hud()
@@ -2250,14 +2250,14 @@ func process_tactical_combat(dt: float) -> void:
 				return
 			entry["ultimate"] = ultimate
 			combat_flow.begin(entry)
-			current_action("%s · %s" % [TaleCatalog.HEROES[run.actors[index].id].name, TaleCatalog.HERO_TACTICS[run.actors[index].id].ult if ultimate else (ExpeditionContent.KITS[run.actors[index].id][0] if run.expedition else arena.heroes[index].get_weapon_label())])
+			current_action(TaleCatalog.HEROES[run.actors[index].id].name)
 	else:
 		var intent: Dictionary = run.tactics.commit_intent(index) if run.expedition else {}
 		var target: int = int(intent.target) if not intent.is_empty() else run.tactics.choose_target(run.tactics.enemies[index], run.actors)
 		if arena.begin_enemy_attack(index, target):
 			arena.enemy_track["support"] = str(intent.get("key", "")) in ["prepare", "banner", "stagger", "pull"] or (intent.get("key") == "copy" and intent.get("copy") == "rapunzel")
 			combat_flow.begin(entry)
-			current_action(str(run.tactics.enemies[index].name) + " · " + str(intent.get("title", "Ataque")))
+			current_action(str(run.tactics.enemies[index].name))
 	update_hud()
 
 
@@ -2300,7 +2300,7 @@ func try_ultimate(index: int) -> bool:
 		return false
 	if combat_flow != null:
 		combat_flow.begin({"side": "ally", "index": index, "manual": true, "ultimate": true})
-	current_action(str(TaleCatalog.HEROES[actor.id].name) + " · " + str(TaleCatalog.HERO_TACTICS[actor.id].ult))
+	current_action(str(TaleCatalog.HEROES[actor.id].name))
 	update_hud()
 	return true
 

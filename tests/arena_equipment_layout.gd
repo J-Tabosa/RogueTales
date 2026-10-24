@@ -75,20 +75,51 @@ func checks() -> void:
 		await process_frame
 		var plates: Array[Rect2] = []
 		var bodies: Array[Rect2] = []
-		for sprite in game.arena.heroes: bodies.append(body_rect(sprite,true))
-		for sprite in game.arena.foes: bodies.append(body_rect(sprite,false))
+		var body_depth: Array[int] = []
+		for sprite in game.arena.heroes:
+			bodies.append(body_rect(sprite,true))
+			body_depth.append(sprite.z_index)
+			assert(sprite.z_index == int(sprite.position.y))
+		for sprite in game.arena.foes:
+			bodies.append(body_rect(sprite,false))
+			body_depth.append(sprite.z_index)
+			assert(sprite.z_index == int(sprite.position.y))
 		for item in game.arena.unit_widgets + game.arena.foe_widgets:
 			var plate := Rect2(item.root.position, item.panel.size)
 			assert(Rect2(Vector2.ZERO,game.battle_viewport.size).encloses(plate), "Plate clipped outside arena")
 			for other in plates: assert(not plate.intersects(other), "Health plates overlap")
-			for body in bodies: assert(not plate.intersects(body), "Health plate covers a character")
+
 			plates.append(plate)
+		# Partial sprite overlap is intentional; no target may disappear behind the rest.
+		for index in bodies.size():
+			var visible_samples := 0
+			for x in 10:
+				for y in 16:
+					var point: Vector2 = bodies[index].position + bodies[index].size * Vector2((x+.5)/10.0,(y+.5)/16.0)
+					var covered := false
+					for other in bodies.size():
+						if other != index and body_depth[other] > body_depth[index] and bodies[other].has_point(point):covered=true
+					if not covered:visible_samples+=1
+			assert(visible_samples >= 24,"A target was almost entirely obscured")
 		assert(plates.size() == 18 and not game.log_label.visible)
+		assert(not game.enemy_label.visible and not game.power_label.visible and not game.timeline.visible)
+		assert(game.stage_label.text.contains("ESTÁGIO") and game.stage_label.text.contains("FASE"))
+		assert(game.battle_gold.text.contains("OURO") and game.battle_gold.z_index>1600)
+		assert(game.action_label.z_index>1600)
+		assert(game.battle_viewport.position.y < 70)
+		assert(game.arena.human_height() >= minf(184,game.arena.field_width*.175))
+		assert(game.ult_buttons[0].get_children().filter(func(node):return node.has_meta("card_box")).size()==5)
+		assert(not game.page.get_children().any(func(node):return node is Button and node.text in ["F11","Histórico"]))
+		game.feedback.enqueue({"hero":"alice","kind":"passive","title":"Carta na manga","detail":"Avançou o naipe e ganhou 25 mana"})
+		game.feedback._process(.3)
+		assert(game.feedback.ribbon_face.texture != null and game.feedback.ribbon.size.y<=70)
+		assert(game.feedback.ribbon.position.x==12 and not game.feedback.ribbon_detail.visible)
 		assert(game.battle_viewport.size.y > (560 if game.desktop else 490))
 		var slots: Array = game.ult_buttons[0].get_children().filter(func(n): return n.has_meta("card_items"))
 		assert(slots.size() == 2)
 		assert(slots[0].get_meta("item_picture").texture == Art.texture("ember_pearl"))
 		assert(slots[1].get_meta("item_picture").texture == Art.texture("winter_match"))
+		game.current_action("Scarlet")
 		await capture("nine_vs_nine_%dx%d" % [dimensions.x,dimensions.y])
 		game.run.interlude = "route"
 		game.show_equipment(0,1)
@@ -116,5 +147,5 @@ func checks() -> void:
 	for suffix in ["", ".bak", ".tmp"]:
 		var path: String = "user://arena_equipment_layout_isolated.json" + suffix
 		if FileAccess.file_exists(path): DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
-	print("ARENA EQUIPMENT LAYOUT PASS: 22 icon assets, 18 plates without body/plate overlap, responsive arena, two equipped slots, selected-slot equip, appearance/description and trophy filters")
+	print("ARENA EQUIPMENT LAYOUT PASS: 22 icon assets, 18 separate plates, larger partially overlapping sprites with visible targets and depth order, compact HUD and portrait abilities, responsive arena, two equipped slots, selected-slot equip, appearance/description and trophy filters")
 	quit()
