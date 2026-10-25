@@ -966,7 +966,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("MeshTexture_v1ete")
 }],
-"loop": 1,
+"loop": 0,
 "name": &"idle_blink",
 "speed": 10.0
 }, {

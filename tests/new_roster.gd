@@ -49,7 +49,7 @@ func checks() -> void:
 			foe.evasion = 0.0
 		var hit := run.hit_enemy(0)
 		assert(hit.damage > 0 and run.unlock_stats.new_hits[id] == 1)
-		assert(run.tactics.enemies[hit.target].row == ("front" if id in ["puss","joao","matches","aladin"] else "back"))
+		assert(run.tactics.enemies[hit.target].row == ("front" if id in ["puss","matches","aladin"] else "back"))
 		if id == "maria":
 			assert(run.tactics.enemies[hit.target].poison_left == 4)
 		if id == "matches":

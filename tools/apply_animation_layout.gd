@@ -9,7 +9,7 @@ func _initialize() -> void:
 		var hero:Dictionary=data.heroes[id]
 		for animation in ["idle","idle_blink","walk","attack","ultimate"]:
 			frames.add_animation(animation)
-			frames.set_animation_loop(animation,animation in ["idle","idle_blink","walk"])
+			frames.set_animation_loop(animation,animation in ["idle","walk"])
 			frames.set_animation_speed(animation,{"idle":7,"idle_blink":10,"walk":8,"attack":12,"ultimate":6}[animation])
 			var source:String="idle" if animation in ["idle","idle_blink","walk"] else animation
 			var texture:Texture2D=load("res://assets/ults_v2/%s_%s.webp"%[id,source])
