@@ -7,6 +7,7 @@ var hero_deck: Control
 var equipment_panel: Control
 var equipment_was_paused:=false
 var battle_gold: Label
+const HealthDisplay = preload("res://scripts/health_display.gd")
 const BattleType = preload("res://scripts/battle_typography.gd")
 var battle_view := false
 var desktop := false
@@ -484,13 +485,12 @@ func update_hud() -> void:
 		var actor: Dictionary = run.actors[index]
 		ult_meters[index].max_value=4 if run.expedition and actor.id=="alice" else 100
 		ult_meters[index].value = actor.get("card_charge",0) if run.expedition and actor.id=="alice" else actor.energy
-		card_health[index].max_value = actor.max_hp
-		card_health[index].value = actor.hp
+		HealthDisplay.update(card_health[index],actor)
 		for child in ult_buttons[index].get_children():
 			if child.has_meta("card_status"):
 				child.text = "Caído" if actor.hp <= 0 else ("ULT na fila" if actor.get("ult_queued", false) else ("ULT em ação" if actor.ult_pending else ("ULT pronta" if run.tactics.ultimate_ready(index) else ("Selada" if actor.get("sealed", false) else "Aguardando"))))
 			elif child.has_meta("card_hp"):
-				child.text = "PV %d / %d%s" % [ceili(actor.hp), ceili(actor.max_hp), "  +%d" % ceili(actor.shield) if actor.shield > 0 else ""]
+				child.text = "PV %d / %d%s" % [ceili(actor.hp), ceili(HealthDisplay.capacity(actor)), "  ESC %d" % ceili(actor.shield) if actor.shield > 0 else ""]
 			elif child.has_meta("card_items"):
 				var equipment_slot: int = child.get_meta("card_items")
 				ItemArt.refresh(child, ItemArt.equipped(actor,equipment_slot))
@@ -746,10 +746,27 @@ func face_portrait(parent: Node,id: String,rect: Rect2) -> Control:
 	slot.add_theme_stylebox_override("panel",box(Color("26372f"),Color(TaleCatalog.HEROES[id].color,.65),9))
 	parent.add_child(slot)
 	register_layout(slot)
-	var path:="res://assets/characters/%s/portrait.jpg"%id
+	var path:="res://assets/ults_v2/%s_portrait.webp"%id
+	var texture:Texture2D
 	if ResourceLoader.exists(path):
-		var face:=UISkin.picture(slot,preload("res://scripts/jpeg_alpha.gd").texture(path),Rect2(Vector2.ZERO,rect.size))
+		var source:Texture2D=load(path)
+		var extent:=source.get_size()
+		var edge:=minf(extent.x*.52,extent.y*.34)
+		var focus:=Vector2(.73,.22) if id=="peter" else Vector2(.55,.15)
+		var crop:=AtlasTexture.new()
+		crop.atlas=source
+		var origin:=extent*focus-Vector2.ONE*edge*.5
+		origin=origin.clamp(Vector2.ZERO,extent-Vector2.ONE*edge)
+		crop.region=Rect2(origin,Vector2.ONE*edge)
+		texture=crop
+	else:
+		path="res://assets/characters/%s/portrait.jpg"%id
+		texture=preload("res://scripts/jpeg_alpha.gd").texture(path)
+	slot.set_meta("portrait_source",path)
+	if texture!=null:
+		var face:=UISkin.picture(slot,texture,Rect2(Vector2.ZERO,rect.size))
 		face.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		face.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	return slot
 
 

@@ -21,7 +21,7 @@ func checks() -> void:
 	game.run = IdleRun.new()
 	assert(game.run.start_expedition(game.campaign, "scarlet", "blessing:scarlet:0"))
 	game.run.party_capacity = 9
-	for hero in ["rapunzel", "joao", "puss", "mulan", "maria", "peter", "snow_white", "alice"]:
+	for hero in ["rapunzel", "joao", "puss", "mulan", "maria", "aladin", "snow_white", "alice"]:
 		game.run.pending_choice = true
 		game.run.offers.assign(["ally:" + hero, "power", "heart"])
 		assert(game.run.recruit(game.campaign, hero))

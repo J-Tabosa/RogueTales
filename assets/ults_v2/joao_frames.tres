@@ -1,207 +1,1042 @@
-[gd_resource type="SpriteFrames" load_steps=36 format=3]
+[gd_resource type="SpriteFrames" format=3]
 
-[ext_resource type="Texture2D" path="res://assets/ults_v2/joao_idle.webp" id="idle"]
+[ext_resource type="Texture2D" path="res://assets/ults_v2/joao_attack.webp" id="1_2uodi"]
+[ext_resource type="Texture2D" path="res://assets/ults_v2/joao_idle.webp" id="2_6qdfs"]
+[ext_resource type="Texture2D" path="res://assets/ults_v2/joao_ultimate.webp" id="3_m4g7k"]
 
-[ext_resource type="Texture2D" path="res://assets/ults_v2/joao_attack.webp" id="attack"]
+[sub_resource type="ArrayMesh" id="ArrayMesh_6qqhn"]
+_surfaces = [{
+"aabb": AABB(308, 328, 0, 152, 280, 1e-05),
+"attribute_data": PackedByteArray(0, 0, 180, 61, 85, 85, 5, 62, 0, 0, 38, 62, 85, 85, 5, 62, 0, 0, 38, 62, 0, 0, 160, 62, 0, 0, 180, 61, 0, 0, 160, 62),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 154, 67, 0, 0, 164, 67, 0, 0, 0, 0, 0, 0, 230, 67, 0, 0, 164, 67, 0, 0, 0, 0, 0, 0, 230, 67, 0, 0, 24, 68, 0, 0, 0, 0, 0, 0, 154, 67, 0, 0, 24, 68, 0, 0, 0, 0)
+}]
 
-[ext_resource type="Texture2D" path="res://assets/ults_v2/joao_ultimate.webp" id="ultimate"]
+[sub_resource type="MeshTexture" id="MeshTexture_xkef4"]
+mesh = SubResource("ArrayMesh_6qqhn")
+base_texture = ExtResource("1_2uodi")
+image_size = Vector2(768, 768)
 
-[sub_resource type="AtlasTexture" id="idle_0"]
-atlas = ExtResource("idle")
-region = Rect2(191, 199, 131, 282)
-margin = Rect2(191, 199, 381, 230)
-filter_clip = true
+[sub_resource type="ArrayMesh" id="ArrayMesh_h0u6o"]
+_surfaces = [{
+"aabb": AABB(289, 326, 0, 240, 282, 1e-05),
+"attribute_data": PackedByteArray(0, 64, 168, 62, 0, 0, 4, 62, 0, 64, 228, 62, 0, 0, 4, 62, 0, 64, 228, 62, 0, 0, 160, 62, 0, 64, 168, 62, 0, 0, 160, 62),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 128, 144, 67, 0, 0, 163, 67, 0, 0, 0, 0, 0, 64, 4, 68, 0, 0, 163, 67, 0, 0, 0, 0, 0, 64, 4, 68, 0, 0, 24, 68, 0, 0, 0, 0, 0, 128, 144, 67, 0, 0, 24, 68, 0, 0, 0, 0)
+}]
 
-[sub_resource type="AtlasTexture" id="idle_1"]
-atlas = ExtResource("idle")
-region = Rect2(700, 199, 146, 282)
-margin = Rect2(188, 199, 366, 230)
-filter_clip = true
+[sub_resource type="MeshTexture" id="MeshTexture_5r4nx"]
+mesh = SubResource("ArrayMesh_h0u6o")
+base_texture = ExtResource("1_2uodi")
+image_size = Vector2(768, 768)
 
-[sub_resource type="AtlasTexture" id="idle_2"]
-atlas = ExtResource("idle")
-region = Rect2(1208, 199, 134, 282)
-margin = Rect2(184, 199, 378, 230)
-filter_clip = true
+[sub_resource type="ArrayMesh" id="ArrayMesh_br66t"]
+_surfaces = [{
+"aabb": AABB(262, 326, 0, 265, 282, 1e-05),
+"attribute_data": PackedByteArray(0, 192, 16, 63, 0, 0, 4, 62, 0, 224, 49, 63, 0, 0, 4, 62, 0, 224, 49, 63, 0, 0, 160, 62, 0, 192, 16, 63, 0, 0, 160, 62),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 131, 67, 0, 0, 163, 67, 0, 0, 0, 0, 0, 192, 3, 68, 0, 0, 163, 67, 0, 0, 0, 0, 0, 192, 3, 68, 0, 0, 24, 68, 0, 0, 0, 0, 0, 0, 131, 67, 0, 0, 24, 68, 0, 0, 0, 0)
+}]
 
-[sub_resource type="AtlasTexture" id="idle_3"]
-atlas = ExtResource("idle")
-region = Rect2(1722, 199, 132, 282)
-margin = Rect2(186, 199, 380, 230)
-filter_clip = true
+[sub_resource type="MeshTexture" id="MeshTexture_iegij"]
+mesh = SubResource("ArrayMesh_br66t")
+base_texture = ExtResource("1_2uodi")
+image_size = Vector2(768, 768)
 
-[sub_resource type="AtlasTexture" id="idle_4"]
-atlas = ExtResource("idle")
-region = Rect2(191, 711, 131, 281)
-margin = Rect2(191, 199, 381, 231)
-filter_clip = true
+[sub_resource type="ArrayMesh" id="ArrayMesh_lvm5u"]
+_surfaces = [{
+"aabb": AABB(273, 335, 0, 236, 273, 1e-05),
+"attribute_data": PackedByteArray(0, 32, 82, 63, 0, 0, 10, 62, 0, 160, 111, 63, 0, 0, 10, 62, 0, 160, 111, 63, 0, 0, 160, 62, 0, 32, 82, 63, 0, 0, 160, 62),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 128, 136, 67, 0, 128, 167, 67, 0, 0, 0, 0, 0, 128, 254, 67, 0, 128, 167, 67, 0, 0, 0, 0, 0, 128, 254, 67, 0, 0, 24, 68, 0, 0, 0, 0, 0, 128, 136, 67, 0, 0, 24, 68, 0, 0, 0, 0)
+}]
 
-[sub_resource type="AtlasTexture" id="idle_5"]
-atlas = ExtResource("idle")
-region = Rect2(700, 712, 135, 280)
-margin = Rect2(188, 200, 377, 232)
-filter_clip = true
+[sub_resource type="MeshTexture" id="MeshTexture_q1mwv"]
+mesh = SubResource("ArrayMesh_lvm5u")
+base_texture = ExtResource("1_2uodi")
+image_size = Vector2(768, 768)
 
-[sub_resource type="AtlasTexture" id="idle_6"]
-atlas = ExtResource("idle")
-region = Rect2(1208, 712, 135, 280)
-margin = Rect2(184, 200, 377, 232)
-filter_clip = true
+[sub_resource type="ArrayMesh" id="ArrayMesh_sabkn"]
+_surfaces = [{
+"aabb": AABB(263, 352, 0, 331, 256, 1e-05),
+"attribute_data": PackedByteArray(0, 0, 135, 61, 85, 85, 245, 62, 0, 0, 105, 62, 85, 85, 245, 62, 0, 0, 105, 62, 85, 85, 37, 63, 0, 0, 135, 61, 85, 85, 37, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 128, 131, 67, 0, 0, 176, 67, 0, 0, 0, 0, 0, 128, 20, 68, 0, 0, 176, 67, 0, 0, 0, 0, 0, 128, 20, 68, 0, 0, 24, 68, 0, 0, 0, 0, 0, 128, 131, 67, 0, 0, 24, 68, 0, 0, 0, 0)
+}]
 
-[sub_resource type="AtlasTexture" id="idle_7"]
-atlas = ExtResource("idle")
-region = Rect2(1724, 712, 133, 280)
-margin = Rect2(188, 200, 379, 232)
-filter_clip = true
+[sub_resource type="MeshTexture" id="MeshTexture_ua8xr"]
+mesh = SubResource("ArrayMesh_sabkn")
+base_texture = ExtResource("1_2uodi")
+image_size = Vector2(768, 768)
 
-[sub_resource type="AtlasTexture" id="attack_0"]
-atlas = ExtResource("attack")
-region = Rect2(178, 199, 156, 281)
-margin = Rect2(178, 199, 356, 231)
-filter_clip = true
+[sub_resource type="ArrayMesh" id="ArrayMesh_4nw1l"]
+_surfaces = [{
+"aabb": AABB(231, 380, 0, 400, 228, 1e-05),
+"attribute_data": PackedByteArray(0, 192, 153, 62, 171, 170, 254, 62, 0, 192, 253, 62, 171, 170, 254, 62, 0, 192, 253, 62, 85, 85, 37, 63, 0, 192, 153, 62, 85, 85, 37, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 103, 67, 0, 0, 190, 67, 0, 0, 0, 0, 0, 192, 29, 68, 0, 0, 190, 67, 0, 0, 0, 0, 0, 192, 29, 68, 0, 0, 24, 68, 0, 0, 0, 0, 0, 0, 103, 67, 0, 0, 24, 68, 0, 0, 0, 0)
+}]
 
-[sub_resource type="AtlasTexture" id="attack_1"]
-atlas = ExtResource("attack")
-region = Rect2(674, 198, 243, 282)
-margin = Rect2(162, 198, 269, 230)
-filter_clip = true
+[sub_resource type="MeshTexture" id="MeshTexture_dsvbj"]
+mesh = SubResource("ArrayMesh_4nw1l")
+base_texture = ExtResource("1_2uodi")
+image_size = Vector2(768, 768)
 
-[sub_resource type="AtlasTexture" id="attack_2"]
-atlas = ExtResource("attack")
-region = Rect2(1159, 198, 268, 282)
-margin = Rect2(135, 198, 244, 230)
-filter_clip = true
+[sub_resource type="ArrayMesh" id="ArrayMesh_ea1sl"]
+_surfaces = [{
+"aabb": AABB(323, 353, 0, 206, 255, 1e-05),
+"attribute_data": PackedByteArray(0, 96, 24, 63, 171, 170, 245, 62, 0, 32, 50, 63, 171, 170, 245, 62, 0, 32, 50, 63, 85, 85, 37, 63, 0, 96, 24, 63, 85, 85, 37, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 128, 161, 67, 0, 128, 176, 67, 0, 0, 0, 0, 0, 64, 4, 68, 0, 128, 176, 67, 0, 0, 0, 0, 0, 64, 4, 68, 0, 0, 24, 68, 0, 0, 0, 0, 0, 128, 161, 67, 0, 0, 24, 68, 0, 0, 0, 0)
+}]
 
-[sub_resource type="AtlasTexture" id="attack_3"]
-atlas = ExtResource("attack")
-region = Rect2(1682, 207, 238, 273)
-margin = Rect2(146, 207, 274, 239)
-filter_clip = true
+[sub_resource type="MeshTexture" id="MeshTexture_uaqtw"]
+mesh = SubResource("ArrayMesh_ea1sl")
+base_texture = ExtResource("1_2uodi")
+image_size = Vector2(768, 768)
 
-[sub_resource type="AtlasTexture" id="attack_4"]
-atlas = ExtResource("attack")
-region = Rect2(132, 706, 298, 273)
-margin = Rect2(132, 194, 214, 239)
-filter_clip = true
+[sub_resource type="ArrayMesh" id="ArrayMesh_je31n"]
+_surfaces = [{
+"aabb": AABB(246, 353, 0, 299, 255, 1e-05),
+"attribute_data": PackedByteArray(0, 192, 78, 63, 171, 170, 245, 62, 0, 32, 116, 63, 171, 170, 245, 62, 0, 32, 116, 63, 85, 85, 37, 63, 0, 192, 78, 63, 85, 85, 37, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 118, 67, 0, 128, 176, 67, 0, 0, 0, 0, 0, 64, 8, 68, 0, 128, 176, 67, 0, 0, 0, 0, 0, 64, 8, 68, 0, 0, 24, 68, 0, 0, 0, 0, 0, 0, 118, 67, 0, 0, 24, 68, 0, 0, 0, 0)
+}]
 
-[sub_resource type="AtlasTexture" id="attack_5"]
-atlas = ExtResource("attack")
-region = Rect2(620, 706, 322, 287)
-margin = Rect2(108, 194, 190, 225)
-filter_clip = true
+[sub_resource type="MeshTexture" id="MeshTexture_pfo4y"]
+mesh = SubResource("ArrayMesh_je31n")
+base_texture = ExtResource("1_2uodi")
+image_size = Vector2(768, 768)
 
-[sub_resource type="AtlasTexture" id="attack_6"]
-atlas = ExtResource("attack")
-region = Rect2(1132, 706, 297, 287)
-margin = Rect2(108, 194, 215, 225)
-filter_clip = true
+[sub_resource type="ArrayMesh" id="ArrayMesh_2qhlm"]
+_surfaces = [{
+"aabb": AABB(263, 372, 0, 377, 236, 1e-05),
+"attribute_data": PackedByteArray(0, 0, 135, 61, 85, 85, 83, 63, 0, 0, 128, 62, 85, 85, 83, 63, 0, 0, 128, 62, 171, 170, 122, 63, 0, 0, 135, 61, 171, 170, 122, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 128, 131, 67, 0, 0, 186, 67, 0, 0, 0, 0, 0, 0, 32, 68, 0, 0, 186, 67, 0, 0, 0, 0, 0, 0, 32, 68, 0, 0, 24, 68, 0, 0, 0, 0, 0, 128, 131, 67, 0, 0, 24, 68, 0, 0, 0, 0)
+}]
 
-[sub_resource type="AtlasTexture" id="attack_7"]
-atlas = ExtResource("attack")
-region = Rect2(1652, 706, 305, 287)
-margin = Rect2(116, 194, 207, 225)
-filter_clip = true
+[sub_resource type="MeshTexture" id="MeshTexture_mmno2"]
+mesh = SubResource("ArrayMesh_2qhlm")
+base_texture = ExtResource("1_2uodi")
+image_size = Vector2(768, 768)
 
-[sub_resource type="AtlasTexture" id="attack_8"]
-atlas = ExtResource("attack")
-region = Rect2(132, 1235, 298, 242)
-margin = Rect2(132, 211, 214, 270)
-filter_clip = true
+[sub_resource type="ArrayMesh" id="ArrayMesh_rvfhs"]
+_surfaces = [{
+"aabb": AABB(128, 347, 0, 454, 261, 1e-05),
+"attribute_data": PackedByteArray(0, 0, 128, 62, 171, 42, 79, 63, 0, 128, 241, 62, 171, 42, 79, 63, 0, 128, 241, 62, 171, 170, 122, 63, 0, 0, 128, 62, 171, 170, 122, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 0, 67, 0, 128, 173, 67, 0, 0, 0, 0, 0, 128, 17, 68, 0, 128, 173, 67, 0, 0, 0, 0, 0, 128, 17, 68, 0, 0, 24, 68, 0, 0, 0, 0, 0, 0, 0, 67, 0, 0, 24, 68, 0, 0, 0, 0)
+}]
 
-[sub_resource type="AtlasTexture" id="attack_9"]
-atlas = ExtResource("attack")
-region = Rect2(620, 1218, 322, 258)
-margin = Rect2(108, 194, 190, 254)
-filter_clip = true
+[sub_resource type="MeshTexture" id="MeshTexture_qq37i"]
+mesh = SubResource("ArrayMesh_rvfhs")
+base_texture = ExtResource("1_2uodi")
+image_size = Vector2(768, 768)
 
-[sub_resource type="AtlasTexture" id="attack_10"]
-atlas = ExtResource("attack")
-region = Rect2(1132, 1218, 299, 261)
-margin = Rect2(108, 194, 213, 251)
-filter_clip = true
+[sub_resource type="ArrayMesh" id="ArrayMesh_pn3ek"]
+_surfaces = [{
+"aabb": AABB(367, 343, 0, 165, 265, 1e-05),
+"attribute_data": PackedByteArray(0, 224, 29, 63, 0, 128, 78, 63, 0, 128, 50, 63, 0, 128, 78, 63, 0, 128, 50, 63, 171, 170, 122, 63, 0, 224, 29, 63, 171, 170, 122, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 128, 183, 67, 0, 128, 171, 67, 0, 0, 0, 0, 0, 0, 5, 68, 0, 128, 171, 67, 0, 0, 0, 0, 0, 0, 5, 68, 0, 0, 24, 68, 0, 0, 0, 0, 0, 128, 183, 67, 0, 0, 24, 68, 0, 0, 0, 0)
+}]
 
-[sub_resource type="AtlasTexture" id="attack_11"]
-atlas = ExtResource("attack")
-region = Rect2(1714, 1218, 152, 268)
-margin = Rect2(178, 194, 360, 244)
-filter_clip = true
+[sub_resource type="MeshTexture" id="MeshTexture_25pph"]
+mesh = SubResource("ArrayMesh_pn3ek")
+base_texture = ExtResource("1_2uodi")
+image_size = Vector2(768, 768)
 
-[sub_resource type="AtlasTexture" id="ultimate_0"]
-atlas = ExtResource("ultimate")
-region = Rect2(180, 199, 332, 281)
-margin = Rect2(180, 199, 180, 231)
-filter_clip = true
+[sub_resource type="ArrayMesh" id="ArrayMesh_amtsb"]
+_surfaces = [{
+"aabb": AABB(308, 333, 0, 147, 275, 1e-05),
+"attribute_data": PackedByteArray(0, 128, 86, 63, 85, 213, 76, 63, 0, 224, 104, 63, 85, 213, 76, 63, 0, 224, 104, 63, 171, 170, 122, 63, 0, 128, 86, 63, 171, 170, 122, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 154, 67, 0, 128, 166, 67, 0, 0, 0, 0, 0, 128, 227, 67, 0, 128, 166, 67, 0, 0, 0, 0, 0, 128, 227, 67, 0, 0, 24, 68, 0, 0, 0, 0, 0, 0, 154, 67, 0, 0, 24, 68, 0, 0, 0, 0)
+}]
 
-[sub_resource type="AtlasTexture" id="ultimate_1"]
-atlas = ExtResource("ultimate")
-region = Rect2(626, 267, 398, 213)
-margin = Rect2(114, 267, 114, 299)
-filter_clip = true
+[sub_resource type="MeshTexture" id="MeshTexture_o5ym3"]
+mesh = SubResource("ArrayMesh_amtsb")
+base_texture = ExtResource("1_2uodi")
+image_size = Vector2(768, 768)
 
-[sub_resource type="AtlasTexture" id="ultimate_2"]
-atlas = ExtResource("ultimate")
-region = Rect2(1138, 248, 398, 232)
-margin = Rect2(114, 248, 114, 280)
-filter_clip = true
+[sub_resource type="ArrayMesh" id="ArrayMesh_sph12"]
+_surfaces = [{
+"aabb": AABB(299, 324, 0, 176, 287, 1e-05),
+"attribute_data": PackedByteArray(0, 0, 171, 61, 0, 0, 68, 62, 0, 128, 45, 62, 0, 0, 68, 62, 0, 128, 45, 62, 0, 128, 241, 62, 0, 0, 171, 61, 0, 128, 241, 62),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 128, 149, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 128, 237, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 128, 237, 67, 0, 192, 24, 68, 0, 0, 0, 0, 0, 128, 149, 67, 0, 192, 24, 68, 0, 0, 0, 0)
+}]
 
-[sub_resource type="AtlasTexture" id="ultimate_3"]
-atlas = ExtResource("ultimate")
-region = Rect2(1650, 259, 384, 221)
-margin = Rect2(114, 259, 128, 291)
-filter_clip = true
+[sub_resource type="MeshTexture" id="MeshTexture_2wv81"]
+mesh = SubResource("ArrayMesh_sph12")
+base_texture = ExtResource("2_6qdfs")
+image_size = Vector2(768, 768)
 
-[sub_resource type="AtlasTexture" id="ultimate_4"]
-atlas = ExtResource("ultimate")
-region = Rect2(138, 593, 374, 393)
-margin = Rect2(138, 81, 138, 119)
-filter_clip = true
+[sub_resource type="ArrayMesh" id="ArrayMesh_f2o0o"]
+_surfaces = [{
+"aabb": AABB(288, 324, 0, 190, 287, 1e-05),
+"attribute_data": PackedByteArray(0, 0, 168, 62, 0, 0, 68, 62, 0, 128, 215, 62, 0, 0, 68, 62, 0, 128, 215, 62, 0, 128, 241, 62, 0, 0, 168, 62, 0, 128, 241, 62),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 144, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 0, 239, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 0, 239, 67, 0, 192, 24, 68, 0, 0, 0, 0, 0, 0, 144, 67, 0, 192, 24, 68, 0, 0, 0, 0)
+}]
 
-[sub_resource type="AtlasTexture" id="ultimate_5"]
-atlas = ExtResource("ultimate")
-region = Rect2(626, 593, 398, 394)
-margin = Rect2(114, 81, 114, 118)
-filter_clip = true
+[sub_resource type="MeshTexture" id="MeshTexture_raywg"]
+mesh = SubResource("ArrayMesh_f2o0o")
+base_texture = ExtResource("2_6qdfs")
+image_size = Vector2(768, 768)
 
-[sub_resource type="AtlasTexture" id="ultimate_6"]
-atlas = ExtResource("ultimate")
-region = Rect2(1138, 593, 398, 394)
-margin = Rect2(114, 81, 114, 118)
-filter_clip = true
+[sub_resource type="ArrayMesh" id="ArrayMesh_2iqku"]
+_surfaces = [{
+"aabb": AABB(288, 324, 0, 190, 287, 1e-05),
+"attribute_data": PackedByteArray(0, 0, 20, 63, 0, 0, 68, 62, 0, 192, 43, 63, 0, 0, 68, 62, 0, 192, 43, 63, 0, 128, 241, 62, 0, 0, 20, 63, 0, 128, 241, 62),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 144, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 0, 239, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 0, 239, 67, 0, 192, 24, 68, 0, 0, 0, 0, 0, 0, 144, 67, 0, 192, 24, 68, 0, 0, 0, 0)
+}]
 
-[sub_resource type="AtlasTexture" id="ultimate_7"]
-atlas = ExtResource("ultimate")
-region = Rect2(1650, 593, 395, 395)
-margin = Rect2(114, 81, 117, 117)
-filter_clip = true
+[sub_resource type="MeshTexture" id="MeshTexture_wtie4"]
+mesh = SubResource("ArrayMesh_2iqku")
+base_texture = ExtResource("2_6qdfs")
+image_size = Vector2(768, 768)
 
-[sub_resource type="AtlasTexture" id="ultimate_8"]
-atlas = ExtResource("ultimate")
-region = Rect2(146, 1189, 366, 246)
-margin = Rect2(146, 165, 146, 266)
-filter_clip = true
+[sub_resource type="ArrayMesh" id="ArrayMesh_3s3e5"]
+_surfaces = [{
+"aabb": AABB(298, 324, 0, 151, 287, 1e-05),
+"attribute_data": PackedByteArray(0, 64, 85, 63, 0, 0, 68, 62, 0, 32, 104, 63, 0, 0, 68, 62, 0, 32, 104, 63, 0, 128, 241, 62, 0, 64, 85, 63, 0, 128, 241, 62),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 149, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 128, 224, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 128, 224, 67, 0, 192, 24, 68, 0, 0, 0, 0, 0, 0, 149, 67, 0, 192, 24, 68, 0, 0, 0, 0)
+}]
 
-[sub_resource type="AtlasTexture" id="ultimate_9"]
-atlas = ExtResource("ultimate")
-region = Rect2(626, 1173, 398, 272)
-margin = Rect2(114, 149, 114, 240)
-filter_clip = true
+[sub_resource type="MeshTexture" id="MeshTexture_4dl44"]
+mesh = SubResource("ArrayMesh_3s3e5")
+base_texture = ExtResource("2_6qdfs")
+image_size = Vector2(768, 768)
 
-[sub_resource type="AtlasTexture" id="ultimate_10"]
-atlas = ExtResource("ultimate")
-region = Rect2(1138, 1220, 398, 214)
-margin = Rect2(114, 196, 114, 298)
-filter_clip = true
+[sub_resource type="ArrayMesh" id="ArrayMesh_uvry6"]
+_surfaces = [{
+"aabb": AABB(316, 325, 0, 158, 286, 1e-05),
+"attribute_data": PackedByteArray(0, 0, 188, 61, 0, 64, 49, 63, 0, 0, 45, 62, 0, 64, 49, 63, 0, 0, 45, 62, 0, 192, 120, 63, 0, 0, 188, 61, 0, 192, 120, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 158, 67, 0, 128, 162, 67, 0, 0, 0, 0, 0, 0, 237, 67, 0, 128, 162, 67, 0, 0, 0, 0, 0, 0, 237, 67, 0, 192, 24, 68, 0, 0, 0, 0, 0, 0, 158, 67, 0, 192, 24, 68, 0, 0, 0, 0)
+}]
 
-[sub_resource type="AtlasTexture" id="ultimate_11"]
-atlas = ExtResource("ultimate")
-region = Rect2(1650, 1151, 260, 283)
-margin = Rect2(114, 127, 252, 229)
-filter_clip = true
+[sub_resource type="MeshTexture" id="MeshTexture_jb6nd"]
+mesh = SubResource("ArrayMesh_uvry6")
+base_texture = ExtResource("2_6qdfs")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_nfedp"]
+_surfaces = [{
+"aabb": AABB(296, 324, 0, 166, 287, 1e-05),
+"attribute_data": PackedByteArray(0, 0, 170, 62, 0, 0, 49, 63, 0, 128, 211, 62, 0, 0, 49, 63, 0, 128, 211, 62, 0, 192, 120, 63, 0, 0, 170, 62, 0, 192, 120, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 148, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 0, 231, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 0, 231, 67, 0, 192, 24, 68, 0, 0, 0, 0, 0, 0, 148, 67, 0, 192, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_8gwl4"]
+mesh = SubResource("ArrayMesh_nfedp")
+base_texture = ExtResource("2_6qdfs")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_xs8jm"]
+_surfaces = [{
+"aabb": AABB(291, 326, 0, 181, 285, 1e-05),
+"attribute_data": PackedByteArray(0, 96, 20, 63, 0, 128, 49, 63, 0, 0, 43, 63, 0, 128, 49, 63, 0, 0, 43, 63, 0, 192, 120, 63, 0, 96, 20, 63, 0, 192, 120, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 128, 145, 67, 0, 0, 163, 67, 0, 0, 0, 0, 0, 0, 236, 67, 0, 0, 163, 67, 0, 0, 0, 0, 0, 0, 236, 67, 0, 192, 24, 68, 0, 0, 0, 0, 0, 128, 145, 67, 0, 192, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_cmdsd"]
+mesh = SubResource("ArrayMesh_xs8jm")
+base_texture = ExtResource("2_6qdfs")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_xf64t"]
+_surfaces = [{
+"aabb": AABB(291, 326, 0, 159, 285, 1e-05),
+"attribute_data": PackedByteArray(0, 96, 84, 63, 0, 128, 49, 63, 0, 64, 104, 63, 0, 128, 49, 63, 0, 64, 104, 63, 0, 192, 120, 63, 0, 96, 84, 63, 0, 192, 120, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 128, 145, 67, 0, 0, 163, 67, 0, 0, 0, 0, 0, 0, 225, 67, 0, 0, 163, 67, 0, 0, 0, 0, 0, 0, 225, 67, 0, 192, 24, 68, 0, 0, 0, 0, 0, 128, 145, 67, 0, 192, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_0gc1a"]
+mesh = SubResource("ArrayMesh_xf64t")
+base_texture = ExtResource("2_6qdfs")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_n2rto"]
+_surfaces = [{
+"aabb": AABB(299, 324, 0, 176, 287, 1e-05),
+"attribute_data": PackedByteArray(0, 0, 171, 61, 0, 0, 68, 62, 0, 128, 45, 62, 0, 0, 68, 62, 0, 128, 45, 62, 0, 128, 241, 62, 0, 0, 171, 61, 0, 128, 241, 62),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 128, 149, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 128, 237, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 128, 237, 67, 0, 192, 24, 68, 0, 0, 0, 0, 0, 128, 149, 67, 0, 192, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_sd15n"]
+mesh = SubResource("ArrayMesh_n2rto")
+base_texture = ExtResource("2_6qdfs")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_we3fu"]
+_surfaces = [{
+"aabb": AABB(288, 324, 0, 190, 287, 1e-05),
+"attribute_data": PackedByteArray(0, 0, 168, 62, 0, 0, 68, 62, 0, 128, 215, 62, 0, 0, 68, 62, 0, 128, 215, 62, 0, 128, 241, 62, 0, 0, 168, 62, 0, 128, 241, 62),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 144, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 0, 239, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 0, 239, 67, 0, 192, 24, 68, 0, 0, 0, 0, 0, 0, 144, 67, 0, 192, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_7ncb3"]
+mesh = SubResource("ArrayMesh_we3fu")
+base_texture = ExtResource("2_6qdfs")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_jfw86"]
+_surfaces = [{
+"aabb": AABB(288, 324, 0, 190, 287, 1e-05),
+"attribute_data": PackedByteArray(0, 0, 20, 63, 0, 0, 68, 62, 0, 192, 43, 63, 0, 0, 68, 62, 0, 192, 43, 63, 0, 128, 241, 62, 0, 0, 20, 63, 0, 128, 241, 62),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 144, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 0, 239, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 0, 239, 67, 0, 192, 24, 68, 0, 0, 0, 0, 0, 0, 144, 67, 0, 192, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_b3a1h"]
+mesh = SubResource("ArrayMesh_jfw86")
+base_texture = ExtResource("2_6qdfs")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_qnhu1"]
+_surfaces = [{
+"aabb": AABB(298, 324, 0, 151, 287, 1e-05),
+"attribute_data": PackedByteArray(0, 64, 85, 63, 0, 0, 68, 62, 0, 32, 104, 63, 0, 0, 68, 62, 0, 32, 104, 63, 0, 128, 241, 62, 0, 64, 85, 63, 0, 128, 241, 62),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 149, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 128, 224, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 128, 224, 67, 0, 192, 24, 68, 0, 0, 0, 0, 0, 0, 149, 67, 0, 192, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_6pqyq"]
+mesh = SubResource("ArrayMesh_qnhu1")
+base_texture = ExtResource("2_6qdfs")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_jmmuh"]
+_surfaces = [{
+"aabb": AABB(316, 325, 0, 158, 286, 1e-05),
+"attribute_data": PackedByteArray(0, 0, 188, 61, 0, 64, 49, 63, 0, 0, 45, 62, 0, 64, 49, 63, 0, 0, 45, 62, 0, 192, 120, 63, 0, 0, 188, 61, 0, 192, 120, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 158, 67, 0, 128, 162, 67, 0, 0, 0, 0, 0, 0, 237, 67, 0, 128, 162, 67, 0, 0, 0, 0, 0, 0, 237, 67, 0, 192, 24, 68, 0, 0, 0, 0, 0, 0, 158, 67, 0, 192, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_1f771"]
+mesh = SubResource("ArrayMesh_jmmuh")
+base_texture = ExtResource("2_6qdfs")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_yrmwk"]
+_surfaces = [{
+"aabb": AABB(296, 324, 0, 166, 287, 1e-05),
+"attribute_data": PackedByteArray(0, 0, 170, 62, 0, 0, 49, 63, 0, 128, 211, 62, 0, 0, 49, 63, 0, 128, 211, 62, 0, 192, 120, 63, 0, 0, 170, 62, 0, 192, 120, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 148, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 0, 231, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 0, 231, 67, 0, 192, 24, 68, 0, 0, 0, 0, 0, 0, 148, 67, 0, 192, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_fjx7x"]
+mesh = SubResource("ArrayMesh_yrmwk")
+base_texture = ExtResource("2_6qdfs")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_jivg2"]
+_surfaces = [{
+"aabb": AABB(291, 326, 0, 181, 285, 1e-05),
+"attribute_data": PackedByteArray(0, 96, 20, 63, 0, 128, 49, 63, 0, 0, 43, 63, 0, 128, 49, 63, 0, 0, 43, 63, 0, 192, 120, 63, 0, 96, 20, 63, 0, 192, 120, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 128, 145, 67, 0, 0, 163, 67, 0, 0, 0, 0, 0, 0, 236, 67, 0, 0, 163, 67, 0, 0, 0, 0, 0, 0, 236, 67, 0, 192, 24, 68, 0, 0, 0, 0, 0, 128, 145, 67, 0, 192, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_ncwc4"]
+mesh = SubResource("ArrayMesh_jivg2")
+base_texture = ExtResource("2_6qdfs")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_d2txi"]
+_surfaces = [{
+"aabb": AABB(291, 326, 0, 159, 285, 1e-05),
+"attribute_data": PackedByteArray(0, 96, 84, 63, 0, 128, 49, 63, 0, 64, 104, 63, 0, 128, 49, 63, 0, 64, 104, 63, 0, 192, 120, 63, 0, 96, 84, 63, 0, 192, 120, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 128, 145, 67, 0, 0, 163, 67, 0, 0, 0, 0, 0, 0, 225, 67, 0, 0, 163, 67, 0, 0, 0, 0, 0, 0, 225, 67, 0, 192, 24, 68, 0, 0, 0, 0, 0, 128, 145, 67, 0, 192, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_3fflh"]
+mesh = SubResource("ArrayMesh_d2txi")
+base_texture = ExtResource("2_6qdfs")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_bx682"]
+_surfaces = [{
+"aabb": AABB(276, 222, 0, 364, 386, 1e-05),
+"attribute_data": PackedByteArray(0, 0, 148, 61, 171, 170, 122, 61, 0, 0, 128, 62, 171, 170, 122, 61, 0, 0, 128, 62, 0, 0, 160, 62, 0, 0, 148, 61, 0, 0, 160, 62),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 138, 67, 0, 0, 94, 67, 0, 0, 0, 0, 0, 0, 32, 68, 0, 0, 94, 67, 0, 0, 0, 0, 0, 0, 32, 68, 0, 0, 24, 68, 0, 0, 0, 0, 0, 0, 138, 67, 0, 0, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_8pvv0"]
+mesh = SubResource("ArrayMesh_bx682")
+base_texture = ExtResource("3_m4g7k")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_fxahr"]
+_surfaces = [{
+"aabb": AABB(289, 326, 0, 240, 282, 1e-05),
+"attribute_data": PackedByteArray(0, 64, 168, 62, 0, 0, 4, 62, 0, 64, 228, 62, 0, 0, 4, 62, 0, 64, 228, 62, 0, 0, 160, 62, 0, 64, 168, 62, 0, 0, 160, 62),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 128, 144, 67, 0, 0, 163, 67, 0, 0, 0, 0, 0, 64, 4, 68, 0, 0, 163, 67, 0, 0, 0, 0, 0, 64, 4, 68, 0, 0, 24, 68, 0, 0, 0, 0, 0, 128, 144, 67, 0, 0, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_c3b43"]
+mesh = SubResource("ArrayMesh_fxahr")
+base_texture = ExtResource("3_m4g7k")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_ipqp4"]
+_surfaces = [{
+"aabb": AABB(262, 326, 0, 265, 282, 1e-05),
+"attribute_data": PackedByteArray(0, 192, 16, 63, 0, 0, 4, 62, 0, 224, 49, 63, 0, 0, 4, 62, 0, 224, 49, 63, 0, 0, 160, 62, 0, 192, 16, 63, 0, 0, 160, 62),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 131, 67, 0, 0, 163, 67, 0, 0, 0, 0, 0, 192, 3, 68, 0, 0, 163, 67, 0, 0, 0, 0, 0, 192, 3, 68, 0, 0, 24, 68, 0, 0, 0, 0, 0, 0, 131, 67, 0, 0, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_q2m4s"]
+mesh = SubResource("ArrayMesh_ipqp4")
+base_texture = ExtResource("3_m4g7k")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_pwhb1"]
+_surfaces = [{
+"aabb": AABB(242, 228, 0, 398, 380, 1e-05),
+"attribute_data": PackedByteArray(0, 64, 78, 63, 85, 85, 133, 61, 0, 0, 128, 63, 85, 85, 133, 61, 0, 0, 128, 63, 0, 0, 160, 62, 0, 64, 78, 63, 0, 0, 160, 62),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 114, 67, 0, 0, 100, 67, 0, 0, 0, 0, 0, 0, 32, 68, 0, 0, 100, 67, 0, 0, 0, 0, 0, 0, 32, 68, 0, 0, 24, 68, 0, 0, 0, 0, 0, 0, 114, 67, 0, 0, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_du30p"]
+mesh = SubResource("ArrayMesh_pwhb1")
+base_texture = ExtResource("3_m4g7k")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_hpgwe"]
+_surfaces = [{
+"aabb": AABB(256, 209, 0, 384, 399, 1e-05),
+"attribute_data": PackedByteArray(0, 0, 128, 61, 171, 170, 197, 62, 0, 0, 128, 62, 171, 170, 197, 62, 0, 0, 128, 62, 85, 85, 37, 63, 0, 0, 128, 61, 85, 85, 37, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 128, 67, 0, 0, 81, 67, 0, 0, 0, 0, 0, 0, 32, 68, 0, 0, 81, 67, 0, 0, 0, 0, 0, 0, 32, 68, 0, 0, 24, 68, 0, 0, 0, 0, 0, 0, 128, 67, 0, 0, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_ah1xe"]
+mesh = SubResource("ArrayMesh_hpgwe")
+base_texture = ExtResource("3_m4g7k")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_w3vbo"]
+_surfaces = [{
+"aabb": AABB(242, 209, 0, 398, 399, 1e-05),
+"attribute_data": PackedByteArray(0, 128, 156, 62, 171, 170, 197, 62, 0, 0, 0, 63, 171, 170, 197, 62, 0, 0, 0, 63, 85, 85, 37, 63, 0, 128, 156, 62, 85, 85, 37, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 114, 67, 0, 0, 81, 67, 0, 0, 0, 0, 0, 0, 32, 68, 0, 0, 81, 67, 0, 0, 0, 0, 0, 0, 32, 68, 0, 0, 24, 68, 0, 0, 0, 0, 0, 0, 114, 67, 0, 0, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_tgosc"]
+mesh = SubResource("ArrayMesh_w3vbo")
+base_texture = ExtResource("3_m4g7k")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_dc8wx"]
+_surfaces = [{
+"aabb": AABB(242, 209, 0, 398, 399, 1e-05),
+"attribute_data": PackedByteArray(0, 64, 14, 63, 171, 170, 197, 62, 0, 0, 64, 63, 171, 170, 197, 62, 0, 0, 64, 63, 85, 85, 37, 63, 0, 64, 14, 63, 85, 85, 37, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 114, 67, 0, 0, 81, 67, 0, 0, 0, 0, 0, 0, 32, 68, 0, 0, 81, 67, 0, 0, 0, 0, 0, 0, 32, 68, 0, 0, 24, 68, 0, 0, 0, 0, 0, 0, 114, 67, 0, 0, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_knwvn"]
+mesh = SubResource("ArrayMesh_dc8wx")
+base_texture = ExtResource("3_m4g7k")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_pmnka"]
+_surfaces = [{
+"aabb": AABB(242, 209, 0, 398, 399, 1e-05),
+"attribute_data": PackedByteArray(0, 64, 78, 63, 171, 170, 197, 62, 0, 0, 128, 63, 171, 170, 197, 62, 0, 0, 128, 63, 85, 85, 37, 63, 0, 64, 78, 63, 85, 85, 37, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 114, 67, 0, 0, 81, 67, 0, 0, 0, 0, 0, 0, 32, 68, 0, 0, 81, 67, 0, 0, 0, 0, 0, 0, 32, 68, 0, 0, 24, 68, 0, 0, 0, 0, 0, 0, 114, 67, 0, 0, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_fjrop"]
+mesh = SubResource("ArrayMesh_pmnka")
+base_texture = ExtResource("3_m4g7k")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_ag705"]
+_surfaces = [{
+"aabb": AABB(242, 209, 0, 398, 399, 1e-05),
+"attribute_data": PackedByteArray(0, 0, 100, 61, 171, 42, 56, 63, 0, 0, 128, 62, 171, 42, 56, 63, 0, 0, 128, 62, 171, 170, 122, 63, 0, 0, 100, 61, 171, 170, 122, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 114, 67, 0, 0, 81, 67, 0, 0, 0, 0, 0, 0, 32, 68, 0, 0, 81, 67, 0, 0, 0, 0, 0, 0, 32, 68, 0, 0, 24, 68, 0, 0, 0, 0, 0, 0, 114, 67, 0, 0, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_l55ij"]
+mesh = SubResource("ArrayMesh_ag705")
+base_texture = ExtResource("3_m4g7k")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_hgo7i"]
+_surfaces = [{
+"aabb": AABB(242, 209, 0, 398, 399, 1e-05),
+"attribute_data": PackedByteArray(0, 128, 156, 62, 171, 42, 56, 63, 0, 0, 0, 63, 171, 42, 56, 63, 0, 0, 0, 63, 171, 170, 122, 63, 0, 128, 156, 62, 171, 170, 122, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 114, 67, 0, 0, 81, 67, 0, 0, 0, 0, 0, 0, 32, 68, 0, 0, 81, 67, 0, 0, 0, 0, 0, 0, 32, 68, 0, 0, 24, 68, 0, 0, 0, 0, 0, 0, 114, 67, 0, 0, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_nnugq"]
+mesh = SubResource("ArrayMesh_hgo7i")
+base_texture = ExtResource("3_m4g7k")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_nk138"]
+_surfaces = [{
+"aabb": AABB(299, 324, 0, 176, 287, 1e-05),
+"attribute_data": PackedByteArray(0, 96, 21, 63, 85, 85, 75, 63, 0, 96, 43, 63, 85, 85, 75, 63, 0, 96, 43, 63, 171, 42, 123, 63, 0, 96, 21, 63, 171, 42, 123, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 128, 149, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 128, 237, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 128, 237, 67, 0, 192, 24, 68, 0, 0, 0, 0, 0, 128, 149, 67, 0, 192, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_if8k5"]
+mesh = SubResource("ArrayMesh_nk138")
+base_texture = ExtResource("3_m4g7k")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_xbm68"]
+_surfaces = [{
+"aabb": AABB(299, 324, 0, 176, 287, 1e-05),
+"attribute_data": PackedByteArray(0, 96, 85, 63, 85, 85, 75, 63, 0, 96, 107, 63, 85, 85, 75, 63, 0, 96, 107, 63, 171, 42, 123, 63, 0, 96, 85, 63, 171, 42, 123, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 128, 149, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 128, 237, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 128, 237, 67, 0, 192, 24, 68, 0, 0, 0, 0, 0, 128, 149, 67, 0, 192, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_t3060"]
+mesh = SubResource("ArrayMesh_xbm68")
+base_texture = ExtResource("3_m4g7k")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_w0h3e"]
+_surfaces = [{
+"aabb": AABB(299, 324, 0, 176, 287, 1e-05),
+"attribute_data": PackedByteArray(0, 0, 171, 61, 0, 0, 68, 62, 0, 128, 45, 62, 0, 0, 68, 62, 0, 128, 45, 62, 0, 128, 241, 62, 0, 0, 171, 61, 0, 128, 241, 62),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 128, 149, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 128, 237, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 128, 237, 67, 0, 192, 24, 68, 0, 0, 0, 0, 0, 128, 149, 67, 0, 192, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_ifjyc"]
+mesh = SubResource("ArrayMesh_w0h3e")
+base_texture = ExtResource("2_6qdfs")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_keodo"]
+_surfaces = [{
+"aabb": AABB(288, 324, 0, 190, 287, 1e-05),
+"attribute_data": PackedByteArray(0, 0, 168, 62, 0, 0, 68, 62, 0, 128, 215, 62, 0, 0, 68, 62, 0, 128, 215, 62, 0, 128, 241, 62, 0, 0, 168, 62, 0, 128, 241, 62),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 144, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 0, 239, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 0, 239, 67, 0, 192, 24, 68, 0, 0, 0, 0, 0, 0, 144, 67, 0, 192, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_tq7lt"]
+mesh = SubResource("ArrayMesh_keodo")
+base_texture = ExtResource("2_6qdfs")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_631cc"]
+_surfaces = [{
+"aabb": AABB(288, 324, 0, 190, 287, 1e-05),
+"attribute_data": PackedByteArray(0, 0, 20, 63, 0, 0, 68, 62, 0, 192, 43, 63, 0, 0, 68, 62, 0, 192, 43, 63, 0, 128, 241, 62, 0, 0, 20, 63, 0, 128, 241, 62),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 144, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 0, 239, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 0, 239, 67, 0, 192, 24, 68, 0, 0, 0, 0, 0, 0, 144, 67, 0, 192, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_2et78"]
+mesh = SubResource("ArrayMesh_631cc")
+base_texture = ExtResource("2_6qdfs")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_ue7ls"]
+_surfaces = [{
+"aabb": AABB(298, 324, 0, 151, 287, 1e-05),
+"attribute_data": PackedByteArray(0, 64, 85, 63, 0, 0, 68, 62, 0, 32, 104, 63, 0, 0, 68, 62, 0, 32, 104, 63, 0, 128, 241, 62, 0, 64, 85, 63, 0, 128, 241, 62),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 149, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 128, 224, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 128, 224, 67, 0, 192, 24, 68, 0, 0, 0, 0, 0, 0, 149, 67, 0, 192, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_kxitm"]
+mesh = SubResource("ArrayMesh_ue7ls")
+base_texture = ExtResource("2_6qdfs")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_5cjoi"]
+_surfaces = [{
+"aabb": AABB(316, 325, 0, 158, 286, 1e-05),
+"attribute_data": PackedByteArray(0, 0, 188, 61, 0, 64, 49, 63, 0, 0, 45, 62, 0, 64, 49, 63, 0, 0, 45, 62, 0, 192, 120, 63, 0, 0, 188, 61, 0, 192, 120, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 158, 67, 0, 128, 162, 67, 0, 0, 0, 0, 0, 0, 237, 67, 0, 128, 162, 67, 0, 0, 0, 0, 0, 0, 237, 67, 0, 192, 24, 68, 0, 0, 0, 0, 0, 0, 158, 67, 0, 192, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_xvnpe"]
+mesh = SubResource("ArrayMesh_5cjoi")
+base_texture = ExtResource("2_6qdfs")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_auh7n"]
+_surfaces = [{
+"aabb": AABB(296, 324, 0, 166, 287, 1e-05),
+"attribute_data": PackedByteArray(0, 0, 170, 62, 0, 0, 49, 63, 0, 128, 211, 62, 0, 0, 49, 63, 0, 128, 211, 62, 0, 192, 120, 63, 0, 0, 170, 62, 0, 192, 120, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 148, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 0, 231, 67, 0, 0, 162, 67, 0, 0, 0, 0, 0, 0, 231, 67, 0, 192, 24, 68, 0, 0, 0, 0, 0, 0, 148, 67, 0, 192, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_lqkc7"]
+mesh = SubResource("ArrayMesh_auh7n")
+base_texture = ExtResource("2_6qdfs")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_ps6xs"]
+_surfaces = [{
+"aabb": AABB(291, 326, 0, 181, 285, 1e-05),
+"attribute_data": PackedByteArray(0, 96, 20, 63, 0, 128, 49, 63, 0, 0, 43, 63, 0, 128, 49, 63, 0, 0, 43, 63, 0, 192, 120, 63, 0, 96, 20, 63, 0, 192, 120, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 128, 145, 67, 0, 0, 163, 67, 0, 0, 0, 0, 0, 0, 236, 67, 0, 0, 163, 67, 0, 0, 0, 0, 0, 0, 236, 67, 0, 192, 24, 68, 0, 0, 0, 0, 0, 128, 145, 67, 0, 192, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_qxq4v"]
+mesh = SubResource("ArrayMesh_ps6xs")
+base_texture = ExtResource("2_6qdfs")
+image_size = Vector2(768, 768)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_p88iw"]
+_surfaces = [{
+"aabb": AABB(291, 326, 0, 159, 285, 1e-05),
+"attribute_data": PackedByteArray(0, 96, 84, 63, 0, 128, 49, 63, 0, 64, 104, 63, 0, 128, 49, 63, 0, 64, 104, 63, 0, 192, 120, 63, 0, 96, 84, 63, 0, 192, 120, 63),
+"format": 34359742481,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 0, 0, 2, 0, 3, 0),
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 128, 145, 67, 0, 0, 163, 67, 0, 0, 0, 0, 0, 0, 225, 67, 0, 0, 163, 67, 0, 0, 0, 0, 0, 0, 225, 67, 0, 192, 24, 68, 0, 0, 0, 0, 0, 128, 145, 67, 0, 192, 24, 68, 0, 0, 0, 0)
+}]
+
+[sub_resource type="MeshTexture" id="MeshTexture_hkrir"]
+mesh = SubResource("ArrayMesh_p88iw")
+base_texture = ExtResource("2_6qdfs")
+image_size = Vector2(768, 768)
 
 [resource]
 resource_local_to_scene = true
-animations = [{"frames": [{"duration": 1.0, "texture": SubResource("idle_0")}, {"duration": 1.0, "texture": SubResource("idle_1")}, {"duration": 1.0, "texture": SubResource("idle_2")}, {"duration": 1.0, "texture": SubResource("idle_3")}, {"duration": 1.0, "texture": SubResource("idle_4")}, {"duration": 1.0, "texture": SubResource("idle_5")}, {"duration": 1.0, "texture": SubResource("idle_6")}, {"duration": 1.0, "texture": SubResource("idle_7")}], "loop": false, "name": &"idle", "speed": 7.0},
-{"frames": [{"duration": 1.0, "texture": SubResource("idle_0")}, {"duration": 1.0, "texture": SubResource("idle_1")}, {"duration": 1.0, "texture": SubResource("idle_2")}, {"duration": 1.0, "texture": SubResource("idle_3")}, {"duration": 1.0, "texture": SubResource("idle_4")}, {"duration": 1.0, "texture": SubResource("idle_5")}, {"duration": 1.0, "texture": SubResource("idle_6")}, {"duration": 1.0, "texture": SubResource("idle_7")}], "loop": false, "name": &"idle_blink", "speed": 10.0},
-{"frames": [{"duration": 1.0, "texture": SubResource("idle_0")}, {"duration": 1.0, "texture": SubResource("idle_1")}, {"duration": 1.0, "texture": SubResource("idle_2")}, {"duration": 1.0, "texture": SubResource("idle_3")}, {"duration": 1.0, "texture": SubResource("idle_4")}, {"duration": 1.0, "texture": SubResource("idle_5")}, {"duration": 1.0, "texture": SubResource("idle_6")}, {"duration": 1.0, "texture": SubResource("idle_7")}], "loop": true, "name": &"walk", "speed": 8.0},
-{"frames": [{"duration": 1.0, "texture": SubResource("attack_0")}, {"duration": 1.0, "texture": SubResource("attack_1")}, {"duration": 1.0, "texture": SubResource("attack_2")}, {"duration": 1.0, "texture": SubResource("attack_3")}, {"duration": 1.0, "texture": SubResource("attack_4")}, {"duration": 1.0, "texture": SubResource("attack_5")}, {"duration": 1.0, "texture": SubResource("attack_6")}, {"duration": 1.0, "texture": SubResource("attack_7")}, {"duration": 1.0, "texture": SubResource("attack_8")}, {"duration": 1.0, "texture": SubResource("attack_9")}, {"duration": 1.0, "texture": SubResource("attack_10")}, {"duration": 1.0, "texture": SubResource("attack_11")}], "loop": false, "name": &"attack", "speed": 12.0},
-{"frames": [{"duration": 1.0, "texture": SubResource("ultimate_0")}, {"duration": 1.0, "texture": SubResource("ultimate_1")}, {"duration": 1.0, "texture": SubResource("ultimate_2")}, {"duration": 1.0, "texture": SubResource("ultimate_3")}, {"duration": 1.0, "texture": SubResource("ultimate_4")}, {"duration": 1.0, "texture": SubResource("ultimate_5")}, {"duration": 1.0, "texture": SubResource("ultimate_6")}, {"duration": 1.0, "texture": SubResource("ultimate_7")}, {"duration": 1.0, "texture": SubResource("ultimate_8")}, {"duration": 1.0, "texture": SubResource("ultimate_9")}, {"duration": 1.0, "texture": SubResource("ultimate_10")}, {"duration": 1.0, "texture": SubResource("ultimate_11")}], "loop": false, "name": &"ultimate", "speed": 6.0}]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("MeshTexture_xkef4")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_5r4nx")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_iegij")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_q1mwv")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_ua8xr")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_dsvbj")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_uaqtw")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_pfo4y")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_mmno2")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_qq37i")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_25pph")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_o5ym3")
+}],
+"loop": 0,
+"name": &"attack",
+"speed": 12.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("MeshTexture_2wv81")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_raywg")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_wtie4")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_4dl44")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_jb6nd")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_8gwl4")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_cmdsd")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_0gc1a")
+}],
+"loop": 1,
+"name": &"idle",
+"speed": 7.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("MeshTexture_sd15n")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_7ncb3")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_b3a1h")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_6pqyq")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_1f771")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_fjx7x")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_ncwc4")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_3fflh")
+}],
+"loop": 1,
+"name": &"idle_blink",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("MeshTexture_8pvv0")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_c3b43")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_q2m4s")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_du30p")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_ah1xe")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_tgosc")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_knwvn")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_fjrop")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_l55ij")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_nnugq")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_if8k5")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_t3060")
+}],
+"loop": 0,
+"name": &"ultimate",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("MeshTexture_ifjyc")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_tq7lt")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_2et78")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_kxitm")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_xvnpe")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_lqkc7")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_qxq4v")
+}, {
+"duration": 1.0,
+"texture": SubResource("MeshTexture_hkrir")
+}],
+"loop": 1,
+"name": &"walk",
+"speed": 8.0
+}]

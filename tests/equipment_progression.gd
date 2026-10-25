@@ -35,7 +35,7 @@ func checks() -> void:
 		assert(run.capacity_cost() == price and run.buy_supply("capacity"))
 		assert(run.run_gold == before - price)
 	assert(run.party_capacity == 9 and not run.buy_supply("capacity"))
-	for hero in ["rapunzel", "joao", "puss", "mulan", "maria", "peter", "snow_white", "alice"]:
+	for hero in ["rapunzel", "joao", "puss", "mulan", "maria", "aladin", "snow_white", "alice"]:
 		run.pending_choice = true
 		run.offers.assign(["ally:" + hero, "power", "heart"])
 		assert(run.recruit(account, hero))

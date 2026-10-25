@@ -48,7 +48,24 @@ static func rank_for_class(job: String) -> String:
 
 
 func ensure_front() -> void:
-	if run().expedition: return
+	if run().expedition:
+		# A class update can overflow an older saved formation. Reserve each natural
+		# row before distributing overflow, preserving all nine existing recruits.
+		var occupied:Dictionary={"front":0,"middle":0,"back":0}
+		var overflow:Array=[]
+		for actor in run().actors:
+			var preferred:=rank_for_class(actor["class"])
+			if occupied[preferred]<3:
+				actor.row=preferred
+				occupied[preferred]+=1
+			else:overflow.append(actor)
+		for actor in overflow:
+			for row in ["middle","back","front"]:
+				if occupied[row]<3:
+					actor.row=row
+					occupied[row]+=1
+					break
+		return
 	for actor in run().actors:
 		if actor.row == "front":
 			return

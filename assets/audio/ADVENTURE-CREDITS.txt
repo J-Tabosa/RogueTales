@@ -1,0 +1,8 @@
+RogueTales — Caminhos do Último Fio (2026)
+Original composition: tools/compose_adventure_theme.py, 48 bars, 112 BPM.
+No melodies or recordings from existing films or games are used.
+Rendered with FluidSynth and TimGM6mb by Tim Brechbill (2004).
+TimGM6mb SoundFont is distributed under GNU GPL v2.
+SoundFont source: https://packages.ubuntu.com/noble/timgm6mb-soundfont
+Score source and rendering instructions are included in this repository.
+See COPYING-ADVENTURE.txt for the sample-bank license.

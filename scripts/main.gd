@@ -342,6 +342,7 @@ func portrait(parent: Node, id: String, at: Vector2, factor: float = 0.68) -> vo
 
 func scroll_area(y: float, height: float, total: float) -> Control:
 	var scroll := ScrollContainer.new()
+	scroll.set_script(preload("res://scripts/touch_scroll.gd"))
 	scroll.position = Vector2(24, y)
 	scroll.size = Vector2(492, height)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED

@@ -32,8 +32,8 @@ func checks() -> void:
 		for animation in ["idle","walk","attack","ultimate"]:
 			assert(frames.get_frame_count(animation)==(8 if animation in ["idle","walk"] else 12))
 			for at in frames.get_frame_count(animation):
-				var texture:AtlasTexture=frames.get_frame_texture(animation,at)
-				assert(texture.atlas.resource_path.ends_with(".webp") and texture.get_size()==Vector2(512,512))
+				var texture:MeshTexture=frames.get_frame_texture(animation,at)
+				assert(texture.base_texture.resource_path.ends_with(".webp") and texture.image_size==Vector2(768,768))
 		assert(preload("res://scripts/ultimate_vfx.gd").frame(id,.5).get_image().get_pixel(0,0).a<.02)
 	for world in 12:
 		var scenery:=Biomes.scenery(world)

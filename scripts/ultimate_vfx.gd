@@ -95,11 +95,9 @@ static func draw(arena,canvas:Node2D) -> void:
 						var to:Vector2=arena.foe_homes[at]+Vector2(0,-h*.45)
 						stamp(canvas,id,from.lerp(to,flight),Vector2(h*1.6,h*.9),fposmod(p*3,1),tail)
 			"snow_white":
-				if p<hit:
-					var eye:Vector2=arena.heroes[index].position+Vector2(h*.08,-h*.87)
-					stamp(canvas,id,eye,Vector2.ONE*h*.35,minf(.24,p*.4),1)
-				else:
-					stamp(canvas,id,aim+Vector2(0,h*.35),Vector2(h*1.8,h*1.2),lerpf(.25,1,(p-hit)/(1-hit)),tail)
+				# The pose atlas already contains the eye glint on her actual eye.
+				if p>=hit and not targets.is_empty():
+					ground_stamp(canvas,id,arena.foe_homes[targets[0]],Vector2(h*1.8,h*1.2),lerpf(.25,1,(p-hit)/(1-hit)),tail)
 			"rapunzel":
 				for at in track.get("ally_targets",[]):
 					var from:Vector2=track.home+Vector2(0,-h*.10)
@@ -134,12 +132,31 @@ static func draw(arena,canvas:Node2D) -> void:
 			for spirit in int(actor.get("guardian_spirits",0)):
 				var angle:float=spirit*TAU/3.0+(0.0 if arena.reduced_motion else arena.clock*1.2)
 				stamp(canvas,"peter",home+Vector2(0,-h*.55)+Vector2.from_angle(angle)*h*.48,Vector2.ONE*h*.43,fposmod(arena.clock*.65+spirit*.23,1))
+		if float(actor.get("shield",0))>0:
+			shield_bubble(canvas,home,float(arena.heroes[index].get_meta("visual_height",h)),arena.clock,arena.reduced_motion)
 		if actor.get("hair_guard",false) and actor.shield>0:
 			stamp(canvas,"rapunzel",home+Vector2(0,-h*.28),Vector2(h*.95,h*.80),.76+sin(arena.clock*2)*.06,.30)
 	for at in arena.foe_homes.size():
 		var foe:Dictionary=arena.simulation.tactics.enemies[at]
 		if foe.hp<=0 or not arena.enemy_visible:continue
+		if float(foe.get("shield",0))>0:shield_bubble(canvas,arena.foe_homes[at],h,arena.clock,arena.reduced_motion)
 		if int(foe.get("sleep_turns",0))>0:
 			stamp(canvas,"aladin",arena.foe_homes[at]+Vector2(0,-h*.68),Vector2.ONE*h*.7,fposmod(arena.clock*.4,1),.5)
 		if float(foe.get("curse_left",0))>0:
 			stamp(canvas,"maria",arena.foe_homes[at]+Vector2(0,-h*.85),Vector2.ONE*h*.45,fposmod(arena.clock*.4,1),.65)
+
+static var ground_regions:Dictionary={}
+static func ground_stamp(canvas:Node2D,id:String,feet:Vector2,extent:Vector2,progress:float,opacity:float) -> void:
+	var texture:=frame(id,progress)
+	var key:="%s:%d"%[id,clampi(int(progress*12),0,11)]
+	if not ground_regions.has(key):ground_regions[key]=texture.get_image().get_used_rect()
+	var region:Rect2=ground_regions[key]
+	var anchor:=Vector2(region.get_center().x,region.end.y)/512.0*extent
+	canvas.draw_texture_rect(texture,Rect2(feet-anchor,extent),false,Color(1,1,1,opacity))
+static func shield_bubble(canvas:Node2D,feet:Vector2,height:float,clock:float,reduced:bool) -> void:
+	var pulse:=1.0 if reduced else 1.0+sin(clock*2.2)*.018
+	var radius:=height*.50*pulse
+	canvas.draw_set_transform(feet+Vector2(0,-height*.52),0,Vector2(.72,1))
+	canvas.draw_circle(Vector2.ZERO,radius,Color("8ddbee",.075),true,-1,true)
+	canvas.draw_arc(Vector2.ZERO,radius,0,TAU,48,Color("bceffc",.40),1.5,true)
+	canvas.draw_set_transform(Vector2.ZERO)

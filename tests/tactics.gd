@@ -26,7 +26,7 @@ func checks() -> void:
 	assert(Tactics.choose_target({"class": "mage"}, units) == -1)
 	var campaign := TaleCampaign.new()
 	campaign.unlocked.assign(TaleCatalog.HEROES.keys())
-	campaign.party.assign(["mulan", "snow_white", "ariel"])
+	campaign.party.assign(["mulan", "alice", "ariel"])
 	campaign.ensure_front()
 	assert(not campaign.set_row("mulan", "back"))
 	assert(campaign.set_row("ariel", "front") and campaign.set_row("mulan", "back"))
@@ -62,7 +62,7 @@ func checks() -> void:
 		if id == "ariel":
 			assert(run.tactics.slow_left == 5 and run.actors[0].hp > run.actors[0].max_hp * 0.25)
 		if id == "snow_white":
-			assert(run.tactics.enemies[result.target].row == "back" and run.tactics.enemies[result.target].poison_left == 6)
+			assert(run.tactics.enemies[result.target].row == "front" and run.tactics.enemies[result.target].poison_left == 6)
 		if id == "mulan":
 			assert(run.actors[0].shield > 0 and run.tactics.enemies[result.target].row == "front")
 		run.actors[0].energy = 75

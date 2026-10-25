@@ -27,10 +27,8 @@ const ATTACK_CALLS = {
 
 func _ready() -> void:
 	music = AudioStreamPlayer.new()
-	var theme: AudioStreamWAV = preload("res://assets/audio/camp_theme.wav").duplicate()
-	theme.loop_mode = AudioStreamWAV.LOOP_FORWARD
-	theme.loop_begin = 0
-	theme.loop_end = theme.data.size() / 2
+	var theme: AudioStreamOggVorbis = preload("res://assets/audio/adventure_theme.ogg").duplicate()
+	theme.loop = true
 	music.stream = theme
 	add_child(music)
 	for index in 6:

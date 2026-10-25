@@ -15,10 +15,10 @@ const CLASSES = {
 const HERO_TACTICS = {
 	"scarlet": {"class": "artificer", "row": "back", "ult": "Chuva de pólvora", "detail": "Lança a cesta como catapulta. Bombas caem em todos os inimigos (220%) e aplicam fogo."},
 	"rapunzel": {"class": "vanguard", "row": "front", "ult": "Raízes protetoras", "detail": "Protege a si e mais dois aliados com raízes de cabelo e escudo de 30% dos PV de cada um."},
-	"snow_white": {"class": "ranger", "row": "back", "ult": "Quebra-mundo", "detail": "Carrega a picareta e desfere um único golpe de 800% em um alvo, rachando o chão."},
+	"snow_white": {"class": "vanguard", "row": "front", "ult": "Quebra-mundo", "detail": "Carrega a picareta e desfere um único golpe de 800% em um alvo, rachando o chão."},
 	"mulan": {"class": "assassin", "row": "middle", "ult": "Vendaval de jade", "detail": "Gira rapidamente e lança cortes horizontais nos inimigos da frente (320%)."},
 	"ariel": {"class": "mage", "row": "back", "ult": "Maré de fúria", "detail": "Surfa em uma onda gigante que atinge todos os inimigos (200%)."},
-	"joao": {"class": "vanguard", "row": "front", "ult": "Seis saudações", "detail": "Dash seguido de seis estocadas de 70% em um alvo (420% no total)."},
+	"joao": {"class": "assassin", "row": "middle", "ult": "Seis saudações", "detail": "Dash seguido de seis estocadas de 70% em um alvo (420% no total)."},
 	"maria": {"class": "assassin", "row": "middle", "ult": "Caveira negra", "detail": "Sem dano direto. A caveira amaldiçoa todos: −20% de defesa e dano de ataques por 8 s."},
 	"alice": {"class": "ranger", "row": "back", "ult": "Cortejo de cartas", "detail": "Sem mana: após quatro ataques, cartas atravessam a linha horizontal do alvo (220%)."},
 	"puss": {"class": "vanguard", "row": "front", "ult": "Nove vidas, um corte", "detail": "Corte de 360% na vanguarda e escudo de 25% para si."},

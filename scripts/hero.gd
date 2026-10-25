@@ -248,5 +248,5 @@ func sync_alpha() -> void:
 	var alpha_path:=path.get_basename()+"_alpha.png"
 	var enabled:=path.ends_with(".jpg") and ResourceLoader.exists(alpha_path)
 	shader_material.set_shader_parameter("use_alpha_mask",enabled)
-	shader_material.set_shader_parameter("frame_anchor",Vector2(1400,1400) if enabled else Vector2(360,580))
+	shader_material.set_shader_parameter("frame_anchor",Vector2(1400,1400) if enabled else Vector2(384,608))
 	if enabled:shader_material.set_shader_parameter("alpha_mask",load(alpha_path))
