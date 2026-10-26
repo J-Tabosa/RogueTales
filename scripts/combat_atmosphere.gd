@@ -1,7 +1,8 @@
 extends Control
 ## Restrained, reusable visual feedback; never changes combat rules.
 const StatusArt=preload("res://scripts/status_art.gd")
-const COLORS={"red":Color("f04c54"),"blue":Color("66c7ef"),"purple":Color("b581ed"),"green":Color("83dc95"),"gold":Color("f7cb68")}
+const AuraArt=preload("res://scripts/aura_art.gd")
+const COLORS=AuraArt.COLORS
 var arena
 var frozen:=false
 var reduced_motion:=false
@@ -42,8 +43,8 @@ func shake(strength:=1.6) -> void:
 func blue_wave() -> void:
 	wave_left=wave_duration
 	if is_instance_valid(wave):wave.show()
-func aura(index:int,color:String,duration:=1.5) -> void:
-	flashes[index]={"color":color,"until":clock+duration}
+func aura(index:int,color:String,duration:=1.5,style:="") -> void:
+	flashes[index]={"color":AuraArt.canonical(color),"until":clock+duration,"style":style}
 	queue_redraw()
 func ultimate_started(index:int,id:String) -> void:
 	if id in ["snow_white","matches"]:aura(index,"red",1.8)
@@ -55,7 +56,7 @@ func impact(id:String) -> void:
 func color_for(data:Dictionary,index:=-1) -> String:
 	if StatusArt.protected(data) or bool(data.get("enraged",false)) or float(data.get("rage_left",0))>0:return "red"
 	if float(data.get("curse_left",0))>0:return "purple"
-	if not str(data.get("aura_color","")).is_empty():return str(data.aura_color)
+	if not str(data.get("aura_color","")).is_empty():return AuraArt.canonical(str(data.aura_color))
 	if flashes.has(index) and float(flashes[index].until)>clock:return str(flashes[index].color)
 	return ""
 func _process(delta:float) -> void:
@@ -77,17 +78,12 @@ func _process(delta:float) -> void:
 	for index in flashes.keys():
 		if flashes[index].until<=clock:flashes.erase(index)
 	queue_redraw()
-func draw_aura(feet:Vector2,height:float,color:Color) -> void:
-	var pulse:=1.0 if reduced_motion else 1.0+sin(clock*3.0)*.035
-	var profile:=PackedVector2Array([Vector2(0,-1.05),Vector2(-.20,-.86),Vector2(-.32,-.99),Vector2(-.29,-.57),Vector2(-.43,-.70),Vector2(-.30,-.24),Vector2(-.37,-.10),Vector2(-.18,.035),Vector2(0,.07),Vector2(.18,.035),Vector2(.37,-.10),Vector2(.30,-.24),Vector2(.43,-.70),Vector2(.29,-.57),Vector2(.32,-.99),Vector2(.20,-.86)])
-	for n in profile.size():profile[n]=feet+profile[n]*height*pulse
-	draw_colored_polygon(profile,Color(color,.10))
-	profile.append(profile[0])
-	draw_polyline(profile,Color(color,.42),1.4,true)
-	for side in [-1,1]:
-		var drift:=0.0 if reduced_motion else fposmod(clock*.24,1.0)
-		var at:=feet+Vector2(side*height*.30,-height*(.2+drift*.65))
-		draw_line(at,at+Vector2(-side*height*.04,-height*.10),Color(color,.40),2,true)
+func aura_style(data:Dictionary,index:int,palette:String) -> String:
+	var requested:String=str(data.get("aura_style",""))
+	if requested.is_empty() and flashes.has(index) and float(flashes[index].until)>clock:requested=str(flashes[index].get("style",""))
+	return AuraArt.style_for(palette,requested)
+func draw_aura(feet:Vector2,height:float,color:Color,style:="flame") -> void:
+	AuraArt.draw_tinted(self,feet,height,color,clock,reduced_motion,style)
 func _draw() -> void:
 	if not is_instance_valid(arena) or arena.simulation==null:return
 	for index in arena.heroes.size():
@@ -96,9 +92,9 @@ func _draw() -> void:
 		var color:=color_for(data,index)
 		if color.is_empty():continue
 		var model:AnimatedSprite2D=arena.heroes[index]
-		draw_aura(arena.position+model.position,float(model.get_meta("visual_height",arena.human_height())),COLORS.get(color,COLORS.purple))
+		draw_aura(arena.position+model.position,float(model.get_meta("visual_height",arena.human_height())),COLORS.get(color,COLORS.purple),aura_style(data,index,color))
 	for index in arena.foes.size():
 		var data:Dictionary=arena.simulation.tactics.enemies[index]
 		if data.hp<=0 or not arena.enemy_visible:continue
 		var color:=color_for(data)
-		if not color.is_empty():draw_aura(arena.position+arena.foes[index].position,arena.human_height(),COLORS.get(color,COLORS.purple))
+		if not color.is_empty():draw_aura(arena.position+arena.foes[index].position,arena.human_height(),COLORS.get(color,COLORS.purple),aura_style(data,-1,color))

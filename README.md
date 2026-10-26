@@ -291,3 +291,7 @@ As onze ULTs do elenco enviado usam poses próprias e efeitos animados que viaja
 ## Versão 0.9.3
 
 [Fontes em HD para seleção/ícones e encaixe dos avisos](docs/HD_093.md).
+
+## Versão 0.9.4
+
+[Auras translúcidas animadas em 16 cores](docs/AURAS_094.md).
