@@ -693,6 +693,7 @@ func banner_portrait(parent: Node, id: String, rect: Rect2, hidden: bool,standar
 	var actor := Sprite2D.new()
 	actor.name = "Silhouette" if hidden else "HeroArt"
 	actor.texture = data.texture
+	actor.texture_filter=CanvasItem.TEXTURE_FILTER_LINEAR
 	actor.centered = false
 	var body_scale := Vector2(preload("res://scripts/character_visuals.gd").width(id),1)
 	var reference_height:float=rect.size.y*.98 if standardized else rect.size.y*.92
