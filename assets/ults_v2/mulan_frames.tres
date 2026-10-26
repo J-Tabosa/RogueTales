@@ -937,9 +937,9 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("MeshTexture_vi8y3")
 }],
-"loop": 1,
+"loop": 0,
 "name": &"idle",
-"speed": 7.0
+"speed": 4.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -968,7 +968,7 @@ animations = [{
 }],
 "loop": 0,
 "name": &"idle_blink",
-"speed": 10.0
+"speed": 4.0
 }, {
 "frames": [{
 "duration": 1.0,

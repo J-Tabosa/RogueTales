@@ -53,12 +53,12 @@ static func ultimate(a: Dictionary) -> String:
 		"matches":return "Fogo em órbita vira um dragão até o centro inimigo: %s dano em todos + %s fogo/s por 6 s."%[n(d*2),n(d*.25)]
 	return "%s dano nos inimigos da frente; escudo próprio de %s PV."%[n(d*3.6),n(a.max_hp*.25)]
 static func conditions(a: Dictionary) -> String:
-	var lines: Array[String]=[]
-	for kind in ["burn","poison"]:
-		var amount: float=float(a.get("hostile_"+kind,0))
-		var duration: float=float(a.get("hostile_dot_left",0))
-		if amount>0 and duration>0: lines.append("%s: %.1f dano/s · %.1f s · até %.1f dano pendente"%["Fogo" if kind=="burn" else "Veneno",amount,duration,amount*duration])
+	var lines:Array[String]=[]
+	var statuses:=preload("res://scripts/status_art.gd").active(a,false)
+	for kind in statuses:
+		lines.append(preload("res://scripts/status_art.gd").description(kind,statuses[kind][0],statuses[kind][1]))
 	return "\n".join(lines)
+
 static func sheet(a: Dictionary) -> String:
 	var interval: float=maxf(1.5,a.interval*1.25)*(1.3 if int(a.get("hindered_rounds",0))>0 else 1.0)
 	var text:String = TaleCatalog.hero_class_name(a.id)+" · "+str(TaleCatalog.CLASSES[a["class"]].rule)+"\n\n"+conditions(a)+("\n\n" if not conditions(a).is_empty() else "")+"PV %s / %s  ·  Escudo %s\nMana %d / 100  ·  +1,4/s e +%s por acerto\nAtaque %s  ·  Intervalo mínimo %.2f s em 1×\nArmadura %s  ·  Crítico %.0f%% (2× dano)\nEsquiva %.0f%%  ·  Cura por acerto %s PV\n\n%s — AUTOMÁTICA\n%s\n\n%s — PASSIVA (recarga 6 s)\n%s\n\n%s — ULT (100 mana)\n%s\n\nValores atuais com os buffs desta run. Dano bruto antes de armadura, guarda e esquiva. A fila de animações pode adiar o próximo ataque." % [n(a.hp),n(a.max_hp),n(a.shield),int(a.energy),n(18+a.energy_bonus),n(a.damage),interval,n(a.armor),a.crit*100,float(a.get("evasion",0))*100,n(a.leech),Content.KITS[a.id][0],active(a),Content.KITS[a.id][2],passive(a),TaleCatalog.HERO_TACTICS[a.id].ult,ultimate(a)]

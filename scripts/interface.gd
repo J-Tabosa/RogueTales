@@ -248,7 +248,7 @@ func build_battle() -> void:
 	header_frame.name="BattleHeader"
 	battle_place(header_frame, Rect2(8, 6, 524, 50), Rect2(12, 5, 1256, 50))
 	stage_label = label(page, "%02d / 12   %s" % [run.stage + 1, TaleCatalog.STAGES[run.stage].name], Rect2(20, 10, 412, 53), 20)
-	battle_place(stage_label, Rect2(27, 16, 408, 28), Rect2(40, 16, 1120, 28))
+	battle_place(stage_label, Rect2(25, 16, 280, 28), Rect2(40, 16, 930, 28))
 	BattleType.apply(stage_label,true)
 	stage_label.autowrap_mode=TextServer.AUTOWRAP_OFF
 	stage_label.text_overrun_behavior=TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -273,6 +273,12 @@ func build_battle() -> void:
 	for id in run.actor_ids():
 		arena.party_scenes.append(HERO_SCENES[id])
 	battle_viewport.add_child(arena)
+	var atmosphere:=preload("res://scripts/combat_atmosphere.gd").new()
+	atmosphere.arena=arena
+	atmosphere.reduced_motion=campaign.reduced_motion
+	battle_viewport.add_child(atmosphere)
+	atmosphere.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	arena.atmosphere=atmosphere
 	UISkin.decorate(battle_viewport, false, true).z_index = 1600
 	arena.attack_hit.connect(on_attack_hit)
 	arena.attack_started.connect(on_attack_started)
@@ -361,14 +367,18 @@ func build_battle() -> void:
 	for child in gold_box.get_children():child.queue_free()
 	gold_box.add_theme_stylebox_override("panel",box(Color("0b3027"),Color("b69a59"),8))
 	gold_box.z_index=1800
-	battle_place(gold_box,Rect2(14,0,174,34),Rect2(24,746,174,34),"gold")
+	battle_place(gold_box,Rect2(312,11,132,34),Rect2(1006,10,170,34),"gold")
 	battle_gold=label(page,"",Rect2(),15,GOLD)
 	battle_gold.name="BattleGold"
 	battle_gold.z_index=1801
 	BattleType.apply(battle_gold,true)
 	battle_gold.autowrap_mode=TextServer.AUTOWRAP_OFF
 	battle_gold.clip_text=true
-	battle_place(battle_gold,Rect2(26,0,150,26),Rect2(36,750,150,26),"gold_text")
+	battle_place(battle_gold,Rect2(348,15,88,26),Rect2(1044,14,124,26),"gold_text")
+	var coin:=UISkin.picture(page,preload("res://scripts/status_art.gd").texture("coin"),Rect2())
+	coin.name="BattleCoin"
+	coin.z_index=1801
+	battle_place(coin,Rect2(318,14,28,28),Rect2(1013,13,30,28),"gold_coin")
 	relayout_battle()
 	update_hud()
 
@@ -401,8 +411,7 @@ func relayout_battle() -> void:
 				"deck":
 					rect.position.y = logical_height - 258
 					rect.size.y = 184
-				"gold": rect.position.y = logical_height - 299
-				"gold_text": rect.position.y = logical_height - 295
+
 				"bottom": rect.position.y = logical_height - 67
 			if node == battle_viewport:
 				rect.size.y = logical_height - 334
@@ -746,27 +755,7 @@ func face_portrait(parent: Node,id: String,rect: Rect2) -> Control:
 	slot.add_theme_stylebox_override("panel",box(Color("26372f"),Color(TaleCatalog.HEROES[id].color,.65),9))
 	parent.add_child(slot)
 	register_layout(slot)
-	var path:="res://assets/ults_v2/%s_portrait.webp"%id
-	var texture:Texture2D
-	if ResourceLoader.exists(path):
-		var source:Texture2D=load(path)
-		var extent:=source.get_size()
-		var edge:=minf(extent.x*.52,extent.y*.34)
-		var focus:=Vector2(.73,.22) if id=="peter" else Vector2(.55,.15)
-		var crop:=AtlasTexture.new()
-		crop.atlas=source
-		var origin:=extent*focus-Vector2.ONE*edge*.5
-		origin=origin.clamp(Vector2.ZERO,extent-Vector2.ONE*edge)
-		crop.region=Rect2(origin,Vector2.ONE*edge)
-		texture=crop
-	else:
-		path="res://assets/characters/%s/portrait.jpg"%id
-		texture=preload("res://scripts/jpeg_alpha.gd").texture(path)
-	slot.set_meta("portrait_source",path)
-	if texture!=null:
-		var face:=UISkin.picture(slot,texture,Rect2(Vector2.ZERO,rect.size))
-		face.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		face.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	preload("res://scripts/hero_art.gd").place_head(slot,id)
 	return slot
 
 
@@ -955,11 +944,9 @@ func show_condition_information(index: int, hostile: bool) -> void:
 	arena.frozen=true
 	modal(str(data.name),"Condições atuais")
 	var description := ""
-	for kind in ["poison","burn"]:
-		var duration: float=float(data.get(kind+"_left",0))
-		var amount: float=float(data.get(kind,0))
-		if duration>0 and amount>0:
-			description+="%s: %.1f dano/s\n%.1f s restantes · até %.1f dano pendente\n\n"%["Veneno" if kind=="poison" else "Queimadura",amount,duration,amount*duration]
+	var conditions:=preload("res://scripts/status_art.gd").active(data,true)
+	for kind in conditions:
+		description+=preload("res://scripts/status_art.gd").description(kind,conditions[kind][0],conditions[kind][1])+"\n\n"
 	label(overlay,description if not description.is_empty() else "Sem condições ativas.",Rect2(32,336,476,350),22)
 	button(overlay,"Voltar ao combate",Rect2(32,768,476,58),close_character_information,true)
 

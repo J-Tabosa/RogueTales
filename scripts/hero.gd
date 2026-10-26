@@ -14,12 +14,12 @@ enum AttackStyle { BOMB, HAIR, APPLE, SWORD, TIDE, CROSSBOW, DAGGER, CARDS, GREA
 @export var return_to_idle := true
 @export_group("Idle — pausas e variações")
 @export var idle_variations_enabled := true
-@export_range(1.0, 20.0, 0.5) var idle_min_wait := 4.0
-@export_range(1.0, 20.0, 0.5) var idle_max_wait := 8.0
+@export_range(1.0, 20.0, 0.5) var idle_min_wait := 7.0
+@export_range(1.0, 20.0, 0.5) var idle_max_wait := 11.0
 @export_range(0.0, 1.0, 0.05) var blink_chance := 0.7
 @export_range(0.0, 8.0, 0.5) var idle_sway_amplitude := 2.0
 @export_group("Walk — movimento dos ombros")
-@export var walk_shoulders_enabled := true
+@export var walk_shoulders_enabled := false
 @export_range(0.0, 16.0, 0.5) var shoulder_swing := 6.0
 @export_range(0.0, 12.0, 0.5) var shoulder_roll := 4.0
 
@@ -36,6 +36,10 @@ var idle_rng := RandomNumberGenerator.new()
 func _ready() -> void:
 	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	idle_rng.randomize()
+	for pose in ["idle","idle_blink"]:
+		if sprite_frames.has_animation(pose):
+			sprite_frames.set_animation_loop(pose,false)
+			sprite_frames.set_animation_speed(pose,4.0)
 	frame_changed.connect(sync_alpha)
 	animation_changed.connect(sync_alpha)
 	sync_alpha()
@@ -70,7 +74,7 @@ func _start_idle_variation(variation: IdleState) -> void:
 	if not sprite_frames.has_animation(anim):
 		idle_state = IdleState.SWAY
 		anim = "idle"
-	play(anim)
+	play(anim,1.0/maxf(.01,speed_scale))
 	set_frame_and_progress(0, 0.0)
 
 
@@ -136,7 +140,12 @@ func _process(delta: float) -> void:
 	# Pausing and 1×/2× affect both the occasional gestures and shoulder motion.
 	if speed_scale <= 0.0:
 		return
-	var dt := delta * speed_scale
+	if animation==&"walk":
+		set_frame_and_progress(0,0.0)
+		pause()
+		reset_pose_motion()
+		return
+	var dt := delta
 	var sway_target := 0.0
 	if is_idle_animation():
 		if idle_state == IdleState.REST:
@@ -148,7 +157,13 @@ func _process(delta: float) -> void:
 					)
 					_start_idle_variation(choice)
 		else:
+			if is_playing():play(animation,1.0/maxf(.01,speed_scale))
 			idle_event_elapsed += dt
+			# Finish independently of SpriteFrames loop flags and battle speed.
+			if idle_event_elapsed>=get_animation_duration(String(animation)):
+				_enter_rest()
+				reset_pose_motion()
+				return
 			if idle_state == IdleState.SWAY:
 				var duration := get_animation_duration("idle")
 				var progress := clampf(idle_event_elapsed / duration, 0.0, 1.0)
@@ -205,7 +220,18 @@ func show_animation(anim: String) -> void:
 		idle_state = IdleState.REST
 		idle_event_elapsed = 0.0
 		play(anim)
+		if anim=="walk":
+			set_frame_and_progress(0,0.0)
+			pause()
+			reset_pose_motion()
 
+func reset_pose_motion() -> void:
+	idle_weight=0.0
+	walk_weight=0.0
+	var pose_material:=material as ShaderMaterial
+	if pose_material!=null:
+		pose_material.set_shader_parameter("idle_weight",0.0)
+		pose_material.set_shader_parameter("walk_weight",0.0)
 
 func get_animation_duration(anim: String) -> float:
 	var fps := sprite_frames.get_animation_speed(anim)

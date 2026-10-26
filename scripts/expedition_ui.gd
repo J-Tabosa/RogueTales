@@ -672,10 +672,9 @@ func show_heroes() -> void:
 	var note_y:=220+gallery_height+12
 	label(page, note, Rect2(24, note_y, w - 48, 54), 15, MUTED)
 	var bottom := 734.0 if desktop else note_y+76
-	var action_w:=(w-60)*.4
-	button(page,"Habilidades" if owned else "Desconhecido",Rect2(24,bottom,action_w,54),show_hero_details.bind(selected_hero) if owned else show_unlock_details.bind(selected_hero)).add_theme_font_size_override("font_size",14)
-	var select_character := button(page,"Selecionar Personagem",Rect2(36+action_w,bottom,w-60-action_w,54),use_protagonist.bind(selected_hero),true)
-	select_character.add_theme_font_size_override("font_size",16 if desktop else 14)
+	var select_character := button(page,"Selecionar Personagem",Rect2(24,bottom,w-48,62),show_hero_details.bind(selected_hero) if owned else show_unlock_details.bind(selected_hero),true)
+	select_character.set_meta("select_character",true)
+	select_character.add_theme_font_size_override("font_size",20)
 	select_character.disabled=not campaign.unlocked.has(selected_hero) or not campaign.checkpoint.is_empty()
 	# Gallery coordinates already use the full current logical height.
 	for child in page.get_children():
@@ -712,7 +711,7 @@ func banner_portrait(parent: Node, id: String, rect: Rect2, hidden: bool,standar
 
 func select_gallery_hero(id: String) -> void:
 	selected_hero = id
-	show_heroes()
+	show_hero_details(id) if hero_revealed(id) else show_unlock_details(id)
 
 func use_protagonist(id: String) -> void:
 	if not campaign.unlocked.has(id) or not campaign.checkpoint.is_empty(): return

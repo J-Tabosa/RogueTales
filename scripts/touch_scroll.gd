@@ -7,6 +7,9 @@ var dragging:=false
 var suppress_mouse_release:=false
 func _input(event: InputEvent) -> void:
 	if not is_visible_in_tree():return
+	if event is InputEventMouse and event.device==InputEvent.DEVICE_ID_EMULATION and (finger>=0 or suppress_mouse_release):
+		get_viewport().set_input_as_handled()
+		return
 	if event is InputEventScreenTouch:
 		if event.pressed and finger<0 and Rect2(Vector2.ZERO,size).has_point(get_global_transform_with_canvas().affine_inverse()*event.position):
 			suppress_mouse_release=false

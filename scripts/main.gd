@@ -294,34 +294,8 @@ func make_arena(y: float, ids: Array = [], target_stage: int = 0) -> void:
 
 func cache_portrait(id: String) -> void:
 	if static_portraits.has(id):return
-	var model: AnimatedSprite2D=HERO_SCENES[id].instantiate()
-	var path:="res://assets/characters/%s/display.jpg"%id
-	var texture: Texture2D
-	var bounds: Rect2
-	var scale: Vector2
-	var offset: Vector2
-	var uploaded:="res://assets/ults_v2/%s_portrait.webp"%id
-	if ResourceLoader.exists(uploaded):
-		texture=load(uploaded)
-		bounds=Rect2(Vector2.ZERO,texture.get_size())
-		scale=Vector2.ONE*400.0/bounds.size.y*model.scale.y
-		offset=-Vector2(bounds.size.x*.5,bounds.size.y)
-	elif ResourceLoader.exists(path):
-		texture=preload("res://scripts/jpeg_alpha.gd").texture(path)
-		bounds=Rect2(Vector2.ZERO,texture.get_size())
-		scale=Vector2(preload("res://scripts/character_visuals.gd").width(id),1)*400.0/bounds.size.y*model.scale.y
-		offset=-Vector2(bounds.size.x*.5,bounds.size.y)
-	else:
-		texture=model.sprite_frames.get_frame_texture("idle",0)
-		bounds=Rect2(Vector2.ZERO,texture.get_size())
-		scale=model.scale
-		offset=model.offset
-		if texture is MeshTexture:
-			var volume:AABB=texture.mesh.get_aabb()
-			bounds=Rect2(Vector2(volume.position.x,volume.position.y),Vector2(volume.size.x,volume.size.y))
-		elif texture is AtlasTexture:bounds=Rect2(texture.margin.position,texture.region.size)
-	static_portraits[id]={"texture":texture,"scale":scale,"offset":offset,"centered":false,"bounds":bounds}
-	model.free()
+	var data:=preload("res://scripts/hero_art.gd").body(id)
+	static_portraits[id]={"texture":data.texture,"scale":data.scale,"offset":data.offset,"centered":false,"bounds":data.bounds,"source":data.source}
 
 
 func portrait(parent: Node, id: String, at: Vector2, factor: float = 0.68) -> void:

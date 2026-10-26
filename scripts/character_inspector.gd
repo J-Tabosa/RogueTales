@@ -69,6 +69,7 @@ func rebuild() -> void:
 	var art_w:=bw-art_x-24
 	var art:=frame(board,Rect2(art_x,128,art_w,bh-202 if wide else stats_h),Color("24372e"))
 	art.name="CharacterArt"
+	art.clip_contents=true
 	InspectorSkin.decorate(art,false,true,.035)
 	ui.banner_portrait(art,actor.id,Rect2(12,20,art_w-24,art.size.y-45),false)
 	text(art,TaleCatalog.hero_class_name(actor.id),Rect2(8,art.size.y-29,art_w-16,22),11,GOLD).horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
@@ -85,6 +86,7 @@ func rebuild() -> void:
 		text(cell,cells[i][2],Rect2(9,50 if wide else 44,cw-18,23 if wide else 16),10,Color("adbeaf"))
 	var sy:=128+stats_h+14
 	var scroll:=ScrollContainer.new()
+	scroll.set_script(preload("res://scripts/touch_scroll.gd"))
 	scroll.name="SkillScroll"
 	scroll.position=Vector2(24,sy)
 	scroll.size=Vector2(stats_w if wide else bw-48,bh-sy-88)
@@ -105,7 +107,7 @@ func rebuild() -> void:
 	if not actor.get("blessing_effects",{}).is_empty() and ui.run!=null:
 		var boon:=preload("res://scripts/hero_blessings.gd").data(ui.run.blessing)
 		if not boon.is_empty():skills.append(["BÊNÇÃO DO PROTAGONISTA",boon.title,boon.detail])
-	if not Details.conditions(actor).is_empty():skills.push_front(["CONDIÇÕES ATIVAS","Dano ao longo do tempo",Details.conditions(actor)])
+	if not Details.conditions(actor).is_empty():skills.push_front(["CONDIÇÕES ATIVAS","Estados e proteção",Details.conditions(actor)])
 	for skill in skills:
 		var card:=PanelContainer.new()
 		card.set_meta("skill",skill[0])

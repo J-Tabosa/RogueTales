@@ -49,6 +49,7 @@ var entrance_left := 0.0
 var bursts: Array[Dictionary] = []
 var feedback: Control
 var vfx: Node2D
+var atmosphere:Control
 var enemy_impacts: Array[Dictionary] = []
 var enemy_areas: Array[Dictionary] = []
 static var hero_shape_cache: Dictionary = {}
@@ -273,6 +274,7 @@ func attack(index: int = 0, target: int = -1, ultimate := false) -> bool:
 	tracks[index].ultimate = ultimate
 	actor.show_animation("ultimate" if fresh else "attack")
 	actor.seek_animation("ultimate" if fresh else "attack", 0)
+	if ultimate and is_instance_valid(atmosphere):atmosphere.ultimate_started(index,id)
 	attack_started.emit(index)
 	return true
 
@@ -284,6 +286,7 @@ func set_animation(id: String) -> void:
 
 
 func reset_effects() -> void:
+	if is_instance_valid(atmosphere):atmosphere.clear()
 	walking = false
 	intro_left = 0.0
 	bursts.clear()
@@ -352,6 +355,9 @@ func enemy_strike(index: int, target: int) -> void:
 
 
 func _process(delta: float) -> void:
+	if is_instance_valid(atmosphere):
+		atmosphere.frozen=frozen
+		atmosphere.reduced_motion=reduced_motion
 	if is_instance_valid(feedback): feedback.frozen = frozen
 	var dt := 0.0 if frozen or hit_stop > 0 or intro_left > 0 else minf(delta, 0.25) * speed
 	if not frozen: intro_left = maxf(0, intro_left - delta)
@@ -377,8 +383,7 @@ func _process(delta: float) -> void:
 			actor.modulate = Enemy.hurt_color(track.hurt)
 		if walking and track.alive:
 			actor.position = track.home + Vector2(-90 * (1.0 - travel_progress), 0)
-			if simulation.actors[index].id in ["ariel","aladin","peter"]:
-				actor.position.y-=human_height()*0.1+(0.0 if reduced_motion else sin(clock*2.5+index)*human_height()*0.025)
+			if simulation.actors[index].id in ["ariel","aladin","peter"]:actor.position.y-=human_height()*0.1
 		actor.z_index = int(actor.position.y)
 		if track.time < 0 or dt <= 0:
 			continue
@@ -406,6 +411,7 @@ func _process(delta: float) -> void:
 					if track.ultimate and hero_id=="puss" and not reduced_motion:actor.rotation=TAU*smoothstep(0.15,impact,phase) if phase<impact else 0.0
 		if not track.hit and phase >= impact:
 			track.hit = true
+			if track.get("fresh_ult",false) and is_instance_valid(atmosphere):atmosphere.impact(hero_id)
 			# Emit before starting recovery: the controller applies exactly one result.
 			attack_hit.emit(index)
 			if not is_instance_valid(actor):
@@ -757,11 +763,7 @@ func passive_effect(event:Dictionary) -> void:
 			ultimate_effect(index,{"targets":targets})
 
 func sync_conditions(item: Dictionary, data: Dictionary, index: int, hostile: bool) -> void:
-	var visible_conditions := {}
-	for kind in ["poison","burn"]:
-		var duration: float=float(data.get(kind+"_left",0)) if hostile else float(data.get("hostile_dot_left",0))
-		var amount: float=float(data.get(kind if hostile else "hostile_"+kind,0))
-		if duration>0 and amount>0 and data.hp>0: visible_conditions[kind]=[amount,duration]
+	var visible_conditions:=preload("res://scripts/status_art.gd").active(data,hostile)
 	for kind in item.badges.keys():
 		if not visible_conditions.has(kind):
 			item.badges[kind].queue_free()
@@ -776,10 +778,10 @@ func sync_conditions(item: Dictionary, data: Dictionary, index: int, hostile: bo
 			item.badges[kind]=badge
 		var badge: Button=item.badges[kind]
 		badge.configure(kind,visible_conditions[kind][0],visible_conditions[kind][1])
-		if widget_size().x < 80:
+		if widget_size().x < 80 and kind in ["poison","burn","bleed"]:
 			badge.text = " %d" % ceili(visible_conditions[kind][0])
 			badge.add_theme_font_size_override("font_size",8)
 		var badge_width: float = (widget_size().x - 2) * .5
-		badge.position=Vector2(slot * (badge_width + 2), 29)
+		badge.position=Vector2((slot%2) * (badge_width + 2), 29+floori(slot/2.0)*19)
 		badge.size=Vector2(badge_width, 17)
 		slot+=1

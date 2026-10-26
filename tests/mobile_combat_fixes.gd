@@ -60,7 +60,7 @@ func checks() -> void:
 	await process_frame
 	for id in Rules.IDS:
 		var portrait=game.face_portrait(game.page,id,Rect2(0,0,80,80))
-		assert(portrait.get_meta("portrait_source")=="res://assets/ults_v2/%s_portrait.webp"%id)
+		assert(portrait.get_meta("portrait_source")==preload("res://scripts/hero_art.gd").source_path(id))
 		var face=portrait.get_child(0)
 		assert(face.size==portrait.size and face.stretch_mode==TextureRect.STRETCH_KEEP_ASPECT_COVERED)
 	game.campaign=account

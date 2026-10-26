@@ -72,7 +72,12 @@ static func decorate(node: Control, button_style := false, frame_only := false, 
 	patch.patch_margin_top = int(texture_size.y * (0.18 if button_style else 0.18))
 	patch.patch_margin_bottom = patch.patch_margin_top
 	node.add_child(patch)
-	var fit := func(): patch.size = node.size / factor
+	var patch_ref:WeakRef=weakref(patch)
+	var host_ref:WeakRef=weakref(node)
+	var fit := func():
+		var current_patch:NinePatchRect=patch_ref.get_ref()
+		var current_host:Control=host_ref.get_ref()
+		if is_instance_valid(current_patch) and is_instance_valid(current_host):current_patch.size=current_host.size/factor
 	node.resized.connect(fit)
 	fit.call()
 	return patch

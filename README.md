@@ -283,3 +283,7 @@ As onze ULTs do elenco enviado usam poses próprias e efeitos animados que viaja
 ## Versão 0.9.1
 
 [Correções de animação e mobile](docs/MOBILE_091.md).
+
+## Versão 0.9.2
+
+[Idles espaçados, retratos unificados, arraste na ficha e novos efeitos de apresentação](docs/MOBILE_092.md).

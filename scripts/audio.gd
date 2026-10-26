@@ -129,7 +129,10 @@ func make_tone(id: String) -> AudioStreamWAV:
 	return stream
 
 
-func _exit_tree() -> void:
+func _notification(what:int) -> void:
+	# Moving the game into the native window briefly exits the tree. Keep audio
+	# resources alive during that reparent; only dispose when the owner is deleted.
+	if what!=NOTIFICATION_PREDELETE:return
 	if is_instance_valid(music):
 		music.stop()
 		music.stream = null

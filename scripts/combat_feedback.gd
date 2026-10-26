@@ -61,18 +61,20 @@ func face(parent: Panel) -> TextureRect:
 	var art := TextureRect.new()
 	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	holder.add_child(art)
+	art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	return art
 func portrait(node: TextureRect,id: String) -> void:
-	node.texture = preload("res://scripts/jpeg_alpha.gd").texture("res://assets/characters/%s/portrait.jpg"%id)
+	node.texture = preload("res://scripts/hero_art.gd").head(id)
+	node.get_parent().set_meta("portrait_source",preload("res://scripts/hero_art.gd").source_path(id))
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	z_index = 2000
 	ribbon = Panel.new()
 	ribbon.size = Vector2(260,70)
 	ribbon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ribbon.clip_contents=true
 	add_child(ribbon)
 	frame(ribbon)
 	ribbon_face = face(ribbon)
@@ -84,6 +86,7 @@ func _ready() -> void:
 	cutin = Panel.new()
 	cutin.size = Vector2(260,62)
 	cutin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cutin.clip_contents=true
 	add_child(cutin)
 	frame(cutin)
 	cutin_face = face(cutin)
