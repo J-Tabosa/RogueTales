@@ -8,23 +8,84 @@ const NEW_HERO_IDS = ["joao", "maria", "alice", "puss", "matches", "peter", "ala
 const CLASSES = {
 	"vanguard": {"name": "Vanguarda", "rule": "Ataca a frente; alcança a retaguarda quando a frente cai.", "evasion": 0.04},
 	"ranger": {"name": "Atirador", "rule": "Prioriza a retaguarda; usa a frente se ela estiver vazia.", "evasion": 0.10},
-	"mage": {"name": "Mago", "rule": "Alcança ambas as linhas; magia ignora 65% da armadura.", "evasion": 0.04},
-	"assassin": {"name": "Assassino", "rule": "Avança à retaguarda mais ferida; 35% de esquiva.", "evasion": 0.35},
+	"mage": {"name": "Mago", "rule": "Alcança ambas as linhas; usa a Defesa Mágica em pontos.", "evasion": 0.04},
+	"assassin": {"name": "Assassino", "rule": "Alcança as três posições; prioriza o alvo mais ferido.", "evasion": 0.35},
 	"artificer": {"name": "Artilheira", "rule": "Alcança ambas as linhas e prioriza a menor armadura.", "evasion": 0.08}
 }
+const Roster=preload("res://scripts/roster_data.gd")
 const HERO_TACTICS = {
-	"scarlet": {"class": "artificer", "row": "back", "ult": "Chuva de pólvora", "detail": "Lança a cesta como catapulta. Bombas caem em todos os inimigos (220%) e aplicam fogo."},
-	"rapunzel": {"class": "vanguard", "row": "front", "ult": "Raízes protetoras", "detail": "Protege a si e mais dois aliados com raízes de cabelo e escudo de 30% dos PV de cada um."},
-	"snow_white": {"class": "vanguard", "row": "front", "ult": "Quebra-mundo", "detail": "Carrega a picareta e desfere um único golpe de 800% em um alvo, rachando o chão."},
-	"mulan": {"class": "assassin", "row": "middle", "ult": "Vendaval de jade", "detail": "Gira rapidamente e lança cortes horizontais nos inimigos da frente (320%)."},
-	"ariel": {"class": "mage", "row": "back", "ult": "Maré de fúria", "detail": "Surfa em uma onda gigante que atinge todos os inimigos (200%)."},
-	"joao": {"class": "assassin", "row": "middle", "ult": "Seis saudações", "detail": "Dash seguido de seis estocadas de 70% em um alvo (420% no total)."},
-	"maria": {"class": "assassin", "row": "middle", "ult": "Caveira negra", "detail": "Sem dano direto. A caveira amaldiçoa todos: −20% de defesa e dano de ataques por 8 s."},
-	"alice": {"class": "ranger", "row": "back", "ult": "Cortejo de cartas", "detail": "Sem mana: após quatro ataques, cartas atravessam a linha horizontal do alvo (220%)."},
-	"puss": {"class": "vanguard", "row": "front", "ult": "Nove vidas, um corte", "detail": "Corte de 360% na vanguarda e escudo de 25% para si."},
-	"matches": {"class": "mage", "row": "back", "ult": "Dragão de brasa", "detail": "Fogo orbita a Vendedora, vira um dragão e atinge todos (200%); queimadura de 25%/s por 6 s."},
-	"peter": {"class": "assassin", "row": "middle", "ult": "Guarda do Nunca", "detail": "Invoca um espírito, até três. Cada ataque consome um, anula o golpe e devolve seu dano ao agressor."},
-	"aladin": {"class": "mage", "row": "back", "ult": "Desejo sonolento", "detail": "Sem dano: uma nuvem roxa tem 50% de chance por inimigo de aplicar Sono e impedir o próximo turno."}
+	"scarlet": {
+		"class": "ranger",
+		"row": "back",
+		"ult": "Detonação em Massa",
+		"detail": "Detonação em Massa: custa 120 de mana, atinge todos os inimigos e consome as cargas de cada um. Dano físico por alvo = Dano Físico × (1,5 + 0,1 × cargas daquele alvo). Vai de 150% a 250%. Pode critar; não gera mana nem pólvora. Pode ocorrer durante a sequência sem consumir básicos restantes.\nCada alvo acertado pelo básico ou seu espalhamento concede dez de mana. Sem regeneração passiva. A mana permanece entre combates."
+	},
+	"alice": {
+		"class": "ranger",
+		"row": "back",
+		"ult": "Cortejo das Cartas",
+		"detail": "Ouros: concede cinco de ouro por acerto. A função econômica é intencional.\nCopas: cura a própria Alice em 10% do dano causado.\nPaus: concede à própria Alice escudo de 5% da vida máxima.\nEspadas: acrescenta 50% do atributo ofensivo mais alto como dano daquele tipo. No empate, apenas um dos dois tipos recebe o bônus; o critério de desempate não foi especificado.\nCortejo das Cartas: causa 120% do Dano Físico + 120% do Dano Mágico por inimigo atravessado na linha horizontal do alvo. Não alimenta seu próprio contador. Básico e ult podem critar se Alice adquirir chance crítica."
+	},
+	"snow_white": {
+		"class": "vanguard",
+		"row": "front",
+		"ult": "Partidora de Rochas",
+		"detail": "Partidora de Rochas: 300% do Dano Físico em um alvo. Custo 100; dez de mana por acerto; zero por turno."
+	},
+	"ariel": {
+		"class": "mage",
+		"row": "back",
+		"ult": "Impacto de Onda",
+		"detail": "Impacto de Onda: custa 120, causa 150% do Dano Mágico em todos os inimigos e tem 50% de chance individual de aplicar Bolha. Bolha remove um ataque da próxima vez do alvo, podendo chegar a zero, não acumula e respeita imunidades. A ult não gera mana nem ativa Águas Curativas."
+	},
+	"rapunzel": {
+		"class": "vanguard",
+		"row": "front",
+		"ult": "Torre de Cabelos",
+		"detail": "Ult sem nome final: concede a todos os aliados vivos, incluindo Silk, escudo de 200% do Dano Mágico e bônus de Defesa Mágica equivalente a 30% dos pontos de Defesa Mágica de Silk. O bônus dura enquanto o escudo da ult daquele beneficiário durar.\nEscudos próprios acumulam até 30% da vida máxima de cada beneficiário. Duração normal cinco turnos do beneficiário, por aplicação. Escudos permanecem entre combates; isso não renova sua duração.\nCusto da ult 100; ganha 20 de mana no início da própria vez e zero por acerto."
+	},
+	"mulan": {
+		"class": "assassin",
+		"row": "middle",
+		"ult": "Dragão de Jade",
+		"detail": "Dragão de Jade: 250% do Dano Físico em toda a coluna escolhida. Pode alcançar as três colunas como Assassina; prioridade detalhada será criada depois. Para execução visual, prioriza o alvo central da coluna, sem precisar expor isso na descrição ao jogador.\nCusto 100; dez de mana por acerto de básico e zero por turno."
+	},
+	"maria": {
+		"class": "assassin",
+		"row": "middle",
+		"ult": "Maldição de Bruxa",
+		"detail": "Maldição de Bruxa: sem dano direto; tenta aplicar Maldição em todos os inimigos, com 75% de chance individual. Reduz Dano Físico, Dano Mágico e pontos das duas defesas em 20%, durante dois turnos de cada alvo. No início da própria vez, cada alvo tem 25% de chance de escapar antecipadamente.\nCusto 150; quinze de mana por acerto de básico e zero por turno."
+	},
+	"joao": {
+		"class": "assassin",
+		"row": "middle",
+		"ult": "Seis Saudações",
+		"detail": "Seis Saudações: seis estocadas de 50% do Dano Físico, ou 70% por estocada contra presa marcada. Cada impacto pode critar ou ser esquivado individualmente. Não gera mana por acerto. Se o alvo morrer, os golpes restantes terminam, sem transferência.\nCusto 80; dez de mana por acerto de básico e zero por turno."
+	},
+	"matches": {
+		"class": "mage",
+		"row": "back",
+		"ult": "Fogo de Dragão",
+		"detail": "Fogo de Dragão: 250% do Dano Mágico em todos os inimigos e aplica a mesma queimadura inicial nos não incendiados; fortalece os já incendiados pela passiva. A ult não gera mana.\nQueimadura não critica nem gera mana pelo dano. Imunidade a fogo impede sua aplicação.\nCusto 200; dez de mana por acerto de básico e zero por turno."
+	},
+	"aladin": {
+		"class": "mage",
+		"row": "back",
+		"ult": "3 Desejos — especial",
+		"detail": "3 Desejos — especial: manual, sem mana, pode ser usado mesmo morto e fora de combate, inclusive no mercador. Um uso de cada opção por run, salvo a bênção de quarto desejo."
+	},
+	"peter": {
+		"class": "assassin",
+		"row": "middle",
+		"ult": "A Hora das Sombras",
+		"detail": "Ult em si mesmo — A Hora das Sombras (nome proposto): completa suas sombras até três e acrescenta quinze pontos percentuais ao coeficiente mágico de seus golpes, até o início da próxima vez. Sombras comuns passam de 15% a 30%. Custo 70; dez de mana por acerto do básico, zero por turno.\nEsquiva inicial 25%, teto comum 80%; chance crítica 15%, multiplicador ×3. Não criar ataques de acerto garantido para contornar a esquiva.\nSombras permanecem entre combates."
+	},
+	"puss": {
+		"class": "vanguard",
+		"row": "front",
+		"ult": "Matador de Gigantes",
+		"detail": "Ult — Matador de Gigantes (nome proposto): 250% do Dano Físico em toda a coluna escolhida, usando o atributo aumentado pela passiva. Pode critar. Custo 90; dez de mana por acerto do básico e zero por turno; ult não gera mana."
+	}
 }
 const HERO_SCENES = {
 	"scarlet": preload("res://scenes/heroes/scarlet.tscn"),
@@ -44,7 +105,7 @@ const HEROES = {
 	"scarlet":
 	{
 		"name": "Scarlet",
-		"role": "Explosão • queimadura",
+		"role": "Atiradora Caster física; retaguarda",
 		"hp": 200.0,
 		"damage": 24.0,
 		"interval": 1.7,
@@ -60,10 +121,10 @@ const HEROES = {
 	},
 	"rapunzel":
 	{
-		"name": "Rapunzel",
-		"role": "Suporte • cura",
-		"hp": 180.0,
-		"damage": 21.0,
+		"name": "Silk",
+		"role": "Tank Suporte; vanguarda",
+		"hp": 350.0,
+		"damage": 15.0,
 		"interval": 1.9,
 		"color": Color("c4a2ed"),
 		"bio": "Seus fios não prendem mais ninguém. Agora são pontes para quem ficou para trás.",
@@ -77,9 +138,9 @@ const HEROES = {
 	"snow_white":
 	{
 		"name": "Branca de Neve",
-		"role": "Veneno • drenagem",
-		"hp": 170.0,
-		"damage": 22.0,
+		"role": "Soldado Tank Físico; vanguarda",
+		"hp": 300.0,
+		"damage": 20.0,
 		"interval": 1.8,
 		"color": Color("eaca82"),
 		"bio": "Ela aprendeu a reconhecer venenos. E decidiu devolver alguns ao remetente.",
@@ -93,9 +154,9 @@ const HEROES = {
 	"mulan":
 	{
 		"name": "Mulan",
-		"role": "Vanguarda • combo",
-		"hp": 245.0,
-		"damage": 23.0,
+		"role": "Assassina Física; meio",
+		"hp": 200.0,
+		"damage": 30.0,
 		"interval": 1.6,
 		"color": Color("9ed4c7"),
 		"bio": "Um nome não empunha uma espada. Uma pessoa, sim. Mulan escolhe a própria batalha.",
@@ -108,10 +169,10 @@ const HEROES = {
 	},
 	"ariel":
 	{
-		"name": "Ariel",
-		"role": "Maré • cura",
-		"hp": 185.0,
-		"damage": 22.0,
+		"name": "Umi",
+		"role": "Maga Curandeira; retaguarda",
+		"hp": 150.0,
+		"damage": 20.0,
 		"interval": 1.9,
 		"color": Color("85dad4"),
 		"bio": "Uma voz que atravessa o mar não vai se calar diante de uma página rasgada.",
@@ -124,19 +185,19 @@ const HEROES = {
 	},
 	"joao": {
 		"name": "João",
-		"role": "Caçador de bruxas",
-		"hp": 175.0,
-		"damage": 24.0,
+		"role": "Assassino Físico; meio",
+		"hp": 190.0,
+		"damage": 20.0,
 		"interval": 1.55,
 		"color": Color("8dba8b"),
 		"bio": "Um rastro de migalhas ensinou João a nunca perder a trilha. Agora a besta abre caminho para casa.",
 		"skills": [["Mira de caçador", "+15% de dano por nível"], ["Olho da floresta", "+4% de chance crítica por nível"], ["Recarga ágil", "Intervalo de ataque −5% por nível"]]
 	},
 	"maria": {
-		"name": "Maria",
-		"role": "Lâmina e veneno",
+		"name": "Gretel",
+		"role": "Assassina Mágica; meio",
 		"hp": 180.0,
-		"damage": 23.0,
+		"damage": 25.0,
 		"interval": 1.55,
 		"color": Color("dc826f"),
 		"bio": "Maria não voltou da casa de doces de mãos vazias. A receita mudou de dona.",
@@ -144,9 +205,9 @@ const HEROES = {
 	},
 	"alice": {
 		"name": "Alice",
-		"role": "Cartomante do caos",
-		"hp": 165.0,
-		"damage": 25.0,
+		"role": "Atiradora Híbrida de economia; retaguarda",
+		"hp": 190.0,
+		"damage": 10.0,
 		"interval": 1.9,
 		"color": Color("73c8d9"),
 		"bio": "No País das Maravilhas, Alice aprendeu que toda regra pode ser embaralhada.",
@@ -154,20 +215,20 @@ const HEROES = {
 	},
 	"puss": {
 		"name": "Gato de Botas",
-		"role": "Espada do crepúsculo",
-		"hp": 250.0,
-		"damage": 26.0,
+		"role": "Soldado Físico; vanguarda",
+		"hp": 330.0,
+		"damage": 30.0,
 		"interval": 1.9,
 		"color": Color("e47b76"),
 		"bio": "A espada parece grande demais. O Gato de Botas considera isso um problema dos inimigos.",
 		"skills": [["Botas de ferro", "+2 de armadura por nível"], ["Nove vidas", "+20 PV por nível"], ["Peso da lâmina", "+18% de dano por nível"]]
 	},
 	"matches": {
-		"name": "Vendedora de Fósforos",
+		"name": "Lume",
 		"short_name": "Vendedora",
-		"role": "Fogo na retaguarda",
-		"hp": 170.0,
-		"damage": 22.0,
+		"role": "Maga de Dano Contínuo; retaguarda",
+		"hp": 150.0,
+		"damage": 20.0,
 		"interval": 1.6,
 		"color": Color("f1aa6b"),
 		"bio": "Cada fósforo guarda uma visão. Ela decidiu acender um futuro que ninguém pudesse apagar.",
@@ -175,9 +236,9 @@ const HEROES = {
 	},
 	"peter": {
 		"name": "Peter Pan",
-		"role": "Assassino espectral",
-		"hp": 175.0,
-		"damage": 23.0,
+		"role": "Assassino Mágico; meio",
+		"hp": 170.0,
+		"damage": 20.0,
 		"interval": 1.45,
 		"color": Color("84dbc3"),
 		"bio": "Peter deixou a própria sombra atravessar o véu. Ela voltou com caminhos que só ele consegue seguir.",
@@ -185,9 +246,9 @@ const HEROES = {
 	},
 	"aladin": {
 		"name": "Aladin",
-		"role": "Desejos e proteção",
-		"hp": 185.0,
-		"damage": 24.0,
+		"role": "Mago de Recursos; retaguarda",
+		"hp": 180.0,
+		"damage": 25.0,
 		"interval": 1.95,
 		"color": Color("77d3cf"),
 		"bio": "Aladin não pede um reino. Prefere um tapete, uma saída e companhia para a viagem.",
@@ -577,81 +638,26 @@ const STAGES = [
 const RELICS = [
 	{"id": "power", "title": "Pena de rebeldia", "detail": "+20% de dano para a formação"},
 	{"id": "heart", "title": "Página de abrigo", "detail": "+25 PV máximos e cura 40 por aliada"},
-	{"id": "haste", "title": "Ponteiro solto", "detail": "Intervalos de ataque −12%"},
+	{"id": "haste", "title": "Ponteiro solto", "detail": "+10 de Iniciativa (máximo 100)"},
 	{"id": "critical", "title": "Olho de vidro", "detail": "+12% de chance crítica"},
 	{"id": "leech", "title": "Fio de vida", "detail": "Cada acerto cura 3 PV da atacante"},
-	{"id": "armor", "title": "Capa do crepúsculo", "detail": "+3 de armadura por aliada"},
+	{"id": "armor", "title": "Capa do crepúsculo", "detail": "+3 pontos de Defesa Física por aliado"},
 ]
 
 
 static func hero_stats(
 	id: String, levels: Array, choices: Dictionary, hero_level: int = 1
 ) -> Dictionary:
-	var data: Dictionary = HEROES[id]
-	var result := {
-		"id": id,
-		"max_hp": float(data.hp),
-		"damage": float(data.damage),
-		"interval": float(data.interval),
-		"crit": 0.08,
-		"armor": 0.0,
-		"leech": 0.0,
-		"ranks": levels.duplicate(),
-		"hits": 0,
-		"shield": 0.0,
-		"class": HERO_TACTICS[id]["class"],
-		"row": HERO_TACTICS[id].row,
-		"evasion": CLASSES[HERO_TACTICS[id]["class"]].evasion,
-		"energy": 0.0,
-		"energy_bonus": 0.0
-	}
+	var base:Dictionary=Roster.BASE[id]
+	var result:Dictionary=base.duplicate(true)
+	result.merge({"id":id,"max_hp":base.hp,"hp":base.hp,"damage":maxf(base.physical_damage,base.magic_damage),"legacy_damage_base":maxf(base.physical_damage,base.magic_damage),"armor":base.physical_defense,"interval":2.0,"crit":base.crit,"ranks":levels.duplicate(),"hits":0,"shield":0.0,"leech":0.0,"energy":0.0,"energy_bonus":0.0,"class":HERO_TACTICS[id]["class"],"row":HERO_TACTICS[id].row,"base_evasion":base.evasion,"blessing_index":-1,"statuses":[],"shield_parts":[],"own_turn":0},true)
+	# Permanent campaign training scales both independent damage attributes equally.
+	result.max_hp*=1.0+0.06*(clampi(hero_level,1,30)-1)
+	result.damage*=1.0+0.04*(clampi(hero_level,1,30)-1)
 	for choice in choices.values():
-		if choice == "hope":
-			result.max_hp += 5.0
-		elif choice == "power":
-			result.damage += 1.0
-	match id:
-		"scarlet":
-			result.damage *= 1.0 + levels[0] * 0.18
-			result.crit += levels[2] * 0.04
-		"rapunzel":
-			result.max_hp += levels[1] * 18.0
-		"snow_white":
-			result.damage *= 1.0 + levels[1] * 0.16
-			result.leech = 1.0 + levels[2] * 2
-		"mulan":
-			result.armor = 2.0 + levels[0] * 2
-			result.interval *= pow(0.94, levels[2])
-		"ariel":
-			result.damage *= 1.0 + levels[2] * 0.16
-		"joao":
-			result.damage *= 1.0 + levels[0] * 0.15
-			result.crit += levels[1] * 0.04
-			result.interval *= pow(0.95, levels[2])
-		"maria":
-			result.damage *= 1.0 + levels[0] * 0.16
-			result.leech = levels[1] * 2.0
-		"alice":
-			result.damage *= 1.0 + levels[0] * 0.16
-			result.energy_bonus = levels[1] * 2.0
-			result.max_hp += levels[2] * 16.0
-		"puss":
-			result.armor = 3.0 + levels[0] * 2.0
-			result.max_hp += levels[1] * 20.0
-			result.damage *= 1.0 + levels[2] * 0.18
-		"matches":
-			result.damage *= 1.0 + levels[1] * 0.14
-			result.energy_bonus = float(levels[2])
-		"peter":
-			result.crit += levels[0] * 0.04
-			result.max_hp += levels[1] * 14.0
-			result.evasion = minf(0.55, result.evasion + levels[2] * 0.02)
-		"aladin":
-			result.damage *= 1.0 + levels[1] * 0.16
-			result.interval *= pow(0.95, levels[2])
-	result.max_hp *= 1.0 + 0.06 * (clampi(hero_level, 1, 30) - 1)
-	result.damage *= 1.0 + 0.04 * (clampi(hero_level, 1, 30) - 1)
-	result["hp"] = result.max_hp
+		if choice=="hope":result.max_hp+=5
+		elif choice=="power":result.damage+=1
+	result.hp=result.max_hp
 	return result
 
 

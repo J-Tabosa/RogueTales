@@ -230,7 +230,7 @@ func load_data(data: Dictionary) -> void:
 	var milestones:Dictionary=data.get("hero_milestones",{}) if data.get("hero_milestones",{}) is Dictionary else {}
 	for hero in TaleCatalog.HEROES:
 		var p:Dictionary=milestones.get(hero,{}) if milestones.get(hero,{}) is Dictionary else {}
-		hero_milestones[hero]={"rooms":clampi(int(p.get("rooms",0)),0,12),"secret":bool(p.get("secret",false)),"win":bool(p.get("win",false))}
+		hero_milestones[hero]={"rooms":clampi(int(p.get("rooms",0)),0,12),"secret":bool(p.get("secret",false)),"win":bool(p.get("win",false)),"feat":bool(p.get("feat",false))}
 	best_endless = clampi(int(data.get("best_endless", 0)), 0, 2147483647)
 	endless_runs = maxi(0, int(data.get("endless_runs", 0)))
 	discovered_synergies.clear()

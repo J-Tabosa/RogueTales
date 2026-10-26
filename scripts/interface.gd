@@ -492,7 +492,7 @@ func update_hud() -> void:
 	power_label.text = "%d aliados   ×   %d inimigos" % [run.actors.filter(func(unit): return unit.hp > 0).size(), living]
 	for index in mini(ult_buttons.size(), run.actors.size()):
 		var actor: Dictionary = run.actors[index]
-		ult_meters[index].max_value=4 if run.expedition and actor.id=="alice" else 100
+		ult_meters[index].max_value=4 if run.expedition and actor.id=="alice" else maxf(1,run.tactics.Rules.cost(actor))
 		ult_meters[index].value = actor.get("card_charge",0) if run.expedition and actor.id=="alice" else actor.energy
 		HealthDisplay.update(card_health[index],actor)
 		for child in ult_buttons[index].get_children():
@@ -504,9 +504,10 @@ func update_hud() -> void:
 				var equipment_slot: int = child.get_meta("card_items")
 				ItemArt.refresh(child, ItemArt.equipped(actor,equipment_slot))
 			elif child.has_meta("card_mana"):
-				child.text = ("CARTAS %d / 4"%int(actor.get("card_charge",0))) if run.expedition and actor.id=="alice" else "MANA %d / 100" % int(actor.energy)
+				child.text = run.tactics.Rules.resource(actor)
 		ult_buttons[index].disabled = paused or state != "battle" or actor.hp <= 0 or not run.tactics.ultimate_ready(index) or actor.ult_pending or actor.get("ult_queued", false) or arena.tracks[index].time >= 0
-		ult_buttons[index].tooltip_text = "%s · %s\n%s" % [TaleCatalog.HERO_TACTICS[actor.id].ult, ("%d/4 cartas"%int(actor.get("card_charge",0))) if run.expedition and actor.id=="alice" else ("%d%%"%int(actor.energy)), TaleCatalog.HERO_TACTICS[actor.id].detail]
+		if actor.id=="aladin":ult_buttons[index].disabled=state!="battle" or run.tactics.Rules.wishes_left(actor)<=0
+		ult_buttons[index].tooltip_text = "%s · %s\n%s" % [TaleCatalog.HERO_TACTICS[actor.id].ult, ("%d/4 cartas"%int(actor.get("card_charge",0))) if run.expedition and actor.id=="alice" else run.tactics.Rules.resource(actor), TaleCatalog.HERO_TACTICS[actor.id].detail]
 	if is_instance_valid(auto_button):
 		auto_button.text = "AUTO ULT  " + ("ON" if campaign.auto_ult else "OFF")
 	if is_instance_valid(action_label) and is_instance_valid(log_label):
@@ -832,7 +833,7 @@ func refresh_timeline() -> void:
 			face_portrait(timeline, unit.id, Rect2(x,3,34,36))
 		else:
 			icon(timeline, "sword", Rect2(x,8,26,26), tint)
-		label(timeline, "%dAP" % unit.ap, Rect2(x+38,8,36,24), 10, tint)
+		label(timeline, "%d×" % int(unit.get("ap",unit.get("attacks",1))), Rect2(x+38,8,36,24), 10, tint)
 
 
 func install_controls_theme() -> void:

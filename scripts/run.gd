@@ -1,6 +1,7 @@
 class_name IdleRun
 extends RefCounted
 ## A chapter consists of two encounters and a boss. Permanent upgrades live in Campaign.
+const Rules=preload("res://scripts/combat_rules.gd")
 const Equipment = preload("res://scripts/equipment.gd")
 const Blessings = preload("res://scripts/hero_blessings.gd")
 const Tactics = preload("res://scripts/tactics.gd")
@@ -236,7 +237,7 @@ func apply_relic_to_actor(actor: Dictionary, id: String) -> void:
 			if actor.hp > 0:
 				actor.hp = minf(actor.max_hp, actor.hp + 40.0)
 		"haste":
-			actor.interval = maxf(0.65, actor.interval * 0.88)
+			actor.initiative=minf(100,float(actor.get("initiative",50))+10)
 		"critical":
 			actor.crit = minf(0.95, actor.crit + 0.12)
 		"leech":
@@ -435,11 +436,11 @@ func restore(campaign: TaleCampaign, data: Dictionary) -> void:
 		for actor in actors:
 			var saved: Variant = states.get(actor.id, {}) if states is Dictionary else {}
 			if saved is Dictionary:
-				for key in ["shadows", "suit", "wish", "charged", "nine_used", "spirit_flames", "guardian_spirits", "card_charge"]:
+				for key in Rules.STATE_KEYS:
 					if saved.has(key): actor[key] = saved[key]
 			actor["guardian_spirits"]=clampi(int(actor.get("guardian_spirits",0) if saved is Dictionary and saved.has("guardian_spirits") else actor.get("spirit_flames",0)),0,3)
 			actor["spirit_flames"]=0
-			actor["card_charge"]=clampi(int(actor.get("card_charge",0)),0,4)
+			actor["card_charge"]=maxi(0,int(actor.get("card_charge",0)))
 
 	# Preserve combos and the random stream at the encounter boundary.
 	var counts: Variant = data.get("hits", [])
@@ -539,7 +540,13 @@ func run_actor(id: String) -> Dictionary:
 	var actor := TaleCatalog.hero_stats(id, [0, 0, 0], {}, 1)
 	actor["equipment"]=[]
 	actor["equipment_applied"]={}
-	actor["blessing_effects"]=Blessings.data(blessing).get("effects",{}).duplicate() if id==leader else {}
+	actor["blessing_index"]=int(Blessings.data(blessing).get("index",-1)) if id==leader else -1
+	actor["blessing_effects"]={} # Character paths are mutually exclusive mechanics, not additive gear.
+	actor["wishes"]=[]
+	actor["wish_extra"]=false
+	actor["resurrections"]=0
+	actor["gato_stage"]=-1
+	actor["alice_stage"]=-1
 	actor["mutations"] = []
 	actor["shadows"] = 0
 	actor["suit"] = 0
@@ -561,9 +568,9 @@ func ability_snapshot() -> Dictionary:
 	var saved := {}
 	for actor in actors:
 		var entry := {}
-		for key in ["shadows", "suit", "wish", "charged", "nine_used", "spirit_flames", "guardian_spirits", "card_charge"]:
+		for key in Rules.STATE_KEYS:
 			if actor.has(key): entry[key] = actor[key]
-		saved[actor.id] = entry
+		saved[actor.id] = entry.duplicate(true)
 	return saved
 
 
@@ -602,7 +609,7 @@ func roll_run_offers() -> void:
 	for item in RELICS:
 		if true:
 			if item.id == "critical" and actors.all(func(actor): return actor.hp <= 0 or actor.crit >= 0.949): continue
-			if item.id == "haste" and actors.all(func(actor): return actor.hp <= 0 or actor.interval <= 0.651): continue
+			if item.id == "haste" and actors.all(func(actor): return actor.hp <= 0 or actor.get("initiative",50)>=100): continue
 			candidates.append(item.id)
 	while offers.size() < 3 and not candidates.is_empty():
 		var slot := rng.randi_range(0, candidates.size() - 1)
@@ -614,6 +621,7 @@ func roll_run_offers() -> void:
 
 
 func clear_encounter() -> bool:
+	Rules.finish_combat(self)
 	if not expedition or interlude=="secret_reward": return false
 	if not active_secret.is_empty():
 		var secret_id:=active_secret

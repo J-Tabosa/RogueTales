@@ -14,34 +14,94 @@ const BLESSINGS := {
 	"thorns": {"name": "Espelho partido", "detail": "Devolva 25% do dano recebido. Requer chegar à fase 4.", "cost": 80},
 	"mercy": {"name": "Uma última página", "detail": "Uma vez por run, o protagonista revive com 35% dos PV. Requer chegar à fase 8.", "cost": 140}
 }
-const KITS := {
-	"scarlet": ["Carga de pólvora", "Aplica fogo e pólvora. A terceira carga explode no alvo e respinga nos demais.", "Estilhaços úteis", "Um crítico ativa a passiva e recupera 20 de ULT."],
-	"rapunzel": ["Trança vital", "Ataca e cura o aliado vivo mais ferido em 8% dos PV máximos.", "Laço de resgate", "Ao deixar um aliado abaixo de 45% dos PV, ativa a passiva para curá-lo e protegê-lo."],
-	"snow_white": ["Maçã amarga", "Aplica veneno acumulável. Acertar um alvo já envenenado também drena vida.", "Semente maldita", "Ao derrotar um alvo envenenado, ativa a passiva para transferir o veneno."],
-	"mulan": ["Três movimentos", "O terceiro acerto causa +80% de dano e atinge os outros inimigos da frente.", "Aparo de jade", "Uma esquiva com a passiva pronta devolve 45% do ataque em dano e concede 10% dos PV em escudo."],
-	"ariel": ["Maré que volta", "Cada terceiro acerto cura 12% dos PV de todos os aliados vivos.", "Corrente de retorno", "Ao ferir um aliado abaixo de 50% dos PV, ativa a passiva para curá-lo e atrasar os inimigos."],
-	"joao": ["Marca da caçada", "Marca a presa. Seus próximos acertos na mesma presa causam +40% de dano.", "Fogo de cobertura", "Após um aliado acertar sua presa, ativa a passiva para dar uma estocada adicional."],
-	"maria": ["Receita roubada", "Alterna entre aplicar veneno e consumi-lo numa onda que recupera vida.", "Gota de revanche", "Ao sofrer dano, ativa a passiva para envenenar o agressor."],
-	"alice": ["Baralho impossível", "Alterna quatro naipes: dano, cura, escudo e uma segunda carta em outro alvo.", "Carta na manga", "Ao sofrer dano, ativa a passiva para ganhar um escudo de cartas de 8% dos PV."],
-	"puss": ["Peso do crepúsculo", "Alterna um golpe de preparação com um corte de 240% na vanguarda.", "Guarda das botas", "Se um aliado abaixo de 45% dos PV for atacado, ativa a passiva para receber o golpe."],
-	"matches": ["Fósforo vivo", "Incendeia a linha inimiga. O fogo fica mais forte em alvos já incendiados.", "Incêndio em cadeia", "Quando um inimigo incendiado cai, ativa a passiva para espalhar fogo aos sobreviventes."],
-	"peter": ["Lâmina sem sombra", "Consome até três sombras; cada uma acrescenta 60% de dano ao golpe.", "Reflexo do outro lado", "Uma esquiva ativa a passiva, cria uma sombra e responde com um contra-ataque."],
-	"aladin": ["Desejo rotativo", "Alterna entre dano de 170%, escudo para o grupo e cura para o grupo.", "Lâmpada de reserva", "Quando um escudo aliado se rompe, ativa a passiva para recuperar energia para o grupo."]
+const KITS = {
+	"scarlet": [
+		"Bombas Caseiras",
+		"Bombas Caseiras: causa 100% do Dano Físico em um alvo. Pode critar. Não tem espalhamento natural na ficha final.",
+		"Espalhando Pólvora",
+		"Espalhando Pólvora: cada alvo acertado por um ataque recebe uma carga, até dez por alvo. Crítico não concede carga adicional naturalmente. A pólvora não explode automaticamente; desaparece no fim do combate."
+	],
+	"alice": [
+		"4 Naipes",
+		"4 Naipes: básico causa 100% do Dano Físico + 100% do Dano Mágico em um alvo e avança um naipe.",
+		"Baralho Mágico",
+		"Baralho Mágico: não usa mana. Cada básico executado concede uma carga em um contador único. A cada quatro cargas, consome quatro e ativa a ult, continuando os ataques restantes. Espalhamento não concede cargas extras. Contador e próximo naipe permanecem entre combates."
+	],
+	"snow_white": [
+		"Minerando",
+		"Minerando: básico de 100% do Dano Físico em um alvo.",
+		"Quebrando Barreiras",
+		"Quebrando Barreiras: básicos causam +100% de dano contra escudos. O dano adicional exclusivo contra escudo não se transforma em dano à vida ao quebrá-lo. A ult também recebe esse benefício, apesar da descrição original usar o nome antigo Rompe-Barreiras."
+	],
+	"ariel": [
+		"Correntes Dançantes",
+		"Correntes Dançantes: 100% do Dano Mágico no alvo inicial. Cada salto testa individualmente 50% de chance de continuar, até dois saltos naturais, de 60% e 40%. Falhar encerra a corrente. Não repete alvos naquele básico.",
+		"Águas Curativas",
+		"Águas Curativas: cada inimigo acertado pelo básico, inclusive por ricochete, cura o aliado vivo com menor porcentagem de vida em 15% do Dano Mágico. Reavalia o beneficiário após cada impacto. Cada acerto também gera dez de mana."
+	],
+	"rapunzel": [
+		"Casulo de Seda",
+		"Casulo de Seda: concede a si e ao outro aliado vivo com menor porcentagem de vida escudo de 100% do Dano Mágico. Enquanto Silk tiver escudo criado por ela, ataques inimigos que a acertam provocam retaliação de 50% do Dano Mágico. Inclui o golpe que quebra o escudo. Não é uma ação ofensiva direta.",
+		"Fios Entrelaçados",
+		"Passiva sem nome final: aliados com escudos criados por Silk recebem 10% menos dano. Beneficia a própria Silk, não acumula e vale também no golpe que quebra a proteção."
+	],
+	"mulan": [
+		"Três Ataques",
+		"Três Ataques: 100% do Dano Físico em um alvo; cada terceiro básico executado causa 150%. Contador permanece entre turnos e combates. Contra-ataques e ults não avançam o contador.",
+		"Contra-Ataque",
+		"Contra-Ataque: ao esquivar de ataque direto, responde com 60% do Dano Físico. Pode critar; não gera mana. Uma ativação entre suas próprias vezes, renovada no início da vez dela."
+	],
+	"maria": [
+		"Veneno Líquido",
+		"Veneno Líquido: 100% do Dano Mágico em um alvo, podendo critar se adquirir chance. Aplica uma dose de veneno.",
+		"Acumulando Toxinas",
+		"Acumulando Toxinas: até três doses por alvo. Cada dose causa 10% do Dano Mágico como dano real no início da vez do alvo, durante dois turnos. Reaplicar renova a duração. Veneno não critica nem gera mana pelo dano periódico."
+	],
+	"joao": [
+		"Perfuração de Açúcar",
+		"Perfuração de Açúcar: 100% do Dano Físico em um alvo, podendo critar.",
+		"Marca do Duelista",
+		"Marca do Duelista: primeiro básico acertado marca o inimigo. Básicos seguintes contra essa presa causam 120%. Marca permanece até a presa morrer ou João trocar de alvo. Apenas básicos aplicam."
+	],
+	"matches": [
+		"Lançar Faíscas",
+		"Lançar Faíscas: 50% do Dano Mágico em um alvo, aplicando Queimadura de 100% do Dano Mágico como dano real de fogo no início da vez do inimigo, por dois turnos.",
+		"Incêndio Amador",
+		"Incêndio Amador: impacto direto de básico ou ult contra alvo já incendiado acrescenta dez pontos percentuais do Dano Mágico à potência do fogo, até 150%, e renova a duração. Dano periódico e explosões não fortalecem a queimadura."
+	],
+	"aladin": [
+		"Energia Genial",
+		"Energia Genial: rajada de 100% do Dano Mágico em um alvo. Pode critar ao adquirir chance.",
+		"Poder Engarrafado",
+		"Poder Engarrafado: +10% de Dano Mágico por desejo disponível: +30%, +20%, +10%, zero. Conta desejos restantes, não desejos já gastos."
+	],
+	"peter": [
+		"Lâmina Sem Sombra",
+		"Básico — Lâmina Sem Sombra (nome proposto): 100% do Dano Mágico no alvo. Cada sombra acompanha com um golpe separado de 15% do Dano Mágico. Atacar não consome sombras. Cada golpe calcula seu próprio crítico ×3. Golpes das sombras não geram mana ou novas cópias de ataques.",
+		"Sombras do Nunca",
+		"Passiva de sombras: cada esquiva de ataque direto concede uma sombra, até três. Cada impacto direto acertado remove uma sombra, se houver; Peter recebe o dano normalmente. Sombras não bloqueiam, não concedem redução e não são escudos. Dano periódico não gera ou remove sombras."
+	],
+	"puss": [
+		"Corte Brutal",
+		"Básico — Corte Brutal (nome proposto): 100% do Dano Físico em um alvo; pode critar.",
+		"Fúria do Pequeno Gigante",
+		"Passiva — Fúria do Pequeno Gigante (nome proposto): +1% de Dano Físico por 1% de vida máxima faltando. Recalcula com a vida atual; curar reduz o bônus. Não usa quantidade absoluta de PV perdidos."
+	]
 }
-## Each option changes an actual mechanic. One copy per hero per run.
-const MUTATIONS := {
-	"scarlet": [["spread", "Pavio compartilhado", "A explosão espalha queimadura a todos."], ["quick", "Pólvora instável", "A pólvora explode com duas cargas."], ["shelter", "Abrigo de fumaça", "Cada explosão concede 12% de escudo ao grupo."]],
-	"rapunzel": [["twin", "Trança dupla", "A cura ativa também alcança um segundo aliado."], ["barrier", "Fios de abrigo", "Sua cura ativa também concede 8% de escudo."], ["rescue", "Ninguém fica para trás", "O resgate reage abaixo de 65% dos PV e cura o dobro."]],
-	"snow_white": [["stack", "Receita concentrada", "O veneno aplicado ganha o dobro de intensidade."], ["harvest", "Colheita vermelha", "Drenar um alvo envenenado cura também o aliado mais ferido."], ["seed", "Pomar proibido", "Semente maldita transfere o veneno a todos os sobreviventes."]],
-	"mulan": [["quick", "Segundo movimento", "O combo acontece a cada dois acertos."], ["dragon", "Rastro de jade", "O combo alcança também a retaguarda."], ["guard", "Estandarte protetor", "Seu aparo concede escudo também aos aliados."]],
-	"ariel": [["quick", "Maré curta", "A cura coletiva acontece a cada dois acertos."], ["tide", "Ressaca abissal", "Uma cura coletiva também atrasa os inimigos."], ["overflow", "Espuma protetora", "A cura coletiva também concede 10% de escudo."]],
-	"joao": [["hunt", "Presa exposta", "A marca também amplifica em 20% o dano dos aliados."], ["pierce", "Bengala perfurante", "A estocada de cobertura ignora armadura."], ["relay", "Caçada sem pausa", "Ao abater a presa, a marca passa ao próximo alvo."]],
-	"maria": [["feast", "Banquete da bruxa", "Consumir veneno cura também o grupo."], ["keep", "Receita inesgotável", "A estocada consome metade do veneno, preservando o restante."], ["toxic", "Antídoto às avessas", "A revanche também aplica veneno aos outros inimigos."]],
-	"alice": [["double", "Mão impossível", "A carta extra acerta todos os outros inimigos."], ["heart", "Rainha de copas", "O naipe de cura alcança todos os aliados."], ["wild", "Coringa", "A cada ciclo completo, recarrega a passiva e ganha 25 mana."]],
-	"puss": [["sweep", "Corte do horizonte", "O golpe carregado alcança ambas as linhas."], ["ready", "Lâmina desperta", "Começa cada combate com o golpe pesado pronto."], ["nine", "Mais uma vida", "Uma vez nesta run, sobrevive a um golpe fatal com 30% dos PV."]],
-	"matches": [["spread", "Cidade em chamas", "Cada acerto espalha parte do fogo a outro inimigo."], ["fuel", "Combustível proibido", "Incêndios em cadeia também causam dano imediato."], ["ash", "Da cinza ao pavio", "Um inimigo incendiado derrotado concede 25 de ULT."]],
-	"peter": [["double", "Sombra gêmea", "Cada reação de esquiva cria duas sombras."], ["veil", "Véu do Nunca", "Consumir sombras concede +20% de esquiva por 4 s."], ["keep", "Sombra teimosa", "Após um golpe com sombras, conserva uma delas."]],
-	"aladin": [["generous", "Desejo generoso", "Os desejos de cura e escudo têm efeito dobrado."], ["storm", "Tempestade das dunas", "O desejo de ataque atinge um segundo inimigo."], ["reserve", "Reserva do gênio", "A quebra de escudo também reconstrói 8% de escudo no grupo."]]
+## Obsolete mutations no longer enter the reward pool.
+const MUTATIONS = {
+	"scarlet": [],
+	"alice": [],
+	"snow_white": [],
+	"ariel": [],
+	"rapunzel": [],
+	"mulan": [],
+	"maria": [],
+	"joao": [],
+	"matches": [],
+	"aladin": [],
+	"peter": [],
+	"puss": []
 }
 const ROUTES := {
 	"team_event": {"title": "Um encontro nas margens", "detail": "Sua equipe encontra uma página especial. Quem está no grupo muda o diálogo e as opções."},

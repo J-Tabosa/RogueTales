@@ -114,7 +114,7 @@ func checks() -> void:
 	assert(run.tactics.enemies.any(func(foe): return foe.burn > 0))
 	run.interlude = "route"
 	assert(run.grant_item("winter_match") and run.equip_item(0, "winter_match", 1))
-	for foe in run.tactics.enemies: foe.burn = 0
+	for foe in run.tactics.enemies: foe.burn = 0;foe.statuses=[];foe.burn_left=0
 	run.hit_enemy(0)
 	assert(run.tactics.enemies.any(func(foe): return foe.poison > 0))
 	assert(run.tactics.enemies.all(func(foe): return foe.burn == 0))
@@ -130,7 +130,7 @@ func checks() -> void:
 		Blessings.record(account, data)
 		Blessings.record(account, data)
 		assert(account.hero_milestones[hero].rooms == 12)
-		assert(Blessings.unlocked(account, Blessings.id_for(hero, 1)))
+		assert(not Blessings.unlocked(account, Blessings.id_for(hero, 1)),"Participation is not a substitute for the documented feat")
 		run.active_secret = hero
 		run.clear_encounter()
 		assert(run.inventory.has("trophy_" + hero))

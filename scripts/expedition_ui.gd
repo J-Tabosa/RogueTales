@@ -129,11 +129,7 @@ func choose_blessing(id: String) -> void:
 	show_map()
 
 func blessing_condition(id: String) -> String:
-	match int(Blessings.data(id).get("index",0)):
-		1:return "Desbloqueia ao vencer 12 fases com este herói · %d/12"%mini(12,int(campaign.hero_milestones.get(selected_hero,{}).get("rooms",0)))
-		2:return "Desbloqueia ao vencer o chefe secreto com este herói"
-		3:return "Desbloqueia ao concluir os 12 mundos com este herói"
-	return "Disponível desde o início"
+	return "Desbloqueia: "+Blessings.mission(campaign,id)
 
 func set_run_mode(infinite: bool) -> void:
 	if not campaign.checkpoint.is_empty(): return
@@ -323,6 +319,8 @@ func show_routes() -> void:
 	button(overlay,"Equipe · %d/%d"%[run.actors.size(),run.party_capacity],Rect2(278,682,230,48),show_run_build)
 	button(overlay, "Ver build", Rect2(32, 758, 230, 48), show_run_build)
 	button(overlay, "Salvar e sair", Rect2(278, 758, 230, 48), leave_battle)
+	wishes_button()
+
 
 func show_recruit_replacement(id: String) -> void:
 	if not is_expedition():
@@ -369,7 +367,7 @@ func show_run_shop() -> void:
 	header("Mercador de histórias","%s ouro   ·   Equipe %d/%d"%[format_gold(run.run_gold),run.actors.size(),run.party_capacity])
 	var keys:Array[String]=["capacity"]
 	keys.append_array(run.shop_stock)
-	var inner:=scroll_area(190,548,keys.size()*150)
+	var inner:=scroll_area(225,513,keys.size()*150)
 	inner.get_parent().name="ShopList"
 	for index in keys.size():
 		var key:String=keys[index]
@@ -395,6 +393,8 @@ func show_run_shop() -> void:
 	register_layout(inventory,"bottom")
 	button(page,"Seguir viagem →",Rect2(24,818,316,56),leave_run_shop,true)
 	button(page,"Salvar e sair",Rect2(356,818,160,56),leave_battle)
+	wishes_button()
+
 
 func supply_data(key: String) -> Dictionary:
 	if key=="capacity":return {"title":"Expandir equipe","detail":"Capacidade %d → %d. Até 9 no total, com no máximo 3 personagens por posição."%[run.party_capacity,mini(9,run.party_capacity+1)]}
@@ -486,7 +486,7 @@ func show_run_build() -> void:
 		var text_height:=get_theme_font("font").get_multiline_string_size(description,HORIZONTAL_ALIGNMENT_LEFT,476,14).y+24
 		entries.append({"actor":actor,"description":description,"height":text_height})
 		total_height+=text_height+115
-	var inner := scroll_area(190,593,total_height)
+	var inner := scroll_area(225,558,total_height)
 	label(inner, "BÊNÇÃO · " + str(Blessings.data(run.blessing).get("title",Content.BLESSINGS.get(run.blessing,{}).get("name","Bênção"))), Rect2(0, 0, 476, 42), 18, GOLD)
 	var y := 63.0
 	for key in pairs:
@@ -506,6 +506,8 @@ func show_run_build() -> void:
 		label(inner, data.detail, Rect2(0, y + 31, 476, 47), 13, MUTED)
 		y += 83
 	button(page, "Voltar ao caminho", Rect2(24, 814, 492, 56), show_routes, true)
+	wishes_button()
+
 
 func finish_defeat() -> void:
 	if not is_expedition():
@@ -753,19 +755,16 @@ func show_hero_details(id: String) -> void:
 		for current in run.actors:
 			if current.id==id: stats=current
 	var detail=preload("res://scripts/combat_details.gd")
-	var descriptions := [["ATIVA · AUTOMÁTICA", Content.KITS[id][0], detail.active(stats)], ["PASSIVA · RECARGA 6 s", Content.KITS[id][2], detail.passive(stats)], ["ULT · 100 MANA", TaleCatalog.HERO_TACTICS[id].ult, detail.ultimate(stats)]]
-	for index in descriptions.size():
-		var data: Array = descriptions[index]
-		var y := 248 + index * 250
-		panel(inner, Rect2(0, y, 476, 240))
-		label(inner, data[0], Rect2(16, y + 10, 444, 21), 10, GOLD)
-		label(inner, data[1], Rect2(16, y + 37, 444, 32), 22)
-		label(inner, data[2], Rect2(16, y + 78, 444, 154), 15, MUTED)
-	label(inner, "TRANSFORMAÇÕES DURANTE A RUN", Rect2(0, 1020, 476, 26), 12, GOLD)
-	for index in Content.MUTATIONS[id].size():
-		var entry: Array = Content.MUTATIONS[id][index]
-		label(inner, entry[1], Rect2(0, 1066 + index * 140, 476, 30), 20)
-		label(inner, entry[2], Rect2(0, 1104 + index * 140, 476, 57), 14, MUTED)
+	var descriptions := [["ATIVA · AUTOMÁTICA", Content.KITS[id][0], detail.active(stats)], ["PASSIVA", Content.KITS[id][2], detail.passive(stats)], ["ESPECIAL · "+detail.Rules.resource(stats), TaleCatalog.HERO_TACTICS[id].ult, detail.ultimate(stats)]]
+	var y:=248.0
+	for data in descriptions:
+		var h:=maxf(240,get_theme_font("font").get_multiline_string_size(str(data[2]),HORIZONTAL_ALIGNMENT_LEFT,444,15).y+110)
+		panel(inner,Rect2(0,y,476,h))
+		label(inner,data[0],Rect2(16,y+10,444,21),10,GOLD)
+		label(inner,data[1],Rect2(16,y+37,444,32),22)
+		label(inner,data[2],Rect2(16,y+78,444,h-88),15,MUTED)
+		y+=h+12
+	inner.custom_minimum_size.y=y+24
 	button(page, "Selecionar Personagem", Rect2(24, 813, 316, 54), use_protagonist.bind(id), true).disabled = not campaign.checkpoint.is_empty()
 	button(page, "Coleção", Rect2(356, 813, 160, 54), show_heroes)
 	navigation("heroes")
@@ -824,7 +823,7 @@ func show_help() -> void:
 	clear_page()
 	header("Uma run, doze páginas", "Prepare o protagonista; descubra o restante durante a tentativa.")
 	var inner := scroll_area(190, 674, 1290)
-	label(inner, "1. MODOS\nConto: 12 mundos com 6 fases cada, totalizando 72 combates. Cada mundo termina em um chefe e cura 12% dos PV dos sobreviventes. Após vencer os 12 mundos, escolha continuar no infinito com a mesma build e dificuldade crescente. Novos marcos de 12 páginas concedem memórias no fim da tentativa.\n\n2. COMBATE\nAtaques automáticos seguem o intervalo de cada personagem. ULTs gastam 100 mana e têm apresentação própria. Passivas ativam automaticamente com recarga de 6 s e avisam no canto. Histórico pausa e mostra dano, cura e efeitos. Vanguardas ficam na frente, assassinos no meio e magos/atiradores atrás. A classe define a formação.\n\n3. SINERGIAS\nJoão e Maria, Peter e Mulan, Scarlet e Vendedora combinam efeitos. As três duplas exigem os dois viajantes vivos, o gatilho e a passiva do parceiro pronta. Cada dupla tem recarga de 6 s. Veja os gatilhos em Ver build da equipe.\n\n4. CHEFES\nQuebre o estandarte do General para interrompê-lo. A Guardiã copia a última ULT deste combate: pense antes de usar cura e escudo. Destrua os fios da Costureira para libertar as ativas seladas. Ataques básicos e ULTs continuam disponíveis.\n\n5. BUILD E EVENTOS\nEscolha uma de três melhorias após vencer. Convites têm 25% de chance por tela. Rotas oferecem elites, descanso, loja e eventos. O mercador vende espaços de equipe (150/400/900/1.500/2.200/3.000 ouro), até 9. Cada posição comporta 3. Grupos comuns têm 1–9 inimigos aleatórios, inclusive na primeira fase; chefes vêm com 2 minions. Cada personagem equipa 2 itens entre combates. Chefes oferecem um equipamento; duelos secretos dão um troféu exclusivo. Cada protagonista tem 4 bênçãos, liberadas por feitos próprios. A equipe muda as falas e libera opções especiais. No infinito, relíquias continuam acumulando com ganhos decrescentes; a build não acaba quando as opções exclusivas se esgotam.\n\n6. FIM E RETOMADA\nOuro, relíquias e convidados são da run. Feitos, coleção, descobertas, recordes e memórias permanecem. Pontos vêm das vitórias, chefes, elites, rapidez e aliados sobreviventes; vencer sem perder PV concede um bônus. Salvar e sair retoma no início do combate atual ou na escolha salva, sem sortear outras opções.\n\nCONTROLES\nToque nos retratos ou use 1–9 para a ULT. Espaço/ESC pausa; A alterna ULT automática; F11 alterna tela cheia.", Rect2(0, 0, 476, 1270), 17)
+	label(inner, "1. MODOS\nConto: 12 mundos com 6 fases cada, totalizando 72 combates. Cada mundo termina em um chefe e cura 12% dos PV dos sobreviventes. Após vencer os 12 mundos, escolha continuar no infinito com a mesma build e dificuldade crescente. Novos marcos de 12 páginas concedem memórias no fim da tentativa.\n\n2. COMBATE\nCada rodada segue a Iniciativa (0–100). Cada personagem executa seus básicos em sequência na própria vez. ULTs usam os custos de cada ficha e podem intercalar os básicos sem consumi-los. Mana não regenera por tempo. Passivas seguem os gatilhos e limites da ficha. Histórico pausa e mostra dano, cura e efeitos. Vanguardas ficam na frente, assassinos no meio e magos/atiradores atrás. A classe define a formação.\n\n3. SINERGIAS\nJoão e Maria, Peter e Mulan, Scarlet e Vendedora combinam efeitos. As fichas atuais usam os gatilhos próprios de cada personagem; as antigas sinergias por tempo foram substituídas. Veja os gatilhos em Ver build da equipe.\n\n4. CHEFES\nQuebre o estandarte do General para interrompê-lo. A Guardiã copia a última ULT deste combate: pense antes de usar cura e escudo. Destrua os fios da Costureira para libertar as ativas seladas. Ataques básicos e ULTs continuam disponíveis.\n\n5. BUILD E EVENTOS\nEscolha uma de três melhorias após vencer. Convites têm 25% de chance por tela. Rotas oferecem elites, descanso, loja e eventos. O mercador vende espaços de equipe (150/400/900/1.500/2.200/3.000 ouro), até 9. Cada posição comporta 3. Grupos comuns têm até 3 inimigos no estágio 1, 6 no estágio 2 e 9 a partir do estágio 3; chefes vêm com 2 minions. Cada personagem equipa 2 itens entre combates. Chefes oferecem um equipamento; duelos secretos dão um troféu exclusivo. Cada protagonista tem 4 bênçãos, liberadas por feitos próprios. A equipe muda as falas e libera opções especiais. No infinito, relíquias continuam acumulando com ganhos decrescentes; a build não acaba quando as opções exclusivas se esgotam.\n\n6. FIM E RETOMADA\nOuro, relíquias e convidados são da run. Feitos, coleção, descobertas, recordes e memórias permanecem. Pontos vêm das vitórias, chefes, elites, rapidez e aliados sobreviventes; vencer sem perder PV concede um bônus. Salvar e sair retoma no início do combate atual ou na escolha salva, sem sortear outras opções.\n\nCONTROLES\nToque nos retratos ou use 1–9 para a ULT. Espaço/ESC pausa; A alterna ULT automática; F11 alterna tela cheia.", Rect2(0, 0, 476, 1270), 17)
 	navigation("profile")
 
 func show_preview() -> void:
@@ -913,3 +912,53 @@ func continue_after_secret() -> void:
 	paused=false
 	persist_run()
 	enter_encounter()
+
+var wishes_was_paused:=false
+func show_wishes() -> void:
+	if run==null:return
+	var rules=preload("res://scripts/combat_rules.gd")
+	var a:Dictionary=rules.actor(run,"aladin")
+	if a.is_empty():return
+	wishes_was_paused=paused
+	paused=true
+	if is_instance_valid(arena):arena.frozen=true
+	modal("3 Desejos","Um uso de cada desejo por run. Disponível mesmo com Aladin caído. Restam %d desejos."%rules.wishes_left(a))
+	var labels:Array=[["wealth","Riqueza · +%d ouro"%(200*(run.stage+1))],["life","Vida · reviver todos com vida cheia"],["death","Morte · eliminar inimigos / 1000% DM em chefes"]]
+	for i in labels.size():
+		var id:String=labels[i][0]
+		var used:bool=a.get("wishes",[]).has(id)
+		var can_repeat:bool=rules.boon(a,2) and not a.get("wish_extra",false)
+		var b:=button(overlay,labels[i][1],Rect2(32,410+i*66,476,58),perform_wish.bind(id))
+		b.disabled=(used and not can_repeat) or (id=="death" and (state!="battle" or run.enemy_hp<=0))
+	button(overlay,"Voltar",Rect2(32,634,476,56),close_wishes,true)
+
+func close_wishes() -> void:
+	if is_instance_valid(overlay):overlay.queue_free()
+	paused=wishes_was_paused
+	if is_instance_valid(arena):arena.frozen=paused
+	update_hud()
+	if state=="route":show_routes()
+
+func perform_wish(id:String) -> void:
+	var hit:Dictionary=preload("res://scripts/combat_rules.gd").wish(run,id)
+	if hit.is_empty():return
+	close_wishes()
+	if state=="battle":
+		if is_instance_valid(arena):
+			for at in run.actors.size():
+				if run.actors[at].hp>0:arena.tracks[at].alive=true;arena.heroes[at].modulate=Color.WHITE;arena.heroes[at].show_animation("idle")
+			arena.sync_health(run.actors)
+		update_hud()
+	else:
+		persist_run()
+		if state=="shop":show_run_shop()
+		elif state=="route":show_routes()
+		else:show_run_build()
+
+func wishes_button() -> void:
+	if run==null:return
+	var rules=preload("res://scripts/combat_rules.gd")
+	var a:Dictionary=rules.actor(run,"aladin")
+	if not a.is_empty():
+		if state=="route" and is_instance_valid(overlay):button(overlay,"✦ 3 Desejos · %d disponíveis"%rules.wishes_left(a),Rect2(32,324,476,44),show_wishes)
+		else:button(page,"✦ 3 Desejos · %d disponíveis"%rules.wishes_left(a),Rect2(24,177,492,38),show_wishes)

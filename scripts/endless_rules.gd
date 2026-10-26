@@ -1,9 +1,9 @@
 extends RefCounted
 ## Compact endless progression: no growing replay history, no finite offer pool.
-const KEYS := ["max_hp", "damage", "interval", "crit", "armor", "leech", "energy_bonus", "evasion", "base_evasion"]
+const KEYS := ["max_hp", "damage", "interval", "crit", "armor", "leech", "energy_bonus", "evasion", "base_evasion", "physical_damage", "magic_damage", "magic_defense", "physical_defense", "initiative", "attacks", "mana_max", "mana_hit", "mana_turn", "crit_multiplier", "legacy_damage_base"]
 
 static func template() -> Dictionary:
-	return {"hp_scale": 1.0, "hp_flat": 0.0, "damage_scale": 1.0, "interval_scale": 1.0, "crit_flat": 0.0, "armor_flat": 0.0, "leech_flat": 0.0}
+	return {"hp_scale": 1.0, "hp_flat": 0.0, "damage_scale": 1.0, "interval_scale": 1.0, "crit_flat": 0.0, "armor_flat": 0.0, "leech_flat": 0.0, "initiative_flat":0.0, "attacks_flat":0}
 
 static func safe(value: float, minimum := 0.0) -> float:
 	return clampf(value, minimum, 1.0e100) if is_finite(value) else minimum
@@ -16,7 +16,8 @@ static func apply_template(owner, actor: Dictionary) -> void:
 	actor.max_hp = safe(actor.max_hp * data.hp_scale + data.hp_flat, 1.0)
 	actor.hp = actor.max_hp
 	actor.damage = safe(actor.damage * data.damage_scale, 1.0)
-	actor.interval = maxf(0.65, actor.interval * data.interval_scale)
+	actor.initiative=minf(100,float(actor.get("initiative",50))+float(data.get("initiative_flat",0)))
+	actor.attacks=maxi(1,int(actor.get("attacks",1))+int(data.get("attacks_flat",0)))
 	actor.crit = minf(0.95, actor.crit + data.crit_flat)
 	actor.armor = safe(actor.armor + data.armor_flat)
 	actor.leech = safe(actor.leech + data.leech_flat)
@@ -41,8 +42,8 @@ static func add_upgrade(owner, id: String) -> bool:
 			owner.team_template.damage_scale = safe(owner.team_template.damage_scale * factor, 0.001)
 		"heart": owner.team_template.hp_flat = safe(owner.team_template.hp_flat + 25)
 		"haste":
-			factor = 0.88
-			owner.team_template.interval_scale = maxf(0.000001, owner.team_template.interval_scale * factor)
+			amount=10.0
+			owner.team_template.initiative_flat+=amount
 		"critical":
 			amount = 0.12 / (1.0 + copies * 0.10)
 			owner.team_template.crit_flat += amount
@@ -58,7 +59,7 @@ static func add_upgrade(owner, id: String) -> bool:
 			"heart":
 				actor.max_hp = safe(actor.max_hp + 25, 1.0)
 				if actor.hp > 0: actor.hp = minf(actor.max_hp, actor.hp + 40)
-			"haste": actor.interval = maxf(0.65, actor.interval * factor)
+			"haste": actor.initiative=minf(100,float(actor.get("initiative",50))+amount)
 			"critical": actor.crit = minf(0.95, actor.crit + amount)
 			"armor": actor.armor = safe(actor.armor + amount)
 			"leech": actor.leech = safe(actor.leech + amount)

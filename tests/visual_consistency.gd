@@ -89,11 +89,12 @@ func checks() -> void:
 		for card in descendants(game.page).filter(func(n):return n.has_meta("hero_id")):
 			var id:String=card.get_meta("hero_id")
 			var sprite:Sprite2D=card.get_node("HeroArt")
-			var height:float=sprite.texture.get_height()*sprite.scale.y
+			var bounds:Rect2=game.static_portraits[id].bounds
+			var height:float=bounds.size.y*sprite.scale.y
 			var area:Rect2=sprite.get_meta("portrait_rect")
 			assert(height>248*Visuals.height(id),id+" enlarged gallery height")
-			assert(absf(sprite.position.y+height-area.end.y)<.1,id+" common gallery baseline")
-			assert(sprite.position.x>=0 and sprite.position.x+sprite.texture.get_width()*sprite.scale.x<=card.size.x,id+" art fits inside card")
+			assert(absf(sprite.position.y+bounds.end.y*sprite.scale.y-area.end.y)<.1,id+" common gallery baseline")
+			assert(sprite.position.x+bounds.position.x*sprite.scale.x>=0 and sprite.position.x+bounds.end.x*sprite.scale.x<=card.size.x,id+" art fits inside card")
 		for id in ["scarlet","mulan","alice","matches","aladin"]:
 			game.select_gallery_hero(id)
 			await process_frame
@@ -109,8 +110,7 @@ func checks() -> void:
 		for unit in game.arena.heroes:assert(absf(float(unit.get_meta("visual_height"))-height)<.1)
 		await capture("three_back_"+mode)
 		game.run.actors[0].damage=123.4
-		game.run.actors[0].hostile_poison=2.1
-		game.run.actors[0].hostile_dot_left=3
+		preload("res://scripts/combat_rules.gd").status(game.run.actors[0],"poison","enemy_0",2,2.1)
 		game.show_character_information(0)
 		await process_frame
 		var children:=descendants(game.overlay)

@@ -3,12 +3,12 @@ extends RefCounted
 const SLOTS := 2
 const CAPACITY_PRICES := [150,400,900,1500,2200,3000]
 const ITEMS := {
-	"ember_pearl":{"title":"Pérola da maré ardente","detail":"Ataques e ULTs aplicam queimadura de 18% do dano por segundo, por 5 s. A água de Ariel também incendeia.","cost":120,"effects":{"fire":0.18}},
-	"winter_match":{"title":"Fósforo de inverno","detail":"Converte as queimaduras do portador em veneno de igual potência. Seus acertos atrasam ataques inimigos em 15% por 3 s.","cost":110,"effects":{"cold":true,"slow":3.0}},
-	"venom_vial":{"title":"Frasco de maçã negra","detail":"Acertos aplicam veneno de 12% do dano por segundo por 5 s, acumulando até 4 aplicações.","cost":95,"effects":{"venom":0.12}},
+	"ember_pearl":{"title":"Pérola da maré ardente","detail":"Ataques e ULTs aplicam queimadura de 18% do dano no início da vez do alvo, por 2 turnos. A água de Ariel também incendeia.","cost":120,"effects":{"fire":0.18}},
+	"winter_match":{"title":"Fósforo de inverno","detail":"Converte as queimaduras do portador em veneno de igual potência. Seus acertos atrasam ataques inimigos em 20 de Iniciativa na próxima vez.","cost":110,"effects":{"cold":true,"slow":3.0}},
+	"venom_vial":{"title":"Frasco de maçã negra","detail":"Acertos aplicam veneno de 12% do dano por turno por 2 turnos, acumulando até 4 aplicações.","cost":95,"effects":{"venom":0.12}},
 	"hunters_lens":{"title":"Lente de caçadora","detail":"+12 pontos percentuais de crítico e +15% de dano.","cost":100,"stats":{"damage":1.15,"crit":0.12}},
-	"tower_braid":{"title":"Laço da torre","detail":"+40 PV máximos e +4 de armadura. Equipar preserva os PV atuais, sem curar.","cost":85,"stats":{"hp":40.0,"armor":4.0}},
-	"clockwork":{"title":"Relógio sem ponteiros","detail":"Intervalo de ataque −15% e +4 mana por acerto. Respeita o intervalo mínimo.","cost":115,"stats":{"interval":0.85,"energy":4.0}},
+	"tower_braid":{"title":"Laço da torre","detail":"+40 PV máximos e +4 pontos de Defesa Física. Equipar preserva os PV atuais, sem curar.","cost":85,"stats":{"hp":40.0,"armor":4.0}},
+	"clockwork":{"title":"Relógio sem ponteiros","detail":"+15 de Iniciativa e +4 mana por acerto elegível.","cost":115,"stats":{"initiative":15.0,"energy":4.0}},
 	"mirror_shard":{"title":"Espelho rachado","detail":"Começa cada combate com escudo de 20% dos PV. Reflete 20% do dano recebido.","cost":100,"effects":{"shield_start":0.20,"reflect":0.20}},
 	"echo_bell":{"title":"Sino dos ecos","detail":"Cada acerto causa uma reverberação de 30% do dano em outro inimigo. Não gera outra reverberação.","cost":140,"effects":{"chain":0.30}},
 	"red_goblet":{"title":"Taça do último brinde","detail":"+4 PV por acerto; derrotar um inimigo recupera 6% dos PV do portador.","cost":90,"stats":{"leech":4.0},"effects":{"kill_heal":0.06}},
@@ -61,21 +61,22 @@ static func detach(actor: Dictionary) -> void:
 	actor.damage/=a.damage
 	actor.interval/=a.interval
 	actor.max_hp=maxf(1,actor.max_hp-a.hp)
-	for key in ["armor","crit","leech","energy_bonus"]:actor[key]-=float(a.get(key,0))
+	for key in ["armor","crit","leech","energy_bonus","initiative"]:actor[key]-=float(a.get(key,0))
 	actor["equipment_applied"]={}
 static func attach(actor: Dictionary) -> void:
-	var a:Dictionary={"damage":1.0,"interval":1.0,"hp":0.0,"armor":0.0,"crit":0.0,"leech":0.0,"energy_bonus":0.0}
+	var a:Dictionary={"damage":1.0,"interval":1.0,"hp":0.0,"armor":0.0,"crit":0.0,"leech":0.0,"energy_bonus":0.0,"initiative":0.0}
 	for id in actor.get("equipment",[]):
 		var s:Dictionary=data(id).get("stats",{})
 		a.damage*=float(s.get("damage",1.0))
 		a.interval*=float(s.get("interval",1.0))
 		a.hp+=float(s.get("hp",0.0))
-		for key in ["armor","crit","leech"]:a[key]+=float(s.get(key,0.0))
+		for key in ["armor","crit","leech","initiative"]:a[key]+=float(s.get(key,0.0))
 		a.energy_bonus+=float(s.get("energy",0.0))
+	a.initiative=minf(a.initiative,100-float(actor.get("initiative",50)))
 	a.crit=minf(a.crit,0.95-actor.crit)
 	a.interval=maxf(0.65,actor.interval*a.interval)/actor.interval
 	actor.damage*=a.damage
 	actor.interval*=a.interval
 	actor.max_hp+=a.hp
-	for key in ["armor","crit","leech","energy_bonus"]:actor[key]+=a[key]
+	for key in ["armor","crit","leech","energy_bonus","initiative"]:actor[key]+=a[key]
 	actor["equipment_applied"]=a

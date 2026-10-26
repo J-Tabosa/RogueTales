@@ -1,7 +1,7 @@
 extends RefCounted
 const AlphaArt = preload("res://scripts/jpeg_alpha.gd")
 const IDS := ["mulan","aladin","ariel","puss","alice","matches","joao","maria","peter","rapunzel"]
-const SUITS := ["♠","♥","♦","♣"]
+const SUITS := ["♦","♥","♣","♠"]
 static var frames: Dictionary = {}
 static func frame(id: String,progress: float,ultimate:=false) -> Texture2D:
 	var number := clampi(int(progress*6),0,5)

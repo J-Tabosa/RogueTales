@@ -300,8 +300,8 @@ func reset_effects() -> void:
 	effects.clear()
 	for index in tracks.size():
 		if simulation.actors[index].ult_pending:
-			if simulation.expedition and simulation.actors[index].id=="alice":simulation.actors[index].card_charge=4
-			else:simulation.actors[index].energy = 100.0
+			if simulation.expedition and simulation.actors[index].id=="alice":simulation.actors[index].card_charge+=4
+			else:simulation.actors[index].energy += simulation.tactics.Rules.cost(simulation.actors[index])
 			simulation.actors[index].ult_pending = false
 		tracks[index].time = -1.0
 		heroes[index].position = tracks[index].home
@@ -320,7 +320,7 @@ func sync_health(actors: Array[Dictionary]) -> void:
 			heroes[index].modulate = Color(0.4, 0.42, 0.48, 0.35)
 		unit_widgets[index].root.visible = actors[index].hp > 0
 		HealthDisplay.update(unit_widgets[index].health,actors[index])
-		unit_widgets[index].energy.max_value = 4 if simulation.expedition and actors[index].id=="alice" else 100
+		unit_widgets[index].energy.max_value = 4 if simulation.expedition and actors[index].id=="alice" else maxf(1,simulation.tactics.Rules.cost(actors[index]))
 		unit_widgets[index].energy.value = actors[index].get("card_charge",0) if simulation.expedition and actors[index].id=="alice" else actors[index].energy
 		sync_conditions(unit_widgets[index],actors[index],index,false)
 		unit_widgets[index].text.text = ("%s/%s" if unit_widgets[index].panel.size.x<90 else "%s/%s PV") % [compact_hp(actors[index].hp),compact_hp(HealthDisplay.capacity(actors[index]))]
@@ -669,14 +669,15 @@ func present_result(result: Dictionary, hostile: bool, attacker: int) -> void:
 				enemy_impacts.append({"at": tracks[target].home + Vector2(0, -human_height() * 0.45), "biome": Biomes.biome(stage), "left": 0.85})
 	if hostile and simulation.tactics.enemies[attacker]["class"] == "mage" and not result.get("non_attack", false):
 		for target in result.get("targets", [result.get("target", -1)]):
-			if target >= 0: enemy_areas.append({"at": tracks[target].home, "left": 1.0})
+			if target >= 0 and target<tracks.size(): enemy_areas.append({"at": tracks[target].home, "left": 1.0})
 	if result.get("ultimate", false) and not hostile:
 		ultimate_effect(attacker, result)
 	if result.get("non_attack", false):
-		damage_number("SUPORTE", foe_homes[attacker], Color("b1c5f6"))
+		damage_number("SUPORTE", foe_homes[attacker] if hostile else tracks[attacker].home, Color("b1c5f6"))
 		return
 	var targets: Array = result.get("targets", [result.target])
 	for target in targets:
+		if target<0 or (target>=tracks.size() if hostile else target>=foe_homes.size()):continue
 		var at: Vector2 = tracks[target].home if hostile else foe_homes[target]
 		var amount: float = float(result.get("target_damage", {}).get(target, result.damage))
 		var text := "ESQUIVA" if result.get("target_evaded", {}).get(target, result.evaded) else ("CRÍTICO  %d" % int(amount) if result.get("critical", false) else str(int(amount)))
@@ -684,7 +685,7 @@ func present_result(result: Dictionary, hostile: bool, attacker: int) -> void:
 		elif not hostile and result.get("ultimate",false):
 			var id:String=simulation.actors[attacker].id
 			if id=="aladin":damage_number("SONO" if target in result.get("status_targets",[]) else "RESISTIU",at,Color("c5b0ef"))
-			elif id=="maria":damage_number("MALDIÇÃO −20%",at,Color("c5b0ef"))
+			elif id=="maria":damage_number("MALDIÇÃO −20%" if target in result.get("status_targets",[]) else "RESISTIU",at,Color("c5b0ef"))
 		if result.get("target_guarded", {}).get(target, result.get("guarded", false)):
 			damage_number("GUARDA", at + Vector2(0, 32), Color("8bcce4"))
 

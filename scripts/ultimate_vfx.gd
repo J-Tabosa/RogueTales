@@ -3,7 +3,7 @@ extends RefCounted
 const Rules = preload("res://scripts/ultimate_rules.gd")
 static var atlases: Dictionary = {}
 static func supported(id: String) -> bool:
-	return id in Rules.IDS
+	return id in Rules.IDS and id!="puss"
 static func duration(id: String) -> float:
 	return 2.9 if id=="snow_white" else 2.7 if id in ["scarlet","joao","matches"] else 2.5
 static func impact(id: String) -> float:
@@ -129,7 +129,7 @@ static func draw(arena,canvas:Node2D) -> void:
 		if actor.hp<=0:continue
 		var home:Vector2=arena.heroes[index].position
 		if actor.id=="peter":
-			for spirit in int(actor.get("guardian_spirits",0)):
+			for spirit in int(actor.get("shadows",0)):
 				var angle:float=spirit*TAU/3.0+(0.0 if arena.reduced_motion else arena.clock*1.2)
 				stamp(canvas,"peter",home+Vector2(0,-h*.55)+Vector2.from_angle(angle)*h*.48,Vector2.ONE*h*.43,fposmod(arena.clock*.65+spirit*.23,1))
 		if float(actor.get("shield",0))>0:

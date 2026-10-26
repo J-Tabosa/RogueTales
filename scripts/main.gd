@@ -2218,6 +2218,7 @@ func process_tactical_combat(dt: float) -> void:
 	combat_flow.waiting -= dt
 	if combat_flow.waiting > 0:
 		return
+	combat_flow.auto_ult=campaign.auto_ult
 	var entry: Dictionary = combat_flow.next_action()
 	if entry.is_empty():
 		return
@@ -2274,6 +2275,9 @@ func try_ultimate(index: int) -> bool:
 	if state != "battle" or paused or run == null or run.tactics == null or index < 0 or index >= run.actors.size():
 		return false
 	var actor: Dictionary = run.actors[index]
+	if actor.id=="aladin":
+		call("show_wishes")
+		return true
 	if actor.hp <= 0 or not run.tactics.ultimate_ready(index) or actor.ult_pending or actor.get("ult_queued", false) or arena.tracks[index].time >= 0:
 		return false
 	if arena.is_action_busy():

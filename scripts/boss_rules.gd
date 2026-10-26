@@ -77,8 +77,6 @@ static func plan(tactics, index: int) -> Dictionary:
 	if index < 0 or index >= tactics.enemies.size(): return {}
 	var foe: Dictionary = tactics.enemies[index]
 	if foe.hp <= 0: return {}
-	if int(foe.get("sleep_turns",0))>0:
-		return {"key":"sleep","title":"Sono","glyph":"magic","target":-1,"targets":[],"power":0.0,"magical":false,"locked":false}
 	var stored: Dictionary = foe.get("intent", {})
 	if stored.get("locked", false): return stored
 	var owner = tactics.run()
@@ -168,7 +166,7 @@ static func execute(tactics, index: int) -> Dictionary:
 			var actual: int = hit.target
 			if id in ["scarlet", "matches", "snow_white", "maria"]:
 				owner.actors[actual]["hostile_burn" if id in ["scarlet", "matches"] else "hostile_poison"] = foe.damage * 0.10
-				owner.actors[actual].hostile_dot_left = 4.0
+				tactics.Rules.status(owner.actors[actual],"burn" if id in ["scarlet","matches"] else "poison",foe.id,2,foe.damage*.1)
 			if id == "ariel": owner.actors[actual].hindered_rounds = 2
 		if id in ["rapunzel", "ariel", "aladin"]: foe.hp = minf(foe.max_hp, foe.hp + foe.max_hp * (0.35 if id == "rapunzel" else (0.20 if id == "ariel" else 0.15)))
 		if id in ["rapunzel", "mulan", "puss", "aladin"]: foe["shield"] = minf(foe.max_hp, float(foe.get("shield", 0)) + foe.max_hp * {"rapunzel": 0.20, "mulan": 0.35, "puss": 0.25, "aladin": 0.15}[id])
@@ -184,7 +182,7 @@ static func execute(tactics, index: int) -> Dictionary:
 				match str(intent.get("secret_effect","")):
 					"burn","poison":
 						victim["hostile_"+str(intent.secret_effect)]=foe.damage*.12
-						victim.hostile_dot_left=5.0
+						tactics.Rules.status(victim,str(intent.secret_effect),foe.id,2,foe.damage*.12)
 					"drain": victim.energy=maxf(0,victim.energy-15)
 					"slow": victim.hindered_rounds=2
 	Abilities.deaths(tactics)
@@ -202,7 +200,7 @@ static func strike(tactics, foe: Dictionary, at: int, power: float, magic: bool,
 	var old_class: String = foe["class"]
 	foe.damage = old_damage * power
 	foe["class"] = "mage" if magic else "vanguard"
-	var hit: Dictionary = Abilities.incoming(tactics, int(foe.get("slot", 0)), at)
+	var hit: Dictionary = Abilities.incoming(tactics, int(foe.get("slot", 0)), at, result.targets.size()>1)
 	foe.damage = old_damage
 	foe["class"] = old_class
 	if not hit.is_empty():

@@ -56,7 +56,7 @@ func checks() -> void:
 		foe.pp = 0
 	var fire: Dictionary = game.run.hit_enemy(1)
 	var combo: Dictionary = game.run.hit_enemy(0, fire.target)
-	assert(combo.synergies == ["powder"])
+	assert(combo.damage>0 and not combo.has("synergies"),"Final roster replaces the old timed synergy proc")
 	game.arena.present_result(combo, false, 0)
 	game.update_hud()
 	await capture("synergy_mobile")
@@ -70,7 +70,7 @@ func checks() -> void:
 	game.resume_battle()
 	assert(not game.paused and not game.arena.frozen)
 	prepare(["scarlet", "rapunzel"], 7, 7)
-	game.run.actors[0].energy = 100
+	game.run.actors[0].energy = 120
 	assert(game.run.tactics.reserve_ultimate(0))
 	game.run.tactics.ultimate(0)
 	game.update_hud()
@@ -112,7 +112,7 @@ func checks() -> void:
 	assert(game.state == "team_event" and game.run.pending_event == "powder_shop")
 	game.select_team_event("pair")
 	assert(game.state == "travel" and game.run.events_discovered == ["powder_shop"])
-	assert(game.run.actors[0].mutations.has("spread") and game.run.actors[1].mutations.has("fuel"))
+	assert(game.run.actors[0].mutations.is_empty() and game.run.actors[1].mutations.is_empty(),"Old event mutations do not override final kits")
 	game.run.interlude = "route"
 	game.run.route_offers.assign(["battle"])
 	game.show_run_build()

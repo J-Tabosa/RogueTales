@@ -12,6 +12,7 @@ static func member(owner, id: String) -> Dictionary:
 	return {}
 
 static func available(owner) -> Array[String]:
+	if owner.expedition:return [] # Superseded by the consolidated character kits.
 	var ids: Array[String] = []
 	for key in PAIRS:
 		if not member(owner, PAIRS[key].heroes[0]).is_empty() and not member(owner, PAIRS[key].heroes[1]).is_empty(): ids.append(key)

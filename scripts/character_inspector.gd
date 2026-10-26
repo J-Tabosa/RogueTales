@@ -73,8 +73,8 @@ func rebuild() -> void:
 	InspectorSkin.decorate(art,false,true,.035)
 	ui.banner_portrait(art,actor.id,Rect2(12,20,art_w-24,art.size.y-45),false)
 	text(art,TaleCatalog.hero_class_name(actor.id),Rect2(8,art.size.y-29,art_w-16,22),11,GOLD).horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
-	var interval:float=maxf(1.5,actor.interval*1.25)*(1.3 if int(actor.get("hindered_rounds",0))>0 else 1.0)
-	var cells:Array=[["VIDA","%d / %d"%[ceili(actor.hp),ceili(actor.max_hp)],"Escudo: %d"%ceili(actor.shield)],["MANA","%d / 100"%int(actor.energy),"+1,4/s · +%s/acerto"%Details.n(18+actor.energy_bonus)],["AUTO-ATAQUE",Details.n(actor.damage),"dano bruto"],["INTERVALO","%.2f s"%interval,"mínimo em 1×"],["ARMADURA",Details.n(actor.armor),"redução por golpe"],["CRÍTICO","%.0f%%"%(actor.crit*100),"2× dano"],["ESQUIVA","%.0f%%"%(float(actor.get("evasion",0))*100),"chance por golpe"],["CURA / ACERTO",Details.n(actor.leech),"PV recuperados"]]
+	var rules=preload("res://scripts/combat_rules.gd")
+	var cells:Array=[["VIDA","%d / %d"%[ceili(actor.hp),ceili(actor.max_hp)],"Escudo: %.1f"%actor.shield],["RECURSO",rules.resource(actor),"+%s/acerto · +%s/vez"%[Details.n(actor.mana_hit),Details.n(actor.mana_turn)]],["DANO FÍSICO",Details.n(rules.power(actor,false)),"atributo independente"],["DANO MÁGICO",Details.n(rules.power(actor,true)),"atributo independente"],["DEFESA F / M","%s / %s"%[Details.n(rules.defense(actor,false)),Details.n(rules.defense(actor,true))],"defesas em pontos"],["INICIATIVA / ATAQUES","%.0f / %d"%[rules.effective_initiative(actor),int(actor.attacks)],"ordem / básicos por vez"],["CRÍTICO","%.0f%% ×%.0f"%[actor.crit*100,actor.crit_multiplier],"chance / multiplicador"],["ESQUIVA","%.0f%%"%(minf(.8,float(actor.evasion))*100),"teto comum 80%"]]
 	var cols:=4 if wide else 2
 	var cw:=(stats_w-8*(cols-1))/cols
 	var ch:=82.0 if wide else 62.0
@@ -82,7 +82,7 @@ func rebuild() -> void:
 		var cell:=frame(board,Rect2(24+(i%cols)*(cw+8),128+floori(i/float(cols))*(ch+8),cw,ch))
 		cell.set_meta("stat",cells[i][0])
 		text(cell,cells[i][0],Rect2(9,5,cw-18,16),10,GOLD)
-		text(cell,cells[i][1],Rect2(9,22,cw-18,27),20 if wide else 17)
+		text(cell,cells[i][1],Rect2(9,22,cw-18,27),16 if wide else 13)
 		text(cell,cells[i][2],Rect2(9,50 if wide else 44,cw-18,23 if wide else 16),10,Color("adbeaf"))
 	var sy:=128+stats_h+14
 	var scroll:=ScrollContainer.new()
@@ -97,14 +97,14 @@ func rebuild() -> void:
 	stack.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 	stack.add_theme_constant_override("separation",10)
 	scroll.add_child(stack)
-	var skills:Array=[["AUTOMÁTICA",Content.KITS[actor.id][0],Details.active(actor)],["PASSIVA · RECARGA 6 s",Content.KITS[actor.id][2],Details.passive(actor)],["ULT · 100 MANA",TaleCatalog.HERO_TACTICS[actor.id].ult,Details.ultimate(actor)]]
+	var skills:Array=[["AUTOMÁTICA",Content.KITS[actor.id][0],Details.active(actor)],["PASSIVA",Content.KITS[actor.id][2],Details.passive(actor)],["ESPECIAL · "+rules.resource(actor),TaleCatalog.HERO_TACTICS[actor.id].ult,Details.ultimate(actor)]]
 	if actor.get("equipment",[]).any(func(id):return not str(id).is_empty()):
 		var gear_lines:Array[String]=[]
 		for id in actor.equipment:
 			var item:=preload("res://scripts/equipment.gd").data(id)
 			if not item.is_empty():gear_lines.append(item.title+" · "+item.detail)
 		skills.append(["EQUIPAMENTOS","2 espaços por personagem","\n\n".join(gear_lines)])
-	if not actor.get("blessing_effects",{}).is_empty() and ui.run!=null:
+	if int(actor.get("blessing_index",-1))>=0 and ui.run!=null:
 		var boon:=preload("res://scripts/hero_blessings.gd").data(ui.run.blessing)
 		if not boon.is_empty():skills.append(["BÊNÇÃO DO PROTAGONISTA",boon.title,boon.detail])
 	if not Details.conditions(actor).is_empty():skills.push_front(["CONDIÇÕES ATIVAS","Estados e proteção",Details.conditions(actor)])
@@ -126,7 +126,7 @@ func rebuild() -> void:
 			var l:=text(lines,str(skill[i]),Rect2(),[10,19,15][i],GOLD if i==0 else Color("eee9da") if i==1 else Color("bbc9bb"))
 			l.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 			l.custom_minimum_size.x=1
-	text(board,"Buffs incluídos · dano antes de armadura e esquiva.",Rect2(24,bh-79,bw-48,24),11,Color("adbeaf"))
+	text(board,"Buffs incluídos · dano bruto antes das defesas e esquiva.",Rect2(24,bh-79,bw-48,24),11,Color("adbeaf"))
 	var back:=Button.new()
 	back.text="Voltar ao combate"
 	back.position=Vector2(24,bh-54)

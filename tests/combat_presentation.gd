@@ -91,11 +91,14 @@ func checks() -> void:
 	game.on_attack_hit(0)
 	assert(game.arena.enemy.hurt_left > 0)
 	game.arena.enemy.reset_damage()
-	game.run.tactics.enemies[0].burn = 3
-	game.run.tactics.enemies[0].burn_left = 2
-	game.arena._process(0.06) # Hit-stop freezes simulation, then status damage resumes.
-	game._process(0.05)
-	assert(game.arena.enemy.hurt_left > 0)
+	var rules=preload("res://scripts/combat_rules.gd")
+	rules.status(game.run.tactics.enemies[0],"burn","matches",2,3)
+	var hp:float=game.run.tactics.enemies[0].hp
+	game._process(.05)
+	assert(game.run.tactics.enemies[0].hp==hp,"Damage over time waits for the victim's turn")
+	rules.start_turn(game.run.tactics,game.run.tactics.enemies[0])
+	for target in game.run.tactics.last_dot_targets:game.arena.hurt_enemy(target,true)
+	assert(game.arena.enemy.hurt_left>0)
 	game.abandon_expedition()
 	game.queue_free()
 	await process_frame
