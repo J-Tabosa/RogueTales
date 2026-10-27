@@ -590,7 +590,8 @@ func roll_run_offers() -> void:
 	for id in TaleCatalog.HEROES:
 		if not actor_ids().has(id) and not drafted.has(id): guests.append(id)
 	# One Bernoulli draw for the whole screen, never one draw per card.
-	if not guests.is_empty() and rng.randf() < ExpeditionContent.RECRUIT_CHANCE:
+	var guaranteed_recruit:bool=reward_boss and drafted.is_empty()
+	if not guests.is_empty() and (guaranteed_recruit or rng.randf() < ExpeditionContent.RECRUIT_CHANCE):
 		offers.append("ally:" + guests[rng.randi_range(0, guests.size() - 1)])
 	if reward_boss or rng.randf()<0.40:
 		var items:Array=Equipment.ITEMS.keys()

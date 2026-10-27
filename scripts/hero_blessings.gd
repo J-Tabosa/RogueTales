@@ -26,7 +26,7 @@ const PATHS = {
 		],
 		[
 			"Chapeuzinho Vermelho",
-			"Ult começa em 300%, chegando a 400% com dez cargas. Básicos aplicam duas cargas por alvo, mantendo dez de mana por acerto.",
+			"Ult começa em 300%, chegando a 600% com dez cargas. Básicos aplicam duas cargas por alvo, mantendo dez de mana por acerto.",
 			{
 				"path": 3
 			}
@@ -403,7 +403,8 @@ static func record(campaign, owner: Dictionary, won:=false) -> Array[String]:
 			var at:int=owner.hero_ids.find(hero)
 			if at<owner.get("health",[]).size() and float(owner.health[at])>0:p.secret=true
 		if won and owner.get("leader","")==hero:p.win=true
-		var feats:Dictionary=owner.get("unlock_stats",{}).get("boon_feats",{}).get(hero,{})
+		var feats:Dictionary=owner.get("unlock_stats",{}).get("boon_feats",{}).get(hero,{}).duplicate()
+		feats.merge(owner.get("ability_state",{}).get(hero,{}).get("boon_feats",{}),true)
 		var conditions:Dictionary={"scarlet":"nine_targets","snow_white":"defense_100","rapunzel":"shield_200","mulan":"two_columns","ariel":"five_hits","joao":"witch_siblings","maria":"witch_siblings","alice":"two_conditions","puss":"low_life_win","matches":"all_burn","peter":"three_shadows"}
 		if feats.get(conditions.get(hero,""),false):p["feat"]=true
 		if won and hero=="aladin" and owner.get("hero_ids",[]).has(hero):

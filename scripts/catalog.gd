@@ -18,7 +18,7 @@ const HERO_TACTICS = {
 		"class": "ranger",
 		"row": "back",
 		"ult": "Detonação em Massa",
-		"detail": "Detonação em Massa: custa 120 de mana, atinge todos os inimigos e consome as cargas de cada um. Dano físico por alvo = Dano Físico × (1,5 + 0,1 × cargas daquele alvo). Vai de 150% a 250%. Pode critar; não gera mana nem pólvora. Pode ocorrer durante a sequência sem consumir básicos restantes.\nCada alvo acertado pelo básico ou seu espalhamento concede dez de mana. Sem regeneração passiva. A mana permanece entre combates."
+		"detail": "Detonação em Massa: custa 120 de mana, atinge todos os inimigos e consome as cargas de cada um. Dano físico por alvo = Dano Físico × 1,5 × (1 + 0,1 × cargas daquele alvo). Vai de 150% a 300%. Pode critar; não gera mana nem pólvora. Pode ocorrer durante a sequência sem consumir básicos restantes.\nCada alvo acertado pelo básico ou seu espalhamento concede dez de mana. Sem regeneração passiva. A mana permanece entre combates."
 	},
 	"alice": {
 		"class": "ranger",

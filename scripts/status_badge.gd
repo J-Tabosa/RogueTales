@@ -7,7 +7,7 @@ func configure(kind: String, amount: float, seconds: float) -> void:
 	condition=kind
 	rate=amount
 	remaining=seconds
-	text="  %.1f"%amount if kind in ["poison","burn","bleed"] else ""
+	text="  %d"%int(amount) if kind=="powder" else ("  %.1f"%amount if kind in ["poison","burn","bleed"] else "")
 	tooltip_text=preload("res://scripts/status_art.gd").description(kind,amount,seconds)
 	add_theme_font_size_override("font_size",9)
 	add_theme_color_override("font_color",Color("b8ed89") if kind=="poison" else Color("ffd099"))
@@ -24,6 +24,14 @@ func _draw() -> void:
 	var generated:Texture2D=preload("res://scripts/status_art.gd").texture(condition)
 	if generated!=null:
 		draw_texture_rect(generated,Rect2(1,1,14,14),false)
+		return
+	if condition=="powder":
+		draw_colored_polygon(PackedVector2Array([Vector2(5,5),Vector2(3,10),Vector2(4,13),Vector2(12,13),Vector2(13,10),Vector2(10,5)]),Color("d7ac62"))
+		draw_line(Vector2(5,5),Vector2(10,5),Color("fae4ad"),2,true)
+		draw_line(Vector2(8,5),Vector2(9,2),Color("dfc6a1"),1.3,true)
+		draw_circle(Vector2(10,2),1.2,Color("f99d5e"))
+		draw_circle(Vector2(6,10),.8,Color("5d4838"))
+		draw_circle(Vector2(10,11),.8,Color("5d4838"))
 		return
 	if condition=="bubble":
 		draw_circle(Vector2(7,9),5,Color("85e7f0",.18))

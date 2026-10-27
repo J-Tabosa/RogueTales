@@ -87,7 +87,9 @@ func spawn() -> void:
 	var total: float = TaleCatalog.STAGES[owner.stage].hp * [1.0, 1.25, 2.4][owner.wave]
 	if owner.expedition:
 		var depth: int = owner.rooms_cleared if owner.endless else owner.stage * 6 + owner.phase
-		count = 3 if ExpeditionContent.is_boss(owner.stage,owner.phase) else owner.rng.randi_range(1,ExpeditionContent.enemy_limit(owner.stage,owner.endless))
+		if ExpeditionContent.is_boss(owner.stage,owner.phase):count=3
+		elif not owner.endless and owner.stage==0 and owner.phase<3:count=owner.phase+1
+		else:count=owner.rng.randi_range(1,ExpeditionContent.enemy_limit(owner.stage,owner.endless))
 		total = 86.0 * ((1.0 + depth * 0.05) * pow(1.045, mini(depth, 120)) * (1.0 + maxi(0, depth - 120) * 0.08)) * (1.5 if ExpeditionContent.is_boss(owner.stage, owner.phase) else 1.0) * (1.35 if owner.room_kind == "elite" else 1.0)
 	var roles: Array = ["vanguard", "ranger", "mage"]
 	if owner.stage % 4 == 2:

@@ -1,6 +1,6 @@
 # RogueTales: O Último Fio
 
-Roguelite em **Godot 4.7**, PC e Android, com 12 protagonistas, equipes de até nove personagens e 12 estágios de seis fases. Versão **0.9.5**: migração para as fichas consolidadas de 26/10/2026.
+Roguelite em **Godot 4.7**, PC e Android, com 12 protagonistas, equipes de até nove personagens e 12 estágios de seis fases. Versão **0.9.6**: fichas consolidadas, abertura progressiva, pólvora com bônus por carga e correção do feito da Alice.
 
 ## Regras e personagens
 
@@ -13,13 +13,15 @@ As fontes de design fornecidas estão preservadas em [personagens](docs/RogueTal
 - Uma bênção pessoal por run. As 48 bênçãos usam seus feitos específicos, chefes secretos e conclusão como protagonista. Vencer doze fases não substitui os feitos novos.
 - Condições e escudos contam turnos do beneficiário. Silk mantém parcelas de escudo entre combates, com os prazos restantes. Peter mantém sombras ofensivas que não bloqueiam dano.
 
-Scarlet conserva pólvora até a detonação; Alice alterna naipes com dano híbrido; Snow quebra escudos; Umi cura por ricochete; Silk protege e retalia; Mulan usa combos e contra-ataques; Gretel aplica doses de veneno e maldição; João marca e executa seis estocadas; Lume fortalece fogo periódico; Aladin administra três desejos; Peter cria sombras por esquiva; Gato ganha dano pela porcentagem de vida faltante.
+Scarlet causa +10% de dano por carga de pólvora no alvo e mostra o contador até a detonação; Alice alterna naipes com dano híbrido; Snow quebra escudos; Umi cura por ricochete; Silk protege e retalia; Mulan usa combos e contra-ataques; Gretel aplica doses de veneno e maldição; João marca e executa seis estocadas; Lume fortalece fogo periódico; Aladin administra três desejos; Peter cria sombras por esquiva; Gato ganha dano pela porcentagem de vida faltante.
 
 ## Interface e arte
 
 Retratos HD separados das células de animação de combate. Idles executam um gesto lento e aguardam 7–11 segundos; deslocamento usa pose estática. Efeitos das ULTs seguem seus alvos, com 16 cores de auras translúcidas, ícones de condições, bolhas de escudo e opção de movimento reduzido. As fichas PC/mobile exibem os atributos novos e permitem rolagem por toque.
 
-A formação tem até três por posição: vanguarda, meio e retaguarda. A linha horizontal do Cortejo das Cartas atravessa essas posições. Encontros comuns limitam-se a 3 inimigos no estágio 1, 6 no estágio 2 e 9 do estágio 3 em diante. Chefes, desafios secretos e infinito mantêm suas regras.
+A formação tem até três por posição: vanguarda, meio e retaguarda. A linha horizontal do Cortejo das Cartas atravessa essas posições. A abertura do estágio 1 é fixa: 1-1 tem um inimigo, 1-2 tem dois e 1-3 tem três. Depois, os encontros comuns desse estágio variam de um a três. Encontros comuns limitam-se a 6 no estágio 2 e 9 do estágio 3 em diante. Chefes, desafios secretos e infinito mantêm suas regras.
+
+Após um chefe, se ninguém tiver sido recrutado nesta run, uma das três ofertas é garantidamente um personagem. O jogador pode escolher outra recompensa. Depois do primeiro recrutamento, convites voltam à chance comum de 25%.
 
 Cada personagem equipa dois itens. A bolsa exibe aparência e descrição; trocas são feitas entre encontros. Ouro, desejos, recursos e equipamentos pertencem à run; coleção e feitos persistem.
 
@@ -37,7 +39,7 @@ python3 tools/check_095.py --godot /caminho/para/godot
 
 `integration_095.gd` exercita as 48 combinações contra chefes, checkpoints, desbloqueios e a cena real. Com renderização nativa e um diretório após `--`, captura as telas PC/mobile para revisão. O runner também valida arte HD, auras, toque, recrutamento, economia, equipamentos, formações e interface. Testes históricos de regras substituídas são identificados em `tests/README.md`.
 
-O preset **Android Teste** exporta APK arm64, código 15, versão 0.9.5-teste, pacote `com.jtabosa.roguetales.preview.v07`. Use a mesma chave das versões anteriores para instalar como atualização. Chaves e SDKs não são versionados.
+O preset **Android Teste** exporta APK arm64, código 16, versão 0.9.6-teste, pacote `com.jtabosa.roguetales.preview.v07`. Use a mesma chave das versões anteriores para instalar como atualização. Chaves e SDKs não são versionados.
 
 ## Código
 

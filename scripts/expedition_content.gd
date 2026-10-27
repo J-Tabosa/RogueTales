@@ -19,7 +19,7 @@ const KITS = {
 		"Bombas Caseiras",
 		"Bombas Caseiras: causa 100% do Dano Físico em um alvo. Pode critar. Não tem espalhamento natural na ficha final.",
 		"Espalhando Pólvora",
-		"Espalhando Pólvora: cada alvo acertado por um ataque recebe uma carga, até dez por alvo. Crítico não concede carga adicional naturalmente. A pólvora não explode automaticamente; desaparece no fim do combate."
+		"Espalhando Pólvora: cada alvo acertado por um ataque recebe uma carga, até dez por alvo. Crítico não concede carga adicional naturalmente. Cada carga aumenta em 10% o dano da Scarlet contra aquele alvo, até +100%. A pólvora não explode automaticamente; desaparece no fim do combate."
 	],
 	"alice": [
 		"4 Naipes",

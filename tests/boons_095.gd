@@ -11,7 +11,7 @@ func test() -> void:
 	run.hit_enemy(0,6)
 	check(run.tactics.enemies[6].powder==2,"Scarlet finalboon doublepowder")
 	run.tactics.reserve_ultimate(0);out=run.tactics.ultimate(0,6)
-	check(close(out.target_damage[6],76.8),"Scarlet finalult320% with2powder")
+	check(close(out.target_damage[6],86.4),"Scarlet finalult360% with2powder")
 	run=make(["alice"],0);a=run.actors[0];a.attacks=8
 	run.tactics.enemies=run.tactics.enemies.slice(6,9)
 	var flow:=Flow.new();flow.bind(run)

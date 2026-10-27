@@ -59,7 +59,7 @@ static func immune(a:Dictionary,kind:String) -> bool:
 	if a.get("immune_control",false) and kind in ["bubble","hangover","sleep"]:return true
 	return a.get("immunities",[]).has(kind)
 
-static func status(a:Dictionary,kind:String,source:String,turns:int,potency:=0.0,stacks:=1,cap:=1,permanent:=false) -> bool:
+static func status(a:Dictionary,kind:String,source:String,turns:int,potency:=0.0,stacks:=1,cap:=1,permanent:=false,tactics=null) -> bool:
 	if a.hp<=0 or immune(a,kind):return false
 	if not a.has("statuses"):a.statuses=[]
 	for s in a.statuses:
@@ -71,10 +71,25 @@ static func status(a:Dictionary,kind:String,source:String,turns:int,potency:=0.0
 			s.stacks=mini(cap,int(s.stacks)+stacks) if cap>1 else 1
 			s.permanent=bool(s.get("permanent",false)) or permanent
 			status_fields(a)
+			record_condition(tactics,source,kind)
 			return true
 	a.statuses.append({"kind":kind,"source":source,"turns":turns,"potency":potency,"stacks":mini(stacks,cap),"permanent":permanent,"applied_turn":int(a.get("own_turn",0))})
 	status_fields(a)
+	record_condition(tactics,source,kind)
 	return true
+
+static func record_condition(tactics,source:String,kind:String) -> void:
+	if tactics==null or kind not in ["burn","poison","bleed","curse","sleep","bubble","hangover","antiheal","shield_break"]:return
+	var a:=actor(tactics.run(),source.trim_prefix("item_"))
+	if a.is_empty() or a.id!="alice":return
+	var round_id:int=int(tactics.round_number)
+	if int(a.get("condition_round",-1))!=round_id:
+		a.condition_round=round_id
+		a.round_conditions=[]
+	if not a.round_conditions.has(kind):a.round_conditions.append(kind)
+	if a.round_conditions.size()>=2 and not a.get("boon_feats",{}).get("two_conditions",false):
+		feat(a,"two_conditions")
+		tactics.notify(a.id,"Chapeleira Maluca desbloqueada","Aplicou duas condições diferentes na mesma rodada","achievement")
 
 static func status_fields(a:Dictionary) -> void:
 	for k in ["burn","poison","bleed","burn_left","poison_left","bleed_left","curse_left","sleep_turns","bubble_turns","hangover_turns"]:a[k]=0.0
@@ -272,6 +287,8 @@ static func wish(owner,id:String) -> Dictionary:
 
 static func start_combat(tactics) -> void:
 	for a in tactics.run().actors:
+		a["condition_round"]=-1
+		a["round_conditions"]=[]
 		a["lost_shadows"]=0
 		a["shadow_thieves"]={}
 		a["counter_used"]=0
@@ -368,6 +385,7 @@ static func multiplier(a:Dictionary,foe:Dictionary,ultimate:bool) -> float:
 	var e:=Gear.effects(a)
 	var v:float=1.0+float(e.get("ult_mult" if ultimate else "attack_mult",0))
 	if foe.hp/foe.max_hp<.35:v*=1.0+float(e.get("execute",0))
+	if a.id=="scarlet":v*=1.0+.1*clampi(int(foe.get("powder",0)),0,10)
 	if a.id=="scarlet" and boon(a,2) and category(foe)=="beast":v*=1.5
 	if a.id in ["joao","maria"] and boon(a,1) and category(foe)=="witch":v*=1.5
 	if a.id=="puss" and boon(a,2) and foe.get("boss",false):v*=1.25
@@ -617,14 +635,14 @@ static func ultimate(tactics,index:int,requested:int) -> Dictionary:
 			var m:=0.0
 			match str(a.id):
 				"scarlet":
-					p=power(a,false)*((3.0 if boon(a,3) else 1.5)+.1*int(foe.get("powder",0)))
-					foe.powder=0
+					p=power(a,false)*(3.0 if boon(a,3) else 1.5)
 				"alice":p=power(a,false)*1.2;m=power(a,true)*1.2
 				"snow_white":p=power(a,false)*3
 				"ariel":m=power(a,true)*1.5
 				"mulan","puss":p=power(a,false)*2.5
 				"matches":m=power(a,true)*2.5
 			var hit:=strike(tactics,a,foe,p,m,0,true)
+			if a.id=="scarlet":foe.powder=0
 			append_hit(out,at,hit)
 			if not hit.evaded:
 				if a.id=="matches":ignite(a,foe)
@@ -636,11 +654,7 @@ static func ultimate(tactics,index:int,requested:int) -> Dictionary:
 					elif boon(a,2):status(foe,"hangover",a.id,1)
 				if not condition.is_empty():
 					var chance:=.75 if condition=="curse" else 1.0
-					if owner.rng.randf()<chance and status(foe,condition,a.id,1,power(a,true)*(1.0 if condition=="burn" else .1) if condition in ["burn","poison"] else 0):
-						var round_id:int=int(tactics.get("round_number"))
-						if int(a.get("condition_round",-1))!=round_id:a.condition_round=round_id;a.round_conditions=[]
-						if not a.round_conditions.has(condition):a.round_conditions.append(condition)
-						if a.round_conditions.size()>=2:feat(a,"two_conditions")
+					if owner.rng.randf()<chance:status(foe,condition,a.id,1,power(a,true)*(1.0 if condition=="burn" else .1) if condition in ["burn","poison"] else 0,1,1,false,tactics)
 		if a.id=="alice" and boon(a,0):a["bonus_attacks"]=int(a.get("bonus_attacks",0))+1
 	item_after(tactics,a,out,true)
 	deaths(tactics)
@@ -699,9 +713,9 @@ static func item_after(tactics,a:Dictionary,out:Dictionary,ult:bool) -> void:
 		if at<0 or at>=tactics.enemies.size():continue
 		var foe:Dictionary=tactics.enemies[at]
 		if foe.hp<=0 or not out.strikes.any(func(s):return int(s.target)==at and not s.evaded):continue
-		if float(e.get("fire",0))>0:status(foe,"poison" if e.get("cold",false) else "burn","item_"+str(a.id),2,maxf(power(a,true),power(a,false))*float(e.fire))
-		if float(e.get("venom",0))>0:status(foe,"poison","item_"+str(a.id),2,maxf(power(a,true),power(a,false))*float(e.venom),1,4)
-		if e.get("slow",0):status(foe,"hangover",a.id,1)
+		if float(e.get("fire",0))>0:status(foe,"poison" if e.get("cold",false) else "burn","item_"+str(a.id),2,maxf(power(a,true),power(a,false))*float(e.fire),1,1,false,tactics)
+		if float(e.get("venom",0))>0:status(foe,"poison","item_"+str(a.id),2,maxf(power(a,true),power(a,false))*float(e.venom),1,4,false,tactics)
+		if e.get("slow",0):status(foe,"hangover",a.id,1,0,1,1,false,tactics)
 	if not ult and not out.targets.is_empty() and float(e.get("chain",0))>0:
 		var choices:=nearest(tactics,int(out.target),1)
 		if not choices.is_empty():

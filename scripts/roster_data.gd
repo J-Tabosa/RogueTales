@@ -188,9 +188,9 @@ const TEXT = {
 		"basic": "Bombas Caseiras",
 		"basic_text": "Bombas Caseiras: causa 100% do Dano Físico em um alvo. Pode critar. Não tem espalhamento natural na ficha final.",
 		"passive": "Espalhando Pólvora",
-		"passive_text": "Espalhando Pólvora: cada alvo acertado por um ataque recebe uma carga, até dez por alvo. Crítico não concede carga adicional naturalmente. A pólvora não explode automaticamente; desaparece no fim do combate.",
+		"passive_text": "Espalhando Pólvora: cada alvo acertado por um ataque recebe uma carga, até dez por alvo. Crítico não concede carga adicional naturalmente. Cada carga aumenta em 10% o dano da Scarlet contra aquele alvo, até +100%. A pólvora não explode automaticamente; desaparece no fim do combate.",
 		"ult": "Detonação em Massa",
-		"ult_text": "Detonação em Massa: custa 120 de mana, atinge todos os inimigos e consome as cargas de cada um. Dano físico por alvo = Dano Físico × (1,5 + 0,1 × cargas daquele alvo). Vai de 150% a 250%. Pode critar; não gera mana nem pólvora. Pode ocorrer durante a sequência sem consumir básicos restantes.\nCada alvo acertado pelo básico ou seu espalhamento concede dez de mana. Sem regeneração passiva. A mana permanece entre combates."
+		"ult_text": "Detonação em Massa: custa 120 de mana, atinge todos os inimigos e consome as cargas de cada um. Dano físico por alvo = Dano Físico × 1,5 × (1 + 0,1 × cargas daquele alvo). Vai de 150% a 300%. Pode critar; não gera mana nem pólvora. Pode ocorrer durante a sequência sem consumir básicos restantes.\nCada alvo acertado pelo básico ou seu espalhamento concede dez de mana. Sem regeneração passiva. A mana permanece entre combates."
 	},
 	"alice": {
 		"role": "Atiradora Híbrida de economia; retaguarda. A posição Vanguarda e os campos de dano puramente físico no JSON são limitações/erros de preenchimento, corrigidos pela conversa.",
@@ -311,7 +311,7 @@ const BOONS = {
 		],
 		[
 			"Chapeuzinho Vermelho",
-			"Ult começa em 300%, chegando a 400% com dez cargas. Básicos aplicam duas cargas por alvo, mantendo dez de mana por acerto.",
+			"Ult começa em 300%, chegando a 600% com dez cargas. Básicos aplicam duas cargas por alvo, mantendo dez de mana por acerto.",
 			"Concluir a run com Scarlet como protagonista."
 		]
 	],

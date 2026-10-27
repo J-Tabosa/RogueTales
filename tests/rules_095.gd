@@ -52,7 +52,7 @@ func test() -> void:
 	check(run.tactics.reserve_ultimate(0),"Scarlet may reserve")
 	check(a.energy==35,"Mana surplus retained")
 	var hit:Dictionary=run.tactics.ultimate(0,0)
-	check(close(hit.target_damage[6],60) and foe.powder==0,"Physical250% powder consumed")
+	check(close(hit.target_damage[6],72) and foe.powder==0,"Physical300% powder consumed")
 	check(a.energy==35,"Ult does not generate mana")
 	run.tick_status(100)
 	check(a.energy==35,"No real-time regeneration")
