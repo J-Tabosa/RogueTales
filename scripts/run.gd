@@ -9,6 +9,7 @@ const Tactics = preload("res://scripts/tactics.gd")
 const Endless = preload("res://scripts/endless_rules.gd")
 var tactics
 const STAGES = TaleCatalog.STAGES
+const Worlds=preload("res://scripts/world_routes.gd")
 const RELICS = TaleCatalog.RELICS
 var stage := 0
 var phase := 0
@@ -38,6 +39,9 @@ var interlude := ""
 var route_offers: Array[String] = []
 var room_kind := "battle"
 var merchant_kind := "shop"
+var journey:Dictionary={}
+var map_guest:=""
+var capacity_relics:=0
 var inactive_companions: Array[Dictionary] = []
 var shop_stock: Array[String] = []
 var shop_bought: Array[String] = []
@@ -84,6 +88,9 @@ func setup(campaign: TaleCampaign, index: int, fresh: bool = true) -> void:
 	drafted.clear()
 	inactive_companions.clear()
 	merchant_kind="shop"
+	journey.clear()
+	map_guest=""
+	capacity_relics=0
 	bonus_serial=0
 	bonus_history.clear()
 	relics.clear()
@@ -287,7 +294,7 @@ func to_checkpoint() -> Dictionary:
 		health.append(float(actor.hp))
 		hits.append(int(actor.hits))
 	return {
-		"expedition": expedition, "route_format":ExpeditionContent.ROUTE_FORMAT,"inactive_companions":inactive_companions.duplicate(true),"merchant_kind":merchant_kind, "world_format": 2, "phase": phase, "bonuses":Bonuses.snapshot(self),
+		"expedition": expedition,"journey":journey.duplicate(true),"map_guest":map_guest,"capacity_relics":capacity_relics, "route_format":ExpeditionContent.ROUTE_FORMAT,"inactive_companions":inactive_companions.duplicate(true),"merchant_kind":merchant_kind, "world_format": 2, "phase": phase, "bonuses":Bonuses.snapshot(self),
 		"party_capacity":party_capacity,"inventory":inventory.duplicate(),"equipment_state":equipment_snapshot(),
 		"hero_room_counts":hero_room_counts.duplicate(),"secret_survivors":secret_survivors.duplicate(),"reward_boss":reward_boss,
 		"active_secret":active_secret,"pending_secret_reward":pending_secret_reward,"secret_defeated":secret_defeated.duplicate(),
@@ -331,6 +338,11 @@ func restore(campaign: TaleCampaign, data: Dictionary) -> void:
 		stage = location.x
 		phase = location.y
 	if expedition:
+		journey=Worlds.restore(data.get("journey",{}))
+		if not journey.is_empty() and stage>=Worlds.WORLD_COUNT:journey.clear()
+		map_guest=str(data.get("map_guest",""))
+		if not TaleCatalog.HEROES.has(map_guest):map_guest=""
+		capacity_relics=clampi(int(data.get("capacity_relics",0)),0,2)
 		run_gold = clampi(int(data.get("run_gold", 0)), 0, 2147483647 if endless else 99999)
 		blessing = str(data.get("blessing", "vigor"))
 		if not ExpeditionContent.BLESSINGS.has(blessing) and Blessings.data(blessing).is_empty(): blessing = "vigor"
@@ -384,7 +396,7 @@ func restore(campaign: TaleCampaign, data: Dictionary) -> void:
 			if key in ["event:curse", "event:elite"] or not TaleCatalog.offer_data(str(key)).is_empty(): build_history.append(str(key))
 		route_offers.clear()
 		for key in data.get("route_offers", []):
-			if ExpeditionContent.ROUTES.has(key) and not route_offers.has(key): route_offers.append(key)
+			if (ExpeditionContent.ROUTES.has(key) or (str(key).begins_with("map:") and Worlds.next_maps(journey).has(str(key).trim_prefix("map:")))) and not route_offers.has(key):route_offers.append(key)
 		shop_stock.clear()
 		for key in data.get("shop_stock", []):
 			var current:String="item:"+Equipment.migrate(str(key).trim_prefix("item:")) if str(key).begins_with("item:") else str(key)
@@ -473,6 +485,9 @@ func restore(campaign: TaleCampaign, data: Dictionary) -> void:
 		tactics.restore(data.tactics)
 	if expedition:
 		limit_party()
+		if needs_map():
+			roll_routes()
+			if not pending_choice:interlude="route"
 		# Old route choices are replaced only at a safe encounter boundary.
 		if int(data.get("route_format",0))<ExpeditionContent.ROUTE_FORMAT:
 			if interlude in ["route","reward"]:roll_routes()
@@ -526,6 +541,7 @@ func start_expedition(campaign: TaleCampaign, id: String, gift: String, infinite
 		return false
 	setup(campaign, 0)
 	expedition = true
+	journey=Worlds.start(rng)
 	endless = infinite
 	upgrade_counts.clear()
 	team_template = Endless.template()
@@ -618,10 +634,12 @@ func roll_run_offers() -> void:
 		if not actor_ids().has(id) and not drafted.has(id): guests.append(id)
 	# One Bernoulli draw for the whole screen, never one draw per card.
 	var guaranteed_recruit:bool=reward_boss and drafted.is_empty()
-	if not guests.is_empty() and (guaranteed_recruit or rng.randf() < ExpeditionContent.RECRUIT_CHANCE):
+	if guests.has(map_guest):
+		offers.append("ally:"+map_guest)
+	elif not guests.is_empty() and (guaranteed_recruit or rng.randf() < ExpeditionContent.RECRUIT_CHANCE):
 		offers.append("ally:" + guests[rng.randi_range(0, guests.size() - 1)])
 	if reward_boss or rng.randf()<0.40:
-		offers.append("item:"+Equipment.roll(rng))
+		offers.append("item:"+Equipment.roll(rng,unavailable_items()))
 	# Recruitment/item decisions above keep their existing frequency and three slots.
 	while offers.size()<3:
 		var bonus_id:=Bonuses.roll(self)
@@ -645,6 +663,7 @@ func clear_encounter() -> bool:
 		for actor in actors:Equipment.attach(actor)
 		return false
 	reward_boss=ExpeditionContent.is_boss(stage,phase)
+	map_guest=str(current_map().get("meeting","")) if reward_boss else ""
 	for actor in actors:
 		if actor.hp>0:hero_room_counts[actor.id]=int(hero_room_counts.get(actor.id,0))+1
 	last_room_score = 100 + (300 if ExpeditionContent.is_boss(stage, phase) else 0) + (150 if room_kind == "elite" else 0)
@@ -665,11 +684,12 @@ func clear_encounter() -> bool:
 			if slot >= 0 and actors[slot].hp > 0:
 				if not unlock_stats.boss_guests.has(id): unlock_stats.boss_guests[id] = []
 				if not unlock_stats.boss_guests[id].has(stage): unlock_stats.boss_guests[id].append(stage)
-	if stage == 11 and phase == 5 and not endless: return true
+	if stage == world_count()-1 and phase == 5 and not endless:return true
 	phase += 1
 	if phase >= 6:
 		phase = 0
-		stage = (stage + 1) % 12
+		stage = (stage + 1) % world_count()
+		if endless and stage==0 and not journey.is_empty():journey=Worlds.start(rng)
 		seen_events.clear()
 		restore_party(0.12)
 	wave = 2 if ExpeditionContent.is_boss(stage, phase) else 0
@@ -680,6 +700,10 @@ func clear_encounter() -> bool:
 
 
 func roll_routes() -> void:
+	if needs_map():
+		route_offers.clear()
+		for id in Worlds.next_maps(journey):route_offers.append("map:"+id)
+		return
 	route_offers.assign(["battle"])
 	if ExpeditionContent.is_boss(stage,phase):return
 	if ExpeditionContent.is_market(phase):
@@ -691,7 +715,7 @@ func roll_routes() -> void:
 func roll_shop() -> void:
 	shop_stock.assign(["potion"])
 	shop_bought.clear()
-	var stock:Array=[]
+	var stock:Array=unavailable_items()
 	for index in 3:
 		var item:=Equipment.roll(rng,stock)
 		shop_stock.append("item:"+item)
@@ -702,6 +726,10 @@ func roll_shop() -> void:
 
 func choose_route(id: String) -> bool:
 	if interlude != "route" or not route_offers.has(id): return false
+	if id.begins_with("map:"):
+		if not needs_map() or not Worlds.select(journey,id.trim_prefix("map:")):return false
+		roll_routes()
+		return true
 	if id == "camp" and run_gold < 18: return false
 	if id == "team_event":
 		var events: Array = preload("res://scripts/team_events.gd").available(self)
@@ -750,11 +778,7 @@ func supply_cost(id: String) -> int:
 func buy_supply(id: String) -> bool:
 	if id.begins_with("bonus:"):return false
 	if id=="capacity":
-		var price:=capacity_cost()
-		if interlude!="shop" or price<0 or run_gold<price:return false
-		run_gold-=price
-		party_capacity+=1
-		return true
+		return false # Capacity now comes exclusively from the mythic Traveler's Page.
 	var cost:=supply_cost(id)
 	if interlude!="shop" or not shop_stock.has(id) or shop_bought.has(id) or run_gold<cost:return false
 	if id=="potion":restore_party(0.35,true)
@@ -766,7 +790,7 @@ func buy_supply(id: String) -> bool:
 	return true
 
 func capacity_cost() -> int:
-	return int(Equipment.CAPACITY_PRICES[party_capacity-3]) if party_capacity<ExpeditionContent.MAX_PARTY else -1
+	return -1
 
 func can_recruit(id: String,replace_index: int=-1) -> bool:
 	if not TaleCatalog.HEROES.has(id) or replace_index>=actors.size() or replace_index< -1:return false
@@ -781,6 +805,11 @@ func can_recruit(id: String,replace_index: int=-1) -> bool:
 
 func grant_item(id: String) -> bool:
 	if Equipment.data(id).is_empty() or inventory.size()>=144:return false
+	if id=="travelers_page":
+		if party_capacity>=ExpeditionContent.MAX_PARTY:return false
+		party_capacity+=1
+		capacity_relics+=1
+		return true
 	inventory.append(id)
 	return true
 
@@ -868,7 +897,7 @@ func upgrade_total() -> int:
 
 
 func phase_label() -> String:
-	return "FASE %03d · INFINITO" % (rooms_cleared + 1) if endless else "MUNDO %02d / 12 · FASE %d / 6" % [stage + 1, phase + 1]
+	return "FASE %03d · INFINITO" % (rooms_cleared + 1) if endless else "MAPA %02d / %d · FASE %d / 6" % [stage+1,world_count(),phase+1]
 
 
 func upgrade_detail(id: String) -> String:
@@ -884,17 +913,19 @@ func upgrade_detail(id: String) -> String:
 
 
 func continue_endless(campaign: TaleCampaign) -> bool:
-	if not expedition or endless or rooms_cleared != 72 or stage != 11 or phase != 5 or not alive() or campaign.expedition_wins <= 0 or not campaign.checkpoint.is_empty(): return false
+	if not expedition or endless or rooms_cleared != world_count()*6 or stage != world_count()-1 or phase != 5 or not alive() or campaign.expedition_wins <= 0 or not campaign.checkpoint.is_empty():return false
 	# Normal victory has already been settled. The continuation gets a distinct id.
 	run_id = campaign.new_run_id()
-	continuation_from = 72
+	continuation_from = rooms_cleared
 	unlock_stats = {"healing": 0.0, "combos": 0, "boss_guests": {}}
 	endless = true
 	phase = 0
 	stage = 0
+	if not journey.is_empty():journey=Worlds.start(rng)
 	wave = 0
 	seen_events.clear()
 	roll_run_offers()
+	roll_routes()
 	return true
 
 
@@ -932,3 +963,29 @@ func limit_party() -> void:
 	actors=keep
 	party_capacity=ExpeditionContent.MAX_PARTY
 	if tactics!=null:tactics.ensure_front()
+
+func world_count() -> int:
+	return Worlds.WORLD_COUNT if not journey.is_empty() else 12
+
+func current_map() -> Dictionary:
+	return Worlds.current(journey,stage)
+
+func needs_map() -> bool:
+	return not journey.is_empty() and journey.path.size()<=stage
+
+func map_name() -> String:
+	return str(current_map().get("name","Próximo território")) if not journey.is_empty() else str(STAGES[stage].name)
+
+func current_biome() -> int:
+	return int(current_map().get("biome",preload("res://scripts/biomes.gd").biome(stage)))
+
+func current_boss_rule() -> int:
+	if journey.is_empty():return ExpeditionContent.boss_rule(stage)
+	if stage==Worlds.WORLD_COUNT-1:return 11
+	return [3,7,3,7,3,11,11,7][current_biome()]
+
+func boss_name() -> String:
+	return str(STAGES[current_boss_rule()].boss)
+
+func unavailable_items() -> Array:
+	return ["travelers_page"] if party_capacity>=ExpeditionContent.MAX_PARTY else []

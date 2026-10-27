@@ -176,7 +176,7 @@ func choose_memory(index: int, choice: String) -> bool:
 
 func to_dict() -> Dictionary:
 	return {
-		"version": 10,
+		"version": 11,
 		"hero_milestones":hero_milestones.duplicate(true),"blessing_credit":blessing_credit.duplicate(),
 		"best_endless": best_endless, "endless_runs": endless_runs,
 		"discovered_synergies": discovered_synergies.duplicate(), "discovered_events": discovered_events.duplicate(),
@@ -421,7 +421,7 @@ func load_from(path: String = SAVE_PATH) -> bool:
 			parser.parse(FileAccess.get_file_as_string(candidate)) == OK
 			and parser.data is Dictionary
 		):
-			if int(parser.data.get("version", 0)) in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]:
+			if int(parser.data.get("version", 0)) in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]:
 				load_data(parser.data)
 				return true
 	return false

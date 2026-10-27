@@ -12,6 +12,7 @@ func fixture(hero := "scarlet") -> IdleRun:
 	account.unlocked.assign(TaleCatalog.HEROES.keys())
 	var run := IdleRun.new()
 	assert(run.start_expedition(account, hero, Blessings.id_for(hero, 0)))
+	run.journey.clear() # Legacy12-stage encounter/migration fixture.
 	return run
 func checks() -> void:
 	# Symmetric positions: every row starts centered, then splits in a straight column.
@@ -30,10 +31,9 @@ func checks() -> void:
 	# Every party size is reachable, never more than three in one position.
 	run.interlude = "shop"
 	run.run_gold = 10000
-	for price in Gear.CAPACITY_PRICES:
-		var before := run.run_gold
-		assert(run.capacity_cost() == price and run.buy_supply("capacity"))
-		assert(run.run_gold == before - price)
+	for i in 2:
+		assert(run.grant_item("travelers_page"))
+		assert(run.party_capacity==4+i)
 	assert(run.party_capacity == 5 and not run.buy_supply("capacity"))
 	for hero in ["rapunzel","joao","puss","alice"]:
 		run.pending_choice = true

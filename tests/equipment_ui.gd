@@ -25,7 +25,8 @@ func checks() -> void:
 		game.run.pending_choice = true
 		game.run.offers.assign(["ally:" + hero, "power", "heart"])
 		assert(game.run.recruit(game.campaign, hero))
-	for id in Gear.ITEMS: assert(game.run.grant_item(id))
+	for id in Gear.ITEMS:
+		if not Gear.data(id).get("consumable",false):assert(game.run.grant_item(id))
 	for hero in Gear.TROPHIES: assert(game.run.grant_item("trophy_" + hero))
 	for dimensions in [Vector2i(540, 960), Vector2i(1280, 800)]:
 		root.content_scale_size = dimensions

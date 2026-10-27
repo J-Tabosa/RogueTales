@@ -104,17 +104,18 @@ func checks() -> void:
 	await capture("run_routes_mobile")
 	# Walk every boundary, including all three bosses, without creating a new run.
 	var number: int = game.run.run_id
-	for stage in range(1, 72):
+	for stage in range(1, 48):
 		assert(game.run.stage == stage / 6 and game.run.phase == stage % 6 and game.run.run_id == number)
 		if stage%6==4:
 			game.select_route("shop")
 			assert(game.state=="shop")
 			game.leave_run_shop()
 			continue
+		if game.run.needs_map():game.select_route(game.run.route_offers[0])
 		game.select_route("battle")
 		assert(game.state == "travel")
 		finish_room()
-		if stage < 71:
+		if stage < 47:
 			assert(game.state == "choice")
 			key = game.run.offers.filter(func(id): return not id.begins_with("ally:"))[0]
 			game.select_relic(key)

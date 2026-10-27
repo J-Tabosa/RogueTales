@@ -62,7 +62,7 @@ func show_menu() -> void:
 	label(page, "Escolha. Arrisque. Recomece.", Rect2(24, 565, 492, 43), 26)
 	label(page, "Um protagonista. Companheiros raros.\nHabilidades e bônus que mudam a cada tentativa.", Rect2(24, 620, 492, 66), 17, MUTED)
 	var active := not campaign.checkpoint.is_empty()
-	var detail := "A vida, a build e os encontros da sua tentativa estão salvos." if active else "12 mundos · 72 fases · vença a run para continuar no infinito"
+	var detail := "A vida, a build e os encontros da sua tentativa estão salvos." if active else "4 estações · 8 mapas por run · 48 fases · vença a run para continuar no infinito"
 	label(page, detail, Rect2(24, 704, 492, 48), 14, GOLD)
 	button(page, "Retomar run  →" if active else "Nova run  →", Rect2(24, 772, 492, 62), resume_checkpoint if active else show_map, true)
 	navigation("menu")
@@ -89,7 +89,7 @@ func show_map() -> void:
 	if not campaign.unlocked.has(selected_hero): selected_hero = campaign.unlocked[0]
 	if Blessings.data(chosen_blessing).get("hero","")!=selected_hero or not Blessings.unlocked(campaign,chosen_blessing):chosen_blessing=Blessings.id_for(selected_hero,0)
 	chosen_endless = false
-	label(page, "CONTO · 12 MUNDOS  →  INFINITO APÓS VENCER", Rect2(24, 183, 492, 46), 14, GOLD)
+	label(page, "CONTO · 4 ESTAÇÕES · 8 MAPAS → INFINITO", Rect2(24, 183, 492, 46), 14, GOLD)
 	var hero := button(page, "", Rect2(24, 246, 492, 118), show_heroes)
 	face_portrait(hero, selected_hero, Rect2(14, 14, 90, 90))
 	label(hero, "Selecionar Personagem", Rect2(123, 11, 350, 21), 10, GOLD)
@@ -171,6 +171,11 @@ func persist_run() -> void:
 	persist()
 
 func enter_encounter() -> void:
+	if is_expedition() and run.needs_map():
+		run.roll_routes()
+		run.interlude="route"
+		show_routes()
+		return
 	if is_expedition() and run.active_secret.is_empty() and Content.is_market(run.phase):
 		if run.route_offers.is_empty():run.roll_routes()
 		run.interlude="route"
@@ -294,7 +299,7 @@ func show_relics() -> void:
 		if offer.has("bonus"):
 			note=offer.note
 			bonus_skin(card,id)
-		elif offer.has("item"):note="EQUIPAMENTO · ESCOLHA O PORTADOR NO INVENTÁRIO"
+		elif offer.has("item"):note="RELÍQUIA MÍTICA · +1 VAGA · LIMITE 5" if offer.get("consumable",false) else "EQUIPAMENTO · ESCOLHA O PORTADOR NO INVENTÁRIO"
 		elif offer.has("owner"): note = "HABILIDADE · " + str(TaleCatalog.HEROES[offer.owner].name)
 		elif offer.has("hero"):
 			var owned := campaign.unlocked.has(offer.hero)
@@ -335,9 +340,11 @@ func show_routes() -> void:
 	arena.frozen = true
 	if is_instance_valid(feedback): feedback.frozen = true
 	journey_modal("Fase %d-5 · Mercador ou Negociante"%[run.stage+1] if Content.is_market(run.phase) else "A próxima página", "%s · %d ouro · escolha o próximo caminho." % [run.phase_label(), run.run_gold])
-	if Content.is_boss(run.stage, run.phase):
-		label(overlay, TaleCatalog.STAGES[run.stage].boss, Rect2(32, 390, 476, 75), 28, GOLD)
-		label(overlay, BossRules.description(run.stage), Rect2(32, 482, 476, 132), 18, MUTED)
+	if run.needs_map():
+		show_map_choices()
+	elif Content.is_boss(run.stage, run.phase):
+		label(overlay, run.boss_name(), Rect2(32, 390, 476, 75), 28, GOLD)
+		label(overlay, BossRules.DESCRIPTIONS[run.current_boss_rule()], Rect2(32, 482, 476, 132), 18, MUTED)
 		button(overlay, "Enfrentar o chefe  →", Rect2(32, 624, 476, 50), select_route.bind("battle"), true)
 	else:
 		for index in run.route_offers.size():
@@ -388,7 +395,11 @@ func select_route(id: String) -> void:
 	if state != "route" or not run.choose_route(id): return
 	paused = false
 	persist_run()
-	if run.interlude == "shop": show_run_shop()
+	if id.begins_with("map:"):
+		build_battle()
+		arena.enemy_visible=false
+		show_routes()
+	elif run.interlude == "shop": show_run_shop()
 	elif run.interlude == "event": show_team_event()
 	else: enter_encounter()
 
@@ -397,7 +408,6 @@ func show_run_shop() -> void:
 	clear_page()
 	header("Negociante de contos" if run.merchant_kind=="trader" else "Mercador de histórias","%s ouro   ·   Equipe %d/%d"%[format_gold(run.run_gold),run.actors.size(),run.party_capacity])
 	var keys:Array[String]=[]
-	if run.party_capacity<Content.MAX_PARTY:keys.append("capacity")
 	keys.append_array(run.shop_stock)
 	var inner:=scroll_area(225,513,keys.size()*150)
 	inner.get_parent().name="ShopList"
@@ -408,7 +418,8 @@ func show_run_shop() -> void:
 		var bought:bool=run.shop_bought.has(key)
 		var card:=button(inner,"",Rect2(0,index*150,476,140),buy_run_supply.bind(key))
 		card.set_meta("shop_item",key)
-		card.disabled=bought or cost<0 or run.run_gold<cost
+		var capped:bool=key=="item:travelers_page" and run.party_capacity>=Content.MAX_PARTY
+		card.disabled=bought or cost<0 or run.run_gold<cost or capped
 		for child in card.get_children():child.queue_free()
 		for skin in ["normal","disabled"]:card.add_theme_stylebox_override(skin,box(Color("142f27"),Color("486047"),12))
 		if key.begins_with("item:"):
@@ -421,7 +432,7 @@ func show_run_shop() -> void:
 		var title:=label(card,data.title,Rect2(108,12,306,42),19,GOLD)
 		title.set_meta("shop_title",true)
 		effect_badges(card,EffectBadges.for_supply(key,run.party_capacity),Vector2(108,80 if key.begins_with("bonus:") else 61),340)
-		label(card,"EQUIPE COMPLETA" if cost<0 else "COMPRADO" if bought else "%d OURO"%cost,Rect2(108,110,296,21),12,Color("92b99d") if bought else GOLD)
+		label(card,"EQUIPE COMPLETA" if cost<0 or capped else "COMPRADO" if bought else "%d OURO"%cost,Rect2(108,110,296,21),12,Color("92b99d") if bought else GOLD)
 		var info:=button(card,"i",Rect2(422,90,42,40),show_supply_details.bind(key))
 		info.tooltip_text="Ver todos os efeitos"
 	var inventory:=button(page,"Equipar itens · %d na bolsa"%run.inventory.size(),Rect2(24,752,492,48),show_equipment.bind(0))
@@ -640,7 +651,7 @@ func update_hud() -> void:
 		if not run.active_secret.is_empty(): enemy_label.text=run.phase_label()+" · SECRETO · "+str(preload("res://scripts/secret_encounters.gd").DATA[run.active_secret].name)
 		power_label.text = ""
 		if is_instance_valid(battle_gold):battle_gold.text="%s OURO"%format_gold(run.run_gold)
-		stage_label.text = ("INFINITO · FASE %d · %s"%[run.rooms_cleared+1,TaleCatalog.STAGES[run.stage].name]) if run.endless else "ESTÁGIO %02d · FASE %d/6 · %s" % [run.stage + 1,run.phase+1,TaleCatalog.STAGES[run.stage].name]
+		stage_label.text = ("INFINITO · FASE %d · %s"%[run.rooms_cleared+1,run.map_name()]) if run.endless else "ESTÁGIO %02d · FASE %d/6 · %s" % [run.stage+1,run.phase+1,run.map_name()]
 		if debug_session:stage_label.text="DEBUG · "+stage_label.text
 		BattleType.fit_line(stage_label,20 if desktop else 14)
 		BattleType.fit_line(battle_gold,15)
@@ -857,7 +868,7 @@ func show_profile() -> void:
 	clear_page()
 	header(campaign.player_name, "Sua coleção e suas memórias atravessam as runs.")
 	face_portrait(page, campaign.avatar, Rect2(200, 198, 140, 142))
-	label(page, "RECORDE · %d pontos\n%d runs iniciadas\n%d vitórias completas\n%d tentativas encerradas\nConto: %02d / 12 mundos\nInfinito: %d páginas\n%d personagens revelados" % [campaign.best_score, campaign.run_counter, campaign.expedition_wins, campaign.total_defeats, campaign.best_depth, campaign.best_endless, campaign.unlocked.size()], Rect2(54, 382, 432, 245), 23, GOLD)
+	label(page, "RECORDE · %d pontos\n%d runs iniciadas\n%d vitórias completas\n%d tentativas encerradas\nMaior estágio alcançado: %02d\nInfinito: %d páginas\n%d personagens revelados" % [campaign.best_score, campaign.run_counter, campaign.expedition_wins, campaign.total_defeats, campaign.best_depth, campaign.best_endless, campaign.unlocked.size()], Rect2(54, 382, 432, 245), 23, GOLD)
 	button(page, "Nome e avatar", Rect2(24, 698, 492, 56), edit_profile)
 	button(page, "Configurações", Rect2(24, 776, 492, 56), show_settings)
 	navigation("profile")
@@ -887,9 +898,9 @@ func show_settings() -> void:
 func show_help() -> void:
 	state = "help"
 	clear_page()
-	header("Uma run, doze páginas", "Prepare o protagonista; descubra o restante durante a tentativa.")
+	header("Uma estação, oito mapas", "Prepare o protagonista; descubra o restante durante a tentativa.")
 	var inner := scroll_area(190, 674, 1290)
-	label(inner, "1. MODOS\nConto: 12 mundos com 6 fases cada, totalizando 60 combates e 12 visitas ao mercado. Cada mundo termina em um chefe e cura 12% dos PV dos sobreviventes. Após vencer os 12 mundos, escolha continuar no infinito com a mesma build e dificuldade crescente. Novos marcos de 12 páginas concedem memórias no fim da tentativa.\n\n2. COMBATE\nCada rodada segue a Iniciativa, da maior à menor, com teto 100 e valores negativos permitidos. Cada personagem executa seus básicos em sequência na própria vez. ULTs usam os custos de cada ficha e podem intercalar os básicos sem consumi-los. Mana não regenera por tempo. Passivas seguem os gatilhos e limites da ficha. Histórico pausa e mostra dano, cura e efeitos. Vanguardas ficam na frente, assassinos no meio e magos/atiradores atrás. A classe define a formação.\n\n3. SINERGIAS\nJoão e Maria, Peter e Mulan, Scarlet e Vendedora combinam efeitos. As fichas atuais usam os gatilhos próprios de cada personagem; as antigas sinergias por tempo foram substituídas. Veja os gatilhos em Ver build da equipe.\n\n4. CHEFES\nQuebre o estandarte do General para interrompê-lo. A Guardiã copia a última ULT deste combate: pense antes de usar cura e escudo. Destrua os fios da Costureira para libertar as ativas seladas. Ataques básicos e ULTs continuam disponíveis.\n\n5. BUILD E EVENTOS\nEscolha uma de três melhorias após vencer. Convites temporários têm 25% de chance por tela; personagens permanentes custam 5.000 memórias. Eventos opcionais antecedem combates sem substituir sua fase. O mercador vende espaços de equipe (150/400 ouro), até 5. Cada posição comporta 3. Estágios 1–2 têm até 3 inimigos; estágios 3–6 até 6; estágio 7 em diante até 9. Fases 1–4 são combates e recompensas, fase 5 é Mercador ou Negociante, fase 6 é o chefe. Eventos podem aparecer antes dos combates. Inimigos atuais não têm esquiva. Chefes vêm com 2 ajudantes. Cada personagem equipa 2 itens entre combates. Chefes oferecem um equipamento; duelos secretos dão um troféu exclusivo. Cada protagonista tem 4 bênçãos, liberadas por feitos próprios. A equipe muda as falas e libera opções especiais. Bônus duram até o fim da run: 70% Único (escolha o personagem), 30% Grupo (compatíveis e futuros recrutados). Raridades: comum 40%, incomum 28%, raro 18%, épico 9%, lendário 4%, mítico 1%. Valores exatos e percentuais aditivos. Iniciativa permite agir antes (+) ou depois (−), com prévia. Saves antigos mantêm os efeitos legados sem conversão.\n\n6. FIM E RETOMADA\nOuro, bônus e convidados são da run. Feitos, coleção, descobertas, recordes e memórias permanecem. Pontos vêm das vitórias, chefes, elites, rapidez e aliados sobreviventes; vencer sem perder PV concede um bônus. Salvar e sair retoma no início do combate atual ou na escolha salva, sem sortear outras opções.\n\nCONTROLES\nToque nos retratos ou use 1–5 para a ULT. Espaço/ESC pausa; A alterna ULT automática; F11 alterna tela cheia.", Rect2(0, 0, 476, 1270), 17)
+	label(inner, "1. MODOS\nConto: uma das quatro florestas é sorteada. Seus percursos levam por oito mapas, cada um com seis fases: 40 combates e oito visitas ao mercado. Cada mundo termina em um chefe e cura 12% dos PV dos sobreviventes. Após vencer o Castelo do Autor, escolha continuar no infinito com a mesma build e dificuldade crescente. Novos marcos de 12 páginas concedem memórias no fim da tentativa.\n\n2. COMBATE\nCada rodada segue a Iniciativa, da maior à menor, com teto 100 e valores negativos permitidos. Cada personagem executa seus básicos em sequência na própria vez. ULTs usam os custos de cada ficha e podem intercalar os básicos sem consumi-los. Mana não regenera por tempo. Passivas seguem os gatilhos e limites da ficha. Histórico pausa e mostra dano, cura e efeitos. Vanguardas ficam na frente, assassinos no meio e magos/atiradores atrás. A classe define a formação.\n\n3. SINERGIAS\nJoão e Maria, Peter e Mulan, Scarlet e Vendedora combinam efeitos. As fichas atuais usam os gatilhos próprios de cada personagem; as antigas sinergias por tempo foram substituídas. Veja os gatilhos em Ver build da equipe.\n\n4. CHEFES\nQuebre o estandarte do General para interrompê-lo. A Guardiã copia a última ULT deste combate: pense antes de usar cura e escudo. Destrua os fios da Costureira para libertar as ativas seladas. Ataques básicos e ULTs continuam disponíveis.\n\n5. BUILD E EVENTOS\nEscolha uma de três melhorias após vencer. Convites temporários têm 25% de chance por tela; personagens permanentes custam 5.000 memórias. Eventos opcionais antecedem combates sem substituir sua fase. A Página dos Viajantes é uma relíquia mítica consumida ao receber: +1 vaga nesta run, até 5. Cada posição comporta 3. Estágios 1–2 têm até 3 inimigos; estágios 3–6 até 6; estágio 7 em diante até 9. Fases 1–4 são combates e recompensas, fase 5 é Mercador ou Negociante, fase 6 é o chefe. Eventos podem aparecer antes dos combates. Inimigos atuais não têm esquiva. Chefes vêm com 2 ajudantes. Cada personagem equipa 2 itens entre combates. Chefes oferecem um equipamento; duelos secretos dão um troféu exclusivo. Cada protagonista tem 4 bênçãos, liberadas por feitos próprios. A equipe muda as falas e libera opções especiais. Bônus duram até o fim da run: 70% Único (escolha o personagem), 30% Grupo (compatíveis e futuros recrutados). Raridades: comum 40%, incomum 28%, raro 18%, épico 9%, lendário 4%, mítico 1%. Valores exatos e percentuais aditivos. Iniciativa permite agir antes (+) ou depois (−), com prévia. Saves antigos mantêm os efeitos legados sem conversão.\n\n6. FIM E RETOMADA\nOuro, bônus e convidados são da run. Feitos, coleção, descobertas, recordes e memórias permanecem. Pontos vêm das vitórias, chefes, elites, rapidez e aliados sobreviventes; vencer sem perder PV concede um bônus. Salvar e sair retoma no início do combate atual ou na escolha salva, sem sortear outras opções.\n\nCONTROLES\nToque nos retratos ou use 1–5 para a ULT. Espaço/ESC pausa; A alterna ULT automática; F11 alterna tela cheia.", Rect2(0, 0, 476, 1270), 17)
 	navigation("profile")
 
 func show_preview() -> void:
@@ -1152,3 +1163,21 @@ func configure_debug_protagonist() -> void:
 	campaign.party.assign([selected_hero])
 	chosen_blessing=Blessings.id_for(selected_hero,0)
 	show_map()
+
+func show_map_choices() -> void:
+	for index in run.route_offers.size():
+		var key:String=run.route_offers[index]
+		var id:=key.trim_prefix("map:")
+		var data:Dictionary=run.Worlds.NODES[id]
+		var card:=button(overlay,"",Rect2(32,390+index*124,476,114),select_route.bind(key),true)
+		card.set_meta("map_choice",id)
+		var picture:=TextureRect.new()
+		picture.texture=run.Worlds.texture(id)
+		picture.expand_mode=TextureRect.EXPAND_IGNORE_SIZE
+		picture.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		picture.position=Vector2(8,8);picture.size=Vector2(128,98)
+		picture.mouse_filter=Control.MOUSE_FILTER_IGNORE;card.add_child(picture)
+		label(card,data.name,Rect2(148,10,314,46),20,GOLD)
+		var note:String="Mapa %d de 8 · %s"%[run.stage+1,run.Worlds.LABELS[run.journey.season]]
+		if not str(data.meeting).is_empty():note+="\nEncontro: "+str(TaleCatalog.HEROES[data.meeting].name)
+		label(card,note,Rect2(148,60,314,48),13,MUTED)

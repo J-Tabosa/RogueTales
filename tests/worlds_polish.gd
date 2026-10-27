@@ -9,7 +9,8 @@ func checks() -> void:
 	assert(run.start_expedition(account, "alice", "vigor"))
 	run.rng.seed = 3717
 	var seen := {}
-	for depth in 72:
+	for depth in 48:
+		if run.needs_map():assert(run.choose_route(run.route_offers[0]))
 		assert(run.stage == depth / 6 and run.phase == depth % 6)
 		if run.phase==4:
 			assert(run.choose_route("shop"));run.leave_shop();continue
@@ -25,18 +26,18 @@ func checks() -> void:
 		assert(restored.actors[0].damage == run.actors[0].damage)
 		assert(restored.rng.state == run.rng.state)
 		var terminal := run.clear_encounter()
-		assert(terminal == (depth == 71))
+		assert(terminal == (depth == 47))
 		if not terminal:
 			assert(run.offers.size() == 3)
 			assert(run.apply_relic("power"))
-			if run.phase!=4:assert(run.choose_route("battle"))
-	for world in 12: assert(seen[world].size() >= 3, "All six identities appear within a world")
-	assert(run.rooms_cleared == 72 and run.upgrade_count("power") == 59)
+			if run.phase!=4 and not run.needs_map():assert(run.choose_route("battle"))
+	for world in 8: assert(seen[world].size() >= 3, "All six identities appear within a world")
+	assert(run.rooms_cleared == 48 and run.upgrade_count("power") == 39)
 	var result := account.finish_expedition(run.to_checkpoint(), true)
-	assert(result.reward == 318 and account.best_depth == 12)
+	assert(result.reward == 222 and account.best_depth == 8)
 	var damage: float = run.actors[0].damage
 	assert(run.continue_endless(account))
-	assert(run.continuation_from == 72 and run.actors[0].damage == damage)
+	assert(run.continuation_from == 48 and run.actors[0].damage == damage)
 	result = account.finish_expedition(run.to_checkpoint(), false)
 	assert(result.reward == 0)
 	var legacy := IdleRun.new()
@@ -91,7 +92,7 @@ func checks() -> void:
 		await capture("alice_ult_"+mode)
 	game.queue_free()
 	await process_frame
-	print("WORLDS POLISH PASS: 72 phases, 12 bosses, six enemy identities per world, compact checkpoint and upgrades, migration, earned endless, native HD meshes, visible child, foreground enemy impacts/ULT and mobile/PC")
+	print("WORLDS POLISH PASS: 48 phases, 8 bosses, six enemy identities per world, compact checkpoint and upgrades, migration, earned endless, native HD meshes, visible child, foreground enemy impacts/ULT and mobile/PC")
 	quit()
 func capture(name: String) -> void:
 	var args := OS.get_cmdline_user_args()

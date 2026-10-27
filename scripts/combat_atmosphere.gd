@@ -15,11 +15,24 @@ var shake_strength:=0.0
 var shake_offset:=Vector2.ZERO
 var flashes:Dictionary={}
 var wave:ColorRect
+var weather:ColorRect
+var fire:ColorRect
+var weather_mode:=0
+var weather_clock:=0.0
+var burn_left:=0.0
+var burn_duration:=1.2
 func _ready() -> void:
 	name="CombatAtmosphere"
 	mouse_filter=Control.MOUSE_FILTER_IGNORE
 	clip_contents=true
 	z_index=1100
+	weather=shader_layer("Weather",preload("res://assets/fx/weather.gdshader"))
+	var climate:String=str(arena.simulation.current_map().get("weather","none")) if is_instance_valid(arena) and arena.simulation.expedition else "none"
+	weather_mode=int({"none":0,"snow":1,"rain":2,"sun":3,"embers":4}.get(climate,0))
+	weather.material.set_shader_parameter("weather_mode",weather_mode)
+	weather.visible=weather_mode>0
+	fire=shader_layer("FireScreen",preload("res://assets/fx/fire_screen.gdshader"))
+	fire.hide()
 	wave=ColorRect.new()
 	wave.name="BlueWave"
 	wave.mouse_filter=Control.MOUSE_FILTER_IGNORE
@@ -29,11 +42,21 @@ func _ready() -> void:
 	add_child(wave)
 	wave.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	wave.hide()
+func shader_layer(title:String,shader:Shader) -> ColorRect:
+	var layer:=ColorRect.new()
+	layer.name=title
+	layer.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	var mat:=ShaderMaterial.new();mat.shader=shader;layer.material=mat
+	add_child(layer)
+	layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	return layer
 func clear() -> void:
 	wave_left=0
 	shake_left=0
 	shake_offset=Vector2.ZERO
 	flashes.clear()
+	burn_left=0
+	if is_instance_valid(fire):fire.hide()
 	if is_instance_valid(wave):wave.hide()
 	queue_redraw()
 func shake(strength:=1.6) -> void:
@@ -43,6 +66,9 @@ func shake(strength:=1.6) -> void:
 func blue_wave() -> void:
 	wave_left=wave_duration
 	if is_instance_valid(wave):wave.show()
+func burn_screen() -> void:
+	burn_left=burn_duration
+	if is_instance_valid(fire):fire.show()
 func aura(index:int,color:String,duration:=1.5,style:="") -> void:
 	flashes[index]={"color":AuraArt.canonical(color),"until":clock+duration,"style":style}
 	queue_redraw()
@@ -52,6 +78,7 @@ func ultimate_started(index:int,id:String) -> void:
 	elif id in ["ariel","rapunzel","peter"]:aura(index,"blue",1.6)
 func impact(id:String) -> void:
 	if id=="ariel":blue_wave()
+	if id=="matches":burn_screen()
 	if id in ["snow_white","matches","mulan"]:shake(1.7 if id=="snow_white" else 1.2)
 func color_for(data:Dictionary,index:=-1) -> String:
 	if StatusArt.protected(data) or bool(data.get("enraged",false)) or float(data.get("rage_left",0))>0:return "red"
@@ -62,6 +89,18 @@ func color_for(data:Dictionary,index:=-1) -> String:
 func _process(delta:float) -> void:
 	if frozen:return
 	clock+=delta
+	if not reduced_motion:weather_clock+=minf(delta,.1)
+	if is_instance_valid(weather):
+		weather.material.set_shader_parameter("clock",weather_clock)
+		weather.material.set_shader_parameter("aspect",size.x/maxf(1,size.y))
+		weather.material.set_shader_parameter("layers",3 if is_instance_valid(arena) and arena.high_quality else 1)
+		weather.material.set_shader_parameter("strength",.40 if reduced_motion else .65)
+	burn_left=maxf(0,burn_left-delta)
+	if is_instance_valid(fire):
+		fire.visible=burn_left>0
+		fire.material.set_shader_parameter("progress",1.0-burn_left/burn_duration)
+		fire.material.set_shader_parameter("opacity",sin(PI*burn_left/burn_duration)*(.16 if reduced_motion else .29))
+		fire.material.set_shader_parameter("reduced_motion",reduced_motion)
 	wave_left=maxf(0,wave_left-delta)
 	shake_left=maxf(0,shake_left-delta)
 	shake_offset=Vector2.ZERO

@@ -58,6 +58,7 @@ func checks() -> void:
 		assert(game.run.equip_item(0,"blue_hourglass",1))
 		game.run.interlude = ""
 		game.run.stage = 6 # Nine-enemy formations become available in stage 7.
+		game.run.journey.clear() # Explicit formation stress fixture, independent of seasonal choices.
 		game.enter_encounter()
 		game.spawn_enemy()
 		for attempt in 1000:
@@ -111,6 +112,7 @@ func checks() -> void:
 		assert(game.arena.human_height() >= minf(184,game.arena.field_width*.175))
 		assert(game.ult_buttons[0].get_children().filter(func(node):return node.has_meta("card_box")).size()==5)
 		assert(not game.page.get_children().any(func(node):return node is Button and node.text in ["F11","Histórico"]))
+		game.feedback.queue.clear();game.feedback.ribbon_left=0
 		game.feedback.enqueue({"hero":"alice","kind":"passive","title":"Carta na manga","detail":"Avançou o naipe e ganhou 25 mana"})
 		game.feedback._process(.3)
 		assert(game.feedback.ribbon_face.texture != null and game.feedback.ribbon.size.y<=70)

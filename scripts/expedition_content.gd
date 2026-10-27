@@ -1,9 +1,9 @@
 class_name ExpeditionContent
 extends RefCounted
 ## Data for runs. Permanent training never changes these starting kits.
-const WORLD_COUNT := 12
+const WORLD_COUNT := 8
 const PHASES_PER_WORLD := 6
-const TOTAL_PHASES := 72
+const TOTAL_PHASES := 48
 const WORLD_FORMAT := 2
 const ROUTE_FORMAT := 3
 const MAX_PARTY := 5
@@ -147,7 +147,8 @@ static func location(data: Dictionary) -> Vector2i:
 
 static func location_label(data: Dictionary) -> String:
 	var at := location(data)
-	return "Mundo %02d / 12 · Fase %d / 6" % [at.x + 1, at.y + 1]
+	var count:=8 if preload("res://scripts/world_routes.gd").valid(data.get("journey",{})) else 12
+	return "Mapa %02d / %d · Fase %d / 6" % [at.x+1,count,at.y+1]
 
 static func is_market(phase:int) -> bool:
 	return phase==4

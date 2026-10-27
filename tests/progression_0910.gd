@@ -65,7 +65,7 @@ func test() -> void:
 		check(run.tactics.enemies.size()==1 and run.tactics.enemies[0].evasion==0,"Secret enemy also has zero dodge")
 	run.active_secret=""
 	# A complete run has60 combats,12 shopping phases and72 completed phases.
-	c=account();run=IdleRun.new();check(run.start_expedition(c,"scarlet","blessing:scarlet:0"),"Start purchased hero")
+	c=account();run=IdleRun.new();check(run.start_expedition(c,"scarlet","blessing:scarlet:0"),"Start purchased hero");run.journey.clear() # Explicit pre1.0 route migration fixture.
 	var combats:=0;var markets:=0
 	for stage in 12:
 		for phase in 6:
@@ -92,8 +92,8 @@ func test() -> void:
 	check(combats==60 and markets==12 and run.rooms_cleared==72,"Exact60combats12shops72phases")
 	# Team capacity purchases stop at five; replacement still works.
 	run=make(["scarlet"]);run.interlude="shop";run.run_gold=10000
-	check(run.buy_supply("capacity") and run.party_capacity==4,"Capacity3to4")
-	check(run.buy_supply("capacity") and run.party_capacity==5,"Capacity4to5")
+	check(run.grant_item("travelers_page") and run.party_capacity==4,"Capacity3to4")
+	check(run.grant_item("travelers_page") and run.party_capacity==5,"Capacity4to5")
 	var balance:int=run.run_gold
 	check(run.capacity_cost()==-1 and not run.buy_supply("capacity") and run.run_gold==balance,"Cannot buy sixth slot or charge gold")
 	for id in ["snow_white","rapunzel","joao","ariel"]:

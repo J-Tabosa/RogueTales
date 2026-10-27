@@ -8,6 +8,7 @@ signal status_requested(index: int, hostile: bool)
 const Formation = preload("res://scripts/formation_layout.gd")
 const ArenaSkin = preload("res://scripts/ui_skin.gd")
 const Biomes = preload("res://scripts/biomes.gd")
+const Worlds=preload("res://scripts/world_routes.gd")
 const CharacterEffects = preload("res://scripts/character_effects.gd")
 const UltVFX = preload("res://scripts/ultimate_vfx.gd")
 const UltimateArt = preload("res://scripts/ultimate_art.gd")
@@ -63,18 +64,19 @@ func _ready() -> void:
 	vfx.z_index = 1000
 	add_child(vfx)
 	backdrop = TextureRect.new()
-	backdrop.texture = Biomes.scenery(stage)
+	var map:Dictionary=Worlds.current(simulation.journey,mini(stage,simulation.journey.path.size()-1)) if simulation.expedition and not simulation.journey.is_empty() else {}
+	backdrop.texture = Worlds.texture(str(simulation.journey.path[mini(stage,simulation.journey.path.size()-1)])) if not map.is_empty() else Biomes.scenery(stage)
 	backdrop.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	var projection := ShaderMaterial.new()
-	projection.shader = preload("res://assets/biomes/arena_floor.gdshader")
-	var window := Biomes.floor_window(stage)
+	projection.shader = preload("res://assets/worlds/arena_world.gdshader") if not map.is_empty() else preload("res://assets/biomes/arena_floor.gdshader")
+	var window := Vector2(map.floor[0],map.floor[1]) if not map.is_empty() else Biomes.floor_window(stage)
 	projection.set_shader_parameter("ground_start",window.x)
 	projection.set_shader_parameter("ground_end",window.y)
 	projection.set_shader_parameter("floor_horizon",Formation.FLOOR_HORIZON)
 	backdrop.material = projection
 	backdrop.position.x = -12
 	backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	backdrop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	backdrop.stretch_mode = TextureRect.STRETCH_SCALE if not map.is_empty() else TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	backdrop.size = Vector2(field_width, field_height)
 	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	backdrop.z_index = 0
@@ -551,7 +553,7 @@ func draw_combat_effects(canvas: Node2D) -> void:
 			var to: Vector2 = tracks[enemy_track.target].home + Vector2(0, -65)
 			var t := clampf((phase - 0.2) / 0.35, 0, 1)
 			var point := from.lerp(to, t)
-			var tint: Color = Biomes.COLORS[Biomes.biome(stage)]
+			var tint: Color = Biomes.COLORS[simulation.current_biome() if simulation.expedition else Biomes.biome(stage)]
 			if simulation.tactics.enemies[index]["class"] == "ranger":
 				var direction := (to - from).normalized()
 				canvas.draw_line(point - direction * 30, point, Color("fbe5b1"), 4, true)
@@ -562,7 +564,7 @@ func draw_combat_effects(canvas: Node2D) -> void:
 				canvas.draw_circle(point, 13, Color(tint, 0.3), true, -1, true)
 				canvas.draw_circle(point, 7, Color("fff2da"), true, -1, true)
 	for area in enemy_areas:
-		var tint := Color(Biomes.COLORS[Biomes.biome(stage)], minf(1, area.left * 2))
+		var tint := Color(Biomes.COLORS[simulation.current_biome() if simulation.expedition else Biomes.biome(stage)], minf(1, area.left * 2))
 		var radius: float = 26 + (1.0 - area.left) * 42
 		canvas.draw_set_transform(area.at, 0, Vector2(1, 0.35))
 		canvas.draw_arc(Vector2.ZERO, radius, 0, TAU, 30, tint, 4, true)
@@ -610,6 +612,9 @@ func fit_field(dimensions: Vector2) -> void:
 	field_height = dimensions.y
 	if is_instance_valid(backdrop):
 		backdrop.size = dimensions + Vector2(24, 0)
+		if simulation.expedition and not simulation.journey.is_empty():
+			backdrop.material.set_shader_parameter("arena_aspect",backdrop.size.x/backdrop.size.y)
+			backdrop.material.set_shader_parameter("source_aspect",backdrop.texture.get_size().aspect())
 	for index in heroes.size():
 		normalize_hero(heroes[index], str(simulation.actors[index].id))
 		heroes[index].set_meta("battle_scale",heroes[index].scale)
@@ -668,7 +673,7 @@ func present_result(result: Dictionary, hostile: bool, attacker: int) -> void:
 	if hostile and not result.get("non_attack", false) and not result.get("blocked_spirit",false):
 		for target in result.get("targets", [result.get("target", -1)]):
 			if target >= 0 and target < tracks.size():
-				enemy_impacts.append({"at": tracks[target].home + Vector2(0, -human_height() * 0.45), "biome": Biomes.biome(stage), "left": 0.85})
+				enemy_impacts.append({"at": tracks[target].home + Vector2(0, -human_height() * 0.45), "biome": simulation.current_biome() if simulation.expedition else Biomes.biome(stage), "left": 0.85})
 	if hostile and simulation.tactics.enemies[attacker]["class"] == "mage" and not result.get("non_attack", false):
 		for target in result.get("targets", [result.get("target", -1)]):
 			if target >= 0 and target<tracks.size(): enemy_areas.append({"at": tracks[target].home, "left": 1.0})

@@ -112,19 +112,19 @@ func spawn() -> void:
 		var interval := 3.1 + index * 0.35
 		var variant := 0
 		if owner.expedition:
-			variant = (0 if ExpeditionContent.boss_rule(owner.stage) == 3 else (3 if ExpeditionContent.boss_rule(owner.stage) == 7 else 5)) if boss_unit else Biomes.pick(owner.stage, owner.phase, index, owner.rng, picked)
+			variant = (0 if owner.current_boss_rule() == 3 else (3 if owner.current_boss_rule() == 7 else 5)) if boss_unit else Biomes.pick(owner.stage, owner.phase, index, owner.rng, picked)
 			if not boss_unit:
 				var options:Array[int]=[]
 				for candidate in 6:
 					if row_counts[rank_for_class(Biomes.CLASSES[candidate])]<3:options.append(candidate)
 				if not options.has(variant):variant=options[owner.rng.randi_range(0,options.size()-1)]
 			picked.append(variant)
-			job = str(Biomes.CLASSES[variant]) if not boss_unit else ("vanguard" if ExpeditionContent.boss_rule(owner.stage) == 3 else "mage")
+			job = str(Biomes.CLASSES[variant]) if not boss_unit else ("vanguard" if owner.current_boss_rule() == 3 else "mage")
 			interval = float(Biomes.INTERVALS[variant])
 			row_counts[rank_for_class(job)]+=1
 		enemies.append({
 			"id": "enemy_%d" % index, "class": job,
-			"name": TaleCatalog.STAGES[owner.stage].boss if boss_unit else TaleCatalog.STAGES[owner.stage].enemy,
+			"name": owner.boss_name() if boss_unit and owner.expedition else TaleCatalog.STAGES[owner.stage].boss if boss_unit else TaleCatalog.STAGES[owner.stage].enemy,
 			"row": "front" if index == 0 else "back", "hp": total * weight, "max_hp": total * weight,
 			"damage": float(TaleCatalog.STAGES[owner.stage].damage) * (1.25 if boss_unit else 0.75) / sqrt(float(count)),
 			"armor": 1.0 + owner.stage * 0.6 if job == "vanguard" else owner.stage * 0.22,
@@ -134,9 +134,9 @@ func spawn() -> void:
 		})
 		if owner.expedition:
 			enemies[-1]["variant"] = variant
-			enemies[-1]["biome"] = Biomes.biome(owner.stage)
+			enemies[-1]["biome"] = owner.current_biome()
 			enemies[-1].row = rank_for_class(job)
-			if not boss_unit: enemies[-1].name = Biomes.ENEMIES[Biomes.biome(owner.stage)][variant]
+			if not boss_unit: enemies[-1].name = Biomes.ENEMIES[owner.current_biome()][variant]
 			enemies[-1].hp *= float(Biomes.HP[variant]) if not boss_unit else 1.0
 			enemies[-1].max_hp = enemies[-1].hp
 			enemies[-1].damage = (13.0 + (owner.rooms_cleared if owner.endless else owner.stage * 6 + owner.phase) * 0.85) * (1.2 if boss_unit else 1.0) * (1.15 if owner.room_kind == "elite" else 1.0) * (float(Biomes.POWER[variant]) if not boss_unit else 1.0)

@@ -7,7 +7,7 @@ static func equipped(actor: Dictionary, index: int) -> String:
 static func texture(id: String) -> Texture2D:
 	if id.is_empty(): return null
 	if not textures.has(id):
-		var path := "res://assets/items/%s.png" % id
+		var path := "res://assets/items/%s.%s" % [id,"svg" if id=="travelers_page" else "png"]
 		textures[id] = load(path) if ResourceLoader.exists(path) else null
 	return textures[id]
 static func item_plate(id:String,selected:=false) -> StyleBoxFlat:

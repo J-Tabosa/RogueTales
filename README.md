@@ -1,6 +1,6 @@
 # RogueTales: O Último Fio
 
-Roguelite em **Godot 4.7**, PC e Android, com 12 protagonistas, equipes de até cinco personagens e 12 estágios de seis fases. Versão **0.9.10**: progressão fixa, compra de personagens por memórias, correção da Alice com itens negativos, inimigos sem esquiva e Umi com Iniciativa base 50. Os 27 equipamentos gerais e 12 utilitários da 0.9.9 permanecem. Detalhes e migrações em [PROGRESSAO_0910](docs/PROGRESSAO_0910.md).
+Roguelite em **Godot 4.7**, PC e Android, com 12 protagonistas e equipes de até cinco. Versão **1.0.0**: 65 cenários HD das quatro estações, 17 percursos autorais, bifurcações por estação e oito mapas por run. Cada mapa mantém seis fases. Neve, chuva, raios de sol e brasas usam shaders; a ULT da Lume aquece as bordas da arena. Detalhes em [ROTAS_100](docs/ROTAS_100.md).
 
 ## Regras e personagens
 
@@ -27,13 +27,13 @@ Retratos HD separados das células de animação de combate. Idles executam um g
 
 A equipe tem até cinco personagens e até três por posição: vanguarda, meio e retaguarda. A linha horizontal do Cortejo das Cartas atravessa essas posições. A abertura é fixa: 1-1 tem um inimigo, 1-2 dois e 1-3 três. Os limites dos encontros comuns são três nos estágios 1–2, seis nos estágios 3–6 e nove a partir do estágio 7. Chefes mantêm dois acompanhantes; desafios secretos são individuais. Todos os inimigos atuais têm esquiva zero.
 
-Em cada estágio, X-1 a X-4 são combates com recompensas, X-5 oferece Mercador ou Negociante e X-6 é o chefe. Eventos aleatórios opcionais podem aparecer antes dos combates. A campanha tem 60 combates e 12 visitas ao mercado.
+Em cada estágio, X-1 a X-4 são combates com recompensas, X-5 oferece Mercador ou Negociante e X-6 é o chefe. Eventos aleatórios opcionais podem aparecer antes dos combates. Cada run começa em uma das quatro florestas, sorteada com chances iguais. As bifurcações seguem exatamente os percursos do pacote: oito mapas até o Castelo do Autor, com 40 combates e oito mercados. Mapas determinam cenário, clima e conjunto de inimigos. Os encontros de personagens do catálogo aparecem como convites opcionais após o chefe local.
 
 Cada personagem custa 5.000 memórias para desbloqueio permanente. Contas novas começam com todos bloqueados e 5.000 memórias para comprar o primeiro. Coleções e saldos de saves anteriores são preservados. Convites de aliados continuam temporários durante a run; feitos liberam bênçãos, sem substituir a compra do personagem.
 
 Após um chefe, se ninguém tiver sido recrutado nesta run, uma das três ofertas é garantidamente um personagem. O jogador pode escolher outra recompensa. Depois do primeiro recrutamento, convites voltam à chance comum de 25%.
 
-Cada personagem equipa dois itens. A bolsa exibe aparência e descrição; trocas são feitas entre encontros. Ouro, desejos, recursos e equipamentos pertencem à run; coleção e feitos persistem.
+A capacidade começa em três e aumenta pela **Página dos Viajantes**, item mítico consumido ao receber: +1 vaga nesta run, até cinco. A compra direta de vagas foi removida. A página não ocupa equipamento e deixa de ser sorteada ao atingir o teto. Cada personagem equipa dois itens. A bolsa exibe aparência e descrição; trocas são feitas entre encontros. Ouro, desejos, recursos e equipamentos pertencem à run; coleção e feitos persistem.
 
 ## Executar e validar
 
@@ -51,10 +51,12 @@ python3 tools/check_095.py --godot /caminho/para/godot
 
 No PC, **Configurações → Ferramentas DEBUG** ou **Ctrl+B** permite liberar os 12 personagens e as 48 bênçãos, montar uma equipe de até cinco e iniciar uma run de teste com os 39 itens na bolsa. O teste usa uma campanha temporária; sair do debug restaura o progresso normal e a tentativa pendente. Essas ferramentas não aparecem no Android.
 
-O preset **Android Teste** exporta APK arm64, código 20, versão 0.9.10-teste, pacote `com.jtabosa.roguetales.preview.v07`. Use a mesma chave das versões anteriores para instalar como atualização. Chaves e SDKs não são versionados.
+O preset **Android Teste** exporta APK arm64, código 21, versão 1.0.0-teste, pacote `com.jtabosa.roguetales.preview.v07`. Use a mesma chave das versões anteriores para instalar como atualização. Chaves e SDKs não são versionados.
 
 ## Código
 
+- `world_routes.gd`: os 65 territórios e 17 percursos originais; validação dos prefixos e cache de cenários.
+- `combat_atmosphere.gd`: clima por território e efeitos de tela; pausa e movimento reduzido.
 - `run_bonuses.gd`: tabelas, sorteio, elegibilidade, prévias, aplicação e persistência.
 - `roster_data.gd`: atributos e descrições consolidados.
 - `combat_rules.gd`: dano, condições, escudos, kits, desejos e sobrevivência.
@@ -64,4 +66,4 @@ O preset **Android Teste** exporta APK arm64, código 20, versão 0.9.10-teste, 
 - `tactics.gd` / `boss_rules.gd`: alvos, encontros e comportamento dos chefes.
 - `expedition_ui.gd` / `interface.gd` / `character_inspector.gd`: navegação e apresentação.
 
-Arte e áudio mantêm os créditos nas respectivas pastas de `assets/`. Não foram geradas novas artes nesta migração de regras.
+Arte e áudio mantêm os créditos nas respectivas pastas de `assets/`. Os 65 cenários fornecidos foram preservados byte a byte; os roteiros e hashes de origem estão em `docs/worlds/`. Saves de runs anteriores continuam nas suas 12 etapas originais até o encerramento. Novas runs usam as quatro estações.

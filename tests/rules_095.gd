@@ -15,6 +15,7 @@ func make(ids:Array,blessing:=-1) -> IdleRun:
 	c.unlocked.assign(TaleCatalog.HEROES.keys())
 	var run:=IdleRun.new()
 	run.start_expedition(c,str(ids[0]),"blessing:%s:0"%ids[0])
+	run.journey.clear() # Isolated legacy combat fixture; seasonal paths have their own integration suite.
 	run.actors.clear()
 	for id in ids:
 		var a:=run.run_actor(id)

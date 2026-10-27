@@ -8,6 +8,15 @@ const COLORS := ["858b94","50b86a","5097ee","ac6bef","ef9c39","ee5555","e6cb79"]
 const WEIGHTS := [36,28,20,10,5,1]
 const LEGACY := {"ember_pearl":"star_powder","winter_match":"blue_hourglass","venom_vial":"black_apple","hunters_lens":"hunter_glasses","tower_braid":"stone_heart","red_goblet":"absinthe_goblet","jade_seal":"enchanted_needle"}
 const ITEMS := {
+  "travelers_page": {
+    "title": "Página dos Viajantes",
+    "rarity": 5,
+    "cost": 550,
+    "detail": "Aumenta permanentemente a capacidade desta run em +1 aliado, até o limite de 5. Consumida ao receber; não ocupa espaço de equipamento.",
+    "consumable": true,
+    "stats": {},
+    "effects": {"party_capacity": 1}
+  },
   "whetstone": {
     "title": "Pedra de Amolar",
     "rarity": 0,

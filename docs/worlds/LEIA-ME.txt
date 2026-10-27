@@ -1,0 +1,32 @@
+﻿ROGUETALES — ESTÁGIOS DAS QUATRO ESTAÇÕES
+
+65 cenários distintos, organizados em oito pastas pela ordem de entrada.
+As pastas reúnem as alternativas de Primavera, Verão, Outono e Inverno.
+Mapa 8 contém somente CasteloDoAutor.png, compartilhado pelas quatro estações.
+
+Outono: 14 arquivos adicionados (6 existentes reutilizados e 8 novos).
+Com o Castelo do Autor compartilhado, a rota de Outono usa 15 territórios.
+Todos os 51 cenários do pacote anterior foram preservados byte a byte.
+
+Mapa 1: 4 cenário(s)
+Mapa 2: 8 cenário(s)
+Mapa 3: 10 cenário(s)
+Mapa 4: 13 cenário(s)
+Mapa 5: 12 cenário(s)
+Mapa 6: 12 cenário(s)
+Mapa 7: 5 cenário(s)
+Mapa 8: 1 cenário(s)
+
+Rotas.txt contém os percursos completos de todas as estações, com oito
+mapas em cada um. A proposta de Outono usa o porão escondido do moinho,
+a casa de doces, o campo de espantalhos e o cemitério; os caminhos se
+encontram no Bosque das Cinzas antes do Castelo do Autor.
+
+Catalogo.csv relaciona etapa, estação, cenário, encontro definido e arquivo.
+PreviaDosCenarios.jpg mostra o conjunto completo.
+PreviaDoOutono.jpg mostra os 15 territórios da rota de Outono.
+PreviaDoInverno.jpg mostra os 16 territórios da rota de Inverno.
+
+As imagens não contêm legendas ou interface. A Cidade Andante mantém
+os viajantes e camelos de ambientação aprovados. Espantalhos e estátuas
+são objetos inertes de cenário.

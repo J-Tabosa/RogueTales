@@ -1,0 +1,66 @@
+Mapa;Estação;Cenário;Encontro definido;Arquivo;Atualização
+1;Primavera;Floresta de Primavera;;Mapa 1/FlorestaPrimavera.png;Preservado
+1;Verao;Floresta de Verão;;Mapa 1/FlorestaVerao.png;Preservado
+1;Outono;Floresta de Outono;;Mapa 1/FlorestaOutono.png;Reutilizado de Outono
+1;Inverno;Floresta de Inverno;;Mapa 1/FlorestaInverno.png;Preservado
+2;Primavera;Bosque Noturno;;Mapa 2/BosqueNoturno.png;Preservado
+2;Primavera;Pomar;Chapeuzinho;Mapa 2/Pomar.png;Preservado
+2;Verao;Campos de Girassóis;;Mapa 2/CamposDeGirassois.png;Preservado
+2;Verao;Campos Verdejantes;;Mapa 2/CamposVerdejantes.png;Preservado
+2;Outono;Plantação de Abóboras;;Mapa 2/PlantacaoDeAboboras.png;Reutilizado de Outono
+2;Outono;Vilarejo Agrícola;;Mapa 2/VilarejoAgricola.png;Reutilizado de Outono
+2;Inverno;Cavernas de Mineração;Branca de Neve;Mapa 2/CavernasDeMineracao.png;Preservado
+2;Inverno;Pé da Montanha;;Mapa 2/PeDaMontanha.png;Preservado
+3;Primavera;Bosque Encantado;;Mapa 3/BosqueEncantado.png;Preservado
+3;Primavera;Mangue;;Mapa 3/Mangue.png;Preservado
+3;Primavera;Recanto;;Mapa 3/Recanto.png;Preservado
+3;Verao;Campo de Batalha;Mulan;Mapa 3/CampoDeBatalha.png;Preservado
+3;Verao;Estrada Real;;Mapa 3/EstradaReal.png;Preservado
+3;Verao;Savana;;Mapa 3/Savana.png;Preservado
+3;Outono;Interior do Moinho;;Mapa 3/InteriorDoMoinho.png;Reutilizado de Outono
+3;Outono;Praça do Vilarejo;;Mapa 3/PracaDoVilarejo.png;Reutilizado de Outono
+3;Inverno;Cavernas Gélidas;;Mapa 3/CavernasGelidas.png;Preservado
+3;Inverno;Montanha;;Mapa 3/Montanha.png;Preservado
+4;Primavera;Beira-Mar;;Mapa 4/BeiraMar.png;Preservado
+4;Primavera;Igreja Destruída;;Mapa 4/IgrejaDestruida.png;Preservado
+4;Primavera;Ruínas Enraizadas;;Mapa 4/RuinasEnraizadas.png;Preservado
+4;Verao;Cânion;;Mapa 4/Canion.png;Preservado
+4;Verao;Ponte para o Castelo;Gato de Botas;Mapa 4/PonteParaOCastelo.png;Preservado
+4;Verao;Terra dos Caídos;;Mapa 4/TerraDosCaidos.png;Preservado
+4;Verao;Terras Áridas;;Mapa 4/TerrasAridas.png;Preservado
+4;Outono;Campo de Espantalhos;;Mapa 4/CampoDeEspantalhos.png;Novo de Outono
+4;Outono;Cemitério Antigo;;Mapa 4/CemiterioAntigo.png;Novo de Outono
+4;Outono;Porão do Moinho;;Mapa 4/PoraoDoMoinho.png;Novo de Outono
+4;Inverno;Cavernas Profundas;;Mapa 4/CavernasProfundas.png;Preservado
+4;Inverno;Cidade Fria;Vendedora de Fósforos;Mapa 4/CidadeFria.png;Preservado
+4;Inverno;Cume;;Mapa 4/Cume.png;Preservado
+5;Primavera;Cavernas de Cogumelos;;Mapa 5/CavernasDeCogumelos.png;Preservado
+5;Primavera;Pátio do Castelo;;Mapa 5/PatioDoCastelo.png;Preservado
+5;Primavera;Praia;;Mapa 5/Praia.png;Preservado
+5;Verao;Castelo do Rei Dourado;;Mapa 5/CasteloDoReiDourado.png;Preservado
+5;Verao;Deserto;;Mapa 5/Deserto.png;Preservado
+5;Verao;Vale da Rocha;;Mapa 5/ValeDaRocha.png;Preservado
+5;Outono;Casa de Doces (interior);;Mapa 5/CasaDeDoces.png;Reutilizado de Outono
+5;Outono;Cripta Esquecida;;Mapa 5/CriptaEsquecida.png;Novo de Outono
+5;Outono;Floresta Retorcida;;Mapa 5/FlorestaRetorcida.png;Novo de Outono
+5;Inverno;Jardim das Estátuas;;Mapa 5/JardimDasEstatuas.png;Preservado
+5;Inverno;Lago Congelado;;Mapa 5/LagoCongelado.png;Preservado
+5;Inverno;Ponto Vulcânico;;Mapa 5/PontoVulcanico.png;Preservado
+6;Primavera;Castelo da Rainha Vermelha;Alice;Mapa 6/CasteloDaRainhaVermelha.png;Preservado
+6;Primavera;Enseada Escondida;;Mapa 6/EnseadaEscondida.png;Preservado
+6;Primavera;Navio Pirata;Peter Pan;Mapa 6/NavioPirata.png;Preservado
+6;Primavera;Oceano;Pequena Sereia;Mapa 6/Oceano.png;Preservado
+6;Verao;Cárcere de Princesa;Rapunzel;Mapa 6/CarcereDePrincesa.png;Preservado
+6;Verao;Esgotos da Cidade;;Mapa 6/EsgotosDaCidade.png;Preservado
+6;Verao;Oásis;;Mapa 6/Oasis.png;Preservado
+6;Outono;Forno da Bruxa;;Mapa 6/FornoDaBruxa.png;Novo de Outono
+6;Outono;Mansão Abandonada;;Mapa 6/MansaoAbandonada.png;Novo de Outono
+6;Inverno;Castelo da Rainha Azul;;Mapa 6/CasteloDaRainhaAzul.png;Preservado
+6;Inverno;Chalé Aconchegante;;Mapa 6/ChaleAconchegante.png;Preservado
+6;Inverno;Forja Antiga;;Mapa 6/ForjaAntiga.png;Preservado
+7;Primavera;Ilha Maldita;;Mapa 7/IlhaMaldita.png;Preservado
+7;Verao;Cidade Andante (Caravanas);Aladdin;Mapa 7/CidadeAndante.png;Preservado
+7;Verao;Fundos do Castelo;;Mapa 7/FundosDoCastelo.png;Preservado
+7;Outono;Bosque das Cinzas;;Mapa 7/BosqueDasCinzas.png;Novo de Outono
+7;Inverno;Vale da Aurora;;Mapa 7/ValeDaAurora.png;Preservado
+8;Compartilhado;Castelo do Autor;;Mapa 8/CasteloDoAutor.png;Preservado

@@ -1,0 +1,24 @@
+﻿ROGUETALES — OUTONO ADICIONADO AO PACOTE CONJUNTO
+
+8 NOVOS CENÁRIOS
+Mapa 4: Porão do Moinho
+Mapa 4: Campo de Espantalhos
+Mapa 4: Cemitério Antigo
+Mapa 5: Floresta Retorcida
+Mapa 5: Cripta Esquecida
+Mapa 6: Forno da Bruxa
+Mapa 6: Mansão Abandonada
+Mapa 7: Bosque das Cinzas
+
+6 CENÁRIOS DE OUTONO REUTILIZADOS
+Mapa 1: Floresta de Outono
+Mapa 2: Plantação de Abóboras
+Mapa 2: Vilarejo Agrícola
+Mapa 3: Interior do Moinho
+Mapa 3: Praça do Vilarejo
+Mapa 5: Casa de Doces (interior)
+
+FINAL COMPARTILHADO
+Mapa 8: Castelo do Autor.
+
+Todos os 51 cenários de Primavera, Verão e Inverno foram preservados.

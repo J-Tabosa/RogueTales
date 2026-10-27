@@ -40,7 +40,8 @@ func checks() -> void:
 	assert(run.start_expedition(account, "scarlet", "vigor", true))
 	run.rng.seed = 8381
 	for phase in 180:
-		assert(run.stage == (phase / 6) % 12 and run.phase == phase % 6)
+		if run.needs_map():assert(run.choose_route(run.route_offers[0]))
+		assert(run.stage == (phase / 6) % 8 and run.phase == phase % 6)
 		if run.phase==4:
 			assert(run.choose_route("shop"));run.leave_shop();continue
 		assert(not run.clear_encounter())
@@ -51,9 +52,10 @@ func checks() -> void:
 			var target=run.actors.filter(func(a):return preload("res://scripts/run_bonuses.gd").useful(a,b.attribute,-1))[0]
 			assert(run.confirm_bonus(choice,target.id,-1))
 		else:assert(run.apply_relic(choice))
-		if run.phase!=4:assert(run.choose_route("battle"))
+		if run.phase!=4 and not run.needs_map():assert(run.choose_route("battle"))
 	assert(run.build_history.is_empty() and run.relics.size() < 12)
-	assert(run.upgrade_total() + run.inventory.size() == 150)
+	assert(run.upgrade_total()+run.inventory.size()+run.capacity_relics==150)
+	if run.needs_map():assert(run.choose_route(run.route_offers[0]))
 	for i in 20: assert(run.apply_relic("power"))
 	assert(run.upgrade_count("power") > 3)
 	run.interlude = "route"

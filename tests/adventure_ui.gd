@@ -23,6 +23,7 @@ func prepare(ids: Array, stage: int, depth: int, infinite := false) -> void:
 		game.run.offers.assign(["ally:" + id, "power", "heart"])
 		assert(game.run.recruit(game.campaign, id))
 	game.run.stage = stage
+	game.run.journey.clear() # Explicit boss mechanic fixture.
 	game.run.phase = 5 if ExpeditionContent.is_boss(stage) else 0
 	game.run.wave = 2 if ExpeditionContent.is_boss(stage) else 0
 	game.run.rooms_cleared = depth

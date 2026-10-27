@@ -1,0 +1,177 @@
+﻿PRIMAVERA
+============================================================
+Percurso 1:
+  Mapa 1: Floresta de Primavera
+  Mapa 2: Bosque Noturno
+  Mapa 3: Bosque Encantado
+  Mapa 4: Ruínas Enraizadas
+  Mapa 5: Cavernas de Cogumelos
+  Mapa 6: Enseada Escondida
+  Mapa 7: Ilha Maldita
+  Mapa 8: Castelo do Autor
+
+Percurso 2:
+  Mapa 1: Floresta de Primavera
+  Mapa 2: Bosque Noturno
+  Mapa 3: Mangue
+  Mapa 4: Beira-Mar
+  Mapa 5: Praia
+  Mapa 6: Navio Pirata — Encontro: Peter Pan
+  Mapa 7: Ilha Maldita
+  Mapa 8: Castelo do Autor
+
+Percurso 3:
+  Mapa 1: Floresta de Primavera
+  Mapa 2: Bosque Noturno
+  Mapa 3: Mangue
+  Mapa 4: Beira-Mar
+  Mapa 5: Praia
+  Mapa 6: Oceano — Encontro: Pequena Sereia
+  Mapa 7: Ilha Maldita
+  Mapa 8: Castelo do Autor
+
+Percurso 4:
+  Mapa 1: Floresta de Primavera
+  Mapa 2: Pomar — Encontro: Chapeuzinho
+  Mapa 3: Recanto
+  Mapa 4: Igreja Destruída
+  Mapa 5: Pátio do Castelo
+  Mapa 6: Castelo da Rainha Vermelha — Encontro: Alice
+  Mapa 7: Ilha Maldita
+  Mapa 8: Castelo do Autor
+
+VERÃO
+============================================================
+Percurso 1:
+  Mapa 1: Floresta de Verão
+  Mapa 2: Campos Verdejantes
+  Mapa 3: Campo de Batalha — Encontro: Mulan
+  Mapa 4: Terra dos Caídos
+  Mapa 5: Vale da Rocha
+  Mapa 6: Esgotos da Cidade
+  Mapa 7: Fundos do Castelo
+  Mapa 8: Castelo do Autor
+
+Percurso 2:
+  Mapa 1: Floresta de Verão
+  Mapa 2: Campos Verdejantes
+  Mapa 3: Savana
+  Mapa 4: Cânion
+  Mapa 5: Vale da Rocha
+  Mapa 6: Esgotos da Cidade
+  Mapa 7: Fundos do Castelo
+  Mapa 8: Castelo do Autor
+
+Percurso 3:
+  Mapa 1: Floresta de Verão
+  Mapa 2: Campos Verdejantes
+  Mapa 3: Savana
+  Mapa 4: Terras Áridas
+  Mapa 5: Deserto
+  Mapa 6: Oásis
+  Mapa 7: Cidade Andante (Caravanas) — Encontro: Aladdin
+  Mapa 8: Castelo do Autor
+
+Percurso 4:
+  Mapa 1: Floresta de Verão
+  Mapa 2: Campos de Girassóis
+  Mapa 3: Estrada Real
+  Mapa 4: Ponte para o Castelo — Encontro: Gato de Botas
+  Mapa 5: Castelo do Rei Dourado
+  Mapa 6: Cárcere de Princesa — Encontro: Rapunzel
+  Mapa 7: Cidade Andante (Caravanas) — Encontro: Aladdin
+  Mapa 8: Castelo do Autor
+
+OUTONO
+============================================================
+Percurso 1:
+  Mapa 1: Floresta de Outono
+  Mapa 2: Plantação de Abóboras
+  Mapa 3: Interior do Moinho
+  Mapa 4: Porão do Moinho
+  Mapa 5: Casa de Doces (interior)
+  Mapa 6: Forno da Bruxa
+  Mapa 7: Bosque das Cinzas
+  Mapa 8: Castelo do Autor
+
+Percurso 2:
+  Mapa 1: Floresta de Outono
+  Mapa 2: Plantação de Abóboras
+  Mapa 3: Interior do Moinho
+  Mapa 4: Campo de Espantalhos
+  Mapa 5: Floresta Retorcida
+  Mapa 6: Mansão Abandonada
+  Mapa 7: Bosque das Cinzas
+  Mapa 8: Castelo do Autor
+
+Percurso 3:
+  Mapa 1: Floresta de Outono
+  Mapa 2: Vilarejo Agrícola
+  Mapa 3: Praça do Vilarejo
+  Mapa 4: Campo de Espantalhos
+  Mapa 5: Floresta Retorcida
+  Mapa 6: Mansão Abandonada
+  Mapa 7: Bosque das Cinzas
+  Mapa 8: Castelo do Autor
+
+Percurso 4:
+  Mapa 1: Floresta de Outono
+  Mapa 2: Vilarejo Agrícola
+  Mapa 3: Praça do Vilarejo
+  Mapa 4: Cemitério Antigo
+  Mapa 5: Cripta Esquecida
+  Mapa 6: Mansão Abandonada
+  Mapa 7: Bosque das Cinzas
+  Mapa 8: Castelo do Autor
+
+INVERNO
+============================================================
+Percurso 1:
+  Mapa 1: Floresta de Inverno
+  Mapa 2: Pé da Montanha
+  Mapa 3: Montanha
+  Mapa 4: Cidade Fria — Encontro: Vendedora de Fósforos
+  Mapa 5: Lago Congelado
+  Mapa 6: Chalé Aconchegante
+  Mapa 7: Vale da Aurora
+  Mapa 8: Castelo do Autor
+
+Percurso 2:
+  Mapa 1: Floresta de Inverno
+  Mapa 2: Pé da Montanha
+  Mapa 3: Montanha
+  Mapa 4: Cume
+  Mapa 5: Jardim das Estátuas
+  Mapa 6: Castelo da Rainha Azul
+  Mapa 7: Vale da Aurora
+  Mapa 8: Castelo do Autor
+
+Percurso 3:
+  Mapa 1: Floresta de Inverno
+  Mapa 2: Cavernas de Mineração — Encontro: Branca de Neve
+  Mapa 3: Cavernas Gélidas
+  Mapa 4: Cume
+  Mapa 5: Jardim das Estátuas
+  Mapa 6: Castelo da Rainha Azul
+  Mapa 7: Vale da Aurora
+  Mapa 8: Castelo do Autor
+
+Percurso 4:
+  Mapa 1: Floresta de Inverno
+  Mapa 2: Cavernas de Mineração — Encontro: Branca de Neve
+  Mapa 3: Cavernas Gélidas
+  Mapa 4: Cavernas Profundas
+  Mapa 5: Jardim das Estátuas
+  Mapa 6: Castelo da Rainha Azul
+  Mapa 7: Vale da Aurora
+  Mapa 8: Castelo do Autor
+
+Percurso 5:
+  Mapa 1: Floresta de Inverno
+  Mapa 2: Cavernas de Mineração — Encontro: Branca de Neve
+  Mapa 3: Cavernas Gélidas
+  Mapa 4: Cavernas Profundas
+  Mapa 5: Ponto Vulcânico
+  Mapa 6: Forja Antiga
+  Mapa 7: Vale da Aurora
+  Mapa 8: Castelo do Autor
