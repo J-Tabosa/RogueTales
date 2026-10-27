@@ -100,7 +100,10 @@ func _ready() -> void:
 	cutin_title = tag(cutin,Vector2(70,28),Vector2(192,24),15,true)
 	cutin.visible = false
 func enqueue(event: Dictionary) -> void:
-	queue.append(event.duplicate())
+	var safe:=event.duplicate()
+	safe["hero"]=str(safe.get("hero","")).trim_prefix("item_")
+	if not TaleCatalog.HEROES.has(safe.hero):return
+	queue.append(safe)
 	if queue.size() > 8: queue.pop_front()
 	if ribbon_left <= 0: next_ribbon()
 func next_ribbon() -> void:
@@ -108,7 +111,10 @@ func next_ribbon() -> void:
 		ribbon.visible = false
 		return
 	var event: Dictionary = queue.pop_front()
-	var id := str(event.hero)
+	var id := str(event.get("hero","")).trim_prefix("item_")
+	if not TaleCatalog.HEROES.has(id):
+		next_ribbon()
+		return
 	tint = TaleCatalog.HEROES[id].color
 	ribbon.add_theme_stylebox_override("panel",skin(tint))
 	portrait(ribbon_face,id)
@@ -120,6 +126,7 @@ func next_ribbon() -> void:
 	ribbon.visible = true
 	layout()
 func announce_ultimate(id: String) -> void:
+	if not TaleCatalog.HEROES.has(id):return
 	cutin.add_theme_stylebox_override("panel",skin(TaleCatalog.HEROES[id].color))
 	portrait(cutin_face,id)
 	cutin_name.text = str(TaleCatalog.HEROES[id].get("short_name",TaleCatalog.HEROES[id].name)).to_upper()+" · ULT"

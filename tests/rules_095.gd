@@ -11,7 +11,7 @@ func check(value:bool,message:String) -> void:
 		failures+=1
 func close(a:float,b:float) -> bool:return absf(a-b)<.001
 func make(ids:Array,blessing:=-1) -> IdleRun:
-	var c:=TaleCampaign.new()
+	var c:=preload("res://tests/test_accounts.gd").legacy()
 	c.unlocked.assign(TaleCatalog.HEROES.keys())
 	var run:=IdleRun.new()
 	run.start_expedition(c,str(ids[0]),"blessing:%s:0"%ids[0])
@@ -159,7 +159,7 @@ func test() -> void:
 	run=make(["scarlet","ariel","mulan"])
 	run.tactics.enemies.clear()
 	var flow:=Flow.new();flow.bind(run)
-	check(flow.order[0].index==0 and flow.order[1].index==2 and flow.order[2].index==1,"Initiative50 before10 stableties")
+	check(flow.order[0].index==0 and flow.order[1].index==1 and flow.order[2].index==2,"Umi50 ties ordered stably by party index")
 	run.actors[0].attacks=3
 	var entry:=flow.next_action()
 	flow.begin(entry);flow.complete()
@@ -179,7 +179,7 @@ func test() -> void:
 	run.actors[2].shadows=2
 	R.shield(run.actors[1],20,run.actors[1],"silk")
 	run.actors[1].shield_parts[0].turns=3
-	var c:=TaleCampaign.new();c.unlocked.assign(TaleCatalog.HEROES.keys())
+	var c:=preload("res://tests/test_accounts.gd").legacy();c.unlocked.assign(TaleCatalog.HEROES.keys())
 	var restored:=IdleRun.new();restored.restore(c,run.to_checkpoint())
 	check(restored.actors[0].wishes==["wealth"] and restored.actors[2].shadows==2,"Checkpoint wishes/shadows")
 	check(restored.actors[1].shield_parts[0].turns==3,"Checkpoint individual shieldremainingturns")

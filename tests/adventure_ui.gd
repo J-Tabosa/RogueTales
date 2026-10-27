@@ -40,7 +40,7 @@ func checks() -> void:
 	game.save_path = SAVE
 	root.add_child(game)
 	game.set_process(false)
-	game.campaign = TaleCampaign.new()
+	game.campaign = preload("res://tests/test_accounts.gd").legacy()
 	game.campaign.unlocked.assign(TaleCatalog.HEROES.keys())
 	game.set_run_mode(true)
 	assert(not game.chosen_endless and game.state == "expedition_setup")

@@ -1,6 +1,6 @@
 # RogueTales: O Último Fio
 
-Roguelite em **Godot 4.7**, PC e Android, com 12 protagonistas, equipes de até nove personagens e 12 estágios de seis fases. Versão **0.9.9**: 27 equipamentos gerais, 12 utilitários dos vilões, ícones próprios, raridades, migração de saves e Areias do Tempo com ativação manual. Bônus Únicos e de Grupo preservados.
+Roguelite em **Godot 4.7**, PC e Android, com 12 protagonistas, equipes de até cinco personagens e 12 estágios de seis fases. Versão **0.9.10**: progressão fixa, compra de personagens por memórias, correção da Alice com itens negativos, inimigos sem esquiva e Umi com Iniciativa base 50. Os 27 equipamentos gerais e 12 utilitários da 0.9.9 permanecem. Detalhes e migrações em [PROGRESSAO_0910](docs/PROGRESSAO_0910.md).
 
 ## Regras e personagens
 
@@ -25,7 +25,11 @@ Saves anteriores preservam os atributos e efeitos legados, sem convertê-los em 
 
 Retratos HD separados das células de animação de combate. Idles executam um gesto lento e aguardam 7–11 segundos; deslocamento usa pose estática. Efeitos das ULTs seguem seus alvos, com 16 cores de auras translúcidas, ícones de condições, bolhas de escudo e opção de movimento reduzido. As fichas PC/mobile exibem os atributos novos e permitem rolagem por toque.
 
-A formação tem até três por posição: vanguarda, meio e retaguarda. A linha horizontal do Cortejo das Cartas atravessa essas posições. A abertura do estágio 1 é fixa: 1-1 tem um inimigo, 1-2 tem dois e 1-3 tem três. Depois, os encontros comuns desse estágio variam de um a três. Encontros comuns limitam-se a 6 no estágio 2 e 9 do estágio 3 em diante. Chefes, desafios secretos e infinito mantêm suas regras.
+A equipe tem até cinco personagens e até três por posição: vanguarda, meio e retaguarda. A linha horizontal do Cortejo das Cartas atravessa essas posições. A abertura é fixa: 1-1 tem um inimigo, 1-2 dois e 1-3 três. Os limites dos encontros comuns são três nos estágios 1–2, seis nos estágios 3–6 e nove a partir do estágio 7. Chefes mantêm dois acompanhantes; desafios secretos são individuais. Todos os inimigos atuais têm esquiva zero.
+
+Em cada estágio, X-1 a X-4 são combates com recompensas, X-5 oferece Mercador ou Negociante e X-6 é o chefe. Eventos aleatórios opcionais podem aparecer antes dos combates. A campanha tem 60 combates e 12 visitas ao mercado.
+
+Cada personagem custa 5.000 memórias para desbloqueio permanente. Contas novas começam com todos bloqueados e 5.000 memórias para comprar o primeiro. Coleções e saldos de saves anteriores são preservados. Convites de aliados continuam temporários durante a run; feitos liberam bênçãos, sem substituir a compra do personagem.
 
 Após um chefe, se ninguém tiver sido recrutado nesta run, uma das três ofertas é garantidamente um personagem. O jogador pode escolher outra recompensa. Depois do primeiro recrutamento, convites voltam à chance comum de 25%.
 
@@ -45,7 +49,9 @@ python3 tools/check_095.py --godot /caminho/para/godot
 
 `integration_095.gd` exercita as 48 combinações contra chefes, checkpoints, desbloqueios e a cena real. Com renderização nativa e um diretório após `--`, captura as telas PC/mobile para revisão. O runner também valida arte HD, auras, toque, recrutamento, economia, equipamentos, formações e interface. Testes históricos de regras substituídas são identificados em `tests/README.md`.
 
-O preset **Android Teste** exporta APK arm64, código 19, versão 0.9.9-teste, pacote `com.jtabosa.roguetales.preview.v07`. Use a mesma chave das versões anteriores para instalar como atualização. Chaves e SDKs não são versionados.
+No PC, **Configurações → Ferramentas DEBUG** ou **Ctrl+B** permite liberar os 12 personagens e as 48 bênçãos, montar uma equipe de até cinco e iniciar uma run de teste com os 39 itens na bolsa. O teste usa uma campanha temporária; sair do debug restaura o progresso normal e a tentativa pendente. Essas ferramentas não aparecem no Android.
+
+O preset **Android Teste** exporta APK arm64, código 20, versão 0.9.10-teste, pacote `com.jtabosa.roguetales.preview.v07`. Use a mesma chave das versões anteriores para instalar como atualização. Chaves e SDKs não são versionados.
 
 ## Código
 

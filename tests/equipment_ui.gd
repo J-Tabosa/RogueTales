@@ -16,12 +16,12 @@ func checks() -> void:
 	game.save_path = SAVE
 	root.add_child(game)
 	game.set_process(false)
-	game.campaign = TaleCampaign.new()
+	game.campaign = preload("res://tests/test_accounts.gd").legacy()
 	game.campaign.unlocked.assign(TaleCatalog.HEROES.keys())
 	game.run = IdleRun.new()
 	assert(game.run.start_expedition(game.campaign, "scarlet", "blessing:scarlet:0"))
-	game.run.party_capacity = 9
-	for hero in ["rapunzel", "joao", "puss", "mulan", "maria", "aladin", "snow_white", "alice"]:
+	game.run.party_capacity = 5
+	for hero in ["rapunzel","joao","puss","alice"]:
 		game.run.pending_choice = true
 		game.run.offers.assign(["ally:" + hero, "power", "heart"])
 		assert(game.run.recruit(game.campaign, hero))
@@ -36,17 +36,17 @@ func checks() -> void:
 		game.spawn_enemy()
 		game.arena.set_process(false)
 		game.feedback.set_process(false)
-		assert(game.ult_buttons.size() == 9)
+		assert(game.ult_buttons.size() == 5)
 		assert(game.hero_deck.custom_minimum_size.y > 492 if game.desktop else game.hero_deck.custom_minimum_size.x > 508)
 		for card in game.ult_buttons:
 			assert(card.get_children().filter(func(child): return child.has_meta("card_items")).size() == 2)
 		game.run.interlude = "route"
 		game.run.route_offers.assign(["battle"])
 		game.show_routes()
-		game.show_equipment(8)
-		assert(game.paused and game.equipment_panel.hero_index == 8)
-		game.equip_from_panel(8, "stone_heart", 0)
-		assert(game.run.actors[8].equipment[0] == "stone_heart")
+		game.show_equipment(4)
+		assert(game.paused and game.equipment_panel.hero_index == 4)
+		game.equip_from_panel(4, "stone_heart", 0)
+		assert(game.run.actors[4].equipment[0] == "stone_heart")
 		assert(game.campaign.checkpoint.equipment_state.alice.items[0] == "stone_heart")
 		game.equipment_panel.select_tab("appearance")
 		var scroll: ScrollContainer = game.equipment_panel.find_child("InventoryScroll", true, false)
@@ -87,12 +87,12 @@ func checks() -> void:
 		var replacement: ScrollContainer = game.overlay.find_child("RecruitReplacementScroll", true, false)
 		assert(replacement != null)
 		var buttons := descendants(replacement).filter(func(child): return child is Button)
-		assert(buttons.size() == 9 and buttons.filter(func(button): return not button.disabled).size() == 3)
+		assert(buttons.size() == 5 and buttons.filter(func(button): return not button.disabled).size() == 5)
 		game.run.interlude = "shop"
 		game.run.shop_stock.assign(["item:echo_bell"])
 		game.run.run_gold = 200
 		game.show_run_shop()
-		assert(descendants(game.page).any(func(child): return child.get_meta("shop_item", "") == "capacity"))
+		assert(not descendants(game.page).any(func(child): return child.get_meta("shop_item", "") == "capacity"))
 	game.queue_free()
 	await process_frame
 	for suffix in ["", ".bak", ".tmp"]:

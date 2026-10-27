@@ -41,13 +41,13 @@ func checks() -> void:
 	if OS.get_cmdline_user_args().size()>0:
 		destination=OS.get_cmdline_user_args()[0]
 		DirAccess.make_dir_recursive_absolute(destination)
-	var fresh:=TaleCampaign.new()
+	var fresh:=preload("res://tests/test_accounts.gd").legacy()
 	assert(fresh.window_mode=="fullscreen" and not fresh.window_mode_selected)
 	fresh.load_data({"window_mode":"windowed"})
 	assert(fresh.window_mode=="fullscreen","Migrate the old implicit windowed default")
 	fresh.load_data({"window_mode":"windowed","window_mode_selected":true})
 	assert(fresh.window_mode=="windowed" and fresh.window_mode_selected)
-	var saved:=TaleCampaign.new()
+	var saved:=preload("res://tests/test_accounts.gd").legacy()
 	saved.load_data(fresh.to_dict())
 	assert(saved.window_mode=="windowed" and saved.window_mode_selected)
 	game=load("res://scenes/main.tscn").instantiate()
@@ -55,7 +55,7 @@ func checks() -> void:
 	root.add_child(game)
 	game.set_process(false)
 	# Do not inherit a previous test's display preference.
-	game.campaign=TaleCampaign.new()
+	game.campaign=preload("res://tests/test_accounts.gd").legacy()
 	if DisplayServer.get_name()!="headless":
 		game.apply_window_mode()
 		await process_frame

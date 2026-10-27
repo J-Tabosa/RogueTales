@@ -572,10 +572,11 @@ func show_settings() -> void:
 	button(inner, "Tela cheia / Janela  ·  F11", Rect2(0, 1500, 476, 52), toggle_fullscreen).disabled = OS.has_feature("mobile")
 	var reset := button(inner, "Resetar conta deste dispositivo", Rect2(0, 1600, 476, 56), request_reset)
 	reset.add_theme_color_override("font_color", Color("ecaaa3"))
-	button(inner,"Ferramentas DEBUG",Rect2(0,1680,476,52),open_debug_tools)
+	if debug_tools_allowed():button(inner,"Ferramentas DEBUG",Rect2(0,1680,476,52),open_debug_tools)
 
 
 func open_debug_tools() -> void:
+	if not debug_tools_allowed():return
 	debug_enabled=true
 	show_debug_panel()
 
@@ -870,7 +871,9 @@ func consume_feedback() -> void:
 	for event in run.tactics.feedback_events:
 		if is_instance_valid(arena): arena.passive_effect(event)
 		if is_instance_valid(feedback): feedback.enqueue(event)
-		push_battle_log("%s · %s · %s" % [TaleCatalog.HEROES[event.hero].name, event.title, event.detail])
+		var hero_id:=str(event.get("hero","")).trim_prefix("item_")
+		var source_name:String=str(TaleCatalog.HEROES[hero_id].name) if TaleCatalog.HEROES.has(hero_id) else str(event.get("source_name","Efeito de combate"))
+		push_battle_log("%s · %s · %s" % [source_name,event.get("title","Efeito"),event.get("detail","")])
 	run.tactics.feedback_events.clear()
 
 func show_battle_history() -> void:

@@ -40,7 +40,7 @@ func test() -> void:
 	check(badge.tooltip_text.contains("+100%"),"Powder tooltip explains actual damage bonus")
 	badge.free()
 	# The opening is deterministic across seeds and routes; later counts remain random.
-	var account:=TaleCampaign.new();account.unlocked.assign(TaleCatalog.HEROES.keys())
+	var account:=preload("res://tests/test_accounts.gd").legacy();account.unlocked.assign(TaleCatalog.HEROES.keys())
 	run=IdleRun.new();run.start_expedition(account,"scarlet","blessing:scarlet:0")
 	for phase in 3:
 		run.phase=phase
@@ -48,7 +48,7 @@ func test() -> void:
 			run.rng.seed=seed_value
 			run.spawn_enemy()
 			check(run.tactics.enemies.size()==phase+1,"Opening encounter1/2/3")
-	for phase in [3,4]:
+	for phase in [3]:
 		run.phase=phase
 		var seen:Dictionary={}
 		for seed_value in 100:
@@ -92,10 +92,10 @@ func test() -> void:
 	run.hit_enemy(0,6)
 	check(earned==1 and run.tactics.feedback_events.filter(func(e):return e.kind=="achievement").size()==1,"Achievement feedback emitted once")
 	a.hp=0 # The earned feat must also survive a defeat without finish_combat().
-	account=TaleCampaign.new()
+	account=preload("res://tests/test_accounts.gd").legacy()
 	Blessings.record(account,run.to_checkpoint())
 	check(Blessings.unlocked(account,"blessing:alice:1"),"Unlock persists from live feat even without a victory")
-	var saved_account:=TaleCampaign.new();saved_account.load_data(account.to_dict())
+	var saved_account:=preload("res://tests/test_accounts.gd").legacy();saved_account.load_data(account.to_dict())
 	check(Blessings.unlocked(saved_account,"blessing:alice:1"),"Permanent Alice unlock survives reload")
 	run=make(["alice"],0);a=run.actors[0];a.equipment=["black_apple","trophy_matches"]
 	run.hit_enemy(0,6)
@@ -122,7 +122,7 @@ func test() -> void:
 	native_game=load("res://scenes/main.tscn").instantiate()
 	native_game.save_path="user://corrections096_isolated.json"
 	root.add_child(native_game);native_game.set_process(false)
-	native_game.campaign=TaleCampaign.new()
+	native_game.campaign=preload("res://tests/test_accounts.gd").legacy()
 	native_game.campaign.window_mode="windowed";native_game.campaign.window_mode_selected=true
 	native_game.apply_window_mode()
 	await process_frame

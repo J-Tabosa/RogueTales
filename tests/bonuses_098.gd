@@ -45,7 +45,7 @@ func test() -> void:
 	var pending:String=run.offers[0]
 	check(run.pending_choice and run.offers.has(pending),"Invalid confirmation consumes nothing")
 	check(not run.apply_relic(pending) and not run.add_upgrade(pending),"Legacy paths cannot bypass confirmation")
-	var c:=TaleCampaign.new();c.unlocked.assign(TaleCatalog.HEROES.keys())
+	var c:=preload("res://tests/test_accounts.gd").legacy();c.unlocked.assign(TaleCatalog.HEROES.keys())
 	# Group once per actor, future recruit once, no heal duplication on JSON save cycles.
 	run=make(["scarlet","snow_white"]);a=run.actors[0]
 	a.hp=50;run.actors[1].hp=0

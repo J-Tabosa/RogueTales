@@ -7,7 +7,7 @@ func checks() -> void:
 	# All events are playable solo and have an enforced party-only alternative.
 	for key in Events.EVENTS:
 		var data: Dictionary = Events.EVENTS[key]
-		var account := TaleCampaign.new()
+		var account := preload("res://tests/test_accounts.gd").legacy()
 		account.unlocked.assign(TaleCatalog.HEROES.keys())
 		var run := IdleRun.new()
 		run.start_expedition(account, data.pair[0], "vigor")
@@ -24,7 +24,7 @@ func checks() -> void:
 		assert(Events.dialogue(run, key).size() == 3 and Events.can_pair(run, key))
 		account.checkpoint = run.to_checkpoint()
 		assert(account.save_to(SAVE))
-		var loaded := TaleCampaign.new()
+		var loaded := preload("res://tests/test_accounts.gd").legacy()
 		assert(loaded.load_from(SAVE))
 		var resumed := IdleRun.new()
 		resumed.restore(loaded, loaded.checkpoint)
@@ -34,13 +34,15 @@ func checks() -> void:
 		assert(not Events.resolve(resumed, "pair"), "No reward can be claimed again")
 		assert(not Events.available(resumed).has(key))
 	# Hundreds of phases retain three choices; phase 12 is never a terminal transition.
-	var account := TaleCampaign.new()
+	var account := preload("res://tests/test_accounts.gd").legacy()
 	account.expedition_wins = 1
 	var run := IdleRun.new()
 	assert(run.start_expedition(account, "scarlet", "vigor", true))
 	run.rng.seed = 8381
 	for phase in 180:
 		assert(run.stage == (phase / 6) % 12 and run.phase == phase % 6)
+		if run.phase==4:
+			assert(run.choose_route("shop"));run.leave_shop();continue
 		assert(not run.clear_encounter())
 		assert(run.rooms_cleared == phase + 1 and run.offers.size() == 3)
 		var choice: String = run.offers.filter(func(id): return not id.begins_with("ally:"))[0]
@@ -49,9 +51,9 @@ func checks() -> void:
 			var target=run.actors.filter(func(a):return preload("res://scripts/run_bonuses.gd").useful(a,b.attribute,-1))[0]
 			assert(run.confirm_bonus(choice,target.id,-1))
 		else:assert(run.apply_relic(choice))
-		assert(run.choose_route("battle"))
+		if run.phase!=4:assert(run.choose_route("battle"))
 	assert(run.build_history.is_empty() and run.relics.size() < 12)
-	assert(run.upgrade_total() + run.inventory.size() == 180)
+	assert(run.upgrade_total() + run.inventory.size() == 150)
 	for i in 20: assert(run.apply_relic("power"))
 	assert(run.upgrade_count("power") > 3)
 	run.interlude = "route"
@@ -68,7 +70,7 @@ func checks() -> void:
 	account.checkpoint = run.to_checkpoint()
 	assert(JSON.stringify(account.checkpoint).length() < 120000, "180 floors retain the required bonus history/ledger within a bounded practical save size")
 	assert(account.save_to(SAVE))
-	var loaded := TaleCampaign.new()
+	var loaded := preload("res://tests/test_accounts.gd").legacy()
 	assert(loaded.load_from(SAVE))
 	var resumed := IdleRun.new()
 	resumed.restore(loaded, loaded.checkpoint)

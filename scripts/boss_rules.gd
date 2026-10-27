@@ -170,7 +170,7 @@ static func execute(tactics, index: int) -> Dictionary:
 			if id == "ariel": owner.actors[actual].hindered_rounds = 2
 		if id in ["rapunzel", "ariel", "aladin"]: foe.hp = minf(foe.max_hp, foe.hp + foe.max_hp * (0.35 if id == "rapunzel" else (0.20 if id == "ariel" else 0.15)))
 		if id in ["rapunzel", "mulan", "puss", "aladin"]: foe["shield"] = minf(foe.max_hp, float(foe.get("shield", 0)) + foe.max_hp * {"rapunzel": 0.20, "mulan": 0.35, "puss": 0.25, "aladin": 0.15}[id])
-		if id == "peter": foe.evasion = minf(0.6, foe.evasion + 0.15)
+		if id == "peter": foe.evasion = 0.0
 		if targets.is_empty(): result.non_attack = true
 		# A ULT used during the windup stays available for the next action.
 		if tactics.last_ultimate.get("serial", -1) == intent.get("serial", -2): tactics.last_ultimate = {}

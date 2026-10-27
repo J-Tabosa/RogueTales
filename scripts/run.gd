@@ -37,6 +37,8 @@ var leader := "scarlet"
 var interlude := ""
 var route_offers: Array[String] = []
 var room_kind := "battle"
+var merchant_kind := "shop"
+var inactive_companions: Array[Dictionary] = []
 var shop_stock: Array[String] = []
 var shop_bought: Array[String] = []
 var rooms_cleared := 0
@@ -80,6 +82,8 @@ func setup(campaign: TaleCampaign, index: int, fresh: bool = true) -> void:
 	run_id = campaign.new_run_id() if fresh else 0
 	wave = 0
 	drafted.clear()
+	inactive_companions.clear()
+	merchant_kind="shop"
 	bonus_serial=0
 	bonus_history.clear()
 	relics.clear()
@@ -283,7 +287,7 @@ func to_checkpoint() -> Dictionary:
 		health.append(float(actor.hp))
 		hits.append(int(actor.hits))
 	return {
-		"expedition": expedition, "world_format": 2, "phase": phase, "bonuses":Bonuses.snapshot(self),
+		"expedition": expedition, "route_format":ExpeditionContent.ROUTE_FORMAT,"inactive_companions":inactive_companions.duplicate(true),"merchant_kind":merchant_kind, "world_format": 2, "phase": phase, "bonuses":Bonuses.snapshot(self),
 		"party_capacity":party_capacity,"inventory":inventory.duplicate(),"equipment_state":equipment_snapshot(),
 		"hero_room_counts":hero_room_counts.duplicate(),"secret_survivors":secret_survivors.duplicate(),"reward_boss":reward_boss,
 		"active_secret":active_secret,"pending_secret_reward":pending_secret_reward,"secret_defeated":secret_defeated.duplicate(),
@@ -333,7 +337,10 @@ func restore(campaign: TaleCampaign, data: Dictionary) -> void:
 		leader = str(data.get("leader", "scarlet"))
 		if not TaleCatalog.HEROES.has(leader):leader="scarlet"
 		if not Blessings.data(blessing).is_empty() and Blessings.data(blessing).hero!=leader:blessing=Blessings.id_for(leader,0)
-		party_capacity=clampi(int(data.get("party_capacity",3)),3,9)
+		party_capacity=clampi(int(data.get("party_capacity",3)),3,ExpeditionContent.MAX_PARTY)
+		merchant_kind="trader" if data.get("merchant_kind","")=="trader" else "shop"
+		for retired in data.get("inactive_companions",[]):
+			if retired is Dictionary and TaleCatalog.HEROES.has(str(retired.get("id",""))):inactive_companions.append(retired.duplicate(true))
 		inventory.clear()
 		for item in data.get("inventory",[]):
 			var current:=Equipment.migrate(str(item))
@@ -464,6 +471,14 @@ func restore(campaign: TaleCampaign, data: Dictionary) -> void:
 	if data.get("tactics") is Dictionary and not data.tactics.is_empty():
 		enable_tactics(campaign)
 		tactics.restore(data.tactics)
+	if expedition:
+		limit_party()
+		# Old route choices are replaced only at a safe encounter boundary.
+		if int(data.get("route_format",0))<ExpeditionContent.ROUTE_FORMAT:
+			if interlude in ["route","reward"]:roll_routes()
+			elif interlude.is_empty() and active_secret.is_empty() and ExpeditionContent.is_market(phase):
+				roll_routes()
+				interlude="route"
 
 
 func actor_ids() -> Array[String]:
@@ -617,6 +632,7 @@ func roll_run_offers() -> void:
 
 
 func clear_encounter() -> bool:
+	if expedition and active_secret.is_empty() and ExpeditionContent.is_market(phase):return false
 	Rules.finish_combat(self)
 	if not expedition or interlude=="secret_reward": return false
 	if not active_secret.is_empty():
@@ -665,11 +681,14 @@ func clear_encounter() -> bool:
 
 func roll_routes() -> void:
 	route_offers.assign(["battle"])
-	if ExpeditionContent.is_boss(stage, phase): return
-	var choices := ["elite", "camp", "shop", "spring", "curse", "cache"]
-	if not preload("res://scripts/team_events.gd").available(self).is_empty(): choices.append("team_event")
-	if run_gold < 18: choices.erase("camp")
-	route_offers.append(str(choices[rng.randi_range(0, choices.size() - 1)]))
+	if ExpeditionContent.is_boss(stage,phase):return
+	if ExpeditionContent.is_market(phase):
+		route_offers.assign(["shop","trader"])
+		roll_shop()
+		return
+	if rng.randf()<ExpeditionContent.EVENT_CHANCE and not preload("res://scripts/team_events.gd").available(self).is_empty():route_offers.append("team_event")
+
+func roll_shop() -> void:
 	shop_stock.assign(["potion"])
 	shop_bought.clear()
 	var stock:Array=[]
@@ -692,7 +711,8 @@ func choose_route(id: String) -> bool:
 		pending_event = pool[rng.randi_range(0, pool.size() - 1)]
 		interlude = "event"
 		return true
-	if id == "shop":
+	if id in ["shop","trader"]:
+		merchant_kind=id
 		interlude = "shop"
 		return true
 	if id in ["elite", "cache"]: room_kind = "elite"
@@ -746,11 +766,11 @@ func buy_supply(id: String) -> bool:
 	return true
 
 func capacity_cost() -> int:
-	return int(Equipment.CAPACITY_PRICES[party_capacity-3]) if party_capacity<9 else -1
+	return int(Equipment.CAPACITY_PRICES[party_capacity-3]) if party_capacity<ExpeditionContent.MAX_PARTY else -1
 
 func can_recruit(id: String,replace_index: int=-1) -> bool:
 	if not TaleCatalog.HEROES.has(id) or replace_index>=actors.size() or replace_index< -1:return false
-	var capacity:=party_capacity if expedition else 3
+	var capacity:=mini(party_capacity,ExpeditionContent.MAX_PARTY) if expedition else 3
 	if replace_index<0 and actors.size()>=capacity:return false
 	if not expedition:return true
 	var row:=Tactics.rank_for_class(TaleCatalog.HERO_TACTICS[id]["class"])
@@ -819,6 +839,11 @@ func build_event(id: String) -> void:
 
 func leave_shop() -> void:
 	if interlude == "shop":
+		# Shopping is phase X-5. It grants no combat reward and advances once.
+		if ExpeditionContent.is_market(phase):
+			phase=5
+			rooms_cleared+=1
+			wave=2
 		interlude = ""
 		route_offers.clear()
 
@@ -889,3 +914,21 @@ func confirm_bonus(id:String,target:String,sign:int,source:="reward") -> bool:
 		run_gold-=supply_cost(id)
 		shop_bought.append(id)
 	return true
+
+
+func limit_party() -> void:
+	if actors.size()<=ExpeditionContent.MAX_PARTY:return
+	var chosen:Array[int]=[]
+	for i in actors.size():
+		if actors[i].id==leader:chosen.append(i);break
+	for alive_only in [true,false]:
+		for i in actors.size():
+			if chosen.size()>=ExpeditionContent.MAX_PARTY:break
+			if not chosen.has(i) and (not alive_only or actors[i].hp>0):chosen.append(i)
+	var keep:Array[Dictionary]=[]
+	for i in actors.size():
+		if chosen.has(i):keep.append(actors[i])
+		else:inactive_companions.append(actors[i].duplicate(true))
+	actors=keep
+	party_capacity=ExpeditionContent.MAX_PARTY
+	if tactics!=null:tactics.ensure_front()

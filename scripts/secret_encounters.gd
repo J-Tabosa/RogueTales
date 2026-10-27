@@ -35,7 +35,7 @@ static func spawn(owner) -> Dictionary:
 	var data: Dictionary=DATA[id]
 	var depth: int=(owner.rooms_cleared if owner.endless else owner.stage*6+owner.phase)+12
 	var health: float=86.0*(1.0+depth*.05)*pow(1.045,mini(depth,120))*1.5*(1.0+maxi(0,depth-120)*.08)
-	return {"id":"secret_"+id,"secret_id":id,"name":data.name,"class":data["class"],"row":"front","hp":health,"max_hp":health,"damage":(13.0+depth*.85)*1.32,"armor":2+float(depth)/10,"evasion":.08,"boss":true,"interval":2.9,"timer":2.0,"burn":0.0,"burn_left":0.0,"poison":0.0,"poison_left":0.0,"biome":Biomes.biome(owner.stage),"variant":5,"slot":0,"action_count":0,"intent":{}}
+	return {"id":"secret_"+id,"secret_id":id,"name":data.name,"class":data["class"],"row":"front","hp":health,"max_hp":health,"damage":(13.0+depth*.85)*1.32,"armor":2+float(depth)/10,"evasion":0.0,"boss":true,"interval":2.9,"timer":2.0,"burn":0.0,"burn_left":0.0,"poison":0.0,"poison_left":0.0,"biome":Biomes.biome(owner.stage),"variant":5,"slot":0,"action_count":0,"intent":{}}
 static func reward(owner) -> void:
 	var id: String=owner.active_secret
 	if not DATA.has(id) or owner.secret_defeated.has(id): return

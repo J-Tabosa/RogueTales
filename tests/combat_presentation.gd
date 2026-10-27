@@ -65,9 +65,9 @@ func checks() -> void:
 	game.save_path = SAVE
 	root.add_child(game)
 	game.set_process(false)
-	game.campaign = TaleCampaign.new()
+	game.campaign = preload("res://tests/test_accounts.gd").legacy()
 	game.set_voice_volume(0.23)
-	var saved := TaleCampaign.new()
+	var saved := preload("res://tests/test_accounts.gd").legacy()
 	assert(saved.load_from(SAVE) and is_equal_approx(saved.voice_volume, 0.23))
 	game.begin_chapter_combat(0)
 	game.spawn_enemy()

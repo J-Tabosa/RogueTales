@@ -12,7 +12,7 @@ func test() -> void:
 	var encounters:=0
 	for id in R.Data.BASE:
 		for path in 4:
-			var c:=TaleCampaign.new();c.unlocked.assign(TaleCatalog.HEROES.keys())
+			var c:=preload("res://tests/test_accounts.gd").legacy();c.unlocked.assign(TaleCatalog.HEROES.keys())
 			var run:=IdleRun.new()
 			run.start_expedition(c,id,"blessing:%s:0"%id)
 			run.actors[0].blessing_index=path
@@ -44,7 +44,7 @@ func test() -> void:
 	var run:=make(["snow_white"])
 	run.actors[0].armor=100
 	R.finish_combat(run)
-	var c:=TaleCampaign.new();c.unlocked.assign(TaleCatalog.HEROES.keys())
+	var c:=preload("res://tests/test_accounts.gd").legacy();c.unlocked.assign(TaleCatalog.HEROES.keys())
 	Blessings.record(c,run.to_checkpoint())
 	check(Blessings.unlocked(c,"blessing:snow_white:1"),"Defense100 actualunlock")
 	check(not Blessings.unlocked(c,"blessing:scarlet:1"),"Scarlet ninehitsnot12rooms")
@@ -52,7 +52,7 @@ func test() -> void:
 	snapshot.leader="snow_white";snapshot.hero_ids=["snow_white","scarlet"]
 	Blessings.record(c,snapshot,true)
 	check(Blessings.unlocked(c,"blessing:snow_white:3") and not Blessings.unlocked(c,"blessing:scarlet:3"),"Completionboon protagonistonly")
-	var restored_c:=TaleCampaign.new();restored_c.load_data(c.to_dict())
+	var restored_c:=preload("res://tests/test_accounts.gd").legacy();restored_c.load_data(c.to_dict())
 	check(Blessings.unlocked(restored_c,"blessing:snow_white:1"),"Feat survivesaccount serialization")
 	# Real scene and mobile/desktop UI, using exactly the live mana and wish paths.
 	if not OS.get_cmdline_user_args().is_empty():
@@ -62,7 +62,7 @@ func test() -> void:
 	game.save_path="user://integration095_isolated.json"
 	root.add_child(game)
 	game.set_process(false)
-	game.campaign=TaleCampaign.new();game.campaign.unlocked.assign(TaleCatalog.HEROES.keys())
+	game.campaign=preload("res://tests/test_accounts.gd").legacy();game.campaign.unlocked.assign(TaleCatalog.HEROES.keys())
 	game.campaign.window_mode="windowed";game.campaign.window_mode_selected=true
 	game.apply_window_mode()
 	await process_frame

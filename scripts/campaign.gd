@@ -2,9 +2,10 @@ class_name TaleCampaign
 extends RefCounted
 ## Persistent progression. Combat checkpoints always begin at an encounter boundary.
 const SAVE_PATH := "user://campaign_v1.json"
-var gold := 80
-var unlocked: Array[String] = ["scarlet"]
-var party: Array[String] = ["scarlet"]
+const HERO_PRICE := 5000
+var gold := HERO_PRICE
+var unlocked: Array[String] = []
+var party: Array[String] = []
 var cleared: Array[int] = []
 var levels: Dictionary = {}
 var choices: Dictionary = {}
@@ -23,7 +24,7 @@ var player_xp := 0
 var total_kills := 0
 var total_wins := 0
 var total_defeats := 0
-var total_gold := 80
+var total_gold := HERO_PRICE
 var total_spent := 0
 var play_seconds := 0.0
 var idle_anchor := 0
@@ -133,7 +134,7 @@ func toggle_party(id: String) -> bool:
 			return false
 		party.erase(id)
 	else:
-		if party.size() >= 3:
+		if party.size() >= ExpeditionContent.MAX_PARTY:
 			return false
 		party.append(id)
 	ensure_front()
@@ -175,7 +176,7 @@ func choose_memory(index: int, choice: String) -> bool:
 
 func to_dict() -> Dictionary:
 	return {
-		"version": 9,
+		"version": 10,
 		"hero_milestones":hero_milestones.duplicate(true),"blessing_credit":blessing_credit.duplicate(),
 		"best_endless": best_endless, "endless_runs": endless_runs,
 		"discovered_synergies": discovered_synergies.duplicate(), "discovered_events": discovered_events.duplicate(),
@@ -246,7 +247,7 @@ func load_data(data: Dictionary) -> void:
 	blessings_unlocked.assign(["vigor", "fury", "echo"])
 	for key in data.get("blessings_unlocked", []):
 		if ExpeditionContent.BLESSINGS.has(key) and not blessings_unlocked.has(key): blessings_unlocked.append(key)
-	gold = clampi(int(data.get("gold", 80)), 0, 9999999)
+	gold = clampi(int(data.get("gold", HERO_PRICE)), 0, 9999999)
 	# Version 1 contained a removed heroine. Refund her purchased skill ranks exactly once.
 	if int(data.get("version", 1)) == 1:
 		var old_levels: Variant = data.get("levels", {})
@@ -254,7 +255,8 @@ func load_data(data: Dictionary) -> void:
 			for rank in old_levels.cinderella:
 				var count := clampi(int(rank), 0, 5)
 				gold += count * 35 + 15 * count * (count - 1)
-	unlocked.assign(["scarlet"])
+	unlocked.clear()
+	if int(data.get("version",1))<10:unlocked.append("scarlet")
 	if data.get("unlocked") is Array:
 		for id in data.unlocked:
 			if TaleCatalog.HEROES.has(id) and not unlocked.has(id):
@@ -262,10 +264,10 @@ func load_data(data: Dictionary) -> void:
 	party.clear()
 	if data.get("party") is Array:
 		for id in data.party:
-			if unlocked.has(id) and not party.has(id) and party.size() < 3:
+			if unlocked.has(id) and not party.has(id) and party.size() < ExpeditionContent.MAX_PARTY:
 				party.append(id)
-	if party.is_empty():
-		party.append("scarlet")
+	if party.is_empty() and not unlocked.is_empty():
+		party.append(unlocked[0])
 	cleared.clear()
 	if data.get("cleared") is Array:
 		var completed: Array[int] = []
@@ -419,7 +421,7 @@ func load_from(path: String = SAVE_PATH) -> bool:
 			parser.parse(FileAccess.get_file_as_string(candidate)) == OK
 			and parser.data is Dictionary
 		):
-			if int(parser.data.get("version", 0)) in [1, 2, 3, 4, 5, 6, 7, 8, 9]:
+			if int(parser.data.get("version", 0)) in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]:
 				load_data(parser.data)
 				return true
 	return false
@@ -557,7 +559,7 @@ func valid_checkpoint_party(data: Dictionary) -> bool:
 		return data.health.size() == party.size()
 	var ids: Variant = data.hero_ids
 	var drafted: Variant = data.get("drafted", [])
-	if not ids is Array or not drafted is Array or ids.is_empty() or ids.size() > (clampi(int(data.get("party_capacity",3)),3,9) if data.get("expedition",false) else 3):
+	if not ids is Array or not drafted is Array or ids.is_empty() or ids.size() > (clampi(int(data.get("party_capacity",3)),3,9 if int(data.get("route_format",0))<3 else ExpeditionContent.MAX_PARTY) if data.get("expedition",false) else 3):
 		return false
 	if data.health.size() != ids.size():
 		return false
@@ -596,12 +598,16 @@ func unlock_amount(id: String) -> float:
 
 
 func unlock_text(id: String) -> String:
-	if unlocked.has(id):
-		return "Desbloqueio permanente"
-	if not TaleCatalog.UNLOCKS.has(id):
-		return "Disponível desde o início"
-	var rule: Dictionary = TaleCatalog.UNLOCKS[id]
-	return "%d / %d %s" % [int(unlock_amount(id)), rule.goal, rule.unit]
+	return "Desbloqueio permanente" if unlocked.has(id) else "Comprar por 5.000 memórias"
+
+func buy_hero(id:String) -> bool:
+	if not TaleCatalog.HEROES.has(id) or unlocked.has(id) or gold<HERO_PRICE or not checkpoint.is_empty():return false
+	gold-=HERO_PRICE
+	total_spent+=HERO_PRICE
+	unlocked.append(id)
+	if party.is_empty():party.append(id)
+	ensure_front()
+	return true
 
 
 func resolve_run(data: Dictionary, won: bool) -> Array[String]:
@@ -648,12 +654,7 @@ func resolve_run(data: Dictionary, won: bool) -> Array[String]:
 		for id in TaleCatalog.NEW_HERO_IDS:
 			if drafted.has(id):
 				unlock_progress[id] = minf(TaleCatalog.UNLOCKS[id].goal, float(unlock_progress.get(id, 0)) + maxf(0, float(new_hits.get(id, 0))))
-	for id in TaleCatalog.UNLOCKS:
-		if not unlocked.has(id) and unlock_amount(id) >= TaleCatalog.UNLOCKS[id].goal:
-			unlocked.append(id)
-			newly_unlocked.append(id)
-			if not is_expedition and party.size() < 3:
-				party.append(id)
+	# Feats still progress, but only an explicit memory purchase unlocks a hero.
 	return newly_unlocked
 
 

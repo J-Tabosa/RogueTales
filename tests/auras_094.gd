@@ -29,7 +29,7 @@ func checks() -> void:
 	assert(Aura.canonical("vermelho")=="red" and Aura.canonical("turquesa")=="teal" and Aura.canonical("ROXO")=="purple")
 	assert(Aura.BODY_ALPHA<.25 and Aura.CORE_ALPHA<.25 and Aura.GLOW_ALPHA<.05)
 	for key in Aura.COLORS:assert(Aura.style_for(key) in Aura.STYLES)
-	var account:=TaleCampaign.new()
+	var account:=preload("res://tests/test_accounts.gd").legacy()
 	var sim:=IdleRun.new()
 	assert(sim.start_expedition(account,"scarlet","vigor"))
 	sim.spawn_enemy()

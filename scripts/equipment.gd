@@ -2,7 +2,7 @@ extends RefCounted
 ## Run-only equipment: 27 general items, 12 villain utilities, two slots.
 const SLOTS := 2
 const FORMAT := 2
-const CAPACITY_PRICES := [150,400,900,1500,2200,3000]
+const CAPACITY_PRICES := [150,400]
 const RARITIES := ["Comum","Incomum","Raro","Épico","Lendário","Mítico","Especial"]
 const COLORS := ["858b94","50b86a","5097ee","ac6bef","ef9c39","ee5555","e6cb79"]
 const WEIGHTS := [36,28,20,10,5,1]

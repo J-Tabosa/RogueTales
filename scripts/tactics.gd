@@ -84,6 +84,9 @@ func spawn() -> void:
 	slow_left = 0
 	elapsed = 0
 	damage_received = 0
+	if owner.expedition and owner.active_secret.is_empty() and ExpeditionContent.is_market(owner.phase):
+		sync_totals()
+		return
 	var count: int = 1 if owner.stage == 0 and owner.wave == 0 else (2 if owner.stage < 3 else 3)
 	var total: float = TaleCatalog.STAGES[owner.stage].hp * [1.0, 1.25, 2.4][owner.wave]
 	if owner.expedition:
@@ -125,7 +128,7 @@ func spawn() -> void:
 			"row": "front" if index == 0 else "back", "hp": total * weight, "max_hp": total * weight,
 			"damage": float(TaleCatalog.STAGES[owner.stage].damage) * (1.25 if boss_unit else 0.75) / sqrt(float(count)),
 			"armor": 1.0 + owner.stage * 0.6 if job == "vanguard" else owner.stage * 0.22,
-			"evasion": float(TaleCatalog.CLASSES[job].evasion) * (0.55 if boss_unit else 1.0),
+			"evasion": 0.0,
 			"boss": boss_unit, "interval": interval, "timer": 1.8 + index * 0.5,
 			"burn": 0.0, "burn_left": 0.0, "poison": 0.0, "poison_left": 0.0
 		})
@@ -281,7 +284,11 @@ func commit_intent(index: int) -> Dictionary:
 
 
 func notify(id: String, title: String, detail: String, kind := "passive") -> void:
-	feedback_events.append({"hero": id, "title": title, "detail": detail, "kind": kind})
+	var hero_id:=id.trim_prefix("item_")
+	var source_name:String=str(TaleCatalog.HEROES[hero_id].name) if TaleCatalog.HEROES.has(hero_id) else "Efeito de combate"
+	for foe in enemies:
+		if str(foe.get("id",""))==hero_id:source_name=str(foe.get("name",source_name));break
+	feedback_events.append({"hero":hero_id,"source":id,"source_name":source_name,"title":title,"detail":detail,"kind":kind})
 
 func pressure() -> float:
 	return 1.0

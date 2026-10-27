@@ -12,7 +12,7 @@ static func for_supply(key: String, capacity: int) -> Array:
 		var gear=preload("res://scripts/equipment.gd")
 		return [{"glyph":"magic","text":gear.rarity_name(id),"color":gear.tint(id).to_html(false)}]
 	match key:
-		"capacity":return [{"glyph":"heroes","text":"%d → %d vagas"%[capacity,mini(9,capacity+1)]}]
+		"capacity":return [{"glyph":"heroes","text":"%d → %d vagas"%[capacity,mini(5,capacity+1)]}]
 		"potion":return [{"glyph":"heart","text":"Cura 35%"},{"glyph":"potion","text":"Revive 1 aliado"}]
 		"power":return [{"glyph":"sword","text":"Dano +20%"}]
 		"heart":return [{"glyph":"heart","text":"+25 PV"},{"glyph":"potion","text":"Cura 40 PV"}]

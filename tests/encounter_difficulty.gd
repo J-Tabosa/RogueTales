@@ -2,16 +2,17 @@ extends SceneTree
 ## Exercise real generation rather than only checking the cap helper.
 func _initialize() -> void: call_deferred("checks")
 func checks() -> void:
-	var account:=TaleCampaign.new()
+	var account:=preload("res://tests/test_accounts.gd").legacy()
 	var run:=IdleRun.new()
 	assert(run.start_expedition(account,"scarlet","blessing:scarlet:0"))
 	assert(run.actors.size()==1)
 	var generated:=0
 	for stage in 12:
 		run.stage=stage
-		var expected:int=[3,6,9][mini(stage,2)]
+		var expected:int=ExpeditionContent.enemy_limit(stage)
 		var observed:Dictionary={}
 		for phase in 6:
+			if phase==4:continue
 			run.phase=phase
 			for kind in ["battle","elite"]:
 				run.room_kind=kind

@@ -15,7 +15,7 @@ func invite(run: IdleRun, campaign: TaleCampaign, id: String, slot: int = -1) ->
 
 
 func checks() -> void:
-	var campaign := TaleCampaign.new()
+	var campaign := preload("res://tests/test_accounts.gd").legacy()
 	assert(campaign.unlocked == ["scarlet"] and campaign.party == ["scarlet"])
 	var run := IdleRun.new()
 	run.setup(campaign, 0)
@@ -33,7 +33,7 @@ func checks() -> void:
 	run.roll_offers(campaign)
 	campaign.checkpoint = run.to_checkpoint()
 	assert(campaign.save_to(TEST_PATH))
-	var loaded := TaleCampaign.new()
+	var loaded := preload("res://tests/test_accounts.gd").legacy()
 	assert(loaded.load_from(TEST_PATH) and not loaded.checkpoint.is_empty())
 	var restored := IdleRun.new()
 	restored.restore(loaded, loaded.checkpoint)
@@ -55,15 +55,15 @@ func checks() -> void:
 		assert(campaign.unlock_amount("snow_white") == trial + 1)
 		assert(campaign.resolve_run(snapshot, true).is_empty())
 		assert(campaign.unlock_amount("snow_white") == trial + 1)
-		assert(unlocked.has("snow_white") == (trial == 2))
-	assert(campaign.unlocked.has("snow_white") and campaign.party.has("snow_white"))
-	var fresh := TaleCampaign.new()
+		assert(unlocked.is_empty())
+	assert(not campaign.unlocked.has("snow_white") and campaign.unlock_amount("snow_white")==3)
+	var fresh := preload("res://tests/test_accounts.gd").legacy()
 	run.setup(fresh, 0)
 	invite(run, fresh, "snow_white")
 	fresh.resolve_run(run.to_checkpoint(), false)
 	assert(fresh.unlock_amount("snow_white") == 0)
 	# Rapunzel counts actual HP restored by her own third hit, never overheal or a relic.
-	var healer := TaleCampaign.new()
+	var healer := preload("res://tests/test_accounts.gd").legacy()
 	run.setup(healer, 0)
 	invite(run, healer, "rapunzel")
 	run.spawn_enemy()
@@ -80,16 +80,16 @@ func checks() -> void:
 	run.apply_relic("heart")
 	assert(run.unlock_stats.healing == 60)
 	healer.checkpoint = run.to_checkpoint()
-	var healer_reload := TaleCampaign.new()
+	var healer_reload := preload("res://tests/test_accounts.gd").legacy()
 	healer_reload.load_data(healer.to_dict())
 	var healer_run := IdleRun.new()
 	healer_run.restore(healer_reload, healer_reload.checkpoint)
 	assert(healer_run.unlock_stats.healing == 60 and healer_run.actors[1].hits == 33)
-	assert(healer_reload.resolve_run(healer_run.to_checkpoint(), false) == ["rapunzel"])
+	assert(healer_reload.resolve_run(healer_run.to_checkpoint(), false).is_empty() and not healer_reload.unlocked.has("rapunzel"))
 	assert(healer_reload.resolve_run(healer_run.to_checkpoint(), false).is_empty())
-	assert(healer.resolve_run(run.to_checkpoint(), false) == ["rapunzel"])
+	assert(healer.resolve_run(run.to_checkpoint(), false).is_empty() and not healer.unlocked.has("rapunzel"))
 	# Mulan's mission counts eight real third hits, not ordinary hits or attacks from a fallen ally.
-	var warrior := TaleCampaign.new()
+	var warrior := preload("res://tests/test_accounts.gd").legacy()
 	run.setup(warrior, 0)
 	invite(run, warrior, "mulan")
 	run.spawn_enemy()
@@ -99,9 +99,9 @@ func checks() -> void:
 	assert(run.unlock_stats.combos == 8)
 	run.actors[1].hp = 0
 	assert(run.hit_enemy(1).is_empty() and run.unlock_stats.combos == 8)
-	assert(warrior.resolve_run(run.to_checkpoint(), false) == ["mulan"])
+	assert(warrior.resolve_run(run.to_checkpoint(), false).is_empty() and not warrior.unlocked.has("mulan"))
 	# Ariel must survive bosses in two DIFFERENT chapters. Repeats and a fallen Ariel do not count.
-	var sailor := TaleCampaign.new()
+	var sailor := preload("res://tests/test_accounts.gd").legacy()
 	for chapter in [0, 0, 1, 1]:
 		run.setup(sailor, chapter)
 		invite(run, sailor, "ariel")
@@ -110,19 +110,19 @@ func checks() -> void:
 			run.actors[1].hp = 0
 		sailor.resolve_run(run.to_checkpoint(), true)
 		assert(sailor.unlock_amount("ariel") == (2 if sailor.run_counter == 4 else 1))
-	assert(sailor.unlocked.has("ariel"))
+	assert(not sailor.unlocked.has("ariel"))
 	# Old owned heroes remain owned. New progress and run IDs roundtrip without re-crediting.
-	var old := TaleCampaign.new()
+	var old := preload("res://tests/test_accounts.gd").legacy()
 	old.load_data(
 		{"version": 2, "unlocked": ["scarlet", "mulan"], "party": ["mulan"], "cleared": [0]}
 	)
 	assert(old.unlocked.has("mulan") and old.party == ["mulan"])
-	var roundtrip := TaleCampaign.new()
+	var roundtrip := preload("res://tests/test_accounts.gd").legacy()
 	roundtrip.load_data(sailor.to_dict())
-	assert(roundtrip.unlock_amount("ariel") == 2 and roundtrip.unlocked.has("ariel"))
+	assert(roundtrip.unlock_amount("ariel") == 2 and not roundtrip.unlocked.has("ariel"))
 	assert(roundtrip.resolve_run(run.to_checkpoint(), true).is_empty())
 	# Full-team swap: existing relics apply to the guest; other health and the base formation stay intact.
-	var full := TaleCampaign.new()
+	var full := preload("res://tests/test_accounts.gd").legacy()
 	full.unlocked.assign(["scarlet", "snow_white", "rapunzel"])
 	full.party.assign(full.unlocked)
 	run.setup(full, 0)
@@ -164,7 +164,7 @@ func checks() -> void:
 	game.show_unlock_details("mulan")
 	assert(is_instance_valid(game.overlay))
 	# Play genuine fights from a new account until Snow White's third invited victory unlocks her.
-	game.campaign = TaleCampaign.new()
+	game.campaign = preload("res://tests/test_accounts.gd").legacy()
 	var invited_wins := 0
 	for trial in 30:
 		game.begin_chapter_combat(0)
@@ -190,7 +190,10 @@ func checks() -> void:
 		assert(game.campaign.unlock_amount("snow_white") == invited_wins)
 		if trial == 0:
 			game.campaign.choose_memory(0, "hope")
-		if game.campaign.unlocked.has("snow_white"):
+		if game.campaign.unlock_amount("snow_white")>=3:
+			game.campaign.earn_gold(maxi(0,5000-game.campaign.gold))
+			assert(game.campaign.buy_hero("snow_white"))
+			assert(game.campaign.toggle_party("snow_white"))
 			break
 	assert(invited_wins == 3 and game.campaign.unlocked.has("snow_white"))
 	game.begin_chapter_combat(0)

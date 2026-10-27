@@ -83,7 +83,7 @@ static func snapshot(owner) -> Dictionary:
 		var data := {"mutations": actor.get("mutations", []).duplicate()}
 		for key in KEYS: data[key] = actor[key]
 		stats[actor.id] = data
-	return {"template": owner.team_template.duplicate(), "counts": owner.upgrade_counts.duplicate(), "stats": stats}
+	return {"roster_format":10,"template": owner.team_template.duplicate(), "counts": owner.upgrade_counts.duplicate(), "stats": stats}
 
 static func restore(owner, data: Dictionary) -> void:
 	owner.team_template = template()
@@ -102,6 +102,7 @@ static func restore(owner, data: Dictionary) -> void:
 		if not stats is Dictionary: continue
 		for key in KEYS:
 			if stats.has(key): actor[key] = float(stats[key]) if key=="initiative" and is_finite(float(stats[key])) else safe(float(stats[key]), 1.0 if key in ["max_hp", "damage"] else 0.0)
+		if actor.id=="ariel" and stats.has("initiative") and int(data.get("roster_format",0))<10:actor.initiative=minf(100,float(actor.initiative)+40.0)
 		actor.interval = maxf(0.65, actor.interval)
 		actor.crit = maxf(0, actor.crit) # Effective chance is capped by Bonuses; retain removable gear stats.
 		actor.mutations.clear()

@@ -35,7 +35,7 @@ func checks() -> void:
 	Health.update(bar,data)
 	assert(not segment.visible and bar.max_value==200)
 	bar.queue_free()
-	var account:=TaleCampaign.new()
+	var account:=preload("res://tests/test_accounts.gd").legacy()
 	account.unlocked.assign(TaleCatalog.HEROES.keys())
 	var run:=IdleRun.new()
 	assert(run.start_expedition(account,"joao","vigor"))

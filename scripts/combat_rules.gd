@@ -91,7 +91,7 @@ static func record_condition(tactics,source:String,kind:String) -> void:
 	var a:=actor(tactics.run(),source.trim_prefix("item_"))
 	if a.is_empty() or a.id!="alice":return
 	var round_id:int=int(tactics.round_number)
-	if int(a.get("condition_round",-1))!=round_id:
+	if int(a.get("condition_round",-1))!=round_id or not a.get("round_conditions") is Array:
 		a.condition_round=round_id
 		a.round_conditions=[]
 	if not a.round_conditions.has(kind):a.round_conditions.append(kind)

@@ -39,7 +39,7 @@ func checks() -> void:
 	game.save_path = SAVE
 	root.add_child(game)
 	game.set_process(false)
-	game.campaign = TaleCampaign.new()
+	game.campaign = preload("res://tests/test_accounts.gd").legacy()
 	game.show_menu()
 	await capture("run_home_mobile")
 	game.show_heroes()
@@ -53,7 +53,7 @@ func checks() -> void:
 			var art: Sprite2D = card.get_node("Silhouette")
 			assert(art.self_modulate == Color.BLACK)
 			var texts: Array = descendants(card).filter(func(node): return node is Label)
-			assert(not texts.any(func(node): return node.text == TaleCatalog.HEROES[card.get_meta("hero_id")].name))
+			assert(texts.any(func(node): return node.text == TaleCatalog.HEROES[card.get_meta("hero_id")].name))
 	assert(black == 11)
 	await capture("heroes_mobile")
 	game.select_gallery_hero("alice")
@@ -106,6 +106,11 @@ func checks() -> void:
 	var number: int = game.run.run_id
 	for stage in range(1, 72):
 		assert(game.run.stage == stage / 6 and game.run.phase == stage % 6 and game.run.run_id == number)
+		if stage%6==4:
+			game.select_route("shop")
+			assert(game.state=="shop")
+			game.leave_run_shop()
+			continue
 		game.select_route("battle")
 		assert(game.state == "travel")
 		finish_room()

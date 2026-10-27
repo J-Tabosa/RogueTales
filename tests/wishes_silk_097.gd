@@ -51,7 +51,7 @@ func test() -> void:
 	game=load("res://scenes/main.tscn").instantiate()
 	game.save_path="user://wishes097_isolated.json"
 	root.add_child(game);game.set_process(false)
-	game.campaign=TaleCampaign.new();game.campaign.unlocked.assign(TaleCatalog.HEROES.keys())
+	game.campaign=preload("res://tests/test_accounts.gd").legacy();game.campaign.unlocked.assign(TaleCatalog.HEROES.keys())
 	game.campaign.window_mode="windowed";game.campaign.window_mode_selected=true
 	game.apply_window_mode();await process_frame;await process_frame
 	for extent in [Vector2i(540,960),Vector2i(1280,800)]:

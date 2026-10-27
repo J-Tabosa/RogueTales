@@ -30,7 +30,7 @@ func checks() -> void:
 	game.save_path = "user://arena_equipment_layout_isolated.json"
 	root.add_child(game)
 	game.set_process(false)
-	game.campaign = TaleCampaign.new()
+	game.campaign = preload("res://tests/test_accounts.gd").legacy()
 	game.campaign.window_mode = "windowed"
 	game.campaign.window_mode_selected = true
 	game.apply_window_mode()
@@ -46,8 +46,8 @@ func checks() -> void:
 		game.campaign.checkpoint.clear()
 		game.run = IdleRun.new()
 		assert(game.run.start_expedition(game.campaign,"scarlet","blessing:scarlet:0"))
-		game.run.party_capacity = 9
-		for hero in ["rapunzel","joao","puss","mulan","maria","aladin","snow_white","alice"]:
+		game.run.party_capacity = 5
+		for hero in ["rapunzel","joao","puss","alice"]:
 			game.run.pending_choice = true
 			game.run.offers.assign(["ally:" + hero, "heart", "power"])
 			assert(game.run.recruit(game.campaign,hero))
@@ -57,7 +57,7 @@ func checks() -> void:
 		assert(game.run.equip_item(0,"star_powder",0))
 		assert(game.run.equip_item(0,"blue_hourglass",1))
 		game.run.interlude = ""
-		game.run.stage = 2 # Nine-enemy formations become available in stage 3.
+		game.run.stage = 6 # Nine-enemy formations become available in stage 7.
 		game.enter_encounter()
 		game.spawn_enemy()
 		for attempt in 1000:
@@ -102,7 +102,7 @@ func checks() -> void:
 						if other != index and body_depth[other] > body_depth[index] and bodies[other].has_point(point):covered=true
 					if not covered:visible_samples+=1
 			assert(visible_samples >= 24,"A target was almost entirely obscured")
-		assert(plates.size() == 18 and not game.log_label.visible)
+		assert(plates.size() == 14 and not game.log_label.visible)
 		assert(not game.enemy_label.visible and not game.power_label.visible and not game.timeline.visible)
 		assert(game.stage_label.text.contains("ESTÁGIO") and game.stage_label.text.contains("FASE"))
 		assert(game.battle_gold.text.contains("OURO") and game.battle_gold.z_index>1600)

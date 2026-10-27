@@ -60,7 +60,7 @@ func checks() -> void:
 	game.save_path="user://mobile_ui_polish_isolated.json"
 	root.add_child(game)
 	game.set_process(false)
-	game.campaign=TaleCampaign.new()
+	game.campaign=preload("res://tests/test_accounts.gd").legacy()
 	game.campaign.window_mode="windowed"
 	game.campaign.window_mode_selected=true
 	game.apply_window_mode()
@@ -110,7 +110,7 @@ func checks() -> void:
 		game.show_run_shop()
 		await process_frame
 		nodes=descendants(game.page)
-		assert(nodes.any(func(node):return node.get_meta("effect_badge","")=="blast_pair"))
+		assert(nodes.any(func(node):return node.get_meta("effect_badge","")=="magic"))
 		assert(nodes.any(func(node):return node is TextureRect and node.texture==game.ItemArt.texture("echo_bell")))
 		var shop:Control=game.page.get_node("ShopList")
 		var bag:Button=nodes.filter(func(node):return node is Button and node.text.begins_with("Equipar itens"))[0]
@@ -119,10 +119,10 @@ func checks() -> void:
 		var before:int=game.run.run_gold
 		game.show_supply_details("item:echo_bell")
 		assert(game.run.run_gold==before,"Viewing effects must not buy the item")
-		assert(descendants(game.overlay).any(func(node):return node is Label and node.text.contains("30%")))
+		assert(descendants(game.overlay).any(func(node):return node is Label and node.text.contains("60%")))
 		game.show_run_shop()
 		game.buy_run_supply("item:echo_bell")
-		assert(game.run.inventory.has("echo_bell") and game.run.run_gold==before-140)
+		assert(game.run.inventory.has("echo_bell") and game.run.run_gold==before-170)
 		game.run.interlude=""
 		game.enter_encounter()
 		game.spawn_enemy()

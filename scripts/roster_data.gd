@@ -52,7 +52,7 @@ const BASE = {
 		"magic_damage": 20.0,
 		"physical_defense": 0.0,
 		"magic_defense": 5.0,
-		"initiative": 10.0,
+		"initiative": 50.0,
 		"attacks": 1.0,
 		"crit": 0.0,
 		"crit_multiplier": 2.0,

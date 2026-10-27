@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Canonical 0.9.8 regression runner. Historical superseded combat tests are excluded."""
+"""Canonical 0.9.10 regression runner. Historical superseded combat tests are excluded."""
 import argparse, concurrent.futures, json, pathlib, subprocess, tempfile
 SUITES = [
+    'progression_0910', 'release_ui_0910',
     'bonuses_098', 'bonuses_ui_098', 'rules_095', 'boons_095', 'integration_095', 'corrections_096', 'wishes_silk_097',
     'hd_portraits_093', 'auras_094', 'presentation_092', 'mobile_combat_fixes',
     'art_integration', 'encounter_difficulty', 'equipment_ui',

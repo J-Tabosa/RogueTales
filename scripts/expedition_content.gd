@@ -5,6 +5,9 @@ const WORLD_COUNT := 12
 const PHASES_PER_WORLD := 6
 const TOTAL_PHASES := 72
 const WORLD_FORMAT := 2
+const ROUTE_FORMAT := 3
+const MAX_PARTY := 5
+const EVENT_CHANCE := 0.25
 const RECRUIT_CHANCE := 0.25
 const BOSSES := [3, 7, 11]
 const BLESSINGS := {
@@ -108,6 +111,7 @@ const ROUTES := {
 	"battle": {"title": "Pela trilha", "detail": "Combate comum. Preserve suas forças e avance."},
 	"elite": {"title": "Caçadores de tinta", "detail": "Inimigos +35% PV e +15% dano. Vitória: +25 ouro e +10% dano ao grupo."},
 	"camp": {"title": "Fogueira nas margens", "detail": "Pague 18 ouro: cure 30% dos PV e levante um aliado com 20%. Depois, avance."},
+	"trader": {"title":"Negociante de contos","detail":"Outra banca de equipamentos, bônus e suprimentos. Depois, enfrente o chefe."},
 	"shop": {"title": "Mercador de histórias", "detail": "Gaste o ouro desta run em bônus, equipamentos e suprimentos antes de avançar."},
 	"spring": {"title": "Fonte esquecida", "detail": "Cure 20% dos PV do grupo; perca 12 de ouro da run. Depois, avance."},
 	"curse": {"title": "A página proibida", "detail": "+18% de dano, mas −10% de PV máximos nesta run. Depois, avance."},
@@ -132,7 +136,7 @@ static func is_boss(stage: int, phase: int = -1) -> bool:
 static func enemy_limit(stage: int, endless := false) -> int:
 	# Stages are zero-based. Endless continues after the campaign, even when
 	# its scenery cycles back to the first world.
-	return 9 if endless else mini(9, (maxi(0, stage) + 1) * 3)
+	return 9 if endless or stage>=6 else 6 if stage>=2 else 3
 
 static func boss_rule(world: int) -> int:
 	return [3, 3, 7, 3, 3, 7, 11, 7, 11, 7, 3, 11][clampi(world, 0, 11)]
@@ -144,3 +148,6 @@ static func location(data: Dictionary) -> Vector2i:
 static func location_label(data: Dictionary) -> String:
 	var at := location(data)
 	return "Mundo %02d / 12 · Fase %d / 6" % [at.x + 1, at.y + 1]
+
+static func is_market(phase:int) -> bool:
+	return phase==4

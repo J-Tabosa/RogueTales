@@ -22,6 +22,9 @@ var hud_timer := 0.0
 var combat_flow: RefCounted
 var debug_enabled := false
 var debug_roster_all := false
+var debug_session := false
+var debug_source_campaign: TaleCampaign
+var debug_party: Array[String] = []
 var debug_panel: Control
 var content: Control
 var page: Control
@@ -331,6 +334,7 @@ func scroll_area(y: float, height: float, total: float) -> Control:
 
 
 func persist() -> void:
+	if debug_session:return
 	campaign.settle_idle(int(Time.get_unix_time_from_system()))
 	campaign.save_to(save_path)
 
@@ -1479,7 +1483,14 @@ func reveal_debug_roster() -> void:
 	debug_roster_all=not debug_roster_all
 	show_heroes()
 
+func debug_tools_allowed() -> bool:
+	return not OS.has_feature("mobile") and not OS.has_feature("Android")
+
 func toggle_debug() -> void:
+	if not debug_tools_allowed():return
+	if debug_enabled and debug_session:
+		finish_debug_session()
+		return
 	debug_enabled = not debug_enabled
 	if not debug_enabled:
 		debug_roster_all=false
@@ -1494,7 +1505,7 @@ func toggle_debug() -> void:
 
 
 func show_debug_panel() -> void:
-	if not debug_enabled:
+	if not debug_tools_allowed() or not debug_enabled:
 		return
 	if is_instance_valid(debug_panel):
 		debug_panel.queue_free()
@@ -1503,7 +1514,7 @@ func show_debug_panel() -> void:
 	debug_panel.size = Vector2(540, 960)
 	debug_panel.position.x=maxf(0,(content.size.x-540)*.5)
 	content.add_child(debug_panel)
-	panel(debug_panel, Rect2(24, 96, 492, 420), Color("273044"))
+	panel(debug_panel, Rect2(24, 96, 492, 620), Color("273044"))
 	label(debug_panel, "DEBUG  •  CTRL+B PARA DESATIVAR", Rect2(40, 112, 460, 32), 17, GOLD)
 	label(
 		debug_panel,
@@ -1529,8 +1540,46 @@ func show_debug_panel() -> void:
 
 	var reveal:=button(debug_panel,"Ocultar personagens DEBUG" if debug_roster_all else "Revelar todos os personagens",Rect2(40,315,460,56),reveal_debug_roster,true)
 	reveal.disabled=lab.disabled
-	label(debug_panel,"Temporário · não altera os desbloqueios salvos.",Rect2(40,386,460,44),13,MUTED)
-	button(debug_panel,"Desativar DEBUG",Rect2(40,448,460,48),toggle_debug)
+	var unlock_all:=button(debug_panel,"Liberar personagens e habilidades",Rect2(40,385,460,56),prepare_debug_run,true)
+	unlock_all.disabled=lab.disabled
+	var test_run:=button(debug_panel,"Montar e testar uma run DEBUG",Rect2(40,455,460,56),func():
+		if prepare_debug_campaign():call("show_debug_run_setup"),true)
+	test_run.disabled=lab.disabled
+	label(debug_panel,"Temporário · até 5 personagens · save normal preservado.",Rect2(40,526,460,50),13,MUTED)
+	button(debug_panel,"Sair do teste DEBUG" if debug_session else "Desativar DEBUG",Rect2(40,602,460,48),toggle_debug)
+
+func prepare_debug_campaign() -> bool:
+	if not debug_enabled or not debug_tools_allowed():return false
+	if not debug_session:
+		debug_source_campaign=campaign
+		var sandbox:=TaleCampaign.new()
+		sandbox.load_data(campaign.to_dict())
+		sandbox.checkpoint.clear()
+		campaign=sandbox
+		run=null
+		debug_session=true
+		debug_party.assign([selected_hero if TaleCatalog.HEROES.has(selected_hero) else "scarlet"])
+	campaign.unlocked.assign(TaleCatalog.HEROES.keys())
+	for hero in TaleCatalog.HEROES:campaign.hero_milestones[hero]={"rooms":12,"feat":true,"secret":true,"win":true}
+	debug_roster_all=true
+	return true
+
+func prepare_debug_run() -> void:
+	if not prepare_debug_campaign():return
+	show_heroes()
+
+func finish_debug_session() -> void:
+	if debug_session:
+		campaign=debug_source_campaign
+		debug_source_campaign=null
+	debug_session=false
+	debug_enabled=false
+	debug_roster_all=false
+	debug_party.clear()
+	run=null
+	paused=false
+	show_menu()
+
 
 func show_preview() -> void:
 	if not debug_enabled:
