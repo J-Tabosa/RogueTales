@@ -923,7 +923,7 @@ func show_wishes() -> void:
 	paused=true
 	if is_instance_valid(arena):arena.frozen=true
 	modal("3 Desejos","Um uso de cada desejo por run. Disponível mesmo com Aladin caído. Restam %d desejos."%rules.wishes_left(a))
-	var labels:Array=[["wealth","Riqueza · +%d ouro"%(200*(run.stage+1))],["life","Vida · reviver todos com vida cheia"],["death","Morte · eliminar inimigos / 1000% DM em chefes"]]
+	var labels:Array=[["wealth","Riqueza · +%d ouro"%(200*(run.stage+1))],["life","Ressurreição · reviver todos os aliados"],["death","Abate · eliminar inimigos / 1000% DM em chefes"]]
 	for i in labels.size():
 		var id:String=labels[i][0]
 		var used:bool=a.get("wishes",[]).has(id)
@@ -945,9 +945,16 @@ func perform_wish(id:String) -> void:
 	close_wishes()
 	if state=="battle":
 		if is_instance_valid(arena):
-			for at in run.actors.size():
-				if run.actors[at].hp>0:arena.tracks[at].alive=true;arena.heroes[at].modulate=Color.WHITE;arena.heroes[at].show_animation("idle")
+			for id_revived in hit.get("revived",[]):
+				var at:int=run.actor_ids().find(str(id_revived))
+				if at<0:continue
+				arena.tracks[at].alive=true
+				arena.tracks[at].time=-1.0
+				arena.heroes[at].modulate=Color.WHITE
+				arena.heroes[at].show_animation("idle")
+				arena.damage_number("RESSURREIÇÃO",arena.tracks[at].home,Color("9ce5b3"))
 			arena.sync_health(run.actors)
+		push_battle_log("Aladin · "+{"life":"Ressurreição","death":"Abate","wealth":"Riqueza"}.get(id,id))
 		update_hud()
 	else:
 		persist_run()

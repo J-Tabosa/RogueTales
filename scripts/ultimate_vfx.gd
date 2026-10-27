@@ -4,6 +4,9 @@ const Rules = preload("res://scripts/ultimate_rules.gd")
 static var atlases: Dictionary = {}
 static func supported(id: String) -> bool:
 	return id in Rules.IDS and id!="puss"
+static func pose_animation(id:String) -> String:
+	# Silk casts with the intact 12-frame cocoon sequence; old ULT crops split her body.
+	return "attack" if id=="rapunzel" else "ultimate"
 static func duration(id: String) -> float:
 	return 2.9 if id=="snow_white" else 2.7 if id in ["scarlet","joao","matches"] else 2.5
 static func impact(id: String) -> float:
@@ -32,7 +35,8 @@ static func pose(arena,index:int,phase:float) -> void:
 	var actor=arena.heroes[index]
 	var id:String=arena.simulation.actors[index].id
 	var hit:=impact(id)
-	actor.seek_animation("ultimate",phase*actor.get_animation_duration("ultimate"))
+	var animation:=pose_animation(id)
+	actor.seek_animation(animation,phase*actor.get_animation_duration(animation))
 	actor.position=track.home
 	actor.scale=actor.get_meta("battle_scale")
 	if id in ["joao","mulan","snow_white"] and track.target>=0:
@@ -100,11 +104,11 @@ static func draw(arena,canvas:Node2D) -> void:
 					ground_stamp(canvas,id,arena.foe_homes[targets[0]],Vector2(h*1.8,h*1.2),lerpf(.25,1,(p-hit)/(1-hit)),tail)
 			"rapunzel":
 				for at in track.get("ally_targets",[]):
-					var from:Vector2=track.home+Vector2(0,-h*.10)
-					var to:Vector2=arena.tracks[at].home+Vector2(0,-h*.08)
-					var end:=from.lerp(to,flight)
-					stamp(canvas,id,(from+end)*.5,Vector2(maxf(h*.7,from.distance_to(end)+h*.45),h*.7),p,tail*.85,(to-from).angle())
-					if p>=hit:stamp(canvas,id,to+Vector2(0,-h*.4),Vector2.ONE*h,p,tail*.6)
+					if at<0 or at>=arena.tracks.size() or arena.simulation.actors[at].hp<=0:continue
+					var from:Vector2=track.home+Vector2(0,-h*.04)
+					var to:Vector2=arena.tracks[at].home+Vector2(0,-h*.04)
+					hair_thread(canvas,from,to,flight,p,h,tail*.8)
+					if p>=hit:hair_roots(canvas,to,h,p*3,tail*.75,arena.reduced_motion)
 			"alice":
 				if not targets.is_empty():
 					var left:=INF
@@ -135,7 +139,7 @@ static func draw(arena,canvas:Node2D) -> void:
 		if float(actor.get("shield",0))>0:
 			shield_bubble(canvas,home,float(arena.heroes[index].get_meta("visual_height",h)),arena.clock,arena.reduced_motion)
 		if actor.get("hair_guard",false) and actor.shield>0:
-			stamp(canvas,"rapunzel",home+Vector2(0,-h*.28),Vector2(h*.95,h*.80),.76+sin(arena.clock*2)*.06,.30)
+			hair_roots(canvas,home,h,arena.clock,.45,arena.reduced_motion)
 	for at in arena.foe_homes.size():
 		var foe:Dictionary=arena.simulation.tactics.enemies[at]
 		if foe.hp<=0 or not arena.enemy_visible:continue
@@ -160,3 +164,27 @@ static func shield_bubble(canvas:Node2D,feet:Vector2,height:float,clock:float,re
 	canvas.draw_circle(Vector2.ZERO,radius,Color("8ddbee",.075),true,-1,true)
 	canvas.draw_arc(Vector2.ZERO,radius,0,TAU,48,Color("bceffc",.40),1.5,true)
 	canvas.draw_set_transform(Vector2.ZERO)
+
+static func hair_thread(canvas:Node2D,from:Vector2,to:Vector2,progress:float,phase:float,height:float,opacity:float) -> void:
+	if from.distance_squared_to(to)<1:return
+	var points:=PackedVector2Array()
+	var normal:Vector2=(to-from).normalized().orthogonal()
+	for n in 21:
+		var t:float=float(n)/20*progress
+		points.append(from.lerp(to,t)+normal*sin(t*PI*2+phase*3)*sin(t*PI)*height*.065)
+	hair_line(canvas,points,height*.032,opacity)
+
+static func hair_line(canvas:Node2D,points:PackedVector2Array,width:float,opacity:float) -> void:
+	if points.size()<2:return
+	canvas.draw_polyline(points,Color("725526",opacity),maxf(2,width*1.55),true)
+	canvas.draw_polyline(points,Color("e8bc54",opacity),maxf(1.5,width),true)
+	canvas.draw_polyline(points,Color("ffdf88",opacity*.85),maxf(.8,width*.32),true)
+
+static func hair_roots(canvas:Node2D,feet:Vector2,height:float,clock:float,opacity:float,reduced:bool) -> void:
+	for side in [-1,1]:
+		var points:=PackedVector2Array()
+		for n in 21:
+			var t:float=float(n)/20
+			var sway:float=0.0 if reduced else sin(clock*1.8+t*4)*.012
+			points.append(feet+Vector2(float(side)*height*(t*.34+sin(t*PI)*.04),-height*(sin(t*PI)*.14+sway)))
+		hair_line(canvas,points,height*.026,opacity)

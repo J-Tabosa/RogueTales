@@ -506,7 +506,12 @@ func update_hud() -> void:
 			elif child.has_meta("card_mana"):
 				child.text = run.tactics.Rules.resource(actor)
 		ult_buttons[index].disabled = paused or state != "battle" or actor.hp <= 0 or not run.tactics.ultimate_ready(index) or actor.ult_pending or actor.get("ult_queued", false) or arena.tracks[index].time >= 0
-		if actor.id=="aladin":ult_buttons[index].disabled=state!="battle" or run.tactics.Rules.wishes_left(actor)<=0
+		if actor.id=="aladin":
+			ult_buttons[index].disabled=paused or state!="battle" or run.tactics.Rules.wishes_left(actor)<=0
+			for child in ult_buttons[index].get_children():
+				if child.has_meta("card_status"):
+					child.text="Usar desejos" if run.tactics.Rules.wishes_left(actor)>0 else "Esgotados"
+					child.add_theme_color_override("font_color",GOLD)
 		ult_buttons[index].tooltip_text = "%s · %s\n%s" % [TaleCatalog.HERO_TACTICS[actor.id].ult, ("%d/4 cartas"%int(actor.get("card_charge",0))) if run.expedition and actor.id=="alice" else run.tactics.Rules.resource(actor), TaleCatalog.HERO_TACTICS[actor.id].detail]
 	if is_instance_valid(auto_button):
 		auto_button.text = "AUTO ULT  " + ("ON" if campaign.auto_ult else "OFF")

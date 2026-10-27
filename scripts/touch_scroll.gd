@@ -7,10 +7,12 @@ var dragging:=false
 var suppress_mouse_release:=false
 func _input(event: InputEvent) -> void:
 	if not is_visible_in_tree():return
-	if event is InputEventMouse and event.device==InputEvent.DEVICE_ID_EMULATION and (finger>=0 or suppress_mouse_release):
+	if event is InputEventMouse and event.device==InputEvent.DEVICE_ID_EMULATION and (dragging or suppress_mouse_release):
+		if event is InputEventMouseButton and not event.pressed:suppress_mouse_release=false
 		get_viewport().set_input_as_handled()
 		return
 	if event is InputEventScreenTouch:
+		if event.pressed:suppress_mouse_release=false
 		if event.pressed and finger<0 and Rect2(Vector2.ZERO,size).has_point(get_global_transform_with_canvas().affine_inverse()*event.position):
 			suppress_mouse_release=false
 			finger=event.index
@@ -25,7 +27,9 @@ func _input(event: InputEvent) -> void:
 			finger=-1
 			dragging=false
 	elif event is InputEventScreenDrag and event.index==finger:
-		if not dragging and event.position.distance_to(start)>10:dragging=true
+		if not dragging and event.position.distance_to(start)>10:
+			dragging=true
+			cancel_buttons(self)
 		if dragging:
 			var movement:Vector2=event.position-previous
 			var scale_factor:Vector2=get_global_transform_with_canvas().get_scale()
@@ -38,3 +42,8 @@ func _input(event: InputEvent) -> void:
 	elif event is InputEventMouseButton and not event.pressed and suppress_mouse_release:
 		get_viewport().set_input_as_handled()
 		suppress_mouse_release=false
+
+func cancel_buttons(node:Node) -> void:
+	for child in node.get_children():
+		if child is BaseButton:child.set_pressed_no_signal(false)
+		cancel_buttons(child)

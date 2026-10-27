@@ -211,6 +211,7 @@ func button(
 func bar(parent: Node, rect: Rect2, color: Color) -> ProgressBar:
 	var node := ProgressBar.new()
 	node.show_percentage = false
+	node.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	node.add_theme_stylebox_override("background", box(Color("080f18"), Color("34404f"), 5))
 	node.add_theme_stylebox_override("fill", box(color, color, 5))
 	parent.add_child(node)
@@ -2276,6 +2277,7 @@ func try_ultimate(index: int) -> bool:
 		return false
 	var actor: Dictionary = run.actors[index]
 	if actor.id=="aladin":
+		if run.tactics.Rules.wishes_left(actor)<=0:return false
 		call("show_wishes")
 		return true
 	if actor.hp <= 0 or not run.tactics.ultimate_ready(index) or actor.ult_pending or actor.get("ult_queued", false) or arena.tracks[index].time >= 0:

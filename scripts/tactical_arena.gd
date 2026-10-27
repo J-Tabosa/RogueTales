@@ -272,8 +272,10 @@ func attack(index: int = 0, target: int = -1, ultimate := false) -> bool:
 	tracks[index].hit = false
 	tracks[index].target = target
 	tracks[index].ultimate = ultimate
-	actor.show_animation("ultimate" if fresh else "attack")
-	actor.seek_animation("ultimate" if fresh else "attack", 0)
+	var animation:String=UltVFX.pose_animation(id) if fresh else "attack"
+	actor.reset_pose_motion()
+	actor.show_animation(animation)
+	actor.seek_animation(animation,0)
 	if ultimate and is_instance_valid(atmosphere):atmosphere.ultimate_started(index,id)
 	attack_started.emit(index)
 	return true

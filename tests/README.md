@@ -1,4 +1,4 @@
-# Suíte 0.9.6
+# Suíte 0.9.7
 
 Execute `python3 tools/check_095.py --godot /caminho/para/godot`. O runner considera falha qualquer erro de script, mesmo que o Godot retorne código zero após uma asserção.
 
@@ -6,6 +6,7 @@ Execute `python3 tools/check_095.py --godot /caminho/para/godot`. O runner consi
 - `boons_095`: 58 verificações das bênçãos, incluindo Full House, controles, limites e sobrevivência.
 - `integration_095`: as 48 combinações de protagonista/bênção contra chefes e a cena real; desbloqueios, desejos, mercador e fichas PC/mobile.
 - `corrections_096`: pólvora e seu contador, abertura 1/2/3, convite garantido opcional e feito da Alice por itens, rodadas, imunidades, derrota e persistência.
+- `wishes_silk_097`: toques/cliques reais nos desejos em combate, ressurreição com Aladin caído, abate, gesto de arrastar sem ativação e ult da Silk completa em 1×/2×/3×.
 - Os outros testes do runner verificam arte, toque, formação, dificuldade, HUD, equipamentos, economia, eventos, recrutamento e regressões visuais.
 
 As expectativas alteradas dos testes de interface/economia foram migradas para dano periódico por vez, feitos específicos, ausência das antigas mutações e limites corretos de mana. Os testes HD continuam usando os originais da UI, sem voltar a extrair retratos das pequenas células de combate.

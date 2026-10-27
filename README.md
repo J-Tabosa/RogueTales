@@ -1,6 +1,6 @@
 # RogueTales: O Último Fio
 
-Roguelite em **Godot 4.7**, PC e Android, com 12 protagonistas, equipes de até nove personagens e 12 estágios de seis fases. Versão **0.9.6**: fichas consolidadas, abertura progressiva, pólvora com bônus por carga e correção do feito da Alice.
+Roguelite em **Godot 4.7**, PC e Android, com 12 protagonistas, equipes de até nove personagens e 12 estágios de seis fases. Versão **0.9.7**: desejos do Aladin acessíveis por toque em combate e animação estável da ult da Silk.
 
 ## Regras e personagens
 
@@ -39,7 +39,7 @@ python3 tools/check_095.py --godot /caminho/para/godot
 
 `integration_095.gd` exercita as 48 combinações contra chefes, checkpoints, desbloqueios e a cena real. Com renderização nativa e um diretório após `--`, captura as telas PC/mobile para revisão. O runner também valida arte HD, auras, toque, recrutamento, economia, equipamentos, formações e interface. Testes históricos de regras substituídas são identificados em `tests/README.md`.
 
-O preset **Android Teste** exporta APK arm64, código 16, versão 0.9.6-teste, pacote `com.jtabosa.roguetales.preview.v07`. Use a mesma chave das versões anteriores para instalar como atualização. Chaves e SDKs não são versionados.
+O preset **Android Teste** exporta APK arm64, código 17, versão 0.9.7-teste, pacote `com.jtabosa.roguetales.preview.v07`. Use a mesma chave das versões anteriores para instalar como atualização. Chaves e SDKs não são versionados.
 
 ## Código
 
