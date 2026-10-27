@@ -74,7 +74,7 @@ func rebuild() -> void:
 	ui.banner_portrait(art,actor.id,Rect2(12,20,art_w-24,art.size.y-45),false)
 	text(art,TaleCatalog.hero_class_name(actor.id),Rect2(8,art.size.y-29,art_w-16,22),11,GOLD).horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
 	var rules=preload("res://scripts/combat_rules.gd")
-	var cells:Array=[["VIDA","%d / %d"%[ceili(actor.hp),ceili(actor.max_hp)],"Escudo: %.1f"%actor.shield],["RECURSO",rules.resource(actor),"+%s/acerto · +%s/vez"%[Details.n(actor.mana_hit),Details.n(actor.mana_turn)]],["DANO FÍSICO",Details.n(rules.power(actor,false)),"atributo independente"],["DANO MÁGICO",Details.n(rules.power(actor,true)),"atributo independente"],["DEFESA F / M","%s / %s"%[Details.n(rules.defense(actor,false)),Details.n(rules.defense(actor,true))],"defesas em pontos"],["INICIATIVA / ATAQUES","%.0f / %d"%[rules.effective_initiative(actor),int(actor.attacks)],"ordem / básicos por vez"],["CRÍTICO","%.0f%% ×%.0f"%[actor.crit*100,actor.crit_multiplier],"chance / multiplicador"],["ESQUIVA","%.0f%%"%(minf(.8,float(actor.evasion))*100),"teto comum 80%"]]
+	var cells:Array=[["VIDA","%d / %d"%[ceili(actor.hp),ceili(actor.max_hp)],"Escudo: %.1f"%actor.shield],["RECURSO",rules.resource(actor),"+%s/acerto · +%s/vez"%[Details.n(rules.Bonuses.mana_hit(actor)),Details.n(rules.Bonuses.mana_turn(actor))]],["DANO FÍSICO",Details.n(rules.power(actor,false)),"atributo independente"],["DANO MÁGICO",Details.n(rules.power(actor,true)),"atributo independente"],["DEFESA F / M","%s / %s"%[Details.n(rules.defense(actor,false)),Details.n(rules.defense(actor,true))],"defesas em pontos"],["INICIATIVA / ATAQUES","%.0f / %d"%[rules.effective_initiative(actor),rules.Bonuses.attacks(actor)],"ordem / básicos por vez"],["CRÍTICO","%.0f%% ×%.2f"%[rules.Bonuses.chance(actor)*100,rules.Bonuses.critical_multiplier(actor)],"chance / multiplicador"],["ESQUIVA","%.0f%%"%(rules.Bonuses.evasion(actor)*100),"teto comum 80%"]]
 	var cols:=4 if wide else 2
 	var cw:=(stats_w-8*(cols-1))/cols
 	var ch:=82.0 if wide else 62.0
@@ -107,6 +107,7 @@ func rebuild() -> void:
 	if int(actor.get("blessing_index",-1))>=0 and ui.run!=null:
 		var boon:=preload("res://scripts/hero_blessings.gd").data(ui.run.blessing)
 		if not boon.is_empty():skills.append(["BÊNÇÃO DO PROTAGONISTA",boon.title,boon.detail])
+	if not actor.get("bonus_totals",{}).is_empty():skills.append(["BÔNUS DA RUN","Acumulados nos atributos","Cura produzida: +%.0f%%. Bônus duram até o fim desta run."%(rules.Bonuses.total(actor,"healing")*100)])
 	if not Details.conditions(actor).is_empty():skills.push_front(["CONDIÇÕES ATIVAS","Estados e proteção",Details.conditions(actor)])
 	for skill in skills:
 		var card:=PanelContainer.new()

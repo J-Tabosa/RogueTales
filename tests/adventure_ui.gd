@@ -91,6 +91,10 @@ func checks() -> void:
 	await capture("endless_reward_mobile")
 	var key: String = game.run.offers.filter(func(id): return not id.begins_with("ally:"))[0]
 	game.select_relic(key)
+	if key.begins_with("bonus:"):
+		var b=preload("res://scripts/run_bonuses.gd").parse(key)
+		var target=game.run.actors.filter(func(a):return preload("res://scripts/run_bonuses.gd").useful(a,b.attribute,1))[0]
+		game.confirm_bonus_selection(key,"reward",target.id,1)
 	game._process(2.4)
 	game.select_route("battle")
 	game.spawn_enemy()

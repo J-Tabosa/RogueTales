@@ -1,6 +1,7 @@
 class_name IdleRun
 extends RefCounted
 ## A chapter consists of two encounters and a boss. Permanent upgrades live in Campaign.
+const Bonuses=preload("res://scripts/run_bonuses.gd")
 const Rules=preload("res://scripts/combat_rules.gd")
 const Equipment = preload("res://scripts/equipment.gd")
 const Blessings = preload("res://scripts/hero_blessings.gd")
@@ -16,6 +17,8 @@ var actors: Array[Dictionary] = []
 var enemy_hp := 0.0
 var enemy_max := 0.0
 var kills := 0
+var bonus_serial := 0
+var bonus_history: Array[Dictionary] = []
 var relics: Array[String] = []
 var pending_choice := false
 var offers: Array[String] = []
@@ -77,6 +80,8 @@ func setup(campaign: TaleCampaign, index: int, fresh: bool = true) -> void:
 	run_id = campaign.new_run_id() if fresh else 0
 	wave = 0
 	drafted.clear()
+	bonus_serial=0
+	bonus_history.clear()
 	relics.clear()
 	offers.clear()
 	pending_choice = false
@@ -278,7 +283,7 @@ func to_checkpoint() -> Dictionary:
 		health.append(float(actor.hp))
 		hits.append(int(actor.hits))
 	return {
-		"expedition": expedition, "world_format": 2, "phase": phase,
+		"expedition": expedition, "world_format": 2, "phase": phase, "bonuses":Bonuses.snapshot(self),
 		"party_capacity":party_capacity,"inventory":inventory.duplicate(),"equipment_state":equipment_snapshot(),
 		"hero_room_counts":hero_room_counts.duplicate(),"secret_survivors":secret_survivors.duplicate(),"reward_boss":reward_boss,
 		"active_secret":active_secret,"pending_secret_reward":pending_secret_reward,"secret_defeated":secret_defeated.duplicate(),
@@ -417,7 +422,9 @@ func restore(campaign: TaleCampaign, data: Dictionary) -> void:
 			for event in build_history:
 				for actor in actors: apply_build_event(actor, event)
 			Endless.promote(self)
-	if expedition:restore_equipment(data.get("equipment_state",{}))
+	if expedition:
+		restore_equipment(data.get("equipment_state",{}))
+		Bonuses.restore(self,data.get("bonuses",{}))
 	var health: Array = data.get("health", [])
 	for index in mini(health.size(), actors.size()):
 		actors[index].hp = clampf(float(health[index]), 0, actors[index].max_hp)
@@ -473,6 +480,7 @@ func recruit(campaign: TaleCampaign, id: String, replace_index: int = -1) -> boo
 	var actor := run_actor(id) if expedition else TaleCatalog.hero_stats(id, campaign.levels[id], campaign.choices, campaign.hero_levels[id])
 	if expedition:
 		Endless.apply_template(self, actor)
+		Bonuses.recruit(self,actor)
 	else:
 		for relic in relics: apply_relic_to_actor(actor, relic)
 	if replace_index < 0:
@@ -575,6 +583,7 @@ func ability_snapshot() -> Dictionary:
 
 
 func apply_run_upgrade(id: String) -> bool:
+	if id.begins_with("bonus:"):return false # Explicit target/direction confirmation required.
 	if id.begins_with("item:"):
 		if not grant_item(id.trim_prefix("item:")):return false
 	elif not add_upgrade(id): return false
@@ -596,27 +605,11 @@ func roll_run_offers() -> void:
 	if reward_boss or rng.randf()<0.40:
 		var items:Array=Equipment.ITEMS.keys()
 		offers.append("item:"+str(items[rng.randi_range(0,items.size()-1)]))
-	var candidates: Array[String] = []
-	for actor in actors:
-		if actor.hp <= 0: continue
-		for entry in ExpeditionContent.MUTATIONS[actor.id]:
-			var key: String = "skill:%s:%s" % [actor.id, entry[0]]
-			if upgrade_count(key) == 0: candidates.append(key)
-	# Guarantee a meaningful skill option while there are unchosen mutations.
-	if not candidates.is_empty():
-		var slot := rng.randi_range(0, candidates.size() - 1)
-		offers.append(candidates[slot])
-		candidates.remove_at(slot)
-	for item in RELICS:
-		if true:
-			if item.id == "critical" and actors.all(func(actor): return actor.hp <= 0 or actor.crit >= 0.949): continue
-			if item.id == "haste" and actors.all(func(actor): return actor.hp <= 0 or actor.get("initiative",50)>=100): continue
-			candidates.append(item.id)
-	while offers.size() < 3 and not candidates.is_empty():
-		var slot := rng.randi_range(0, candidates.size() - 1)
-		offers.append(candidates[slot])
-		candidates.remove_at(slot)
-	# At most 11 rewards + 3 shop items; the generic pool cannot run out.
+	# Recruitment/item decisions above keep their existing frequency and three slots.
+	while offers.size()<3:
+		var bonus_id:=Bonuses.roll(self)
+		if bonus_id.is_empty():break
+		offers.append(bonus_id)
 	interlude = "reward"
 	pending_choice = true
 
@@ -682,7 +675,8 @@ func roll_routes() -> void:
 		var slot:=rng.randi_range(0,stock.size()-1)
 		shop_stock.append("item:"+str(stock[slot]))
 		stock.remove_at(slot)
-	shop_stock.append(str(RELICS[rng.randi_range(0,RELICS.size()-1)].id))
+	var bonus_id:=Bonuses.roll(self)
+	if not bonus_id.is_empty():shop_stock.append(bonus_id)
 
 
 func choose_route(id: String) -> bool:
@@ -732,6 +726,7 @@ func supply_cost(id: String) -> int:
 	return 32
 
 func buy_supply(id: String) -> bool:
+	if id.begins_with("bonus:"):return false
 	if id=="capacity":
 		var price:=capacity_cost()
 		if interlude!="shop" or price<0 or run_gold<price:return false
@@ -835,7 +830,7 @@ func upgrade_count(id: String) -> int:
 
 
 func upgrade_total() -> int:
-	var count := 0
+	var count := bonus_history.size()
 	for value in upgrade_counts.values(): count += int(value)
 	return count
 
@@ -868,4 +863,22 @@ func continue_endless(campaign: TaleCampaign) -> bool:
 	wave = 0
 	seen_events.clear()
 	roll_run_offers()
+	return true
+
+
+func confirm_bonus(id:String,target:String,sign:int,source:="reward") -> bool:
+	if not expedition:return false
+	if source=="reward":
+		if not pending_choice or interlude!="reward" or not offers.has(id):return false
+	elif source=="shop":
+		if interlude!="shop" or not shop_stock.has(id) or shop_bought.has(id) or run_gold<supply_cost(id):return false
+	else:return false
+	if not Bonuses.acquire(self,id,target,sign):return false
+	if source=="reward":
+		pending_choice=false
+		offers.clear()
+		interlude="route"
+	else:
+		run_gold-=supply_cost(id)
+		shop_bought.append(id)
 	return true

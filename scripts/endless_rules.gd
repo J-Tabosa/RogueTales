@@ -26,7 +26,7 @@ static func apply_template(owner, actor: Dictionary) -> void:
 
 static func add_upgrade(owner, id: String) -> bool:
 	var item := TaleCatalog.offer_data(id)
-	if item.is_empty() or item.has("hero"): return false
+	if item.is_empty() or item.has("hero") or item.has("bonus"): return false
 	if item.has("owner") and (not owner.actor_ids().has(item.owner) or owner.upgrade_count(id) > 0): return false
 	var copies: int = owner.upgrade_count(id)
 	owner.upgrade_counts[id] = copies + 1
@@ -91,7 +91,7 @@ static func restore(owner, data: Dictionary) -> void:
 	var stored_template: Variant = data.get("template", {})
 	if stored_template is Dictionary:
 		for key in owner.team_template:
-			if stored_template.has(key): owner.team_template[key] = safe(float(stored_template[key]))
+			if stored_template.has(key): owner.team_template[key] = float(stored_template[key]) if key=="initiative_flat" and is_finite(float(stored_template[key])) else safe(float(stored_template[key]))
 	var counts: Variant = data.get("counts", {})
 	if counts is Dictionary:
 		for key in counts:
@@ -101,7 +101,7 @@ static func restore(owner, data: Dictionary) -> void:
 		var stats: Variant = saved.get(actor.id, {}) if saved is Dictionary else {}
 		if not stats is Dictionary: continue
 		for key in KEYS:
-			if stats.has(key): actor[key] = safe(float(stats[key]), 1.0 if key in ["max_hp", "damage"] else 0.0)
+			if stats.has(key): actor[key] = float(stats[key]) if key=="initiative" and is_finite(float(stats[key])) else safe(float(stats[key]), 1.0 if key in ["max_hp", "damage"] else 0.0)
 		actor.interval = maxf(0.65, actor.interval)
 		actor.crit = clampf(actor.crit, 0, 0.95)
 		actor.mutations.clear()

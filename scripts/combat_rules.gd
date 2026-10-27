@@ -1,5 +1,6 @@
 extends RefCounted
 ## Turn-based combat. Floating-point PV/mana are intentional; only presentation rounds.
+const Bonuses=preload("res://scripts/run_bonuses.gd")
 const Data=preload("res://scripts/roster_data.gd")
 const Gear=preload("res://scripts/equipment.gd")
 const Layout=preload("res://scripts/formation_layout.gd")
@@ -15,6 +16,7 @@ static func actor(owner,id:String) -> Dictionary:
 
 static func power(a:Dictionary,magic:bool) -> float:
 	var value:float=float(a.get("magic_damage" if magic else "physical_damage",a.get("damage",0)))
+	value*=1.0+Bonuses.total(a,"magic_damage" if magic else "physical_damage")
 	value*=float(a.get("damage",1))/maxf(.001,float(a.get("legacy_damage_base",a.get("damage",1))))
 	if a.get("id","")=="puss" and not magic:value*=1.0+clampf(1.0-float(a.hp)/maxf(1,a.max_hp),0,1)
 	if a.get("id","")=="snow_white" and not magic and boon(a,1):value*=1.0+defense(a,false)*.005
@@ -24,6 +26,7 @@ static func power(a:Dictionary,magic:bool) -> float:
 
 static func defense(a:Dictionary,magic:bool) -> float:
 	var value:float=float(a.get("magic_defense",0)) if magic else float(a.get("physical_defense",0))+float(a.get("armor",0))-float(Data.BASE.get(str(a.get("id","")),{}).get("physical_defense",0))
+	value+=Bonuses.total(a,"magic_defense" if magic else "physical_defense")
 	if magic:
 		for part in a.get("shield_parts",[]):
 			if float(part.value)>0:value+=float(part.get("magic_bonus",0))
@@ -167,7 +170,7 @@ static func consume_shield(tactics,a:Dictionary,raw:float,bonus:float,hostile:bo
 static func hurt(tactics,a:Dictionary,physical:float,magic:float,real:=0.0,certain:=false,source:Dictionary={},shield_bonus:=0.0,ignore_defense:=0.0,reduction:=1.0,direct:=true) -> Dictionary:
 	var empty:={"damage":0.0,"absorbed":0.0,"evaded":false,"critical":false,"guarded":false,"shield_broken":false}
 	if a.hp<=0 or physical+magic+real<=0:return empty
-	var evade:float=1.0 if a.get("escape_evasion",false) else minf(.8,maxf(0,float(a.get("evasion",0))))
+	var evade:float=1.0 if a.get("escape_evasion",false) else Bonuses.evasion(a)
 	if not certain and tactics.run().rng.randf()<evade:
 		empty.evaded=true
 		if a.get("id","")=="peter" and direct:
@@ -232,8 +235,9 @@ static func survive(tactics,a:Dictionary) -> void:
 		tactics.run().mercy_used=true
 		a.hp=a.max_hp*.35
 
-static func heal(a:Dictionary,amount:float) -> Dictionary:
+static func heal(a:Dictionary,amount:float,source:Dictionary={}) -> Dictionary:
 	if a.hp<=0:return {"healed":0.0,"overflow":0.0}
+	amount*=1.0+Bonuses.total(source,"healing")
 	if has_status(a,"bleed") or has_status(a,"antiheal"):amount*=.5
 	var actual:=minf(amount,maxf(0,float(a.max_hp)-a.hp))
 	a.hp+=actual
@@ -323,7 +327,7 @@ static func category(foe:Dictionary) -> String:
 	return "other"
 
 static func effective_initiative(a:Dictionary) -> float:
-	return clampf(float(a.get("initiative",50))-(20 if has_status(a,"hangover") else 0),0,100)
+	return minf(100,float(a.get("initiative",50))+Bonuses.total(a,"initiative")-(20 if has_status(a,"hangover") else 0))
 
 static func start_turn(tactics,a:Dictionary) -> Dictionary:
 	a.own_turn=int(a.get("own_turn",0))+1
@@ -342,7 +346,7 @@ static func start_turn(tactics,a:Dictionary) -> Dictionary:
 	a.shield_parts=a.shield_parts.filter(func(p):return int(p.turns)!=0)
 	a.shield=0.0
 	for p in a.shield_parts:a.shield+=float(p.value)
-	var attacks:int=maxi(1,int(a.get("attacks",1)))
+	var attacks:int=Bonuses.attacks(a)
 	if a.get("id","")=="matches" and boon(a,0):attacks+=1
 	if a.get("id","")=="aladin" and boon(a,3) and wishes_left(a)==0:attacks+=2
 	if a.get("id","")=="ariel":
@@ -374,12 +378,12 @@ static func start_turn(tactics,a:Dictionary) -> Dictionary:
 	if a.get("id","")=="matches" and boon(a,2):
 		var strongest:=0.0
 		for foe in tactics.enemies:strongest=maxf(strongest,float(foe.get("burn",0)) if foe.hp>0 else 0)
-		heal(a,strongest*.5)
-	if a.has("mana_turn"):mana(a,float(a.mana_turn))
+		heal(a,strongest*.5,a)
+	if a.has("mana_turn"):mana(a,Bonuses.mana_turn(a))
 	return {"attacks":0 if skip else attacks,"skip":skip}
 
 static func critical(tactics,a:Dictionary) -> bool:
-	return tactics.run().rng.randf()<clampf(float(a.get("crit",0)),0,1)
+	return tactics.run().rng.randf()<Bonuses.chance(a)
 
 static func multiplier(a:Dictionary,foe:Dictionary,ultimate:bool) -> float:
 	var e:=Gear.effects(a)
@@ -393,7 +397,7 @@ static func multiplier(a:Dictionary,foe:Dictionary,ultimate:bool) -> float:
 
 static func strike(tactics,a:Dictionary,foe:Dictionary,p:float,m:float,r:=0.0,ult:=false,can_crit:=true,certain:=false) -> Dictionary:
 	var crit:bool=can_crit and critical(tactics,a)
-	var mult:float=multiplier(a,foe,ult)*(float(a.get("crit_multiplier",2)) if crit else 1.0)
+	var mult:float=multiplier(a,foe,ult)*(Bonuses.critical_multiplier(a) if crit else 1.0)
 	var hit:=hurt(tactics,foe,p*mult,m*mult,r*mult,certain,a,1.0 if a.id=="snow_white" else 0.0,.5 if a.id=="joao" and boon(a,0) else 0.0)
 	hit.critical=crit and not hit.evaded
 	if a.id=="snow_white" and boon(a,0) and hit.get("shield_broken",false):shield(a,float(hit.shield_before)*.5,a)
@@ -421,17 +425,17 @@ static func ignite(a:Dictionary,foe:Dictionary) -> void:
 			if s.kind=="burn" and s.source==a.id:s["coefficient"]=coefficient
 
 static func on_basic_hit(tactics,a:Dictionary,foe:Dictionary,out:Dictionary) -> void:
-	mana(a,float(a.get("mana_hit",0))+float(a.get("energy_bonus",0))+float(Gear.effects(a).get("mana_hit",0)))
+	mana(a,Bonuses.mana_hit(a)+float(a.get("energy_bonus",0))+float(Gear.effects(a).get("mana_hit",0)))
 	if a.id=="scarlet":foe.powder=mini(10,int(foe.get("powder",0))+(2 if boon(a,3) else 1))
 	elif a.id=="maria":status(foe,"poison",a.id,2,power(a,true)*.1,1,5 if boon(a,0) else 3)
 	elif a.id=="matches":ignite(a,foe)
 	elif a.id=="ariel":
 		var ally:=weakest(tactics.run())
 		if not ally.is_empty():
-			var healed:=heal(ally,power(a,true)*.15)
+			var healed:=heal(ally,power(a,true)*.15,a)
 			out.healed+=healed.healed
 			if boon(a,0):shield(ally,healed.overflow,a,"foam")
-	if float(a.get("leech",0))>0:out.healed+=heal(a,a.leech).healed
+	if float(a.get("leech",0))>0:out.healed+=heal(a,a.leech,a).healed
 
 static func weakest(owner,exclude:Array=[]) -> Dictionary:
 	var candidates:Array=[]
@@ -443,7 +447,7 @@ static func weakest(owner,exclude:Array=[]) -> Dictionary:
 static func suit_effect(a:Dictionary,suit:int,out:Dictionary,owner,mult:=1.0) -> void:
 	var double:=2.0 if boon(a,3) else 1.0
 	if suit==0:owner.run_gold+=int(5*double*mult)
-	elif suit==1:out.healed+=heal(a,out.damage*.1*double*mult).healed
+	elif suit==1:out.healed+=heal(a,out.damage*.1*double*mult,a).healed
 	elif suit==2:shield(a,a.max_hp*.05*double*mult,a,"cards")
 
 static func nearest(tactics,main:int,limit:int) -> Array[int]:
@@ -532,7 +536,7 @@ static func attack(tactics,index:int,requested:int) -> Dictionary:
 		var other:=nearest(tactics,target,1)
 		var at:int=target if other.is_empty() else other[0]
 		if tactics.enemies[at].hp>0:
-			var extra:=strike(tactics,a,tactics.enemies[at],power(a,false)*.5*(float(a.get("crit_multiplier",2)) if hit.critical else 1.0),0,0,false,false)
+			var extra:=strike(tactics,a,tactics.enemies[at],power(a,false)*.5*(Bonuses.critical_multiplier(a) if hit.critical else 1.0),0,0,false,false)
 			append_hit(out,at,extra)
 			if not extra.evaded:on_basic_hit(tactics,a,tactics.enemies[at],out)
 	if a.id=="alice":
@@ -733,7 +737,7 @@ static func item_after(tactics,a:Dictionary,out:Dictionary,ult:bool) -> void:
 		shield(a,a.max_hp*float(e.get("ult_shield",0)),a)
 		for ally in tactics.run().actors:
 			if ally.hp>0:shield(ally,ally.max_hp*float(e.get("ult_group_shield",0)),a)
-	if float(e.get("drain",0))>0:out.healed+=heal(a,out.damage*float(e.drain)).healed
+	if float(e.get("drain",0))>0:out.healed+=heal(a,out.damage*float(e.drain),a).healed
 
 static func deaths(tactics) -> void:
 	var owner=tactics.run()
@@ -755,7 +759,7 @@ static func deaths(tactics) -> void:
 						if column.size()==3 and column.all(func(f):return killer.turn_kills.has(str(f.id))):full+=1
 					if full>=2:feat(killer,"two_columns")
 			for a in owner.actors:
-				if a.hp>0:heal(a,a.max_hp*float(Gear.effects(a).get("kill_heal",0)))
+				if a.hp>0:heal(a,a.max_hp*float(Gear.effects(a).get("kill_heal",0)),a)
 				if a.id=="maria" and boon(a,3) and not killer.is_empty() and killer.id==a.id:
 					for s in foe.get("statuses",[]):
 						if s.kind=="poison" and s.source==a.id:

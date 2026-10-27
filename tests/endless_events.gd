@@ -44,7 +44,11 @@ func checks() -> void:
 		assert(not run.clear_encounter())
 		assert(run.rooms_cleared == phase + 1 and run.offers.size() == 3)
 		var choice: String = run.offers.filter(func(id): return not id.begins_with("ally:"))[0]
-		assert(run.apply_relic(choice))
+		if choice.begins_with("bonus:"):
+			var b=preload("res://scripts/run_bonuses.gd").parse(choice)
+			var target=run.actors.filter(func(a):return preload("res://scripts/run_bonuses.gd").useful(a,b.attribute,-1))[0]
+			assert(run.confirm_bonus(choice,target.id,-1))
+		else:assert(run.apply_relic(choice))
 		assert(run.choose_route("battle"))
 	assert(run.build_history.is_empty() and run.relics.size() < 12)
 	assert(run.upgrade_total() + run.inventory.size() == 180)
@@ -62,7 +66,7 @@ func checks() -> void:
 	run.shop_stock.assign(["potion", "power", "armor"])
 	assert(run.buy_supply("power"))
 	account.checkpoint = run.to_checkpoint()
-	assert(JSON.stringify(account.checkpoint).length() < 12000, "The save stays compact rather than replaying every endless upgrade")
+	assert(JSON.stringify(account.checkpoint).length() < 120000, "180 floors retain the required bonus history/ledger within a bounded practical save size")
 	assert(account.save_to(SAVE))
 	var loaded := TaleCampaign.new()
 	assert(loaded.load_from(SAVE))
@@ -79,6 +83,8 @@ func checks() -> void:
 	resumed.offers.assign(["ally:alice", "heart", "power"])
 	assert(resumed.recruit(loaded, "alice"))
 	var expected: float = TaleCatalog.HEROES.alice.hp * 1.25 * resumed.team_template.hp_scale + resumed.team_template.hp_flat
+	for b in resumed.bonus_history:
+		if b.mode=="group" and b.attribute=="max_hp":expected+=float(b.magnitude)
 	assert(is_equal_approx(resumed.actors[1].max_hp, expected))
 	resumed.rooms_cleared = 181
 	resumed.stage = 1

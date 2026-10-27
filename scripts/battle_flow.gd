@@ -39,7 +39,7 @@ func start_round() -> void:
 	for side in ["ally","enemy"]:
 		var units:Array=owner.actors if side=="ally" else owner.tactics.enemies
 		for at in units.size():
-			units[at]["ap"]=maxi(1,int(units[at].get("attacks",1)))
+			units[at]["ap"]=Rules.Bonuses.attacks(units[at])
 			units[at]["pp"]=0
 			if units[at].hp>0:order.append({"side":side,"index":at,"initiative":Rules.effective_initiative(units[at])})
 	order.sort_custom(less)

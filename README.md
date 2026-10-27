@@ -1,12 +1,12 @@
 # RogueTales: O Último Fio
 
-Roguelite em **Godot 4.7**, PC e Android, com 12 protagonistas, equipes de até nove personagens e 12 estágios de seis fases. Versão **0.9.7**: desejos do Aladin acessíveis por toque em combate e animação estável da ult da Silk.
+Roguelite em **Godot 4.7**, PC e Android, com 12 protagonistas, equipes de até nove personagens e 12 estágios de seis fases. Versão **0.9.8**: Bônus Únicos e de Grupo, seis raridades com fundos cinza/verde/azul/roxo/laranja/vermelho, prévia e confirmação de alvo e Iniciativa.
 
 ## Regras e personagens
 
 As fontes de design fornecidas estão preservadas em [personagens](docs/RogueTales_Personagens.md) e [mecânicas](docs/RogueTales_Mecanicas.md). [REGRAS_095](docs/REGRAS_095.md) registra a implementação, compatibilidade e convenções provisórias dos pontos que os MDs deixaram em aberto.
 
-- Cada rodada ordena os vivos por **Iniciativa, 0–100**. Cada um executa sua **Quantidade de Ataques** na própria vez. A iniciativa não concede ações adicionais.
+- Cada rodada ordena os vivos por **Iniciativa, com teto 100 e sem piso negativo**. Cada um executa sua **Quantidade de Ataques** na própria vez. A iniciativa não concede ações adicionais.
 - **Dano Físico/Mágico** e **Defesa Física/Mágica** são independentes. Mitigação por pontos: `bruto × 100 / (100 + defesa)`. Híbridos calculam as parcelas separadamente; dano real ignora as defesas, com escudos ainda absorvendo.
 - Mana vem dos acertos elegíveis ou do início da própria vez, conforme a ficha. Não há regeneração por segundo nem ganho natural por receber dano. Excedente e mana entre combates são preservados.
 - ULTs podem intercalar básicos sem consumir os restantes. Alice usa quatro cargas, conserva sobras e ulta automaticamente. Aladin usa desejos manuais, sem mana, inclusive caído e no mercador; não participa da ULT automática.
@@ -14,6 +14,12 @@ As fontes de design fornecidas estão preservadas em [personagens](docs/RogueTal
 - Condições e escudos contam turnos do beneficiário. Silk mantém parcelas de escudo entre combates, com os prazos restantes. Peter mantém sombras ofensivas que não bloqueiam dano.
 
 Scarlet causa +10% de dano por carga de pólvora no alvo e mostra o contador até a detonação; Alice alterna naipes com dano híbrido; Snow quebra escudos; Umi cura por ricochete; Silk protege e retalia; Mulan usa combos e contra-ataques; Gretel aplica doses de veneno e maldição; João marca e executa seis estocadas; Lume fortalece fogo periódico; Aladin administra três desejos; Peter cria sombras por esquiva; Gato ganha dano pela porcentagem de vida faltante.
+
+## Bônus da run
+
+A especificação original está em [RogueTales_Bonus.md](docs/RogueTales_Bonus.md); os detalhes de integração e compatibilidade em [BONUS_098.md](docs/BONUS_098.md). Bônus não ocupam equipamento: Único (70%) exige escolher um personagem; Grupo (30%) alcança compatíveis atuais e futuros recrutados. Raridades comum/incomum/raro/épico/lendário/mítico: 40/28/18/9/4/1%, com valores exatos. Percentuais de dano e cura somam; crítico usa pontos percentuais. Iniciativa aceita direção positiva ou negativa, com prévia do resultado. Abrir ou cancelar não consome ouro/recompensa.
+
+Saves anteriores preservam os atributos e efeitos legados, sem convertê-los em bônus novos. O histórico da build identifica esses efeitos. Espalhamento permanece fora do sorteio: dano secundário, seleção de alvos e interação com ricochetes aguardam definição, conforme o Markdown. Equipamentos e bênçãos mantêm seus catálogos e regras.
 
 ## Interface e arte
 
@@ -39,10 +45,11 @@ python3 tools/check_095.py --godot /caminho/para/godot
 
 `integration_095.gd` exercita as 48 combinações contra chefes, checkpoints, desbloqueios e a cena real. Com renderização nativa e um diretório após `--`, captura as telas PC/mobile para revisão. O runner também valida arte HD, auras, toque, recrutamento, economia, equipamentos, formações e interface. Testes históricos de regras substituídas são identificados em `tests/README.md`.
 
-O preset **Android Teste** exporta APK arm64, código 17, versão 0.9.7-teste, pacote `com.jtabosa.roguetales.preview.v07`. Use a mesma chave das versões anteriores para instalar como atualização. Chaves e SDKs não são versionados.
+O preset **Android Teste** exporta APK arm64, código 18, versão 0.9.8-teste, pacote `com.jtabosa.roguetales.preview.v07`. Use a mesma chave das versões anteriores para instalar como atualização. Chaves e SDKs não são versionados.
 
 ## Código
 
+- `run_bonuses.gd`: tabelas, sorteio, elegibilidade, prévias, aplicação e persistência.
 - `roster_data.gd`: atributos e descrições consolidados.
 - `combat_rules.gd`: dano, condições, escudos, kits, desejos e sobrevivência.
 - `battle_flow.gd`: rodadas, iniciativa, sequências e interrupções de ULT.

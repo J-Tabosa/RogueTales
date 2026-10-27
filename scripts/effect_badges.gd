@@ -4,6 +4,9 @@ static func symbol(key: String) -> String:
 	return {"capacity":"heroes","potion":"potion","power":"sword","heart":"heart","haste":"clock","critical":"target","leech":"heart","armor":"shield"}.get(key,"magic")
 
 static func for_supply(key: String, capacity: int) -> Array:
+	if key.begins_with("bonus:"):
+		var b=preload("res://scripts/run_bonuses.gd").describe(key)
+		return [{"glyph":"heroes" if b.mode=="group" else "profile","text":"Equipe + futuros" if b.mode=="group" else "Escolher personagem"}]
 	match key:
 		"capacity":return [{"glyph":"heroes","text":"%d → %d vagas"%[capacity,mini(9,capacity+1)]}]
 		"potion":return [{"glyph":"heart","text":"Cura 35%"},{"glyph":"potion","text":"Revive 1 aliado"}]

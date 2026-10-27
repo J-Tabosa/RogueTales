@@ -662,6 +662,7 @@ static func hero_stats(
 
 
 static func offer_data(id: String) -> Dictionary:
+	if id.begins_with("bonus:"):return preload("res://scripts/run_bonuses.gd").describe(id)
 	if id.begins_with("item:"):return preload("res://scripts/equipment.gd").offer(id)
 	if id.begins_with("skill:"):
 		return ExpeditionContent.offer(id)

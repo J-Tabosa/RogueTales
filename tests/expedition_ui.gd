@@ -95,6 +95,10 @@ func checks() -> void:
 	assert(game.state == "choice" and game.run.offers == offers)
 	var key: String = game.run.offers.filter(func(id): return not id.begins_with("ally:"))[0]
 	game.select_relic(key)
+	if key.begins_with("bonus:"):
+		var b=preload("res://scripts/run_bonuses.gd").parse(key)
+		var target=game.run.actors.filter(func(a):return preload("res://scripts/run_bonuses.gd").useful(a,b.attribute,1))[0]
+		game.confirm_bonus_selection(key,"reward",target.id,1)
 	game._process(2.4)
 	assert(game.state == "route" and game.run.interlude == "route")
 	await capture("run_routes_mobile")
@@ -109,6 +113,10 @@ func checks() -> void:
 			assert(game.state == "choice")
 			key = game.run.offers.filter(func(id): return not id.begins_with("ally:"))[0]
 			game.select_relic(key)
+			if key.begins_with("bonus:"):
+				var b=preload("res://scripts/run_bonuses.gd").parse(key)
+				var target=game.run.actors.filter(func(a):return preload("res://scripts/run_bonuses.gd").useful(a,b.attribute,1))[0]
+				game.confirm_bonus_selection(key,"reward",target.id,1)
 			game._process(2.4)
 			assert(game.state == "route")
 	assert(game.state == "result" and game.campaign.expedition_wins == 1 and game.campaign.checkpoint.is_empty())

@@ -1,5 +1,6 @@
 extends "res://scripts/interface.gd"
 ## The run experience. Legacy chapter checkpoints can still be finished safely.
+const Bonuses=preload("res://scripts/run_bonuses.gd")
 const Content = preload("res://scripts/expedition_content.gd")
 const Synergies = preload("res://scripts/team_synergies.gd")
 const TeamEvents = preload("res://scripts/team_events.gd")
@@ -58,7 +59,7 @@ func show_menu() -> void:
 	portrait_fitted(art, id, Vector2(246, 319), 283)
 	label(art, "ESCREVA SEU PRÓPRIO FINAL", Rect2(18, 16, 456, 29), 13, GOLD)
 	label(page, "Escolha. Arrisque. Recomece.", Rect2(24, 565, 492, 43), 26)
-	label(page, "Um protagonista. Companheiros raros.\nHabilidades e relíquias que mudam a cada tentativa.", Rect2(24, 620, 492, 66), 17, MUTED)
+	label(page, "Um protagonista. Companheiros raros.\nHabilidades e bônus que mudam a cada tentativa.", Rect2(24, 620, 492, 66), 17, MUTED)
 	var active := not campaign.checkpoint.is_empty()
 	var detail := "A vida, a build e os encontros da sua tentativa estão salvos." if active else "12 mundos · 72 fases · vença a run para continuar no infinito"
 	label(page, detail, Rect2(24, 704, 492, 48), 14, GOLD)
@@ -265,8 +266,11 @@ func show_relics() -> void:
 		var card := button(overlay, "", Rect2(32, 390 + index * 126, 476, 116), select_relic.bind(id))
 		var title: String = offer.title
 		var detail: String = run.upgrade_detail(id)
-		var note := "RELÍQUIA · ACÚMULO %d" % (run.upgrade_count(id) + 1)
-		if offer.has("item"):note="EQUIPAMENTO · ESCOLHA O PORTADOR NO INVENTÁRIO"
+		var note := "BÔNUS LEGADO · ACÚMULO %d" % (run.upgrade_count(id) + 1)
+		if offer.has("bonus"):
+			note=offer.note
+			bonus_skin(card,id)
+		elif offer.has("item"):note="EQUIPAMENTO · ESCOLHA O PORTADOR NO INVENTÁRIO"
 		elif offer.has("owner"): note = "HABILIDADE · " + str(TaleCatalog.HEROES[offer.owner].name)
 		elif offer.has("hero"):
 			var owned := campaign.unlocked.has(offer.hero)
@@ -285,6 +289,9 @@ func select_relic(id: String, replace_index: int = -1) -> void:
 	if state != "choice" or not run.offers.has(id): return
 	var offer := TaleCatalog.offer_data(id)
 	if offer.is_empty(): return
+	if offer.has("bonus"):
+		show_bonus_selection(id)
+		return
 	if offer.has("hero") and not run.can_recruit(offer.hero) and replace_index < 0:
 		show_recruit_replacement(id)
 		return
@@ -383,9 +390,12 @@ func show_run_shop() -> void:
 			ItemArt.picture(card,key.trim_prefix("item:"),Rect2(12,20,82,82))
 		else:
 			icon(card,EffectBadges.symbol(key),Rect2(28,35,48,48),GOLD)
+		if key.begins_with("bonus:"):
+			bonus_skin(card,key,false)
+			label(card,data.note,Rect2(108,59,340,18),11,Bonuses.tint(key))
 		var title:=label(card,data.title,Rect2(108,12,306,42),19,GOLD)
 		title.set_meta("shop_title",true)
-		effect_badges(card,EffectBadges.for_supply(key,run.party_capacity),Vector2(108,61),340)
+		effect_badges(card,EffectBadges.for_supply(key,run.party_capacity),Vector2(108,80 if key.begins_with("bonus:") else 61),340)
 		label(card,"EQUIPE COMPLETA" if cost<0 else "COMPRADO" if bought else "%d OURO"%cost,Rect2(108,110,296,21),12,Color("92b99d") if bought else GOLD)
 		var info:=button(card,"i",Rect2(422,90,42,40),show_supply_details.bind(key))
 		info.tooltip_text="Ver todos os efeitos"
@@ -419,13 +429,19 @@ func effect_badges(parent: Node, entries: Array, at: Vector2, available: float) 
 
 func show_supply_details(key: String) -> void:
 	var data:=supply_data(key)
-	modal(data.title,"SUPRIMENTO" if key in ["capacity","potion"] else "EQUIPAMENTO" if key.begins_with("item:") else "RELÍQUIA")
+	if key.begins_with("bonus:"):
+		show_bonus_selection(key,"shop")
+		return
+	modal(data.title,"SUPRIMENTO" if key in ["capacity","potion"] else "EQUIPAMENTO" if key.begins_with("item:") else "BÔNUS LEGADO")
 	if key.begins_with("item:"):ItemArt.picture(overlay,key.trim_prefix("item:"),Rect2(180,388,180,160))
 	else:icon(overlay,EffectBadges.symbol(key),Rect2(230,410,80,80))
 	label(overlay,data.detail,Rect2(40,564,460,120),18)
 	button(overlay,"Voltar ao mercador",Rect2(32,740,476,56),show_run_shop,true)
 
 func buy_run_supply(id: String) -> void:
+	if state=="shop" and id.begins_with("bonus:"):
+		show_bonus_selection(id,"shop")
+		return
 	if state == "shop" and run.buy_supply(id):
 		persist_run()
 		show_run_shop()
@@ -480,7 +496,7 @@ func show_run_build() -> void:
 	header("O conto até aqui", "%s · %d ouro · %d melhorias" % [run.phase_label(), run.run_gold, run.upgrade_total()])
 	var pairs := Synergies.available(run)
 	var entries: Array[Dictionary]=[]
-	var total_height := 230.0+run.relics.size()*83+pairs.size()*139
+	var total_height := 275.0+run.relics.size()*83+run.bonus_history.size()*120+pairs.size()*139
 	for actor in run.actors:
 		var description:=preload("res://scripts/combat_details.gd").sheet(actor)
 		var text_height:=get_theme_font("font").get_multiline_string_size(description,HORIZONTAL_ALIGNMENT_LEFT,476,14).y+24
@@ -500,6 +516,18 @@ func show_run_build() -> void:
 		label(inner, TaleCatalog.HEROES[actor.id].name, Rect2(88, y, 388, 32), 21)
 		label(inner, entry.description, Rect2(0, y + 86, 476, entry.height), 14, MUTED)
 		y += entry.height+115
+	for entry in run.bonus_history:
+		var data:=Bonuses.describe(entry.id)
+		var card:=panel(inner,Rect2(0,y,476,110))
+		bonus_skin(card,entry.id,false)
+		var recipient:String="Equipe e futuros recrutados" if entry.mode=="group" else str(TaleCatalog.HEROES.get(entry.target,{}).get("name",entry.target))
+		label(card,data.note,Rect2(12,6,452,20),11,Bonuses.tint(entry.id))
+		label(card,data.title,Rect2(12,31,452,31),19)
+		label(card,recipient+(" · Agir depois" if entry.attribute=="initiative" and int(entry.sign)<0 else " · Agir antes" if entry.attribute=="initiative" else ""),Rect2(12,70,452,30),13,Color("e1e4dc"))
+		y+=120
+	if not run.relics.is_empty():
+		label(inner,"BÔNUS LEGADOS · efeitos originais preservados",Rect2(0,y,476,40),13,GOLD)
+		y+=45
 	for key in run.relics:
 		var data := TaleCatalog.offer_data(key)
 		label(inner, str(data.title) + (" ×%d" % run.upgrade_count(key) if run.endless else ""), Rect2(0, y, 476, 29), 19, GOLD)
@@ -823,7 +851,7 @@ func show_help() -> void:
 	clear_page()
 	header("Uma run, doze páginas", "Prepare o protagonista; descubra o restante durante a tentativa.")
 	var inner := scroll_area(190, 674, 1290)
-	label(inner, "1. MODOS\nConto: 12 mundos com 6 fases cada, totalizando 72 combates. Cada mundo termina em um chefe e cura 12% dos PV dos sobreviventes. Após vencer os 12 mundos, escolha continuar no infinito com a mesma build e dificuldade crescente. Novos marcos de 12 páginas concedem memórias no fim da tentativa.\n\n2. COMBATE\nCada rodada segue a Iniciativa (0–100). Cada personagem executa seus básicos em sequência na própria vez. ULTs usam os custos de cada ficha e podem intercalar os básicos sem consumi-los. Mana não regenera por tempo. Passivas seguem os gatilhos e limites da ficha. Histórico pausa e mostra dano, cura e efeitos. Vanguardas ficam na frente, assassinos no meio e magos/atiradores atrás. A classe define a formação.\n\n3. SINERGIAS\nJoão e Maria, Peter e Mulan, Scarlet e Vendedora combinam efeitos. As fichas atuais usam os gatilhos próprios de cada personagem; as antigas sinergias por tempo foram substituídas. Veja os gatilhos em Ver build da equipe.\n\n4. CHEFES\nQuebre o estandarte do General para interrompê-lo. A Guardiã copia a última ULT deste combate: pense antes de usar cura e escudo. Destrua os fios da Costureira para libertar as ativas seladas. Ataques básicos e ULTs continuam disponíveis.\n\n5. BUILD E EVENTOS\nEscolha uma de três melhorias após vencer. Convites têm 25% de chance por tela. Rotas oferecem elites, descanso, loja e eventos. O mercador vende espaços de equipe (150/400/900/1.500/2.200/3.000 ouro), até 9. Cada posição comporta 3. Grupos comuns têm até 3 inimigos no estágio 1, 6 no estágio 2 e 9 a partir do estágio 3; chefes vêm com 2 minions. Cada personagem equipa 2 itens entre combates. Chefes oferecem um equipamento; duelos secretos dão um troféu exclusivo. Cada protagonista tem 4 bênçãos, liberadas por feitos próprios. A equipe muda as falas e libera opções especiais. No infinito, relíquias continuam acumulando com ganhos decrescentes; a build não acaba quando as opções exclusivas se esgotam.\n\n6. FIM E RETOMADA\nOuro, relíquias e convidados são da run. Feitos, coleção, descobertas, recordes e memórias permanecem. Pontos vêm das vitórias, chefes, elites, rapidez e aliados sobreviventes; vencer sem perder PV concede um bônus. Salvar e sair retoma no início do combate atual ou na escolha salva, sem sortear outras opções.\n\nCONTROLES\nToque nos retratos ou use 1–9 para a ULT. Espaço/ESC pausa; A alterna ULT automática; F11 alterna tela cheia.", Rect2(0, 0, 476, 1270), 17)
+	label(inner, "1. MODOS\nConto: 12 mundos com 6 fases cada, totalizando 72 combates. Cada mundo termina em um chefe e cura 12% dos PV dos sobreviventes. Após vencer os 12 mundos, escolha continuar no infinito com a mesma build e dificuldade crescente. Novos marcos de 12 páginas concedem memórias no fim da tentativa.\n\n2. COMBATE\nCada rodada segue a Iniciativa, da maior à menor, com teto 100 e valores negativos permitidos. Cada personagem executa seus básicos em sequência na própria vez. ULTs usam os custos de cada ficha e podem intercalar os básicos sem consumi-los. Mana não regenera por tempo. Passivas seguem os gatilhos e limites da ficha. Histórico pausa e mostra dano, cura e efeitos. Vanguardas ficam na frente, assassinos no meio e magos/atiradores atrás. A classe define a formação.\n\n3. SINERGIAS\nJoão e Maria, Peter e Mulan, Scarlet e Vendedora combinam efeitos. As fichas atuais usam os gatilhos próprios de cada personagem; as antigas sinergias por tempo foram substituídas. Veja os gatilhos em Ver build da equipe.\n\n4. CHEFES\nQuebre o estandarte do General para interrompê-lo. A Guardiã copia a última ULT deste combate: pense antes de usar cura e escudo. Destrua os fios da Costureira para libertar as ativas seladas. Ataques básicos e ULTs continuam disponíveis.\n\n5. BUILD E EVENTOS\nEscolha uma de três melhorias após vencer. Convites têm 25% de chance por tela. Rotas oferecem elites, descanso, loja e eventos. O mercador vende espaços de equipe (150/400/900/1.500/2.200/3.000 ouro), até 9. Cada posição comporta 3. Grupos comuns têm até 3 inimigos no estágio 1, 6 no estágio 2 e 9 a partir do estágio 3; chefes vêm com 2 minions. Cada personagem equipa 2 itens entre combates. Chefes oferecem um equipamento; duelos secretos dão um troféu exclusivo. Cada protagonista tem 4 bênçãos, liberadas por feitos próprios. A equipe muda as falas e libera opções especiais. Bônus duram até o fim da run: 70% Único (escolha o personagem), 30% Grupo (compatíveis e futuros recrutados). Raridades: comum 40%, incomum 28%, raro 18%, épico 9%, lendário 4%, mítico 1%. Valores exatos e percentuais aditivos. Iniciativa permite agir antes (+) ou depois (−), com prévia. Saves antigos mantêm os efeitos legados sem conversão.\n\n6. FIM E RETOMADA\nOuro, bônus e convidados são da run. Feitos, coleção, descobertas, recordes e memórias permanecem. Pontos vêm das vitórias, chefes, elites, rapidez e aliados sobreviventes; vencer sem perder PV concede um bônus. Salvar e sair retoma no início do combate atual ou na escolha salva, sem sortear outras opções.\n\nCONTROLES\nToque nos retratos ou use 1–9 para a ULT. Espaço/ESC pausa; A alterna ULT automática; F11 alterna tela cheia.", Rect2(0, 0, 476, 1270), 17)
 	navigation("profile")
 
 func show_preview() -> void:
@@ -969,3 +997,76 @@ func wishes_button() -> void:
 	if not a.is_empty():
 		if state=="route" and is_instance_valid(overlay):button(overlay,"✦ 3 Desejos · %d disponíveis"%rules.wishes_left(a),Rect2(32,324,476,44),show_wishes)
 		else:button(page,"✦ 3 Desejos · %d disponíveis"%rules.wishes_left(a),Rect2(24,177,492,38),show_wishes)
+
+
+func bonus_skin(card:Control,id:String,remove_decoration:=true) -> void:
+	if remove_decoration:
+		for child in card.get_children():
+			card.remove_child(child)
+			child.queue_free()
+	var tint:=Bonuses.tint(id)
+	card.set_meta("bonus_rarity",Bonuses.parse(id).rarity)
+	card.set_meta("rarity_color",tint)
+	var background:=tint.darkened(.72)
+	if card is Button:
+		for skin in ["normal","disabled","hover","pressed"]:
+			card.add_theme_stylebox_override(skin,box(background.lightened(.10) if skin=="hover" else background,tint,10))
+	else:card.add_theme_stylebox_override("panel",box(background,tint,10))
+
+func show_bonus_selection(id:String,source:="reward",target:="",direction:=0) -> void:
+	var data:=Bonuses.describe(id)
+	if data.is_empty():return
+	state="bonus_choice"
+	paused=true
+	journey_modal(data.title,data.note+"\n"+data.detail)
+	overlay.set_meta("bonus_offer",id)
+	var strip:=panel(overlay,Rect2(32,382,476,52))
+	bonus_skin(strip,id,false)
+	label(strip,"PRÉVIA · escolha e confirme abaixo",Rect2(14,8,448,36),17,Color("f4efdf"))
+	var initiative:bool=data.attribute=="initiative"
+	if initiative:
+		for sign_value in [1,-1]:
+			var text:="Agir antes (+%d)"%int(data.magnitude) if sign_value>0 else "Agir depois (−%d)"%int(data.magnitude)
+			var choice:=button(overlay,text,Rect2(32 if sign_value>0 else 278,444,230,52),show_bonus_selection.bind(id,source,target,sign_value),direction==sign_value)
+			choice.name="BonusEarlier" if sign_value>0 else "BonusLater"
+	var top:=510.0 if initiative else 448.0
+	var scroll:=ScrollContainer.new()
+	scroll.set_script(preload("res://scripts/touch_scroll.gd"))
+	scroll.name="BonusRecipients"
+	scroll.position=Vector2(32,top)
+	scroll.size=Vector2(476,708-top)
+	scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED
+	overlay.add_child(scroll)
+	register_layout(scroll,"center")
+	var inner:=Control.new()
+	inner.custom_minimum_size=Vector2(458,run.actors.size()*87)
+	scroll.add_child(inner)
+	var valid:=false
+	for i in run.actors.size():
+		var a:Dictionary=run.actors[i]
+		var preview:=Bonuses.preview(a,data,direction if direction!=0 else 1)
+		var eligible:bool=Bonuses.useful(a,data.attribute,direction)
+		var recipient:=button(inner,"",Rect2(0,i*87,458,79),show_bonus_selection.bind(id,source,str(a.id),direction),a.id==target)
+		recipient.set_meta("bonus_recipient",a.id)
+		recipient.disabled=data.mode=="group" or not eligible
+		face_portrait(recipient,a.id,Rect2(9,9,58,58))
+		label(recipient,str(TaleCatalog.HEROES[a.id].name)+(" · CAÍDO" if a.hp<=0 else ""),Rect2(78,7,365,26),16,GOLD if a.id==target else Color("edf0e3"))
+		label(recipient,"Escolha o sentido acima" if initiative and direction==0 and eligible else preview.text,Rect2(78,37,365,34),14,Color("c9d9c5"))
+		if preview.eligible and (data.mode=="group" or a.id==target):valid=true
+	var help_text:="Caídos recebem o bônus sem reviver. Nada é consumido ao voltar."
+	if data.mode=="group":help_text="Uma aplicação por integrante compatível, incluindo futuros recrutados."
+	label(overlay,help_text,Rect2(32,714,476,43),13,MUTED)
+	var confirm:=button(overlay,"Confirmar%s"%(" · %d ouro"%run.supply_cost(id) if source=="shop" else ""),Rect2(32,764,476,50),confirm_bonus_selection.bind(id,source,target,direction),true)
+	confirm.name="ConfirmBonus"
+	confirm.disabled=not valid or initiative and direction==0 or source=="shop" and (run.shop_bought.has(id) or run.run_gold<run.supply_cost(id))
+	button(overlay,"Voltar sem escolher",Rect2(32,822,476,44),cancel_bonus_selection.bind(source))
+
+func cancel_bonus_selection(source:String) -> void:
+	if source=="shop":show_run_shop()
+	else:show_relics()
+
+func confirm_bonus_selection(id:String,source:String,target:String,direction:int) -> void:
+	if state!="bonus_choice" or not run.confirm_bonus(id,target,direction,source):return
+	persist_run()
+	if source=="shop":show_run_shop()
+	else:walk_to_routes()

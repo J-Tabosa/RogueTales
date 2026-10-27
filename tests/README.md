@@ -1,7 +1,9 @@
-# Suíte 0.9.7
+# Suíte 0.9.8
 
 Execute `python3 tools/check_095.py --godot /caminho/para/godot`. O runner considera falha qualquer erro de script, mesmo que o Godot retorne código zero após uma asserção.
 
+- `bonuses_098`: tabelas, probabilidades, elegibilidade, adição de percentuais, defesa, crítico, esquiva, Iniciativa negativa, mana, curas, básicos extras, loja, migração e idempotência de HP/grupo em JSON.
+- `bonuses_ui_098`: seleção/retorno/confirmação por toque e clique na cena real, seis fundos de raridade, nove beneficiários, rolagem, prévia negativa e confirmação da loja em PC/mobile.
 - `rules_095`: 53 verificações das fichas, fórmula híbrida, defesa, recursos e persistência.
 - `boons_095`: 58 verificações das bênçãos, incluindo Full House, controles, limites e sobrevivência.
 - `integration_095`: as 48 combinações de protagonista/bênção contra chefes e a cena real; desbloqueios, desejos, mercador e fichas PC/mobile.
