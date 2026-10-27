@@ -103,7 +103,7 @@ static func restore(owner, data: Dictionary) -> void:
 		for key in KEYS:
 			if stats.has(key): actor[key] = float(stats[key]) if key=="initiative" and is_finite(float(stats[key])) else safe(float(stats[key]), 1.0 if key in ["max_hp", "damage"] else 0.0)
 		actor.interval = maxf(0.65, actor.interval)
-		actor.crit = clampf(actor.crit, 0, 0.95)
+		actor.crit = maxf(0, actor.crit) # Effective chance is capped by Bonuses; retain removable gear stats.
 		actor.mutations.clear()
 		for key in stats.get("mutations", []):
 			var mutation := ExpeditionContent.offer("skill:%s:%s" % [actor.id, key])

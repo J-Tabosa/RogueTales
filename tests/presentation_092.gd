@@ -115,7 +115,7 @@ func checks() -> void:
 		for face in [game.feedback.ribbon_face,game.feedback.cutin_face]:
 			assert(face.get_parent().clip_contents and face.get_rect()==Rect2(Vector2.ZERO,face.get_parent().size))
 		await capture(prefix+"-ribbons")
-		game.run.actors[0].equipment.assign(["echo_bell","venom_vial"])
+		game.run.actors[0].equipment.assign(["echo_bell","black_apple"])
 		game.run.actors[0]["hostile_burn"]=3.0
 		game.run.actors[0]["hostile_dot_left"]=5.0
 		game.show_character_information(0)

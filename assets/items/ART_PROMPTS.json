@@ -1,30 +1,46 @@
 {
   "generator": "built-in image_gen",
-  "style": "Simplified cel-shaded fairy-tale inventory icons with dark outlines; transparent background",
+  "style": "Polished cel-shaded fairy-tale inventory icons, dark outlines, transparent background",
   "items": [
     {
-      "id": "ember_pearl",
-      "prompt": "Pearl held in a turquoise wave with a small orange flame; transparent, bold outlined cel-shaded fairy-tale equipment icon."
+      "id": "whetstone",
+      "prompt": "Pedra de Amolar: gray whetstone in a worn brown leather holder. Square isolated cel-shaded fairy-tale equipment icon, bold outlines, transparent background, no text."
     },
     {
-      "id": "winter_match",
-      "prompt": "Use case: stylized-concept. Asset type: square inventory equipment icon for RogueTales, a dark fairy-tale cartoon RPG. Single isolated item, centered, fills 76% of square. Hand-drawn 2D cel-shaded game art, bold dark outline, elegant simplified silhouette, restrained details, 3 main colors plus gold accents, readable at 40 pixels, crisp. Real transparent background, no background plate, no text, no letters, no frame, no watermark. Entire object inside canvas with generous transparent padding. Subject: Fósforo de inverno — one frosted wooden match, icy blue flame, a tiny curl of green venom."
+      "id": "scribbled_grimoire",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a closed battered plum-purple spellbook with gold corner caps, an emerald clasp and small cyan magical glint"
     },
     {
-      "id": "venom_vial",
-      "prompt": "Use case: stylized-concept. Asset type: square inventory equipment icon for RogueTales, a dark fairy-tale cartoon RPG. Single isolated item, centered, fills 76% of square. Hand-drawn 2D cel-shaded game art, bold dark outline, elegant simplified silhouette, restrained details, 3 main colors plus gold accents, readable at 40 pixels, crisp. Real transparent background, no background plate, no text, no letters, no frame, no watermark. Entire object inside canvas with generous transparent padding. Subject: Frasco de maçã negra — one squat glass poison vial shaped like a black apple, violet liquid, green stopper."
-    },
-    {
-      "id": "hunters_lens",
-      "prompt": "Use case: stylized-concept. Asset type: square inventory equipment icon for RogueTales, a dark fairy-tale cartoon RPG. Single isolated item, centered, fills 76% of square. Hand-drawn 2D cel-shaded game art, bold dark outline, elegant simplified silhouette, restrained details, 3 main colors plus gold accents, readable at 40 pixels, crisp. Real transparent background, no background plate, no text, no letters, no frame, no watermark. Entire object inside canvas with generous transparent padding. Subject: Lente de caçadora — one brass magnifying lens with a short dark wooden handle, crimson lens glint."
-    },
-    {
-      "id": "tower_braid",
-      "prompt": "Use case: stylized-concept. Asset type: square inventory equipment icon for RogueTales, a dark fairy-tale cartoon RPG. Single isolated item, centered, fills 76% of square. Hand-drawn 2D cel-shaded game art, bold dark outline, elegant simplified silhouette, restrained details, 3 main colors plus gold accents, readable at 40 pixels, crisp. Real transparent background, no background plate, no text, no letters, no frame, no watermark. Entire object inside canvas with generous transparent padding. Subject: Laço da torre — one golden braided ribbon tied into a compact bow, emerald clasp."
+      "id": "seven_league_boots",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a matching pair of moss-green travel boots with folded cuffs and small gold wing-shaped buckles"
     },
     {
       "id": "clockwork",
       "prompt": "Use case: stylized-concept. Asset type: square inventory equipment icon for RogueTales, a dark fairy-tale cartoon RPG. Single isolated item, centered, fills 76% of square. Hand-drawn 2D cel-shaded game art, bold dark outline, elegant simplified silhouette, restrained details, 3 main colors plus gold accents, readable at 40 pixels, crisp. Real transparent background, no background plate, no text, no letters, no frame, no watermark. Entire object inside canvas with generous transparent padding. Subject: Relógio sem ponteiros — one antique brass pocket watch with visible gears and an empty handless cream clock face."
+    },
+    {
+      "id": "blue_hourglass",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a compact silver hourglass containing bright azure magical sand and blue glass"
+    },
+    {
+      "id": "enchanted_needle",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a single large silver sewing needle threaded with curling golden magical thread"
+    },
+    {
+      "id": "leaf_cloak",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a folded forest-green cloak made of overlapping autumn leaves with a gold acorn clasp"
+    },
+    {
+      "id": "shrapnel_bag",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: an open brown leather drawstring pouch filled with several angular silver metal shards"
+    },
+    {
+      "id": "wolf_fang",
+      "prompt": "Use case: stylized-concept. Asset type: square inventory equipment icon for RogueTales, a dark fairy-tale cartoon RPG. Single isolated item, centered, fills 76% of square. Hand-drawn 2D cel-shaded game art, bold dark outline, elegant simplified silhouette, restrained details, 3 main colors plus gold accents, readable at 40 pixels, crisp. Real transparent background, no background plate, no text, no letters, no frame, no watermark. Entire object inside canvas with generous transparent padding. Subject: Presa do Lobo Mau — one large ivory wolf fang pendant with a crimson leather wrap."
+    },
+    {
+      "id": "black_apple",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a single glossy dark red poisoned apple, black-violet lower half, green leaf and a tiny violet poison glint"
     },
     {
       "id": "mirror_shard",
@@ -35,60 +51,112 @@
       "prompt": "Use case: stylized-concept. Asset type: square inventory equipment icon for RogueTales, a dark fairy-tale cartoon RPG. Single isolated item, centered, fills 76% of square. Hand-drawn 2D cel-shaded game art, bold dark outline, elegant simplified silhouette, restrained details, 3 main colors plus gold accents, readable at 40 pixels, crisp. Real transparent background, no background plate, no text, no letters, no frame, no watermark. Entire object inside canvas with generous transparent padding. Subject: Sino dos ecos — one small enchanted bronze handbell, emerald handle, two subtle cyan sound arcs."
     },
     {
-      "id": "red_goblet",
-      "prompt": "Use case: stylized-concept. Asset type: square inventory equipment icon for RogueTales, a dark fairy-tale cartoon RPG. Single isolated item, centered, fills 76% of square. Hand-drawn 2D cel-shaded game art, bold dark outline, elegant simplified silhouette, restrained details, 3 main colors plus gold accents, readable at 40 pixels, crisp. Real transparent background, no background plate, no text, no letters, no frame, no watermark. Entire object inside canvas with generous transparent padding. Subject: Taça do último brinde — one silver medieval goblet filled with ruby-red liquid, a red gem in its stem."
+      "id": "full_tide_shell",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a single pearly turquoise seashell cupping a glowing pale blue pearl, delicate gold edge"
     },
     {
-      "id": "jade_seal",
-      "prompt": "Use case: stylized-concept. Asset type: square inventory equipment icon for RogueTales, a dark fairy-tale cartoon RPG. Single isolated item, centered, fills 76% of square. Hand-drawn 2D cel-shaded game art, bold dark outline, elegant simplified silhouette, restrained details, 3 main colors plus gold accents, readable at 40 pixels, crisp. Real transparent background, no background plate, no text, no letters, no frame, no watermark. Entire object inside canvas with generous transparent padding. Subject: Selo do dragão — one carved deep green jade seal depicting a coiled dragon, warm gold edge."
+      "id": "hunter_glasses",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a pair of brass hunter goggles with crimson round lenses and a dark brown leather strap"
     },
     {
-      "id": "trophy_scarlet",
-      "prompt": "Use case: stylized-concept. Asset type: square inventory equipment icon for RogueTales, a dark fairy-tale cartoon RPG. Single isolated item, centered, fills 76% of square. Hand-drawn 2D cel-shaded game art, bold dark outline, elegant simplified silhouette, restrained details, 3 main colors plus gold accents, readable at 40 pixels, crisp. Real transparent background, no background plate, no text, no letters, no frame, no watermark. Entire object inside canvas with generous transparent padding. Subject: Presa do Lobo Mau — one large ivory wolf fang pendant with a crimson leather wrap."
+      "id": "golden_spool",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a wooden spool wound with thick luminous golden thread, a short loose thread curls beside it"
     },
     {
-      "id": "trophy_snow_white",
-      "prompt": "Use case: stylized-concept. Asset type: square inventory equipment icon for RogueTales, a dark fairy-tale cartoon RPG. Single isolated item, centered, fills 76% of square. Hand-drawn 2D cel-shaded game art, bold dark outline, elegant simplified silhouette, restrained details, 3 main colors plus gold accents, readable at 40 pixels, crisp. Real transparent background, no background plate, no text, no letters, no frame, no watermark. Entire object inside canvas with generous transparent padding. Subject: Fórmula da rainha — one rolled poison recipe parchment with a black apple wax seal and violet potion stain, illegible markings only."
+      "id": "black_cat_boots",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a pair of compact black leather boots with small gold cat-paw buckles and violet inner cuffs"
     },
     {
-      "id": "trophy_rapunzel",
-      "prompt": "Use case: stylized-concept. Asset type: square inventory equipment icon for RogueTales, a dark fairy-tale cartoon RPG. Single isolated item, centered, fills 76% of square. Hand-drawn 2D cel-shaded game art, bold dark outline, elegant simplified silhouette, restrained details, 3 main colors plus gold accents, readable at 40 pixels, crisp. Real transparent background, no background plate, no text, no letters, no frame, no watermark. Entire object inside canvas with generous transparent padding. Subject: Chave da torre — one ornate long gold tower key with a spiraling purple ribbon."
+      "id": "absinthe_goblet",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a silver goblet holding vivid emerald-green absinthe, a purple gemstone in its stem"
     },
     {
-      "id": "trophy_mulan",
-      "prompt": "Use case: stylized-concept. Asset type: square inventory equipment icon for RogueTales, a dark fairy-tale cartoon RPG. Single isolated item, centered, fills 76% of square. Hand-drawn 2D cel-shaded game art, bold dark outline, elegant simplified silhouette, restrained details, 3 main colors plus gold accents, readable at 40 pixels, crisp. Real transparent background, no background plate, no text, no letters, no frame, no watermark. Entire object inside canvas with generous transparent padding. Subject: Insígnia de jade — one emerald jade military medallion shaped like a stylized dragon, dark bronze border."
+      "id": "stone_heart",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a dark gray angular stone shaped like a heart with glowing amber fissures and a gold band"
+    },
+    {
+      "id": "star_powder",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a small blue glass powder flask full of bright golden star-shaped grains, gold stopper"
+    },
+    {
+      "id": "giant_sword",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a massive broad iron greatsword with a dark rectangular blade and short brown wrapped handle, whole sword diagonal"
+    },
+    {
+      "id": "empty_lamp",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: an ornate tarnished brass oil lamp, emerald accent, dark empty spout without smoke or genie"
+    },
+    {
+      "id": "thorn_dress",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a compact burgundy dress wrapped in black thorny vines, green leaf collar, no mannequin or body"
+    },
+    {
+      "id": "fate_scissors",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a pair of ornate silver scissors with intertwined golden handles, one violet gemstone"
+    },
+    {
+      "id": "immortal_wolf_heart",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a dark crimson wolf heart encased in a small silver rib-like cage with a vivid red glow, stylized no gore"
+    },
+    {
+      "id": "world_needle",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: an ornate large golden sewing needle with a tiny turquoise globe-shaped eye and luminous cyan thread"
+    },
+    {
+      "id": "hundred_mirrors_crown",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a silver crown composed of angular mirror facets with turquoise reflections and violet jewels"
+    },
+    {
+      "id": "author_quill",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a single elegant white and black quill pen with a golden nib, small violet magical ink curl"
     },
     {
       "id": "trophy_ariel",
-      "prompt": "Use case: stylized-concept. Asset type: square inventory equipment icon for RogueTales, a dark fairy-tale cartoon RPG. Single isolated item, centered, fills 76% of square. Hand-drawn 2D cel-shaded game art, bold dark outline, elegant simplified silhouette, restrained details, 3 main colors plus gold accents, readable at 40 pixels, crisp. Real transparent background, no background plate, no text, no letters, no frame, no watermark. Entire object inside canvas with generous transparent padding. Subject: Concha da maré negra — one dark purple spiral sea shell with a luminous teal pearl and an orange ember."
-    },
-    {
-      "id": "trophy_joao",
-      "prompt": "Use case: stylized-concept. Asset type: square inventory equipment icon for RogueTales, a dark fairy-tale cartoon RPG. Single isolated item, centered, fills 76% of square. Hand-drawn 2D cel-shaded game art, bold dark outline, elegant simplified silhouette, restrained details, 3 main colors plus gold accents, readable at 40 pixels, crisp. Real transparent background, no background plate, no text, no letters, no frame, no watermark. Entire object inside canvas with generous transparent padding. Subject: Selo do duque — one aristocratic bronze signet ring with a dark red pointed diamond crest."
-    },
-    {
-      "id": "trophy_maria",
-      "prompt": "Use case: stylized-concept. Asset type: square inventory equipment icon for RogueTales, a dark fairy-tale cartoon RPG. Single isolated item, centered, fills 76% of square. Hand-drawn 2D cel-shaded game art, bold dark outline, elegant simplified silhouette, restrained details, 3 main colors plus gold accents, readable at 40 pixels, crisp. Real transparent background, no background plate, no text, no letters, no frame, no watermark. Entire object inside canvas with generous transparent padding. Subject: Taça da condessa — one elegant silver chalice with violet poison, a small dark purple rose on its stem."
-    },
-    {
-      "id": "trophy_alice",
-      "prompt": "Use case: stylized-concept. Asset type: square inventory equipment icon for RogueTales, a dark fairy-tale cartoon RPG. Single isolated item, centered, fills 76% of square. Hand-drawn 2D cel-shaded game art, bold dark outline, elegant simplified silhouette, restrained details, 3 main colors plus gold accents, readable at 40 pixels, crisp. Real transparent background, no background plate, no text, no letters, no frame, no watermark. Entire object inside canvas with generous transparent padding. Subject: Coroa de copas — one playful gold crown with three red heart-shaped jewels and black tips."
-    },
-    {
-      "id": "trophy_puss",
-      "prompt": "Use case: stylized-concept. Asset type: square inventory equipment icon for RogueTales, a dark fairy-tale cartoon RPG. Single isolated item, centered, fills 76% of square. Hand-drawn 2D cel-shaded game art, bold dark outline, elegant simplified silhouette, restrained details, 3 main colors plus gold accents, readable at 40 pixels, crisp. Real transparent background, no background plate, no text, no letters, no frame, no watermark. Entire object inside canvas with generous transparent padding. Subject: Nona marca — one black cat paw medallion with nine small gold notches around its bronze rim."
-    },
-    {
-      "id": "trophy_matches",
-      "prompt": "Use case: stylized-concept. Asset type: square inventory equipment icon for RogueTales, a dark fairy-tale cartoon RPG. Single isolated item, centered, fills 76% of square. Hand-drawn 2D cel-shaded game art, bold dark outline, elegant simplified silhouette, restrained details, 3 main colors plus gold accents, readable at 40 pixels, crisp. Real transparent background, no background plate, no text, no letters, no frame, no watermark. Entire object inside canvas with generous transparent padding. Subject: Brasa real — one vivid orange glowing coal inside a little broken gold crown."
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a sinister sea witch trident with exactly three teal metal tines, purple coral handle and pearl accent, whole weapon diagonal"
     },
     {
       "id": "trophy_peter",
-      "prompt": "Use case: stylized-concept. Asset type: square inventory equipment icon for RogueTales, a dark fairy-tale cartoon RPG. Single isolated item, centered, fills 76% of square. Hand-drawn 2D cel-shaded game art, bold dark outline, elegant simplified silhouette, restrained details, 3 main colors plus gold accents, readable at 40 pixels, crisp. Real transparent background, no background plate, no text, no letters, no frame, no watermark. Entire object inside canvas with generous transparent padding. Subject: Âncora sem peso — one small spectral turquoise pirate anchor with dark violet bindings, floating."
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a single pirate captain curved silver hook attached to a worn dark red cuff with a gold rim"
+    },
+    {
+      "id": "trophy_scarlet",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a folded charcoal-gray wolf pelt cloak with recognizable wolf-head hood and red lining, no living wolf"
     },
     {
       "id": "trophy_aladin",
       "prompt": "Use case: stylized-concept. Asset type: square inventory equipment icon for RogueTales, a dark fairy-tale cartoon RPG. Single isolated item, centered, fills 76% of square. Hand-drawn 2D cel-shaded game art, bold dark outline, elegant simplified silhouette, restrained details, 3 main colors plus gold accents, readable at 40 pixels, crisp. Real transparent background, no background plate, no text, no letters, no frame, no watermark. Entire object inside canvas with generous transparent padding. Subject: Areia do vizir — one small gold-framed hourglass with violet glass and magical golden sand."
+    },
+    {
+      "id": "trophy_snow_white",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: an intact regal oval hand mirror with black and gold frame, violet reflection and tiny green apple-shaped jewel"
+    },
+    {
+      "id": "trophy_mulan",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a compact battle standard on a short bronze pole, deep red angular flag with a simple gold sun emblem, no lettering"
+    },
+    {
+      "id": "trophy_rapunzel",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a pair of long dark steel hair-cutting scissors with gold handles and a short severed golden lock of hair"
+    },
+    {
+      "id": "trophy_puss",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a round iron bounty hunter medallion with a red wolf claw slash symbol and dark leather cord, no lettering"
+    },
+    {
+      "id": "trophy_alice",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a queen's short gold scepter topped by a large ruby-red heart, black diamond accents"
+    },
+    {
+      "id": "trophy_matches",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a faceted icy blue spirit heart crystal with frosted edges and a small cyan spectral wisp"
+    },
+    {
+      "id": "trophy_joao",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a single sharp white sugar-glass knife with a red candy-striped handle and amber sugar guard"
+    },
+    {
+      "id": "trophy_maria",
+      "prompt": "Use case: stylized-concept. Asset: individual square inventory equipment icon for RogueTales, dark fairy-tale cartoon RPG. Polished hand-drawn 2D cel shading, bold near-black outlines, restrained details, simple angular silhouette readable at 40px, jewel colors with gold accents. Isolated single item centered with entire silhouette inside canvas, ample transparent padding, fills 76% of square. True transparent background, no scene, no text, no lettering, no watermark, no frame, no characters or hands. Subject: a small black iron witch cauldron filled with glowing violet potion and a green candy swirl bubble"
     }
   ]
 }

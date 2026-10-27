@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bj1xydlppk75r"
-path="res://.godot/imported/venom_vial.png-84c59958e24c54db449ff5c86de4f642.ctex"
+uid="uid://4jwnvn24vlqj"
+path="res://.godot/imported/author_quill.png-8ab3990b7c5742c730409a92d31ee779.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/items/venom_vial.png"
-dest_files=["res://.godot/imported/venom_vial.png-84c59958e24c54db449ff5c86de4f642.ctex"]
+source_file="res://assets/items/author_quill.png"
+dest_files=["res://.godot/imported/author_quill.png-8ab3990b7c5742c730409a92d31ee779.ctex"]
 
 [params]
 

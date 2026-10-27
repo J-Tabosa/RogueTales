@@ -930,7 +930,7 @@ func show_secret_reward() -> void:
 	var reward: Dictionary=secrets.DATA[run.pending_secret_reward]
 	journey_modal("Lenda vencida · "+str(reward.name),"+600 pontos · +%d ouro"%(75+run.stage*5))
 	face_portrait(overlay,run.pending_secret_reward,Rect2(208,336,124,124))
-	label(overlay,reward.reward+"\nTroféu: "+Equipment.data("trophy_"+run.pending_secret_reward).title+" adicionado ao inventário.\n\nBônus aplicado nesta run. A próxima fase normal continua de onde parou.",Rect2(40,492,460,170),20,GOLD)
+	label(overlay,reward.reward+"\nEspecial: "+Equipment.data("trophy_"+run.pending_secret_reward).title+" adicionado ao inventário.\n\nBônus aplicado nesta run. A próxima fase normal continua de onde parou.",Rect2(40,492,460,170),20,GOLD)
 	button(overlay,"Equipar troféu",Rect2(32,702,476,50),show_equipment.bind(maxi(0,run.actor_ids().find(run.pending_secret_reward))))
 	button(overlay,"Continuar a jornada",Rect2(32,768,476,58),continue_after_secret,true)
 func continue_after_secret() -> void:

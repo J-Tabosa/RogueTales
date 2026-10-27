@@ -85,7 +85,7 @@ func test() -> void:
 		game.show_character_information(2)
 		await capture("silk-sheet-%d"%extent.x)
 		game.close_character_information()
-	game.run.interlude="shop";game.run.shop_stock.assign(["item:clockwork","item:tower_braid"])
+	game.run.interlude="shop";game.run.shop_stock.assign(["item:clockwork","item:stone_heart"])
 	game.show_run_shop()
 	game.show_wishes()
 	await capture("wishes-mobile")

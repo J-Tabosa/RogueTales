@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://drm34024pd2jo"
-path="res://.godot/imported/red_goblet.png-f031551c3c74d383eba24f1b8fff8279.ctex"
+uid="uid://ds7x5ksw0mtmt"
+path="res://.godot/imported/black_apple.png-8cb5ef5b07a61945774a83ad8a047a6d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/items/red_goblet.png"
-dest_files=["res://.godot/imported/red_goblet.png-f031551c3c74d383eba24f1b8fff8279.ctex"]
+source_file="res://assets/items/black_apple.png"
+dest_files=["res://.godot/imported/black_apple.png-8cb5ef5b07a61945774a83ad8a047a6d.ctex"]
 
 [params]
 

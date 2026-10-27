@@ -85,9 +85,9 @@ func test() -> void:
 	# Exact reported Alice scenario with ordinary items and the default blessing.
 	run=make(["alice"] ,0);a=run.actors[0]
 	run.tactics.round_number=1
-	a.equipment=["ember_pearl","venom_vial"]
+	a.equipment=["trophy_alice"]
 	hit=run.hit_enemy(0,6)
-	check(a.get("boon_feats",{}).get("two_conditions",false),"Item burn+poison unlock without owning ChapeleiraMaluca")
+	check(a.get("boon_feats",{}).get("two_conditions",false),"Item antiheal+shieldbreak unlock without owning ChapeleiraMaluca")
 	var earned:int=run.tactics.feedback_events.filter(func(e):return e.kind=="achievement").size()
 	run.hit_enemy(0,6)
 	check(earned==1 and run.tactics.feedback_events.filter(func(e):return e.kind=="achievement").size()==1,"Achievement feedback emitted once")
@@ -97,17 +97,17 @@ func test() -> void:
 	check(Blessings.unlocked(account,"blessing:alice:1"),"Unlock persists from live feat even without a victory")
 	var saved_account:=TaleCampaign.new();saved_account.load_data(account.to_dict())
 	check(Blessings.unlocked(saved_account,"blessing:alice:1"),"Permanent Alice unlock survives reload")
-	run=make(["alice"],0);a=run.actors[0];a.equipment=["venom_vial","winter_match"]
+	run=make(["alice"],0);a=run.actors[0];a.equipment=["black_apple","trophy_matches"]
 	run.hit_enemy(0,6)
-	check(a.get("boon_feats",{}).get("two_conditions",false),"Poison+slow also qualifies")
-	run=make(["alice"],0);a=run.actors[0];a.equipment=["ember_pearl","venom_vial"]
-	for foe in run.tactics.enemies:foe.immune_poison=true
+	check(a.get("boon_feats",{}).get("two_conditions",false),"Poison+hangover also qualifies")
+	run=make(["alice"],0);a=run.actors[0];a.equipment=["trophy_alice"]
+	for foe in run.tactics.enemies:foe.immune_antiheal=true
 	run.hit_enemy(0,6)
 	check(not a.get("boon_feats",{}).get("two_conditions",false),"An immune condition is not credited")
-	run=make(["alice"],0);a=run.actors[0];a.equipment=["venom_vial"]
+	run=make(["alice"],0);a=run.actors[0];a.equipment=["black_apple"]
 	run.hit_enemy(0,6);run.hit_enemy(0,7)
 	check(not a.get("boon_feats",{}).get("two_conditions",false),"Repeating one condition does not fake two different conditions")
-	run.tactics.round_number+=1;a.equipment=["ember_pearl"]
+	run.tactics.round_number+=1;a.equipment=["trophy_matches"];a.basic_in_turn=0
 	run.hit_enemy(0,6)
 	check(not a.get("boon_feats",{}).get("two_conditions",false),"Conditions from separate rounds do not combine")
 	# Same round number in a new encounter cannot reuse the old condition.

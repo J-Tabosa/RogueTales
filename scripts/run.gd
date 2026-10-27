@@ -336,7 +336,8 @@ func restore(campaign: TaleCampaign, data: Dictionary) -> void:
 		party_capacity=clampi(int(data.get("party_capacity",3)),3,9)
 		inventory.clear()
 		for item in data.get("inventory",[]):
-			if not Equipment.data(str(item)).is_empty() and inventory.size()<144:inventory.append(str(item))
+			var current:=Equipment.migrate(str(item))
+			if not Equipment.data(current).is_empty() and inventory.size()<144:inventory.append(current)
 		hero_room_counts={}
 		for hero in TaleCatalog.HEROES:hero_room_counts[hero]=maxi(0,int(data.get("hero_room_counts",{}).get(hero,0)))
 		secret_survivors.clear()
@@ -379,10 +380,12 @@ func restore(campaign: TaleCampaign, data: Dictionary) -> void:
 			if ExpeditionContent.ROUTES.has(key) and not route_offers.has(key): route_offers.append(key)
 		shop_stock.clear()
 		for key in data.get("shop_stock", []):
-			if key == "potion" or not TaleCatalog.offer_data(str(key)).is_empty(): shop_stock.append(key)
+			var current:String="item:"+Equipment.migrate(str(key).trim_prefix("item:")) if str(key).begins_with("item:") else str(key)
+			if current == "potion" or not TaleCatalog.offer_data(current).is_empty(): shop_stock.append(current)
 		shop_bought.clear()
 		for key in data.get("shop_bought", []):
-			if shop_stock.has(key) and not shop_bought.has(key): shop_bought.append(key)
+			var current:String="item:"+Equipment.migrate(str(key).trim_prefix("item:")) if str(key).begins_with("item:") else str(key)
+			if shop_stock.has(current) and not shop_bought.has(current): shop_bought.append(current)
 	run_id = int(data.get("run_id", 0))
 	if run_id <= 0:
 		run_id = campaign.new_run_id()
@@ -603,8 +606,7 @@ func roll_run_offers() -> void:
 	if not guests.is_empty() and (guaranteed_recruit or rng.randf() < ExpeditionContent.RECRUIT_CHANCE):
 		offers.append("ally:" + guests[rng.randi_range(0, guests.size() - 1)])
 	if reward_boss or rng.randf()<0.40:
-		var items:Array=Equipment.ITEMS.keys()
-		offers.append("item:"+str(items[rng.randi_range(0,items.size()-1)]))
+		offers.append("item:"+Equipment.roll(rng))
 	# Recruitment/item decisions above keep their existing frequency and three slots.
 	while offers.size()<3:
 		var bonus_id:=Bonuses.roll(self)
@@ -670,11 +672,11 @@ func roll_routes() -> void:
 	route_offers.append(str(choices[rng.randi_range(0, choices.size() - 1)]))
 	shop_stock.assign(["potion"])
 	shop_bought.clear()
-	var stock:Array=Equipment.ITEMS.keys()
+	var stock:Array=[]
 	for index in 3:
-		var slot:=rng.randi_range(0,stock.size()-1)
-		shop_stock.append("item:"+str(stock[slot]))
-		stock.remove_at(slot)
+		var item:=Equipment.roll(rng,stock)
+		shop_stock.append("item:"+item)
+		stock.append(item)
 	var bonus_id:=Bonuses.roll(self)
 	if not bonus_id.is_empty():shop_stock.append(bonus_id)
 
@@ -786,17 +788,22 @@ func equipment_snapshot() -> Dictionary:
 	for a in actors:result[a.id]={"items":a.get("equipment",[]).duplicate(),"applied":a.get("equipment_applied",{}).duplicate()}
 	return result
 
-func restore_equipment(saved: Dictionary) -> void:
+func restore_equipment(saved:Dictionary) -> void:
 	var remaining:=inventory.duplicate()
 	for a in actors:
 		var state:Dictionary=saved.get(a.id,{})
 		a["equipment"]=[]
-		for id in state.get("items",[]).slice(0,Equipment.SLOTS):
+		a["equipment_applied"]=state.get("applied",{}).duplicate()
+		var old_format:bool=not a.equipment_applied.has("format")
+		if old_format:Equipment.detach(a)
+		for previous in state.get("items",[]).slice(0,Equipment.SLOTS):
+			var id:=Equipment.migrate(str(previous))
 			if id=="":a.equipment.append("")
-			elif remaining.has(id):
+			elif remaining.has(id) and not a.equipment.has(id):
 				a.equipment.append(id)
 				remaining.erase(id)
-		a["equipment_applied"]=state.get("applied",{}).duplicate()
+		if old_format:Equipment.attach(a)
+
 
 func add_upgrade(id: String) -> bool:
 	for a in actors:Equipment.detach(a)

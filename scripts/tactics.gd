@@ -18,6 +18,7 @@ var last_ultimate: Dictionary = {}
 var ultimate_serial := 0
 var feedback_events: Array[Dictionary] = []
 var damage_received := 0.0
+var enemy_action_serial := 0
 
 
 func run():
@@ -167,6 +168,11 @@ static func eligible(attacker: Dictionary, defenders: Array) -> Array[int]:
 
 static func choose_target(attacker: Dictionary, defenders: Array) -> int:
 	var candidates := eligible(attacker, defenders)
+	var visible:Array[int]=[]
+	for at in candidates:
+		var hidden:bool=Rules.Gear.effects(defenders[at]).get("wolf_hide",false) and candidates.any(func(other):return other!=at and defenders[other].row==defenders[at].row)
+		if not hidden:visible.append(at)
+	if not visible.is_empty():candidates=visible
 	if candidates.is_empty():
 		return -1
 	var selected: int = candidates[0]
@@ -195,6 +201,7 @@ func hit_enemy(index:int,requested:=-1) -> Dictionary:
 	return hit
 
 func hit_party(index:=0) -> Dictionary:
+	enemy_action_serial+=1
 	return BossRules.execute(self,index) if run().expedition else Rules.incoming(self,index)
 
 

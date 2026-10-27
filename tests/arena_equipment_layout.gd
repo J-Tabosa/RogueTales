@@ -54,8 +54,8 @@ func checks() -> void:
 		for id in Gear.ITEMS: game.run.grant_item(id)
 		for hero in Gear.TROPHIES: game.run.grant_item("trophy_" + hero)
 		game.run.interlude = "route"
-		assert(game.run.equip_item(0,"ember_pearl",0))
-		assert(game.run.equip_item(0,"winter_match",1))
+		assert(game.run.equip_item(0,"star_powder",0))
+		assert(game.run.equip_item(0,"blue_hourglass",1))
 		game.run.interlude = ""
 		game.run.stage = 2 # Nine-enemy formations become available in stage 3.
 		game.enter_encounter()
@@ -118,14 +118,14 @@ func checks() -> void:
 		assert(game.battle_viewport.size.y > (560 if game.desktop else 490))
 		var slots: Array = game.ult_buttons[0].get_children().filter(func(n): return n.has_meta("card_items"))
 		assert(slots.size() == 2)
-		assert(slots[0].get_meta("item_picture").texture == Art.texture("ember_pearl"))
-		assert(slots[1].get_meta("item_picture").texture == Art.texture("winter_match"))
+		assert(slots[0].get_meta("item_picture").texture == Art.texture("star_powder"))
+		assert(slots[1].get_meta("item_picture").texture == Art.texture("blue_hourglass"))
 		game.current_action("Scarlet")
 		await capture("nine_vs_nine_%dx%d" % [dimensions.x,dimensions.y])
 		game.run.interlude = "route"
 		game.show_equipment(0,1)
-		assert(game.equipment_panel.selected_slot == 1 and game.equipment_panel.selected_item == "winter_match")
-		game.equipment_panel.select_item("jade_seal")
+		assert(game.equipment_panel.selected_slot == 1 and game.equipment_panel.selected_item == "blue_hourglass")
+		game.equipment_panel.select_item("enchanted_needle")
 		await process_frame
 		var description: Control = game.equipment_panel.find_child("DescriptionPane",true,false)
 		for node in description.get_children():
@@ -133,7 +133,7 @@ func checks() -> void:
 		var equip: Button = game.equipment_panel.find_child("EquipSelectedItem",true,false)
 		assert(equip != null and not equip.disabled)
 		equip.pressed.emit()
-		assert(game.run.actors[0].equipment[1] == "jade_seal")
+		assert(game.run.actors[0].equipment[1] == "enchanted_needle")
 		await capture("item_description_%dx%d" % [dimensions.x,dimensions.y])
 		game.equipment_panel.select_tab("appearance")
 		game.equipment_panel.select_category("trophy")
@@ -148,5 +148,5 @@ func checks() -> void:
 	for suffix in ["", ".bak", ".tmp"]:
 		var path: String = "user://arena_equipment_layout_isolated.json" + suffix
 		if FileAccess.file_exists(path): DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
-	print("ARENA EQUIPMENT LAYOUT PASS: 22 icon assets, 18 separate plates, larger partially overlapping sprites with visible targets and depth order, compact HUD and portrait abilities, responsive arena, two equipped slots, selected-slot equip, appearance/description and trophy filters")
+	print("ARENA EQUIPMENT LAYOUT PASS: 39 icon assets, 18 separate plates, larger partially overlapping sprites with visible targets and depth order, compact HUD and portrait abilities, responsive arena, two equipped slots, selected-slot equip, appearance/description and trophy filters")
 	quit()

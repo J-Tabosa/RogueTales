@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c86blalca75gt"
-path="res://.godot/imported/jade_seal.png-eb34de2f375ac227c958b5d9ef02300f.ctex"
+uid="uid://dl2tabbwc4o8l"
+path="res://.godot/imported/whetstone.png-e0a5303a3cc89e2a656d23369f57bac3.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/items/jade_seal.png"
-dest_files=["res://.godot/imported/jade_seal.png-eb34de2f375ac227c958b5d9ef02300f.ctex"]
+source_file="res://assets/items/whetstone.png"
+dest_files=["res://.godot/imported/whetstone.png-e0a5303a3cc89e2a656d23369f57bac3.ctex"]
 
 [params]
 

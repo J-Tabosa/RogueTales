@@ -2,7 +2,7 @@
 config_version=5
 
 [application]
-config/version="0.9.8"
+config/version="0.9.9"
 config/icon="res://assets/ui/app_icon.png"
 config/name="RogueTales: O Último Fio"
 run/main_scene="res://scenes/main.tscn"

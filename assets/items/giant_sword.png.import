@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bgy1oxb4frse2"
-path="res://.godot/imported/ember_pearl.png-00e841fb12b36e00a7844ce4648a6b7e.ctex"
+uid="uid://epqfdg0uuncf"
+path="res://.godot/imported/giant_sword.png-eb060e051cad664595a994562ae26c76.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/items/ember_pearl.png"
-dest_files=["res://.godot/imported/ember_pearl.png-00e841fb12b36e00a7844ce4648a6b7e.ctex"]
+source_file="res://assets/items/giant_sword.png"
+dest_files=["res://.godot/imported/giant_sword.png-eb060e051cad664595a994562ae26c76.ctex"]
 
 [params]
 

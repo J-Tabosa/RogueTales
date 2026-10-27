@@ -63,27 +63,27 @@ func checks() -> void:
 	assert(counts.size() == 9)
 	# Copies cannot be duplicated across heroes. Removing/equipping never heals.
 	run.interlude = "shop"
-	for item in ["tower_braid", "hunters_lens", "ember_pearl", "winter_match"]: assert(run.grant_item(item))
+	for item in ["stone_heart", "hunter_glasses", "black_apple", "blue_hourglass"]: assert(run.grant_item(item))
 	var actor: Dictionary = run.actors[0]
 	actor.hp = 70
 	var base_damage: float = actor.damage
 	var base_hp: float = actor.max_hp
-	assert(run.equip_item(0, "tower_braid", 0))
-	assert(actor.max_hp == base_hp + 40 and actor.hp == 70)
-	assert(not run.equip_item(1, "tower_braid", 0))
-	assert(run.equip_item(0, "hunters_lens", 1))
-	assert(is_equal_approx(actor.damage, base_damage * 1.15))
+	assert(run.equip_item(0, "stone_heart", 0))
+	assert(actor.max_hp == base_hp + 100 and actor.hp == 70)
+	assert(not run.equip_item(1, "stone_heart", 0))
+	assert(run.equip_item(0, "hunter_glasses", 1))
+	assert(is_equal_approx(actor.damage, base_damage))
 	assert(run.apply_relic("power"))
 	run.interlude = "shop"
 	assert(run.equip_item(0, "", 1))
 	assert(is_equal_approx(actor.damage, base_damage * 1.2))
-	assert(run.equip_item(0, "hunters_lens", 1))
+	assert(run.equip_item(0, "hunter_glasses", 1))
 	assert(run.equip_item(0, "", 0) and actor.max_hp == base_hp and actor.hp == 70)
-	assert(run.equip_item(0, "tower_braid", 0))
+	assert(run.equip_item(0, "stone_heart", 0))
 	run.shop_stock.assign(["item:echo_bell"])
 	run.shop_bought.clear()
 	run.run_gold = 500
-	assert(run.buy_supply("item:echo_bell") and run.run_gold == 360)
+	assert(run.buy_supply("item:echo_bell") and run.run_gold == 330)
 	assert(not run.buy_supply("item:echo_bell"))
 	# Full JSON/disk round trip preserves nine heroes, equipped stats and stock.
 	account.checkpoint = run.to_checkpoint()
@@ -100,20 +100,20 @@ func checks() -> void:
 	assert(restored.equip_item(0, "", 1))
 	assert(is_equal_approx(restored.actors[0].damage, base_damage * 1.2))
 	restored.interlude = ""
-	assert(not restored.equip_item(0, "ember_pearl", 0))
+	assert(not restored.equip_item(0, "black_apple", 0))
 	# Special interactions work on actual targets and do not recurse.
 	run = fixture("ariel")
 	run.interlude = "route"
-	assert(run.grant_item("ember_pearl") and run.equip_item(0, "ember_pearl", 0))
+	assert(run.grant_item("black_apple") and run.equip_item(0, "black_apple", 0))
 	run.spawn_enemy()
 	for foe in run.tactics.enemies:
 		foe.hp = 10000
 		foe.max_hp = 10000
 		foe.evasion = 0
 	run.hit_enemy(0)
-	assert(run.tactics.enemies.any(func(foe): return foe.burn > 0))
+	assert(run.tactics.enemies.any(func(foe): return foe.poison > 0))
 	run.interlude = "route"
-	assert(run.grant_item("winter_match") and run.equip_item(0, "winter_match", 1))
+	assert(run.grant_item("blue_hourglass") and run.equip_item(0, "blue_hourglass", 1))
 	for foe in run.tactics.enemies: foe.burn = 0;foe.statuses=[];foe.burn_left=0
 	run.hit_enemy(0)
 	assert(run.tactics.enemies.any(func(foe): return foe.poison > 0))
@@ -152,5 +152,5 @@ func checks() -> void:
 	assert(run.run_gold >= 171)
 	for suffix in ["", ".bak", ".tmp"]:
 		if FileAccess.file_exists(SAVE + suffix): DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE + suffix))
-	print("EQUIPMENT PROGRESSION PASS: centered rows, 1-9 enemies, 12 boss formations, 9-hero saves, physical copies, reversible stats, atomic shop, elemental effects, 48 blessings and idempotent trophies/missions")
+	print("EQUIPMENT PROGRESSION PASS: centered rows, 1-9 enemies, 12 boss formations, 9-hero saves, physical copies, reversible stats, atomic shop, poison equipment, 48 blessings and idempotent trophies/missions")
 	quit()

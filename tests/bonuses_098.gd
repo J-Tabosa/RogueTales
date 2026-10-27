@@ -67,13 +67,13 @@ func test() -> void:
 	# Separate accumulators remain through equipment changes.
 	run=make(["scarlet"]);a=run.actors[0]
 	grant(run,"physical_damage");grant(run,"max_hp",0)
-	run.interlude="shop";run.inventory.assign(["hunters_lens","tower_braid"])
+	run.interlude="shop";run.inventory.assign(["whetstone","stone_heart"])
 	var power_before:=R.power(a,false)
 	var hp_before:float=a.hp
 	for cycle in 3:
-		check(run.equip_item(0,"hunters_lens",0),"Equip damage multiplier")
-		check(close(R.power(a,false),power_before*1.15),"Gear order preserved")
-		check(run.equip_item(0,"tower_braid",0) and a.max_hp==260,"HPgear separate")
+		check(run.equip_item(0,"whetstone",0),"Equip damage multiplier")
+		check(close(R.power(a,false),power_before+24*.2),"Gear order preserved")
+		check(run.equip_item(0,"stone_heart",0) and a.max_hp==320,"HPgear separate")
 		check(run.equip_item(0,"",0) and close(R.power(a,false),power_before) and a.hp==hp_before and a.max_hp==220,"Unequip no bonus replay")
 	# Cap previews and absolute critical multiplier.
 	run=make(["peter","scarlet"]);a=run.actors[0];a.crit=.15

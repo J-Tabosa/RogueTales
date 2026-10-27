@@ -3,8 +3,9 @@ extends RefCounted
 const Bonuses=preload("res://scripts/run_bonuses.gd")
 const Data=preload("res://scripts/roster_data.gd")
 const Gear=preload("res://scripts/equipment.gd")
+const Items=preload("res://scripts/equipment_rules.gd")
 const Layout=preload("res://scripts/formation_layout.gd")
-const STATE_KEYS=["shadows","shadow_boost","shadow_thieves","lost_shadows","suit","previous_suit","card_charge","mark_id","wishes","wish_extra","resurrections","gato_stage","alice_stage","immortal_turns","escape_evasion","shield_parts","shield","statuses","own_turn","boon_feats","energy","mana","guardian_spirits"]
+const STATE_KEYS=["shadows","shadow_boost","shadow_thieves","lost_shadows","suit","previous_suit","card_charge","mark_id","wishes","wish_extra","resurrections","gato_stage","alice_stage","immortal_turns","escape_evasion","shield_parts","shield","statuses","own_turn","boon_feats","energy","mana","guardian_spirits","gear_fatal_stage"]
 
 static func boon(a:Dictionary,n:int) -> bool:
 	return int(a.get("blessing_index",-1))==n
@@ -16,7 +17,7 @@ static func actor(owner,id:String) -> Dictionary:
 
 static func power(a:Dictionary,magic:bool) -> float:
 	var value:float=float(a.get("magic_damage" if magic else "physical_damage",a.get("damage",0)))
-	value*=1.0+Bonuses.total(a,"magic_damage" if magic else "physical_damage")
+	value*=1.0+Bonuses.total(a,"magic_damage" if magic else "physical_damage")+float(Gear.effects(a).get("magic_damage" if magic else "physical_damage",0))+(.3 if a.get("gear_opening",false) and Gear.effects(a).get("opening_quill",false) else 0)
 	value*=float(a.get("damage",1))/maxf(.001,float(a.get("legacy_damage_base",a.get("damage",1))))
 	if a.get("id","")=="puss" and not magic:value*=1.0+clampf(1.0-float(a.hp)/maxf(1,a.max_hp),0,1)
 	if a.get("id","")=="snow_white" and not magic and boon(a,1):value*=1.0+defense(a,false)*.005
@@ -30,6 +31,10 @@ static func defense(a:Dictionary,magic:bool) -> float:
 	if magic:
 		for part in a.get("shield_parts",[]):
 			if float(part.value)>0:value+=float(part.get("magic_bonus",0))
+	var e:=Gear.effects(a)
+	if float(e.get("missing_defense",0))>0:value+=mini(9,int(floor(clampf(1-float(a.hp)/maxf(1,a.max_hp),0,1)*10+.00001)))*float(e.missing_defense)
+	var copied:Array=a.get("gear_copied_defenses",[])
+	if copied.size()==2:value=maxf(value,float(copied[1 if magic else 0]))
 	if has_status(a,"curse"):value*=.8
 	return maxf(0,value)
 
@@ -63,7 +68,7 @@ static func immune(a:Dictionary,kind:String) -> bool:
 	return a.get("immunities",[]).has(kind)
 
 static func status(a:Dictionary,kind:String,source:String,turns:int,potency:=0.0,stacks:=1,cap:=1,permanent:=false,tactics=null) -> bool:
-	if a.hp<=0 or immune(a,kind):return false
+	if a.hp<=0 or immune(a,kind) or a.get("gear_banner",false) and kind in ["bubble","hangover"]:return false
 	if not a.has("statuses"):a.statuses=[]
 	for s in a.statuses:
 		# Controls and bleed never stack. Damage effects retain ownership per source.
@@ -128,15 +133,19 @@ static func sync_shield(a:Dictionary) -> void:
 static func shield(a:Dictionary,amount:float,source:Dictionary,kind:="other",magic_bonus:=0.0) -> float:
 	if a.hp<=0 or amount<=0:return 0
 	sync_shield(a)
+	a["gear_was_unshielded"]=float(a.shield)<=0
+	amount*=1.0+float(Gear.effects(source).get("shield_mult",0))
 	if has_status(a,"shield_break") or has_status(a,"curse") and a.get("curse_break",false):amount*=.5
 	var sum:=0.0
 	for p in a.shield_parts:
 		if p.source==kind:sum+=float(p.value)
+	if kind=="gear_overheal":amount=minf(amount,maxf(0,float(a.max_hp)*.2-sum))
 	if kind in ["silk","foam"]:amount=minf(amount,maxf(0,float(a.max_hp)*(.30 if kind=="silk" else .15)-sum))
 	if amount<=0:return 0
 	a.shield_parts.append({"source":kind,"owner":str(source.get("id","")),"value":amount,"turns":-1 if kind=="silk" and boon(source,2) else 5,"magic_bonus":magic_bonus})
 	a.shield+=amount
 	if kind=="silk" and float(a.shield)>=200:feat(source,"shield_200")
+	Items.shield_added(a,amount,source)
 	status_fields(a)
 	return amount
 
@@ -150,10 +159,12 @@ static func consume_shield(tactics,a:Dictionary,raw:float,bonus:float,hostile:bo
 	var exclusive:=minf(before,raw*maxf(0,bonus))
 	var normal:=minf(maxf(0,before-exclusive),raw)
 	var left:=exclusive+normal
+	var broken_parts:Array=[]
 	for p in a.shield_parts:
 		var absorbed:=minf(float(p.value),left)
 		p.value-=absorbed
 		left-=absorbed
+		if p.value<=0 and absorbed>0 and hostile:broken_parts.append(p.duplicate(true))
 		if p.value<=0 and absorbed>0 and p.source=="silk" and hostile:
 			var silk:=actor(tactics.run(),str(p.owner))
 			if not silk.is_empty() and boon(silk,1):
@@ -165,19 +176,20 @@ static func consume_shield(tactics,a:Dictionary,raw:float,bonus:float,hostile:bo
 	a.shield_parts=a.shield_parts.filter(func(p):return float(p.value)>.0001)
 	a.shield=maxf(0,before-exclusive-normal)
 	status_fields(a)
-	return {"absorbed":exclusive+normal,"hp_damage":raw-normal,"broken":before>0 and a.shield<=.0001,"before":before,"silk_before":silk_before}
+	return {"absorbed":exclusive+normal,"hp_damage":raw-normal,"broken":before>0 and a.shield<=.0001,"before":before,"silk_before":silk_before,"broken_parts":broken_parts}
 
 static func hurt(tactics,a:Dictionary,physical:float,magic:float,real:=0.0,certain:=false,source:Dictionary={},shield_bonus:=0.0,ignore_defense:=0.0,reduction:=1.0,direct:=true) -> Dictionary:
-	var empty:={"damage":0.0,"absorbed":0.0,"evaded":false,"critical":false,"guarded":false,"shield_broken":false}
+	var empty:={"physical_damage":0.0,"magic_damage":0.0,"damage":0.0,"absorbed":0.0,"evaded":false,"critical":false,"guarded":false,"shield_broken":false}
 	if a.hp<=0 or physical+magic+real<=0:return empty
 	var evade:float=1.0 if a.get("escape_evasion",false) else Bonuses.evasion(a)
 	if not certain and tactics.run().rng.randf()<evade:
 		empty.evaded=true
+		if direct:Items.on_evade(tactics,a)
 		if a.get("id","")=="peter" and direct:
 			a.shadows=mini(3,int(a.get("shadows",0))+1)
 			tactics.notify(a.id,"Sombras do Nunca","Esquiva: +1 sombra")
 		return empty
-	var raw:float=physical*100/(100+defense(a,false)*(1-ignore_defense))+magic*100/(100+defense(a,true))+real
+	var raw:float=physical*100/(100+defense(a,false)*(1-ignore_defense))+magic*100/(100+defense(a,true)*(1-ignore_defense))+real
 	if a.get("guarded_by_banner",false):raw*=.6
 	sync_shield(a)
 	if a.shield_parts.any(func(p):return p.source=="silk" and float(p.value)>0):raw*=.9
@@ -198,11 +210,15 @@ static func hurt(tactics,a:Dictionary,physical:float,magic:float,real:=0.0,certa
 				tactics.notify(a.id,"Escapada Mágica","Trocou com "+str(TaleCatalog.HEROES[ally.id].name))
 				return redirected
 	var defended:=consume_shield(tactics,a,raw,shield_bonus,hostile)
+	var physical_weight:float=physical*100/(100+defense(a,false)*(1-ignore_defense))
+	var magic_weight:float=magic*100/(100+defense(a,true)*(1-ignore_defense))
+	var total_weight:float=maxf(.001,physical_weight+magic_weight+real)
+	var previous_ratio:float=float(a.hp)/maxf(1,a.max_hp)
 	var damage:float=minf(float(a.hp),defended.hp_damage)
 	if a.get("immortal_turns",0)>0:damage=minf(damage,maxf(0,float(a.hp)-1))
 	a.hp=maxf(0,float(a.hp)-damage)
 	if tactics.run().actor_ids().has(str(a.get("id",""))):tactics.damage_received+=damage
-	empty.merge({"damage":damage,"absorbed":defended.absorbed,"shield_broken":defended.broken,"shield_before":defended.before,"silk_before":defended.silk_before},true)
+	empty.merge({"physical_damage":damage*physical_weight/total_weight,"magic_damage":damage*magic_weight/total_weight,"target_hp_ratio":previous_ratio,"damage":damage,"absorbed":defended.absorbed,"shield_broken":defended.broken,"shield_before":defended.before,"silk_before":defended.silk_before},true)
 	if not source.is_empty():a["last_source"]=source.id
 	if direct and a.get("id","")=="peter":
 		if int(a.get("shadows",0))>0:
@@ -212,7 +228,11 @@ static func hurt(tactics,a:Dictionary,physical:float,magic:float,real:=0.0,certa
 				if not a.has("shadow_thieves"):a.shadow_thieves={}
 				a.shadow_thieves[source.id]=int(tactics.get("round_number"))
 			if boon(a,1):cleanse(a,true)
+	Items.protect_fatal(tactics,a)
 	survive(tactics,a)
+	for part in defended.get("broken_parts",[]):Items.shield_broken(tactics,a,part)
+	Items.on_damage(tactics,a,source,empty,direct)
+	Items.refresh_banner(tactics)
 	return empty
 
 static func survive(tactics,a:Dictionary) -> void:
@@ -235,13 +255,16 @@ static func survive(tactics,a:Dictionary) -> void:
 		tactics.run().mercy_used=true
 		a.hp=a.max_hp*.35
 
-static func heal(a:Dictionary,amount:float,source:Dictionary={}) -> Dictionary:
+static func heal(a:Dictionary,amount:float,source:Dictionary={},allow_overheal:=true) -> Dictionary:
 	if a.hp<=0:return {"healed":0.0,"overflow":0.0}
-	amount*=1.0+Bonuses.total(source,"healing")
+	amount*=1.0+Bonuses.total(source,"healing")+float(Gear.effects(source).get("healing",0))
 	if has_status(a,"bleed") or has_status(a,"antiheal"):amount*=.5
 	var actual:=minf(amount,maxf(0,float(a.max_hp)-a.hp))
 	a.hp+=actual
-	return {"healed":actual,"overflow":maxf(0,amount-actual)}
+	var overflow:=maxf(0,amount-actual)
+	if allow_overheal and overflow>0 and float(Gear.effects(source).get("overheal",0))>0:
+		shield(a,overflow*float(Gear.effects(source).overheal),source,"gear_overheal")
+	return {"healed":actual,"overflow":overflow}
 
 static func feat(a:Dictionary,key:String) -> void:
 	if not a.has("boon_feats"):a.boon_feats={}
@@ -318,6 +341,7 @@ static func start_combat(tactics) -> void:
 		foe["shield_parts"]=[]
 		foe["own_turn"]=0
 		foe["category"]=category(foe)
+	Items.start_combat(tactics)
 
 static func category(foe:Dictionary) -> String:
 	if foe.has("category"):return str(foe.category)
@@ -327,7 +351,9 @@ static func category(foe:Dictionary) -> String:
 	return "other"
 
 static func effective_initiative(a:Dictionary) -> float:
-	return minf(100,float(a.get("initiative",50))+Bonuses.total(a,"initiative")-(20 if has_status(a,"hangover") else 0))
+	var extra:=0.0
+	for b in a.get("gear_initiative",[]):extra+=float(b.value)
+	return minf(100,float(a.get("initiative",50))+Bonuses.total(a,"initiative")+extra-(20 if has_status(a,"hangover") and not a.get("gear_banner",false) else 0))
 
 static func start_turn(tactics,a:Dictionary) -> Dictionary:
 	a.own_turn=int(a.get("own_turn",0))+1
@@ -346,7 +372,7 @@ static func start_turn(tactics,a:Dictionary) -> Dictionary:
 	a.shield_parts=a.shield_parts.filter(func(p):return int(p.turns)!=0)
 	a.shield=0.0
 	for p in a.shield_parts:a.shield+=float(p.value)
-	var attacks:int=Bonuses.attacks(a)
+	var attacks:int=Bonuses.attacks(a)+Items.start_turn(tactics,a)
 	if a.get("id","")=="matches" and boon(a,0):attacks+=1
 	if a.get("id","")=="aladin" and boon(a,3) and wishes_left(a)==0:attacks+=2
 	if a.get("id","")=="ariel":
@@ -358,7 +384,7 @@ static func start_turn(tactics,a:Dictionary) -> Dictionary:
 			s.turns=0
 			for attached in a.statuses:
 				if attached.source==s.source and attached.get("requires_curse",false):attached.turns=0
-		if s.kind=="bubble":attacks=maxi(0,attacks-1)
+		if s.kind=="bubble" and not a.get("gear_banner",false) and tactics.run().rng.randf()<float(s.get("chance",1)):attacks=maxi(0,attacks-1)
 		if s.kind=="sleep" and tactics.run().rng.randf()<.5:skip=true
 		if s.kind in ["burn","poison","bleed"] and a.hp>0:
 			var source:=actor(tactics.run(),str(s.source))
@@ -396,9 +422,15 @@ static func multiplier(a:Dictionary,foe:Dictionary,ultimate:bool) -> float:
 	return v
 
 static func strike(tactics,a:Dictionary,foe:Dictionary,p:float,m:float,r:=0.0,ult:=false,can_crit:=true,certain:=false) -> Dictionary:
-	var crit:bool=can_crit and critical(tactics,a)
+	var chance:float=Bonuses.chance(a)+(float(Gear.effects(a).get("boss_crit",0)) if foe.get("boss",false) else 0)
+	var crit:bool=can_crit and (a.get("gear_force_crit",false) or tactics.run().rng.randf()<minf(1,chance))
 	var mult:float=multiplier(a,foe,ult)*(Bonuses.critical_multiplier(a) if crit else 1.0)
-	var hit:=hurt(tactics,foe,p*mult,m*mult,r*mult,certain,a,1.0 if a.id=="snow_white" else 0.0,.5 if a.id=="joao" and boon(a,0) else 0.0)
+	if not ult:mult*=float(a.get("gear_basic_scale",1))
+	if ult and a.get("gear_first_ult",false):mult*=1+float(Gear.effects(a).get("first_ult",0))
+	var penetration:=maxf(.5 if a.id=="joao" and boon(a,0) else 0.0,float(Gear.effects(a).get("critical_penetration",0)) if crit else 0.0)
+	var shield_bonus:float=(1.0 if a.id=="snow_white" else 0.0)+(float(Gear.effects(a).get("critical_shield",0)) if crit else 0.0)
+	var marked:bool=a.hp>0 and a.get("gear_hunter_mark","")==foe.id
+	var hit:=hurt(tactics,foe,p*mult,m*mult,r*mult,certain or marked,a,shield_bonus,penetration)
 	hit.critical=crit and not hit.evaded
 	if a.id=="snow_white" and boon(a,0) and hit.get("shield_broken",false):shield(a,float(hit.shield_before)*.5,a)
 	return hit
@@ -425,7 +457,7 @@ static func ignite(a:Dictionary,foe:Dictionary) -> void:
 			if s.kind=="burn" and s.source==a.id:s["coefficient"]=coefficient
 
 static func on_basic_hit(tactics,a:Dictionary,foe:Dictionary,out:Dictionary) -> void:
-	mana(a,Bonuses.mana_hit(a)+float(a.get("energy_bonus",0))+float(Gear.effects(a).get("mana_hit",0)))
+	mana(a,Bonuses.mana_hit(a))
 	if a.id=="scarlet":foe.powder=mini(10,int(foe.get("powder",0))+(2 if boon(a,3) else 1))
 	elif a.id=="maria":status(foe,"poison",a.id,2,power(a,true)*.1,1,5 if boon(a,0) else 3)
 	elif a.id=="matches":ignite(a,foe)
@@ -462,6 +494,10 @@ static func attack(tactics,index:int,requested:int) -> Dictionary:
 	if index<0 or index>=owner.actors.size() or owner.actors[index].hp<=0:return {}
 	var a:Dictionary=owner.actors[index]
 	var target:int=requested if tactics.eligible(a,tactics.enemies).has(requested) else tactics.target_for(index)
+	if int(a.get("basic_in_turn",0))==0 and Gear.effects(a).get("hook",false):
+		var all:Array=tactics.enemies.filter(func(f):return f.hp>0)
+		all.sort_custom(func(x,y):return x.hp/x.max_hp<y.hp/y.max_hp)
+		if not all.is_empty():target=tactics.enemies.find(all[0])
 	var out:=result(target,Data.TEXT[a.id].basic)
 	if a.id=="rapunzel" and not a.get("sealed",false):
 		var selected:Array=[a]
@@ -476,6 +512,8 @@ static func attack(tactics,index:int,requested:int) -> Dictionary:
 		return out
 	if target<0:return {}
 	var foe:Dictionary=tactics.enemies[target]
+	var first:bool=int(a.get("basic_in_turn",0))==0
+	Items.before_basic(tactics,a,foe,first)
 	if a.id=="matches" and boon(a,0) and int(a.get("basic_in_turn",0))==1:
 		var other:=nearest(tactics,int(a.get("first_target",target)),1)
 		if not other.is_empty():target=other[0];foe=tactics.enemies[target];out.target=target
@@ -502,17 +540,21 @@ static func attack(tactics,index:int,requested:int) -> Dictionary:
 		if combo:owner.unlock_stats.combos+=1
 	if a.id=="joao" and a.get("mark_id","")==foe.id:p*=1.2
 	if a.id=="aladin" and boon(a,3) and wishes_left(a)==0:r=m;m=0.0
-	var hit:=strike(tactics,a,foe,p,m,r)
+	a["gear_attack_components"]=[p,m,r]
+	var hit:=Items.basic_strike(tactics,a,foe,p,m,r,first)
 	append_hit(out,target,hit)
 	if not hit.evaded:
 		on_basic_hit(tactics,a,foe,out)
+		Items.on_basic_hit(tactics,a,foe,hit,out,first)
 		if a.id=="joao":a.mark_id=foe.id
 		if a.id=="mulan" and boon(a,3) and hit.critical:a.combo_bonus=minf(.2,float(a.get("combo_bonus",0))+.05)
 	if a.id=="scarlet" and boon(a,1):
 		for at in nearest(tactics,target,2):
-			var secondary:=strike(tactics,a,tactics.enemies[at],power(a,false)*.5,0)
+			var secondary:=Items.basic_strike(tactics,a,tactics.enemies[at],power(a,false)*.5,0,0,false,.5)
 			append_hit(out,at,secondary)
-			if not secondary.evaded:on_basic_hit(tactics,a,tactics.enemies[at],out)
+			if not secondary.evaded:
+				on_basic_hit(tactics,a,tactics.enemies[at],out)
+				Items.on_basic_hit(tactics,a,tactics.enemies[at],secondary,out,false)
 	if a.id=="ariel":
 		var visited:Array=[target]
 		for bounce in (4 if boon(a,1) else 2):
@@ -522,9 +564,12 @@ static func attack(tactics,index:int,requested:int) -> Dictionary:
 				if tactics.enemies[at].hp>0 and not visited.has(at):next=at;break
 			if next<0:break
 			visited.append(next)
-			var bounced:=strike(tactics,a,tactics.enemies[next],0,power(a,true)*(.6 if bounce==0 else .4))
+			var bounce_scale:=.6 if bounce==0 else .4
+			var bounced:=Items.basic_strike(tactics,a,tactics.enemies[next],0,power(a,true)*bounce_scale,0,false,bounce_scale)
 			append_hit(out,next,bounced)
-			if not bounced.evaded:on_basic_hit(tactics,a,tactics.enemies[next],out)
+			if not bounced.evaded:
+				on_basic_hit(tactics,a,tactics.enemies[next],out)
+				Items.on_basic_hit(tactics,a,tactics.enemies[next],bounced,out,false)
 		if out.targets.size()>=5:feat(a,"five_hits")
 	if a.id=="peter":
 		if boon(a,2) and int(a.get("shadow_thieves",{}).get(foe.id,-1))==int(tactics.get("round_number")) and owner.rng.randf()<.5:a.shadows=mini(3,int(a.get("shadows",0))+1)
@@ -557,6 +602,17 @@ static func attack(tactics,index:int,requested:int) -> Dictionary:
 		a.previous_suit=suit
 		a.suit=(suit+1)%4
 	if a.id=="scarlet" and out.targets.size()>=9:feat(a,"nine_targets")
+	Items.after_basic(tactics,a,out,first)
+	if float(a.get("gear_echo_pending",0))>0 and not a.get("gear_echo_running",false):
+		a["gear_echo_running"]=true
+		a["gear_basic_scale"]=float(a.gear_echo_pending)
+		a.gear_echo_pending=0.0
+		var repeated:=attack(tactics,index,target)
+		for strike_hit in repeated.get("strikes",[]):
+			append_hit(out,int(strike_hit.target),strike_hit)
+		out.healed+=float(repeated.get("healed",0))
+		a["gear_basic_scale"]=1.0
+		a.gear_echo_running=false
 	item_after(tactics,a,out,false)
 	deaths(tactics)
 	tactics.sync_totals()
@@ -660,6 +716,7 @@ static func ultimate(tactics,index:int,requested:int) -> Dictionary:
 					var chance:=.75 if condition=="curse" else 1.0
 					if owner.rng.randf()<chance:status(foe,condition,a.id,1,power(a,true)*(1.0 if condition=="burn" else .1) if condition in ["burn","poison"] else 0,1,1,false,tactics)
 		if a.id=="alice" and boon(a,0):a["bonus_attacks"]=int(a.get("bonus_attacks",0))+1
+	Items.after_ult(a)
 	item_after(tactics,a,out,true)
 	deaths(tactics)
 	tactics.BossRules.refresh(tactics)
@@ -717,6 +774,7 @@ static func item_after(tactics,a:Dictionary,out:Dictionary,ult:bool) -> void:
 		if at<0 or at>=tactics.enemies.size():continue
 		var foe:Dictionary=tactics.enemies[at]
 		if foe.hp<=0 or not out.strikes.any(func(s):return int(s.target)==at and not s.evaded):continue
+		if ult:Items.cauldron(tactics,a,foe,out)
 		if float(e.get("fire",0))>0:status(foe,"poison" if e.get("cold",false) else "burn","item_"+str(a.id),2,maxf(power(a,true),power(a,false))*float(e.fire),1,1,false,tactics)
 		if float(e.get("venom",0))>0:status(foe,"poison","item_"+str(a.id),2,maxf(power(a,true),power(a,false))*float(e.venom),1,4,false,tactics)
 		if e.get("slow",0):status(foe,"hangover",a.id,1,0,1,1,false,tactics)
@@ -789,6 +847,7 @@ static func finish_combat(owner) -> void:
 	owner.unlock_stats.boon_feats=feats
 
 static func end_turn(a:Dictionary) -> void:
+	a["gear_opening"]=false
 	for s in a.get("statuses",[]):
 		if int(s.turns)>0 and int(s.get("applied_turn",-1))<int(a.get("own_turn",0)):s.turns-=1
 	a.statuses=a.get("statuses",[]).filter(func(s):return int(s.turns)!=0)

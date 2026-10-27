@@ -10,6 +10,12 @@ static func texture(id: String) -> Texture2D:
 		var path := "res://assets/items/%s.png" % id
 		textures[id] = load(path) if ResourceLoader.exists(path) else null
 	return textures[id]
+static func item_plate(id:String,selected:=false) -> StyleBoxFlat:
+	var style:=plate(selected,id.begins_with("trophy_"))
+	if not id.is_empty():
+		style.bg_color=Gear.tint(id).darkened(.73)
+		style.border_color=Gear.tint(id).lightened(.2 if selected else 0)
+	return style
 static func plate(selected := false, trophy := false) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color("49374d") if trophy else Color("263b35")
@@ -34,7 +40,7 @@ static func slot(parent: Node, id: String, rect: Rect2, callback: Callable, sele
 	button.position = rect.position
 	button.size = rect.size
 	for state in ["normal", "hover", "pressed", "focus"]:
-		button.add_theme_stylebox_override(state, plate(selected or state != "normal", id.begins_with("trophy_")))
+		button.add_theme_stylebox_override(state, item_plate(id,selected or state != "normal"))
 	button.add_theme_color_override("font_color", Color("b4bba7"))
 	button.add_theme_font_size_override("font_size", 22)
 	button.pressed.connect(callback)
@@ -47,12 +53,12 @@ static func slot(parent: Node, id: String, rect: Rect2, callback: Callable, sele
 	art.offset_bottom = -3
 	button.set_meta("item_picture", art)
 	refresh(button, id)
-	button.add_theme_stylebox_override("normal", plate(selected, id.begins_with("trophy_")))
+	button.add_theme_stylebox_override("normal", item_plate(id,selected))
 	return button
 static func refresh(button: Button, id: String) -> void:
 	if button.get_meta("item_id", "__unset") == id: return
 	button.set_meta("item_id", id)
 	button.text = "+" if id.is_empty() else ""
-	button.tooltip_text = Gear.data(id).get("title", "Espaço vazio · escolher equipamento")
+	button.tooltip_text = (Gear.rarity_name(id)+" · " if not id.is_empty() else "")+Gear.data(id).get("title", "Espaço vazio · escolher equipamento")
 	button.get_meta("item_picture").texture = texture(id)
-	button.add_theme_stylebox_override("normal", plate(false, id.begins_with("trophy_")))
+	button.add_theme_stylebox_override("normal", item_plate(id))

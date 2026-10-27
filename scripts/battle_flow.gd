@@ -23,6 +23,9 @@ func unit(entry:Dictionary) -> Dictionary:
 	return owner.actors[entry.index] if entry.side=="ally" else owner.tactics.enemies[entry.index]
 
 func less(a:Dictionary,b:Dictionary) -> bool:
+	var ad:bool=int(unit(a).get("gear_delayed_round",-1))==round_number
+	var bd:bool=int(unit(b).get("gear_delayed_round",-1))==round_number
+	if ad!=bd:return not ad
 	var ai:=Rules.effective_initiative(unit(a))
 	var bi:=Rules.effective_initiative(unit(b))
 	if not is_equal_approx(ai,bi):return ai>bi
@@ -113,6 +116,23 @@ func queue_ultimate(index:int) -> bool:
 	if ult_queue.has(index):return false
 	ult_queue.append(index)
 	owner_ref.get_ref().actors[index].ult_queued=true
+	return true
+
+func can_delay(hero:int,enemy:int) -> bool:
+	var owner=owner_ref.get_ref()
+	if hero<0 or hero>=owner.actors.size() or enemy<0 or enemy>=owner.tactics.enemies.size():return false
+	var a:Dictionary=owner.actors[hero]
+	if a.hp<=0 or a.get("gear_time_used",false) or not Rules.Gear.effects(a).get("time_sands",false):return false
+	if owner.tactics.enemies[enemy].hp<=0 or int(owner.tactics.enemies[enemy].get("gear_delayed_round",-1))==round_number:return false
+	if not turn_entry.is_empty() and turn_entry.side=="enemy" and turn_entry.index==enemy:return false
+	return order.slice(cursor).any(func(entry):return entry.side=="enemy" and entry.index==enemy)
+
+func delay_enemy(hero:int,enemy:int) -> bool:
+	if not can_delay(hero,enemy):return false
+	var owner=owner_ref.get_ref()
+	owner.actors[hero]["gear_time_used"]=true
+	owner.tactics.enemies[enemy]["gear_delayed_round"]=round_number
+	owner.tactics.notify(owner.actors[hero].id,"Areias do Tempo",str(owner.tactics.enemies[enemy].get("name","Inimigo"))+" agirá no final da rodada")
 	return true
 
 func entry_key(entry:Dictionary) -> String:return "%s:%d"%[entry.side,entry.index]

@@ -100,7 +100,7 @@ func build_inventory(parent: Node, rect: Rect2) -> void:
 	pane.name = "AppearancePane"
 	var width := rect.size.x
 	text(pane, "APARÊNCIA", Rect2(14, 10, width - 28, 23), 12, ui.GOLD)
-	var filters := [["all", "Todos"], ["gear", "Itens"], ["trophy", "Troféus"]]
+	var filters := [["all", "Todos"], ["gear", "Itens"], ["trophy", "Especiais"]]
 	var filter_width := (width - 36) / 3.0
 	for index in filters.size():
 		var control: Button = ui.button(pane, filters[index][1], Rect2(10 + index * (filter_width + 8), 40, filter_width, 44), select_category.bind(filters[index][0]), category == filters[index][0])
@@ -165,7 +165,7 @@ func build_description(parent: Node, rect: Rect2) -> void:
 	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	stack.add_theme_constant_override("separation", 12)
 	scroll.add_child(stack)
-	for line in [[data.title, 24, ui.GOLD], ["TROFÉU DE CHEFE SECRETO" if data.has("trophy") else "EQUIPAMENTO", 11, Color("cbb5db")], [data.detail, 17, Color("eee8d6")]]:
+	for line in [[data.title, 24, ui.GOLD], [Gear.rarity_name(selected_item).to_upper()+" · "+("ITEM DE VILÃO" if data.has("trophy") else "EQUIPAMENTO"), 11, Gear.tint(selected_item)], [data.detail, 17, Color("eee8d6")]]:
 		var label := Label.new()
 		label.text = line[0]
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -183,6 +183,14 @@ func build_description(parent: Node, rect: Rect2) -> void:
 	status.add_theme_font_size_override("font_size", 13)
 	status.add_theme_color_override("font_color", ui.MUTED)
 	stack.add_child(status)
+	if selected_item=="trophy_aladin" and ui.run.actors[hero_index].equipment.has(selected_item) and ui.combat_flow!=null and ui.run.interlude.is_empty():
+		for at in ui.run.tactics.enemies.size():
+			var activate:=Button.new()
+			activate.text="Adiar · "+str(ui.run.tactics.enemies[at].name)
+			activate.custom_minimum_size.y=46
+			activate.disabled=not ui.combat_flow.can_delay(hero_index,at)
+			activate.pressed.connect(use_time_sands.bind(at))
+			stack.add_child(activate)
 	var actor: Dictionary = ui.run.actors[hero_index]
 	var equipped_here: bool = Gear.item_at(actor, selected_slot) == selected_item
 	var action: Button = ui.button(pane, "Equipado" if equipped_here else "Equipar · espaço %d" % (selected_slot + 1), Rect2(14, height - 63, width - 88, 46), ui.equip_from_panel.bind(hero_index, selected_item, selected_slot), true)
@@ -191,3 +199,8 @@ func build_description(parent: Node, rect: Rect2) -> void:
 	var remove: Button = ui.button(pane, "−", Rect2(width - 63, height - 63, 49, 46), ui.equip_from_panel.bind(hero_index, "", selected_slot))
 	remove.tooltip_text = "Remover equipamento deste espaço"
 	remove.disabled = not editable() or str(Gear.item_at(actor, selected_slot)).is_empty()
+
+func use_time_sands(enemy:int) -> void:
+	if ui.combat_flow!=null and ui.combat_flow.delay_enemy(hero_index,enemy):
+		ui.update_hud()
+		rebuild()

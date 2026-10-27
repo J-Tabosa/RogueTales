@@ -17,7 +17,9 @@ static func chance(a:Dictionary) -> float:return clampf(float(a.get("crit",0))+t
 static func critical_multiplier(a:Dictionary) -> float:return float(a.get("crit_multiplier",2))+total(a,"crit_multiplier")
 static func evasion(a:Dictionary) -> float:return clampf(float(a.get("evasion",0))+total(a,"evasion"),0,.8)
 static func attacks(a:Dictionary) -> int:return maxi(1,int(a.get("attacks",1))+int(total(a,"attacks")))
-static func mana_hit(a:Dictionary) -> float:return float(a.get("mana_hit",0))+total(a,"mana_hit")
+static func mana_hit(a:Dictionary) -> float:
+	var e:=Gear.effects(a)
+	return float(a.get("mana_hit",0))+total(a,"mana_hit")+float(a.get("energy_bonus",0))+float(e.get("mana_hit",0))+(15 if a.get("gear_opening",false) and e.get("opening_quill",false) else 0)
 static func mana_turn(a:Dictionary) -> float:return float(a.get("mana_turn",0))+total(a,"mana_turn")
 
 static func compatible(a:Dictionary,key:String) -> bool:
@@ -28,7 +30,11 @@ static func compatible(a:Dictionary,key:String) -> bool:
 		"mana_hit":return id not in ["alice","aladin","rapunzel"]
 		"mana_turn":return id not in ["alice","aladin"] and a.has("mana_turn")
 		"crit","crit_multiplier":return id!="rapunzel" and (float(a.get("physical_damage",0))+float(a.get("magic_damage",0))>0) and (key=="crit" or chance(a)>0)
-		"healing":return id in ["ariel","alice"] or id=="matches" and int(a.get("blessing_index",-1))==2 or id!="rapunzel" and float(a.get("leech",0))>0 or float(Gear.effects(a).get("drain",0))>0 or float(Gear.effects(a).get("kill_heal",0))>0
+		"healing":
+			var e:=Gear.effects(a)
+			for source in ["physical_leech","status_magic","shield_heal","broken_heal","hurt_regen","evade_heal","cauldron","drain","kill_heal"]:
+				if float(e.get(source,0))>0:return true
+			return id in ["ariel","alice"] or id=="matches" and int(a.get("blessing_index",-1))==2 or id!="rapunzel" and float(a.get("leech",0))>0
 	return NAMES.has(key)
 
 static func useful(a:Dictionary,key:String,sign:=0) -> bool:
@@ -106,7 +112,7 @@ static func value(a:Dictionary,key:String) -> float:
 		"attacks":return attacks(a)
 		"mana_hit":return mana_hit(a)
 		"mana_turn":return mana_turn(a)
-		"healing":return (1+total(a,key))*100
+		"healing":return (1+total(a,key)+float(Gear.effects(a).get("healing",0)))*100
 	return float(a.get(key,0))
 
 static func apply_actor(a:Dictionary,b:Dictionary) -> void:

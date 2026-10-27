@@ -43,7 +43,7 @@ func recipient(id:String) -> Button:
 	return null
 func prepare(id:String) -> void:
 	game.run.interlude="reward";game.run.pending_choice=true
-	game.run.offers.assign([id,"item:clockwork","item:tower_braid"])
+	game.run.offers.assign([id,"item:clockwork","item:stone_heart"])
 	game.show_relics()
 	await process_frame
 func test() -> void:

@@ -106,7 +106,7 @@ func checks() -> void:
 		assert(game.run.start_expedition(game.campaign,"scarlet","blessing:scarlet:0"))
 		game.run.run_gold=1234567
 		game.run.interlude="shop"
-		game.run.shop_stock.assign(["potion","item:echo_bell","item:venom_vial","item:tower_braid","item:winter_match","armor"])
+		game.run.shop_stock.assign(["potion","item:echo_bell","item:black_apple","item:stone_heart","item:blue_hourglass","armor"])
 		game.show_run_shop()
 		await process_frame
 		nodes=descendants(game.page)

@@ -67,7 +67,7 @@ func checks() -> void:
 	game.run=IdleRun.new()
 	assert(game.run.start_expedition(account,"scarlet","vigor"))
 	game.run.run_gold=10000
-	game.run.shop_stock.assign(["item:echo_bell","item:mirror_shard","item:ember_pearl","item:clockwork"])
+	game.run.shop_stock.assign(["item:echo_bell","item:mirror_shard","item:star_powder","item:clockwork"])
 	game.run.interlude="shop"
 	game.show_run_shop()
 	await process_frame

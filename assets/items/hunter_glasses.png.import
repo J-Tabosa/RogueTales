@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ka3j54f8v0q5"
-path="res://.godot/imported/tower_braid.png-295048b6a217e04fa42a0cdbb76fcbb2.ctex"
+uid="uid://bf27whqm3uvw0"
+path="res://.godot/imported/hunter_glasses.png-b21474f8cbdff330ed9c4dfcf3262c1a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/items/tower_braid.png"
-dest_files=["res://.godot/imported/tower_braid.png-295048b6a217e04fa42a0cdbb76fcbb2.ctex"]
+source_file="res://assets/items/hunter_glasses.png"
+dest_files=["res://.godot/imported/hunter_glasses.png-b21474f8cbdff330ed9c4dfcf3262c1a.ctex"]
 
 [params]
 
