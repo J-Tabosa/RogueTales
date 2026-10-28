@@ -30,7 +30,8 @@ func checks() -> void:
 	for id in preload("res://scripts/ultimate_rules.gd").IDS:
 		var frames:SpriteFrames=load("res://assets/ults_v2/%s_frames.tres"%id)
 		for animation in ["idle","walk","attack","ultimate"]:
-			assert(frames.get_frame_count(animation)==(8 if animation in ["idle","walk"] else 12))
+			var expected := 8 if animation in ["idle","walk"] else (16 if id=="scarlet" and animation=="ultimate" else 12)
+			assert(frames.get_frame_count(animation)==expected)
 			for at in frames.get_frame_count(animation):
 				var texture:MeshTexture=frames.get_frame_texture(animation,at)
 				assert(texture.base_texture.resource_path.ends_with(".webp") and texture.image_size==Vector2(768,768))

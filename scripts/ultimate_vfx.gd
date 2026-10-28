@@ -65,10 +65,12 @@ static func draw(arena,canvas:Node2D) -> void:
 		var aim:Vector2=center(arena,targets)+Vector2(0,-h*.45)
 		match id:
 			"scarlet":
+				# The redesigned cast releases the bombs at pose 7 of 16.
+				var toss := smoothstep(.40,hit,p)
 				for at in targets:
 					var to:Vector2=arena.foe_homes[at]+Vector2(0,-h*.4)
-					var point:=origin.lerp(to,flight)-Vector2(0,sin(flight*PI)*h*1.25)
-					var anim:=lerpf(0,.42,flight) if p<hit else lerpf(.43,1.0,(p-hit)/(1-hit))
+					var point:=origin.lerp(to,toss)-Vector2(0,sin(toss*PI)*h*1.25)
+					var anim:=lerpf(0,.42,toss) if p<hit else lerpf(.43,1.0,(p-hit)/(1-hit))
 					stamp(canvas,id,point,Vector2.ONE*h*(.62 if p<hit else 1.25),anim,tail)
 			"ariel":
 				var point:=origin.lerp(aim,flight)+Vector2(0,h*.10)

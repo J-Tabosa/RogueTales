@@ -3,6 +3,7 @@ extends SceneTree
 func _initialize() -> void:
 	var data:Dictionary=JSON.parse_string(FileAccess.get_file_as_string("res://assets/ults_v2/FRAME_LAYOUT.json"))
 	for id in data.heroes:
+		if not OS.get_cmdline_user_args().is_empty() and not OS.get_cmdline_user_args().has(id): continue
 		var frames:=SpriteFrames.new()
 		frames.remove_animation("default")
 		frames.resource_local_to_scene=true
