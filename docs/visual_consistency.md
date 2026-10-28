@@ -16,7 +16,7 @@
 
 As dez folhas novas e a correção da caminhada da Ariel foram criadas pelo gerador nativo de imagens usando Scarlet e Rapunzel como referência. Originais e prompts exatos estão em `old/source/revision_3/`. A pasta antiga continua excluída das importações/exportações por `old/.gdignore`.
 
-`assets/characters/sources.json` aponta para as folhas ativas. Para reconstruir JPEGs, máscaras alfa lossless, portraits e os SpriteFrames nativos:
+A estrutura atual está documentada em `assets/characters/ART_PIPELINE.md`. Os onze personagens revisados usam WebP e `FRAME_LAYOUT.json`; os JPEGs substituídos foram removidos. `assets/characters/sources.json` mantém apenas o Gato, efeitos básicos, arenas e segredos ainda usados. Para reconstruir essas dependências JPEG e máscaras alfa:
 
 ```sh
 GODOT=/caminho/do/godot python tools/build_art.py

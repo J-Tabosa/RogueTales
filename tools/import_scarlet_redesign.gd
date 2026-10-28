@@ -1,6 +1,6 @@
 extends SceneTree
 ## Deterministic chroma/atlas import. Only Scarlet's supplied paintings are used.
-const OUT := "res://assets/ults_v2/"
+const OUT := "res://assets/characters/scarlet/"
 func _initialize() -> void:
 	var args := OS.get_cmdline_user_args()
 	assert(args.size() == 2, "Pass the inspected sheet manifest and output metadata")
@@ -35,7 +35,7 @@ func _initialize() -> void:
 			atlas.blit_rect(crop, Rect2i(Vector2i.ZERO, crop.get_size()), cell + local)
 			var used := Rect2i(local, crop.get_size())
 			meta.append({"region": [cell.x + used.position.x, cell.y + used.position.y, used.size.x, used.size.y], "local_bounds": [384 + used.position.x - 256, 608 + used.position.y - 480, used.size.x, used.size.y], "anchor": [256, 480], "scale": 1, "removed": []})
-		assert(atlas.save_webp(OUT + "scarlet_" + str(sheet.kind) + ".webp", false) == OK)
+		assert(atlas.save_webp(OUT + str(sheet.kind) + ".webp", false) == OK)
 		hero[sheet.kind] = meta
 		print("SCARLET ", sheet.kind, ": ", meta.size(), " whole poses, constant scale ", sheet.scale)
 	hero.pose_order = range(16)
@@ -45,5 +45,5 @@ func _initialize() -> void:
 	metadata.close()
 	var portrait := Image.load_from_file("res://tools/art_sources/scarlet_20261028/portrait.png")
 	assert(portrait != null and portrait.get_height() >= 1400)
-	assert(portrait.save_webp(OUT + "scarlet_portrait.webp", false) == OK)
+	assert(portrait.save_webp(OUT + "portrait.webp", false) == OK)
 	quit()

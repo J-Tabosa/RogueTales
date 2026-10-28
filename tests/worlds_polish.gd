@@ -45,7 +45,7 @@ func checks() -> void:
 	assert(legacy.stage == 1 and legacy.phase == 2)
 	var alice: SpriteFrames = load("res://assets/characters/alice/frames.tres")
 	var rapunzel: SpriteFrames = load("res://assets/characters/rapunzel/frames.tres")
-	assert(alice.get_frame_count("attack") == 10 and rapunzel.get_frame_count("attack") == 10)
+	assert(alice.get_frame_count("attack") == 12 and rapunzel.get_frame_count("attack") == 12)
 	assert(alice.get_frame_texture("idle", 0) is MeshTexture and rapunzel.get_frame_texture("idle", 0) is MeshTexture)
 	root.content_scale_size = Vector2i(540,960)
 	root.size = Vector2i(540,960)

@@ -1,7 +1,7 @@
 extends SceneTree
 ## Whole-pose geometry on a fixed logical canvas. FX never change anatomical scale.
 func _initialize() -> void:
-	var data:Dictionary=JSON.parse_string(FileAccess.get_file_as_string("res://assets/ults_v2/FRAME_LAYOUT.json"))
+	var data:Dictionary=JSON.parse_string(FileAccess.get_file_as_string("res://assets/characters/FRAME_LAYOUT.json"))
 	for id in data.heroes:
 		if not OS.get_cmdline_user_args().is_empty() and not OS.get_cmdline_user_args().has(id): continue
 		var frames:=SpriteFrames.new()
@@ -13,7 +13,7 @@ func _initialize() -> void:
 			frames.set_animation_loop(animation,animation in ["walk"])
 			frames.set_animation_speed(animation,{"idle":4,"idle_blink":4,"walk":8,"attack":12,"ultimate":6}[animation])
 			var source:String="idle" if animation in ["idle","idle_blink","walk"] else animation
-			var texture:Texture2D=load("res://assets/ults_v2/%s_%s.webp"%[id,source])
+			var texture:Texture2D=load("res://assets/characters/%s/%s.webp"%[id,source])
 			for at in hero[source].size():
 				var index:int=int(hero.pose_order[at]) if animation=="ultimate" else at
 				var item:Dictionary=hero[source][index]
@@ -34,7 +34,7 @@ func _initialize() -> void:
 				pose.mesh=mesh
 				pose.image_size=Vector2(data.logical_size,data.logical_size)
 				frames.add_frame(animation,pose)
-		ResourceSaver.save(frames,"res://assets/ults_v2/%s_frames.tres"%id)
+		ResourceSaver.save(frames,"res://assets/characters/%s/frames.tres"%id)
 		var path:="res://scenes/heroes/%s.tscn"%id
 		var scene:=FileAccess.get_file_as_string(path).replace("offset = Vector2(-256, -480)","offset = Vector2(-384, -608)")
 		FileAccess.open(path,FileAccess.WRITE).store_string(scene)

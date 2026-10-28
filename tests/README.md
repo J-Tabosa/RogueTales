@@ -1,5 +1,7 @@
 # Suíte 1.0.0
 
+- `character_asset_paths`: carrega os doze personagens nas pastas definitivas, animações de tamanho fixo, retratos HD, efeitos básicos e de Ultimate, e confere o manifesto de reconstrução sem folhas substituídas.
+
 Execute `python3 tools/check_095.py --godot /caminho/para/godot`. O runner considera falha qualquer erro de script, mesmo que o Godot retorne código zero após uma asserção.
 
 - `enemy_balance`: leitura do Excel entregue e de PCK, preservação dos atributos-base e da progressão, alterações de vida/dano/defesas/esquiva, iniciativa e três ataques reais na própria vez, texto compartilhado/inline, rejeição de dados inválidos e recuperação.

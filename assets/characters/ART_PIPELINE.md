@@ -1,11 +1,32 @@
 # Active character art
 
-The game scenes use these native-resolution JPEG sheets and `frames.tres` resources. Each JPEG has a same-size `_alpha.png` lossless mask. JPEG alone cannot encode transparency: the actor shader samples the matching mask, and effects/static portraits compose the pair once into a shared texture. No opaque rectangles are rendered behind characters or spells.
+Each hero has one folder under `assets/characters/<id>/`.
 
-Each of the ten revised heroes has 34 animation frames: idle 4, idle variation 4, walk 16 and attack 10. The native alpha contours generate separate padded meshes, so hair, hats and weapons can cross a source grid boundary without being cut by a rectangular crop. All new meshes use a shared foot anchor with generous outer bounds. Human heights match; Puss is half height and Little Match Girl is three-quarter height.
+- The eleven revised heroes use `frames.tres`, `idle.webp`, `attack.webp`, `ultimate.webp`, `portrait.webp` and `fx.webp`. The WebP paintings retain their original bytes, dimensions and lossless transparency.
+- `FRAME_LAYOUT.json` holds the shared 768 × 768 logical canvas, ground anchors and per-pose mesh geometry. `ART_PROMPTS.json` records the source art references.
+- Puss still uses his active native JPEG sheets, lossless `_alpha.png` masks and `frames.tres`; he has no replacement WebP animation set.
+- `effects.jpg` and `effects_alpha.png` are the six-frame basic spell/legacy burst effects still used by `scripts/character_effects.gd`. They are separate from the twelve-frame `fx.webp` Ultimate effects and must remain.
+- HD UI portraits in `assets/portraits_hd/` take precedence over `portrait.webp`. Puss uses his current `display.jpg` plus alpha mask.
 
-The active arena images are `assets/biomes/arena_*.jpg`. Their projection reserves the lower 64% of the battlefield for a deeper ground plane, with fixed mirrored formation slots, at most three units in each class row. Health and mana use themed numeric panels.
+Replaced JPEG animation sheets, portraits and meshes have been removed rather than archived in the exported asset tree. Runtime scenes, UI art, Ultimate effects, tests and rebuild tools use the same character folders.
 
-Replaced artwork and editable source images are archived in `old/`. That directory is ignored by Godot's importer and excluded from exports. Existing UI, enemies, Scarlet and Snow White remain active assets and are not obsolete backups.
+To rebuild the current WebP meshes without changing the paintings:
 
-To rebuild, install Pillow, NumPy and SciPy, then run `GODOT=/path/to/godot python tools/build_art.py`. The Python step only inspects source alpha to calculate ownership metadata; Godot performs JPEG/alpha conversion and builds the meshes. Image-generation references and the exact source-to-output mapping are recorded in `sources.json` and `old/source/PROMPTS.json`.
+```sh
+godot --headless --path . --script res://tools/apply_animation_layout.gd
+```
+
+To reimport Scarlet's approved original paintings:
+
+```sh
+GODOT=/path/to/godot python tools/import_scarlet_redesign.py
+```
+
+`sources.json` now lists only the active JPEG effects, Puss, arenas and secret art. `tools/build_art.py` rebuilds those dependencies; it no longer recreates replaced hero sheets. Older preparation scripts describe previous source pipelines and are not the current WebP importer.
+
+Validate character resources after moving assets:
+
+```sh
+godot --headless --path . --script res://tests/character_asset_paths.gd
+godot --headless --path . --script res://tests/art_integration.gd
+```

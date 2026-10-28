@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/hero.gd" id="1_hero"]
-[ext_resource type="SpriteFrames" path="res://assets/ults_v2/scarlet_frames.tres" id="2_frames"]
+[ext_resource type="SpriteFrames" path="res://assets/characters/scarlet/frames.tres" id="2_frames"]
 [ext_resource type="Shader" path="res://assets/hero/shaders/idle_motion.gdshader" id="3_idle"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_idle"]

@@ -28,7 +28,7 @@ func checks() -> void:
 		assert(effect.get_image().get_pixel(0,0).a<0.02,"JPEG effects reconstruct their original alpha")
 		actor.free()
 	for id in preload("res://scripts/ultimate_rules.gd").IDS:
-		var frames:SpriteFrames=load("res://assets/ults_v2/%s_frames.tres"%id)
+		var frames:SpriteFrames=load("res://assets/characters/%s/frames.tres"%id)
 		for animation in ["idle","walk","attack","ultimate"]:
 			var expected := 8 if animation in ["idle","walk"] else (16 if id=="scarlet" and animation=="ultimate" else 12)
 			assert(frames.get_frame_count(animation)==expected)

@@ -7,7 +7,7 @@ static var heads:Dictionary={}
 static func source_path(id:String) -> String:
 	var restored:="res://assets/portraits_hd/%s.png"%id
 	if ResourceLoader.exists(restored):return restored
-	return "res://assets/ults_v2/%s_portrait.webp"%id if id!="puss" else "res://assets/characters/puss/display.jpg"
+	return "res://assets/characters/%s/portrait.webp"%id if id!="puss" else "res://assets/characters/puss/display.jpg"
 static func body(id:String) -> Dictionary:
 	if bodies.has(id):return bodies[id]
 	var path:=source_path(id)

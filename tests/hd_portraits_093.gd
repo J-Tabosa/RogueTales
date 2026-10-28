@@ -44,7 +44,7 @@ func checks() -> void:
 		var head:AtlasTexture=Art.head(id)
 		assert(head.region.size.x>=270,"Icons must crop the HD source")
 		var model:AnimatedSprite2D=TaleCatalog.HERO_SCENES[id].instantiate()
-		if id!="puss":assert(model.sprite_frames.get_frame_texture("idle",0).base_texture.resource_path.ends_with("_idle.webp"),"Combat sprites must keep their original source")
+		if id!="puss":assert(model.sprite_frames.get_frame_texture("idle",0).base_texture.resource_path=="res://assets/characters/%s/idle.webp"%id,"Combat sprites must use the current character folder")
 		model.free()
 		var x:=20+(at%6)*210
 		var y:=12+floori(at/6.0)*388

@@ -9,7 +9,7 @@ import numpy as np
 from PIL import Image
 from scipy import ndimage as ndi
 from skimage.segmentation import watershed
-ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'assets/ults_v2'
+ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'assets/characters'
 FILES={'scarlet':'Chapeuzinho','ariel':'Sereia','aladin':'Aladin','joao':'Joao','maria':'Maria','peter':'PeterPan','mulan':'Mulan','snow_white':'BrancadeNeve','rapunzel':'Rapunzel','alice':'Alice','matches':'fosforo'}
 SCALE={'scarlet':(1,1),'ariel':(.97,1),'aladin':(.94,1),'joao':(1,1),'maria':(.96,1),'peter':(.82,1),'mulan':(.94,.83),'snow_white':(.94,.78),'rapunzel':(1,1),'alice':(.94,1),'matches':(.98,1)}
 def recover(path,cols,rows):
@@ -61,17 +61,17 @@ def main(source):
    original_width=Image.open(Path(source)/(file+"ATK.png")).width
    x=round(256+(box[0]-(min(n,10) if hero=="alice" else n)%cols*original_width/cols-anchor)*scale);y=480-crop.height
    sheet.alpha_composite(crop,(n%4*512+x,n//4*512+y))
-  sheet.save(OUT/(hero+'_attack.webp'),lossless=True,method=4)
+  sheet.save(OUT/hero/'attack.webp',lossless=True,method=4)
   hero_meta={}
   for anim,count in [('idle',8),('attack',12),('ultimate',12)]:
-   path=OUT/(hero+'_'+anim+'.webp');atlas=Image.open(path).convert('RGBA');meta=[]
+   path=OUT/hero/(anim+'.webp');atlas=Image.open(path).convert('RGBA');meta=[]
    for n in range(count):
     tile=atlas.crop((n%4*512,n//4*512,n%4*512+512,n//4*512+512));tile,removed=clean_tile(tile)
     # Four old dash poses contain severed neighboring limbs; the arena supplies
     # actual dash movement and six thrust effects over complete replacement poses.
     if hero=='joao' and anim=='ultimate' and n in [1,2,10,11]:
      fallback='attack' if n<3 else 'idle';at=n if n<3 else 0
-     src=Image.open(OUT/(hero+'_'+fallback+'.webp'));tile=src.crop((at%4*512,at//4*512,at%4*512+512,at//4*512+512))
+     src=Image.open(OUT/hero/(fallback+'.webp'));tile=src.crop((at%4*512,at//4*512,at%4*512+512,at//4*512+512))
     atlas.paste(tile,(n%4*512,n//4*512));box=tile.getbbox();assert box,(hero,anim,n)
     factor=1 if anim=='idle' else SCALE[hero][0 if anim=='attack' else 1]
     foot=462 if hero=='snow_white' and anim=='ultimate' and n>=8 else 480

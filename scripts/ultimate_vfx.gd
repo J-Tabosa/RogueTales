@@ -15,7 +15,7 @@ static func frame(id: String,progress: float) -> Texture2D:
 	var number:=clampi(int(progress*12),0,11)
 	var key:="%s:%d"%[id,number]
 	if not atlases.has(key):
-		var sheet:Texture2D=load("res://assets/ults_v2/%s_fx.webp"%id)
+		var sheet:Texture2D=load("res://assets/characters/%s/fx.webp"%id)
 		var tex:=AtlasTexture.new()
 		tex.atlas=sheet
 		tex.region=Rect2(Vector2(number%4,number/4)*512,Vector2.ONE*512)

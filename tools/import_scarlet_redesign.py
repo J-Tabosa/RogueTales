@@ -69,7 +69,7 @@ def main():
         command = [GODOT, "--headless", "--path", str(ROOT)]
         metadata = work / "scarlet-layout.json"
         subprocess.run(command + ["--script", "res://tools/import_scarlet_redesign.gd", "--", str(manifest), str(metadata)], check=True)
-        layout_path = ROOT / "assets/ults_v2/FRAME_LAYOUT.json"
+        layout_path = ROOT / "assets/characters/FRAME_LAYOUT.json"
         layout = json.loads(layout_path.read_text())
         layout["heroes"]["scarlet"] = json.loads(metadata.read_text())
         layout_path.write_text(json.dumps(layout, indent=2) + "\n")
