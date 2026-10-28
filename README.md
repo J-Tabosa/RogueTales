@@ -37,6 +37,8 @@ A capacidade começa em três e aumenta pela **Página dos Viajantes**, item mí
 
 ## Executar e validar
 
+O balanceamento dos inimigos das expedições pode ser editado em **[data/inimigos.xlsx](data/inimigos.xlsx)**. Salve o Excel para aplicar vida, ataque, defesas, iniciativa, quantidade de ataques e esquiva no próximo combate. O jogo de PC exportado também aceita `inimigos.xlsx` ao lado do executável; no Android, as mudanças acompanham a próxima exportação do APK. Veja [BALANCEAMENTO_INIMIGOS](docs/BALANCEAMENTO_INIMIGOS.md).
+
 Abra `project.godot` no Godot 4.7. A cena principal é `scenes/main.tscn`.
 
 ```bash

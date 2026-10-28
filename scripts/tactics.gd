@@ -4,6 +4,7 @@ var round_number:=0
 const Modifiers = preload("res://scripts/combat_modifiers.gd")
 const Abilities = preload("res://scripts/hero_abilities.gd")
 const Biomes = preload("res://scripts/biomes.gd")
+const EnemyBalance = preload("res://scripts/enemy_balance.gd")
 const BossRules = preload("res://scripts/boss_rules.gd")
 const UltRules = preload("res://scripts/ultimate_rules.gd")
 ## Formation rules and all combat results; contains no nodes or rendering logic.
@@ -78,6 +79,7 @@ func ensure_front() -> void:
 
 func spawn() -> void:
 	var owner = run()
+	EnemyBalance.reload_if_changed()
 	enemies.clear()
 	feedback_events.clear()
 	synergy_used.clear()
@@ -140,6 +142,7 @@ func spawn() -> void:
 			enemies[-1].hp *= float(Biomes.HP[variant]) if not boss_unit else 1.0
 			enemies[-1].max_hp = enemies[-1].hp
 			enemies[-1].damage = (13.0 + (owner.rooms_cleared if owner.endless else owner.stage * 6 + owner.phase) * 0.85) * (1.2 if boss_unit else 1.0) * (1.15 if owner.room_kind == "elite" else 1.0) * (float(Biomes.POWER[variant]) if not boss_unit else 1.0)
+	for foe in enemies: EnemyBalance.apply(foe, owner)
 	Rules.start_combat(self)
 	if owner.expedition:
 		for at in enemies.size(): enemies[at]["slot"] = at

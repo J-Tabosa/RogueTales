@@ -2,6 +2,7 @@
 """Canonical 1.0.0 regression runner. Historical superseded combat tests are excluded."""
 import argparse, concurrent.futures, json, pathlib, subprocess, tempfile
 SUITES = [
+    'enemy_balance',
     'seasonal_routes_100', 'seasonal_ui_100', 'weather_100',
     'progression_0910', 'release_ui_0910',
     'bonuses_098', 'bonuses_ui_098', 'rules_095', 'boons_095', 'integration_095', 'corrections_096', 'wishes_silk_097',

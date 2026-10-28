@@ -334,9 +334,9 @@ static func start_combat(tactics) -> void:
 		if float(e.get("shield_start",0))>0:shield(a,a.max_hp*float(e.shield_start),a)
 		status_fields(a)
 	for foe in tactics.enemies:
-		foe["initiative"]=50.0
-		foe["attacks"]=1
-		foe["magic_defense"]=float(foe.get("armor",0)) if foe.get("class","")=="vanguard" else 0.0
+		foe["initiative"]=float(foe.get("initiative",50.0))
+		foe["attacks"]=int(foe.get("attacks",1))
+		foe["magic_defense"]=float(foe.get("magic_defense",float(foe.get("armor",0)) if foe.get("class","")=="vanguard" else 0.0))
 		foe["statuses"]=[]
 		foe["shield_parts"]=[]
 		foe["own_turn"]=0
