@@ -97,6 +97,7 @@ func test() -> void:
 		# Silk's ULT must keep a complete, properly scaled body and hit once at every speed.
 		for speed in [1.0,2.0,3.0]:
 			game.run.spawn_enemy();game.arena.sync_enemies();game.arena.reset_effects();game.arena.intro_left=0;game.arena.entrance_left=0
+			while game.arena.warming_attacks():await process_frame
 			game.paused=false;game.state="battle";game.arena.frozen=false;game.arena.speed=speed
 			game.run.actors[1].energy=100
 			for ally in game.run.actors:ally.shield=0.0;ally.shield_parts=[]

@@ -772,6 +772,7 @@ func banner_portrait(parent: Node, id: String, rect: Rect2, hidden: bool,standar
 	var factor:=height/maxf(1,bounds.size.y)
 	actor.scale = body_scale * factor
 	actor.position=rect.position+Vector2((rect.size.x-bounds.size.x*actor.scale.x)*.5,(rect.size.y-height) if standardized else (rect.size.y-height)*.5)-bounds.position*actor.scale
+	if not hidden:preload("res://scripts/hero_art.gd").ink(actor,id,factor)
 	actor.self_modulate = Color.BLACK if hidden else Color.WHITE
 	actor.set_meta("portrait_rect",rect)
 	actor.set_meta("visual_height",height)

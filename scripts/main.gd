@@ -60,6 +60,7 @@ var profile_avatar_buttons: Dictionary = {}
 var logical_height := 960.0
 var static_portraits: Dictionary = {}
 var shared_boxes: Dictionary = {}
+var attack_warmup:Node
 var loading_callback: Callable
 var loading_elapsed := 0.0
 var loading_frames := 0
@@ -311,7 +312,8 @@ func portrait(parent: Node, id: String, at: Vector2, factor: float = 0.68) -> vo
 	actor.centered = data.centered
 	actor.scale = data.scale * factor
 	actor.position = at
-	actor.texture_filter = texture_filter
+	actor.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	preload("res://scripts/hero_art.gd").ink(actor,id,actor.scale.y)
 	parent.add_child(actor)
 	if parent == overlay:
 		actor.set_meta("portrait_base", at)
@@ -2205,6 +2207,14 @@ func show_loading(callback: Callable, index: int) -> void:
 	)
 	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	register_layout(caption, "center")
+	attack_warmup=preload("res://scripts/combat_warmup.gd").new()
+	page.add_child(attack_warmup)
+	var models:Array=[]
+	var ids:Array=campaign.party.duplicate()
+	for id in ids:models.append(TaleCatalog.HERO_SCENES[id].instantiate())
+	models.append(Arena.Enemy.warm(index).instantiate())
+	attack_warmup.start(models,ids)
+	for model in models:model.free()
 
 
 func advance_loading(delta: float) -> void:
@@ -2216,7 +2226,7 @@ func advance_loading(delta: float) -> void:
 		loading_bar.value = minf(95, 15 + loading_elapsed * 250)
 	# A short transition yields presentation frames; it never pretends to download data.
 	var duration := 0.12 if campaign.reduced_motion else 0.3
-	if loading_frames >= 2 and loading_elapsed >= duration:
+	if loading_frames >= 2 and loading_elapsed >= duration and (not is_instance_valid(attack_warmup) or not attack_warmup.busy):
 		var callback := loading_callback
 		loading_callback = Callable()
 		if callback.is_valid():
@@ -2242,7 +2252,7 @@ func set_voice_volume(value: float) -> void:
 
 
 func process_tactical_combat(dt: float) -> void:
-	if arena.hit_stop > 0 or arena.intro_left > 0: return
+	if arena.hit_stop > 0 or arena.intro_left > 0 or arena.warming_attacks(): return
 	if not run.alive():
 		if not arena.is_action_busy(): finish_defeat()
 		return

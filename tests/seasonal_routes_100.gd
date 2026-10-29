@@ -24,7 +24,7 @@ func test() -> void:
 		check(art!=null and art.get_width()>=1600 and art.get_height()>=900,"HD source imported "+id)
 		check(W.textures.size()<=3,"Bounded scenery cache")
 		# All anchored feet map into the safe floor band, independently of aspect ratio.
-		for depth in [.44,.66,.88]:
+		for depth in [.40,.66,.92]:
 			var projected:float=lerpf(node.floor[0],node.floor[1],(depth-F.FLOOR_HORIZON)/(1-F.FLOOR_HORIZON))
 			check(projected>node.floor[0] and projected<node.floor[1],"Feet inside source ground "+id)
 		textures+=1

@@ -489,6 +489,37 @@ static func nearest(tactics,main:int,limit:int) -> Array[int]:
 	choices.sort_custom(func(a,b):return Layout.home(tactics.enemies,a,true).distance_squared_to(Layout.home(tactics.enemies,main,true))<Layout.home(tactics.enemies,b,true).distance_squared_to(Layout.home(tactics.enemies,main,true)))
 	return choices.slice(0,limit)
 
+## Read-only components shared by live strikes and target-independent previews.
+static func basic_components(a:Dictionary,marked:=false,next_hit:=true) -> Array[float]:
+	var p:=power(a,false)
+	var m:=power(a,true)
+	var r:=0.0
+	match str(a.id):
+		"scarlet","snow_white","joao","mulan","puss":m=0.0
+		"alice":
+			if int(a.get("suit",0))%4==3:
+				if p>=m:p+=power(a,false)*(.5*(2 if boon(a,3) else 1))
+				else:m+=power(a,true)*(.5*(2 if boon(a,3) else 1))
+		"matches":p=0.0;m*=.5
+		_:p=0.0
+	if a.id=="mulan":
+		var combo:bool=(int(a.get("hits",0))+(1 if next_hit else 0))%(2 if boon(a,0) else 3)==0
+		p*=1.0+(.5 if combo else 0)+float(a.get("combo_bonus",0))
+	if a.id=="joao" and marked:p*=1.2
+	if a.id=="aladin" and boon(a,3) and wishes_left(a)==0:r=m;m=0.0
+	return [p,m,r]
+static func ultimate_components(a:Dictionary) -> Array[float]:
+	var p:=0.0
+	var m:=0.0
+	match str(a.id):
+		"scarlet":p=power(a,false)*(3.0 if boon(a,3) else 1.5)
+		"alice":p=power(a,false)*1.2;m=power(a,true)*1.2
+		"snow_white":p=power(a,false)*3
+		"ariel":m=power(a,true)*1.5
+		"mulan","puss":p=power(a,false)*2.5
+		"matches":m=power(a,true)*2.5
+	return [p,m,0.0]
+
 static func attack(tactics,index:int,requested:int) -> Dictionary:
 	var owner=tactics.run()
 	if index<0 or index>=owner.actors.size() or owner.actors[index].hp<=0:return {}
@@ -522,24 +553,12 @@ static func attack(tactics,index:int,requested:int) -> Dictionary:
 	a.hits+=1
 	if a.id=="alice":
 		a.card_charge=int(a.get("card_charge",0))+1
-	var p:=power(a,false)
-	var m:=power(a,true)
-	var r:=0.0
+	var components:=basic_components(a,a.get("mark_id","")==foe.id,false)
+	var p:float=components[0]
+	var m:float=components[1]
+	var r:float=components[2]
 	var suit:int=int(a.get("suit",0))%4
-	match str(a.id):
-		"scarlet","snow_white","joao","mulan","puss":m=0.0
-		"alice":
-			if suit==3:
-				if p>=m:p+=power(a,false)*(.5*(2 if boon(a,3) else 1))
-				else:m+=power(a,true)*(.5*(2 if boon(a,3) else 1))
-		"matches":p=0.0;m*=.5
-		_:p=0.0
-	if a.id=="mulan":
-		var combo:bool=int(a.hits)%(2 if boon(a,0) else 3)==0
-		p*=1.0+(.5 if combo else 0)+float(a.get("combo_bonus",0))
-		if combo:owner.unlock_stats.combos+=1
-	if a.id=="joao" and a.get("mark_id","")==foe.id:p*=1.2
-	if a.id=="aladin" and boon(a,3) and wishes_left(a)==0:r=m;m=0.0
+	if a.id=="mulan" and int(a.hits)%(2 if boon(a,0) else 3)==0:owner.unlock_stats.combos+=1
 	a["gear_attack_components"]=[p,m,r]
 	var hit:=Items.basic_strike(tactics,a,foe,p,m,r,first)
 	append_hit(out,target,hit)
@@ -691,16 +710,9 @@ static func ultimate(tactics,index:int,requested:int) -> Dictionary:
 		var condition:String=["burn","poison","sleep","curse","antiheal","shield_break"][owner.rng.randi_range(0,5)] if a.id=="alice" and boon(a,1) else ""
 		for at in targets:
 			var foe:Dictionary=tactics.enemies[at]
-			var p:=0.0
-			var m:=0.0
-			match str(a.id):
-				"scarlet":
-					p=power(a,false)*(3.0 if boon(a,3) else 1.5)
-				"alice":p=power(a,false)*1.2;m=power(a,true)*1.2
-				"snow_white":p=power(a,false)*3
-				"ariel":m=power(a,true)*1.5
-				"mulan","puss":p=power(a,false)*2.5
-				"matches":m=power(a,true)*2.5
+			var components:=ultimate_components(a)
+			var p:float=components[0]
+			var m:float=components[1]
 			var hit:=strike(tactics,a,foe,p,m,0,true)
 			if a.id=="scarlet":foe.powder=0
 			append_hit(out,at,hit)

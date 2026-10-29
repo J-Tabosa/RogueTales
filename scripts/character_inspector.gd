@@ -1,12 +1,19 @@
 extends Control
 const Details=preload("res://scripts/combat_details.gd")
+const Preview=preload("res://scripts/skill_preview.gd")
 const Content=preload("res://scripts/expedition_content.gd")
 const InspectorSkin=preload("res://scripts/ui_skin.gd")
+const Rules=preload("res://scripts/combat_rules.gd")
+const Icon=preload("res://scripts/mobile_icon.gd")
 const GOLD=Color("f2d28e")
-var ui: Control
-var actor: Dictionary
+var ui:Control
+var actor:Dictionary
 var built_size:=Vector2.ZERO
-func setup(owner_ui: Control,unit: Dictionary) -> void:
+var board:Panel
+var detail:PanelContainer
+var pinned:=false
+var detail_key:=""
+func setup(owner_ui:Control,unit:Dictionary) -> void:
 	ui=owner_ui
 	actor=unit.duplicate(true)
 	name="CharacterInspector"
@@ -15,19 +22,23 @@ func setup(owner_ui: Control,unit: Dictionary) -> void:
 	mouse_filter=Control.MOUSE_FILTER_STOP
 	resized.connect(rebuild)
 	rebuild()
-func frame(parent: Node,rect: Rect2,tint:=Color("19332e")) -> Panel:
+func style() -> StyleBoxFlat:
+	var result:=StyleBoxFlat.new()
+	result.bg_color=Color("19332e")
+	result.border_color=Color("796344")
+	result.set_border_width_all(1)
+	result.set_corner_radius_all(8)
+	return result
+func frame(parent:Node,rect:Rect2,tint:=Color("19332e")) -> Panel:
 	var p:=Panel.new()
 	p.position=rect.position
 	p.size=rect.size
-	var style:=StyleBoxFlat.new()
-	style.bg_color=tint
-	style.border_color=Color("796344")
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(8)
-	p.add_theme_stylebox_override("panel",style)
+	var skin:=style()
+	skin.bg_color=tint
+	p.add_theme_stylebox_override("panel",skin)
 	parent.add_child(p)
 	return p
-func text(parent: Node,value: String,rect: Rect2,points: int,color:=Color("eee9da")) -> Label:
+func text(parent:Node,value:String,rect:Rect2,points:int,color:=Color("eee9da")) -> Label:
 	var l:=Label.new()
 	l.text=value
 	l.position=rect.position
@@ -38,9 +49,69 @@ func text(parent: Node,value: String,rect: Rect2,points: int,color:=Color("eee9d
 	l.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	parent.add_child(l)
 	return l
+func icon(parent:Node,glyph:String,at:Vector2,extent:=28.0,tint:=GOLD) -> void:
+	var image:=Icon.new()
+	image.glyph=glyph
+	image.tint=tint
+	image.position=at
+	image.size=Vector2.ONE*extent
+	image.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	parent.add_child(image)
+func hide_detail() -> void:
+	if is_instance_valid(detail):
+		# Detach immediately; a queued, still-interactive popup can swallow the next tap.
+		if detail.get_parent()!=null:detail.get_parent().remove_child(detail)
+		detail.queue_free()
+	detail=null
+	pinned=false
+	detail_key=""
+func show_detail(key:String,title:String,body:String,tap:=false) -> void:
+	if tap and pinned and detail_key==key:
+		hide_detail()
+		return
+	if pinned and not tap:return
+	hide_detail()
+	pinned=tap
+	detail_key=key
+	detail=PanelContainer.new()
+	detail.name="SkillDescription"
+	detail.z_index=20
+	var extent:=Vector2(minf(board.size.x-32,470),minf(board.size.y-100,290))
+	detail.position=Vector2(clampf(get_local_mouse_position().x-board.position.x+12,16,board.size.x-extent.x-16),board.size.y-extent.y-66)
+	detail.size=extent
+	detail.mouse_filter=Control.MOUSE_FILTER_STOP if tap else Control.MOUSE_FILTER_IGNORE
+	var skin:=style()
+	skin.bg_color=Color("0d252b")
+	skin.border_color=Color("64c7ff")
+	skin.set_content_margin_all(12)
+	detail.add_theme_stylebox_override("panel",skin)
+	board.add_child(detail)
+	var column:=VBoxContainer.new()
+	column.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	detail.add_child(column)
+	var close:=Button.new()
+	close.mouse_filter=Control.MOUSE_FILTER_STOP if tap else Control.MOUSE_FILTER_IGNORE
+	close.text=title+"   ×"
+	close.custom_minimum_size.y=36
+	close.pressed.connect(hide_detail)
+	column.add_child(close)
+	var content:=RichTextLabel.new()
+	content.mouse_filter=Control.MOUSE_FILTER_STOP if tap else Control.MOUSE_FILTER_IGNORE
+	content.text=body
+	content.bbcode_enabled=false
+	content.size_flags_vertical=Control.SIZE_EXPAND_FILL
+	content.add_theme_font_size_override("normal_font_size",15)
+	column.add_child(content)
+func bind_detail(button:Button,key:String,title:String,body:String) -> void:
+	button.mouse_entered.connect(func():show_detail(key,title,body))
+	button.mouse_exited.connect(func():
+		if not pinned:hide_detail())
+	button.focus_entered.connect(func():show_detail(key,title,body))
+	button.pressed.connect(func():show_detail(key,title,body,true))
 func rebuild() -> void:
 	if ui==null or size.x<1 or size==built_size:return
 	built_size=size
+	hide_detail()
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
@@ -50,89 +121,129 @@ func rebuild() -> void:
 	add_child(shade)
 	var wide:=size.x>=900
 	var bw:=minf(size.x-24,1120)
-	var bh:=minf(size.y-24,930 if not wide else 760)
-	var board:=frame(self,Rect2((size-Vector2(bw,bh))*.5,Vector2(bw,bh)),Color("102421"))
+	var bh:=minf(size.y-24,760)
+	board=frame(self,Rect2((size-Vector2(bw,bh))*.5,Vector2(bw,bh)),Color("102421"))
 	InspectorSkin.decorate(board,false,true,.075)
-	text(board,"FICHA DO VIAJANTE",Rect2(24,18,bw-90,22),12,GOLD)
-	text(board,TaleCatalog.HEROES[actor.id].name,Rect2(24,43,bw-90,43),27 if wide else 24)
-	text(board,TaleCatalog.hero_class_name(actor.id)+" · atributos desta run",Rect2(24,87,bw-48,27),13,Color("b8c6b5"))
+	text(board,"FICHA DO VIAJANTE",Rect2(20,14,bw-90,20),11,GOLD)
+	text(board,TaleCatalog.HEROES[actor.id].name,Rect2(20,38,bw-150,40),25 if wide else 21)
+	text(board,TaleCatalog.hero_class_name(actor.id),Rect2(20,80,bw-160,24),13,Color("b8c6b5"))
 	var close:=Button.new()
 	close.text="×"
-	close.position=Vector2(bw-66,24)
+	close.position=Vector2(bw-62,16)
 	close.size=Vector2(44,44)
 	close.pressed.connect(ui.close_character_information)
-	InspectorSkin.decorate(close,true,true,.04)
 	board.add_child(close)
-	var stats_w:=bw-374 if wide else bw-242
-	var stats_h:=172.0 if wide else 272.0
-	var art_x:=stats_w+38
-	var art_w:=bw-art_x-24
-	var art:=frame(board,Rect2(art_x,128,art_w,bh-202 if wide else stats_h),Color("24372e"))
+	var stats_w:=bw-360 if wide else bw-40
+	var art_rect:=Rect2(stats_w+32,116,bw-stats_w-52,bh-192) if wide else Rect2(bw-146,46,76,66)
+	var art:=frame(board,art_rect,Color("24372e"))
 	art.name="CharacterArt"
 	art.clip_contents=true
-	InspectorSkin.decorate(art,false,true,.035)
-	ui.banner_portrait(art,actor.id,Rect2(12,20,art_w-24,art.size.y-45),false)
-	text(art,TaleCatalog.hero_class_name(actor.id),Rect2(8,art.size.y-29,art_w-16,22),11,GOLD).horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
-	var rules=preload("res://scripts/combat_rules.gd")
-	var cells:Array=[["VIDA","%d / %d"%[ceili(actor.hp),ceili(actor.max_hp)],"Escudo: %.1f"%actor.shield],["RECURSO",rules.resource(actor),"+%s/acerto · +%s/vez"%[Details.n(rules.Bonuses.mana_hit(actor)),Details.n(rules.Bonuses.mana_turn(actor))]],["DANO FÍSICO",Details.n(rules.power(actor,false)),"atributo independente"],["DANO MÁGICO",Details.n(rules.power(actor,true)),"atributo independente"],["DEFESA F / M","%s / %s"%[Details.n(rules.defense(actor,false)),Details.n(rules.defense(actor,true))],"defesas em pontos"],["INICIATIVA / ATAQUES","%.0f / %d"%[rules.effective_initiative(actor),rules.Bonuses.attacks(actor)],"ordem / básicos por vez"],["CRÍTICO","%.0f%% ×%.2f"%[rules.Bonuses.chance(actor)*100,rules.Bonuses.critical_multiplier(actor)],"chance / multiplicador"],["ESQUIVA","%.0f%%"%(rules.Bonuses.evasion(actor)*100),"teto comum 80%"]]
-	var cols:=4 if wide else 2
-	var cw:=(stats_w-8*(cols-1))/cols
-	var ch:=82.0 if wide else 62.0
-	for i in cells.size():
-		var cell:=frame(board,Rect2(24+(i%cols)*(cw+8),128+floori(i/float(cols))*(ch+8),cw,ch))
-		cell.set_meta("stat",cells[i][0])
-		text(cell,cells[i][0],Rect2(9,5,cw-18,16),10,GOLD)
-		text(cell,cells[i][1],Rect2(9,22,cw-18,27),16 if wide else 13)
-		text(cell,cells[i][2],Rect2(9,50 if wide else 44,cw-18,23 if wide else 16),10,Color("adbeaf"))
-	var sy:=128+stats_h+14
+	ui.banner_portrait(art,actor.id,Rect2(6,6,art.size.x-12,art.size.y-12),false)
+	var portrait:=art.get_node_or_null("HeroArt") as Sprite2D
+	if portrait!=null:
+		var bounds:Rect2=preload("res://scripts/hero_art.gd").body(actor.id).bounds
+		portrait.position.x+=2*bounds.get_center().x*portrait.scale.x
+		portrait.scale.x=-portrait.scale.x
+	var stats:Array=[
+		["AP","magic",Details.n(Rules.power(actor,true)),"Dano Mágico atual"],
+		["AD","sword",Details.n(Rules.power(actor,false)),"Dano Físico atual"],
+		["DEF","shield",Details.n(Rules.defense(actor,false)),"Defesa Física em pontos"],
+		["RES","mirror",Details.n(Rules.defense(actor,true)),"Defesa Mágica em pontos"],
+		["HP","heart","%d/%d"%[ceili(actor.hp),ceili(actor.max_hp)],"Vida atual / máxima · Escudo: "+Details.n(actor.shield)],
+		["ESQ","heroes","%.0f%%"%(Rules.Bonuses.evasion(actor)*100),"Chance de esquiva · teto comum de 80%"],
+		["QTD","blast_pair",str(Rules.Bonuses.attacks(actor)),"Ataques básicos por vez"],
+		["MAN","potion",Rules.resource(actor),"Recurso · +%s por acerto · +%s por vez"%[Details.n(Rules.Bonuses.mana_hit(actor)),Details.n(Rules.Bonuses.mana_turn(actor))]],
+		["CRIT","flame","×%.2f"%Rules.Bonuses.critical_multiplier(actor),"Multiplicador de dano crítico"],
+		["TAXA","target","%.0f%%"%(Rules.Bonuses.chance(actor)*100),"Chance de acerto crítico"],
+		["INI","clock","%.0f"%Rules.effective_initiative(actor),"Iniciativa · ordem de ação"]]
+	var cols:=6 if wide else 4 if bw>=440 else 3
+	var ch:=58.0 if wide else 48.0
+	var cw:=(stats_w-6*(cols-1))/cols
+	for i in stats.size():
+		var stat:Array=stats[i]
+		var cell:=Button.new()
+		cell.position=Vector2(20+(i%cols)*(cw+6),116+floori(i/float(cols))*(ch+6))
+		cell.size=Vector2(cw,ch)
+		cell.set_meta("stat",stat[0])
+		cell.add_theme_stylebox_override("normal",style())
+		board.add_child(cell)
+		icon(cell,stat[1],Vector2(6,5),19,Color("64c7ff") if stat[0]=="AP" else Color("ff6969") if stat[0]=="AD" else GOLD)
+		text(cell,stat[0],Rect2(28,4,cw-31,19),10,GOLD)
+		text(cell,stat[2],Rect2(6,25,cw-12,ch-25),12 if cw<100 else 15)
+		bind_detail(cell,str(stat[0]),str(stat[0]),str(stat[3]))
+	var sy:=116+ceili(stats.size()/float(cols))*(ch+6)+8
 	var scroll:=ScrollContainer.new()
 	scroll.set_script(preload("res://scripts/touch_scroll.gd"))
 	scroll.name="SkillScroll"
-	scroll.position=Vector2(24,sy)
-	scroll.size=Vector2(stats_w if wide else bw-48,bh-sy-88)
+	scroll.position=Vector2(20,sy)
+	scroll.size=Vector2(stats_w,bh-sy-74)
 	scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.scroll_deadzone=10
 	board.add_child(scroll)
 	var stack:=VBoxContainer.new()
 	stack.size_flags_horizontal=Control.SIZE_EXPAND_FILL
-	stack.add_theme_constant_override("separation",10)
+	stack.add_theme_constant_override("separation",8)
 	scroll.add_child(stack)
-	var skills:Array=[["AUTOMÁTICA",Content.KITS[actor.id][0],Details.active(actor)],["PASSIVA",Content.KITS[actor.id][2],Details.passive(actor)],["ESPECIAL · "+rules.resource(actor),TaleCatalog.HERO_TACTICS[actor.id].ult,Details.ultimate(actor)]]
-	if actor.get("equipment",[]).any(func(id):return not str(id).is_empty()):
-		var gear_lines:Array[String]=[]
-		for id in actor.equipment:
-			var item:=preload("res://scripts/equipment.gd").data(id)
-			if not item.is_empty():gear_lines.append(item.title+" · "+item.detail)
-		skills.append(["EQUIPAMENTOS","2 espaços por personagem","\n\n".join(gear_lines)])
+	var titles:Array=[Content.KITS[actor.id][0],Content.KITS[actor.id][2],TaleCatalog.HERO_TACTICS[actor.id].ult]
+	for kind in 3:
+		var data:=Preview.preview(actor,kind)
+		var card:=Button.new()
+		card.name="Skill%d"%kind
+		card.set_meta("skill",["AUTOMÁTICA","PASSIVA","ESPECIAL"][kind])
+		card.custom_minimum_size=Vector2(1,80)
+		card.add_theme_stylebox_override("normal",style())
+		stack.add_child(card)
+		icon(card,["sword","book","magic"][kind],Vector2(10,22),30)
+		var lines:=VBoxContainer.new()
+		lines.position=Vector2(50,7)
+		lines.mouse_filter=Control.MOUSE_FILTER_IGNORE
+		card.add_child(lines)
+		card.resized.connect(func():lines.size=Vector2(maxf(1,card.size.x-62),66))
+		var title:=text(lines,str(titles[kind]),Rect2(),16)
+		title.custom_minimum_size.y=23
+		var summary:=RichTextLabel.new()
+		summary.bbcode_enabled=true
+		summary.text=data.summary
+		summary.fit_content=true
+		summary.scroll_active=false
+		summary.mouse_filter=Control.MOUSE_FILTER_IGNORE
+		summary.add_theme_font_size_override("normal_font_size",13)
+		lines.add_child(summary)
+		bind_detail(card,"skill%d"%kind,str(titles[kind]),data.detail)
+	var bonus_lines:Array[String]=[]
+	for key in actor.get("bonus_totals",{}):
+		var value:float=Rules.Bonuses.total(actor,key)
+		if is_zero_approx(value):continue
+		var percent:bool=key in Rules.Bonuses.PERCENT
+		var suffix:=" pp" if key in ["crit","crit_multiplier","evasion"] else "%" if percent else ""
+		bonus_lines.append("%s  %s%s%s"%[Rules.Bonuses.NAMES.get(key,key),"+" if value>0 else "",Details.n(value*100 if percent else value),suffix])
+	info_card(stack,"BÔNUS DA RUN"," · ".join(bonus_lines) if not bonus_lines.is_empty() else "Nenhum bônus adquirido.")
+	var gear_lines:Array[String]=[]
+	for id in actor.get("equipment",[]):
+		var item:=preload("res://scripts/equipment.gd").data(id)
+		if not item.is_empty():gear_lines.append(item.title+" · "+item.detail)
+	info_card(stack,"EQUIPAMENTOS · 2 ESPAÇOS","\n\n".join(gear_lines) if not gear_lines.is_empty() else "Nenhum equipamento.")
 	if int(actor.get("blessing_index",-1))>=0 and ui.run!=null:
 		var boon:=preload("res://scripts/hero_blessings.gd").data(ui.run.blessing)
-		if not boon.is_empty():skills.append(["BÊNÇÃO DO PROTAGONISTA",boon.title,boon.detail])
-	if not actor.get("bonus_totals",{}).is_empty():skills.append(["BÔNUS DA RUN","Acumulados nos atributos","Cura produzida: +%.0f%%. Bônus duram até o fim desta run."%(rules.Bonuses.total(actor,"healing")*100)])
-	if not Details.conditions(actor).is_empty():skills.push_front(["CONDIÇÕES ATIVAS","Estados e proteção",Details.conditions(actor)])
-	for skill in skills:
-		var card:=PanelContainer.new()
-		card.set_meta("skill",skill[0])
-		var style:=StyleBoxFlat.new()
-		style.bg_color=Color("1c3430")
-		style.border_color=Color("796344")
-		style.set_border_width_all(1)
-		style.set_corner_radius_all(8)
-		style.set_content_margin_all(14)
-		card.add_theme_stylebox_override("panel",style)
-		stack.add_child(card)
-		var lines:=VBoxContainer.new()
-		lines.add_theme_constant_override("separation",6)
-		card.add_child(lines)
-		for i in 3:
-			var l:=text(lines,str(skill[i]),Rect2(),[10,19,15][i],GOLD if i==0 else Color("eee9da") if i==1 else Color("bbc9bb"))
-			l.size_flags_horizontal=Control.SIZE_EXPAND_FILL
-			l.custom_minimum_size.x=1
-	text(board,"Buffs incluídos · dano bruto antes das defesas e esquiva.",Rect2(24,bh-79,bw-48,24),11,Color("adbeaf"))
+		if not boon.is_empty():info_card(stack,"BÊNÇÃO · "+boon.title,boon.detail)
+	if not Details.conditions(actor).is_empty():info_card(stack,"CONDIÇÕES ATIVAS",Details.conditions(actor))
 	var back:=Button.new()
 	back.text="Voltar ao combate"
-	back.position=Vector2(24,bh-54)
-	back.size=Vector2(bw-48,42)
+	back.position=Vector2(20,bh-54)
+	back.size=Vector2(bw-40,42)
 	back.pressed.connect(ui.close_character_information)
-	back.add_theme_stylebox_override("normal",StyleBoxEmpty.new())
 	InspectorSkin.decorate(back,true,false,.09)
 	board.add_child(back)
+func info_card(stack:VBoxContainer,title:String,body:String) -> void:
+	var card:=PanelContainer.new()
+	card.set_meta("skill",title)
+	var skin:=style()
+	skin.set_content_margin_all(12)
+	card.add_theme_stylebox_override("panel",skin)
+	stack.add_child(card)
+	var column:=VBoxContainer.new()
+	card.add_child(column)
+	text(column,title,Rect2(),11,GOLD)
+	var value:=text(column,body,Rect2(),14)
+	value.custom_minimum_size.x=1
+	value.size_flags_horizontal=Control.SIZE_EXPAND_FILL

@@ -32,7 +32,7 @@ func test() -> void:
 			check(game.arena.backdrop.texture.resource_path==W.NODES[id].texture,"Correct HD scenario "+id)
 			for model in game.arena.heroes+game.arena.foes:
 				var feet:Vector2=model.position/Vector2(game.arena.field_width,game.arena.field_height)
-				check(feet.y>=.44-.001 and feet.y<=.88+.001 and feet.x>.05 and feet.x<.95,"Anchored feet within projected ground on "+id)
+				check(feet.y>=.40-.001 and feet.y<=.92+.001 and feet.x>.05 and feet.x<.95,"Anchored feet within projected ground on "+id)
 			check(is_equal_approx(game.arena.backdrop.material.get_shader_parameter("ground_start"),W.NODES[id].floor[0]),"Per-map safe floor configured")
 			if id in ["FlorestaPrimavera","FlorestaVerao","FlorestaOutono","FlorestaInverno","NavioPirata","Oceano","PontoVulcanico","CasteloDoAutor","Cume"]:await capture(id+"-%d"%extent.x)
 			scenes+=1

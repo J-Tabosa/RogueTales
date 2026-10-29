@@ -114,8 +114,9 @@ func checks() -> void:
 		game.show_character_information(0)
 		await process_frame
 		var children:=descendants(game.overlay)
-		assert(children.filter(func(n):return n.has_meta("stat")).size()==8)
-		assert(children.filter(func(n):return n.has_meta("skill")).size()==4)
+		assert(children.filter(func(n):return n.has_meta("stat")).size()==11)
+		for section in ["AUTOMÁTICA","PASSIVA","ESPECIAL","BÔNUS DA RUN","EQUIPAMENTOS","CONDIÇÕES ATIVAS"]:
+			assert(children.any(func(n):return n.has_meta("skill") and str(n.get_meta("skill")).begins_with(section)),"Retain "+section)
 		assert(children.any(func(n):return n is Label and n.text=="123.4"),"Live run buffs appear in stat cards")
 		assert(children.any(func(n):return n.name=="CharacterArt"))
 		await capture("inspector_"+mode)
@@ -143,7 +144,7 @@ func checks() -> void:
 		assert(game.get_window()==game.fullscreen_host and game.fullscreen_host.mode==Window.MODE_WINDOWED,"Editor fallback keeps its native keyboard target")
 		await f11()
 		assert(game.fullscreen_host.mode==Window.MODE_FULLSCREEN)
-	print("VISUAL CONSISTENCY PASS: native F11/default, temporary all-hero debug, 34 frames, standard gallery height/baseline, stable arena scale, 8 live stat boxes and separate skills")
+	print("VISUAL CONSISTENCY PASS: native F11/default, temporary all-hero debug, 34 frames, standard gallery height/baseline, stable arena scale, 11 compact live stats and separate skills")
 	if is_instance_valid(game.fullscreen_host):
 		var host:Window=game.fullscreen_host
 		game.reparent(root)

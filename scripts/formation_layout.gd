@@ -5,9 +5,9 @@ const MAX_PER_ROW := 3
 const FLOOR_HORIZON := 0.36
 const COLUMNS := {"back":0.12,"middle":0.255,"front":0.39}
 const SINGLE_DEPTH := {"back":0.66,"middle":0.66,"front":0.66}
-const DEPTHS := {2:[0.44,0.88],3:[0.44,0.66,0.88]}
+const DEPTHS := {2:[0.40,0.92],3:[0.40,0.66,0.92]}
 static func zone(hostile: bool) -> Rect2:
-	return Rect2(0.56 if hostile else 0.06,0.40,0.38,0.50)
+	return Rect2(0.56 if hostile else 0.06,0.38,0.38,0.56)
 static func max_stack(units: Array) -> int:
 	var result := 0
 	for row in ROWS:

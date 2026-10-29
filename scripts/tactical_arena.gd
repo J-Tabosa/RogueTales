@@ -36,6 +36,7 @@ var high_quality := true
 var enemy_windup := 0.0
 var enemy_interval := 2.4
 var clock := 0.0
+var attack_warmup:Node
 var health_tick := 0.0
 var effects: Array[Dictionary] = []
 var field_height := 550.0
@@ -117,6 +118,8 @@ func widget_size() -> Vector2:
 
 func place_widget(item: Dictionary, at: Vector2) -> void:
 	var extent := widget_size()
+	# Depth follows the owner, so nearer bodies occlude rear plates.
+	item.root.z_index=int(at.y)+1
 	item.panel.size = extent
 	item.root.position = Vector2(clampf(at.x - extent.x * .5, 4, field_width - extent.x - 4), minf(at.y + 5, field_height - extent.y - 4))
 	item.text.position = Vector2(3, 1)
@@ -136,8 +139,10 @@ func hero_bounds(actor: AnimatedSprite2D) -> Rect2:
 	return Rect2(Vector2.ZERO, texture.get_size())
 
 func human_height() -> float:
-	# Intentional partial overlap preserves the illustrated characters' presence.
-	return clampf(minf(field_height * .31,field_width * (.195 if field_width < 700 else .18)),64,184)
+	# Each vertical slot reserves a plate plus 8px. Scale depends on the viewport,
+	# never on current party/enemy composition, avoiding size changes mid-run.
+	var presence:=clampf(minf(field_height*.31,field_width*(.195 if field_width<700 else .18)),64,184)
+	return minf(presence,maxf(32,field_height*.26-widget_size().y-8))
 
 
 func normalize_hero(actor: AnimatedSprite2D, id: String) -> void:
@@ -146,6 +151,7 @@ func normalize_hero(actor: AnimatedSprite2D, id: String) -> void:
 	actor.scale = Vector2(preload("res://scripts/character_visuals.gd").width(id),1) * (height / maxf(1, bounds.size.y))
 	actor.offset = -Vector2(bounds.get_center().x, bounds.end.y)
 	actor.set_meta("visual_height", height)
+	if id=="scarlet" and actor.material is ShaderMaterial:actor.material.set_shader_parameter("ink_width",1.2/maxf(.01,actor.scale.y))
 
 
 
@@ -251,7 +257,13 @@ func sync_enemies() -> void:
 		enemy = foes[0]
 	fit_field(Vector2(field_width,field_height))
 	sync_health(simulation.actors)
+	if is_instance_valid(attack_warmup):attack_warmup.queue_free()
+	attack_warmup=preload("res://scripts/combat_warmup.gd").new()
+	add_child(attack_warmup)
+	attack_warmup.start(heroes+foes,simulation.actors.map(func(a):return a.id))
 
+func warming_attacks() -> bool:
+	return is_instance_valid(attack_warmup) and attack_warmup.busy
 
 func attack(index: int = 0, target: int = -1, ultimate := false) -> bool:
 	if is_action_busy():
@@ -633,6 +645,7 @@ func fit_field(dimensions: Vector2) -> void:
 
 
 func is_action_busy() -> bool:
+	if warming_attacks():return true
 	if enemy_track.time >= 0:
 		return true
 	for track in tracks:
