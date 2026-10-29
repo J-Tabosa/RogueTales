@@ -778,7 +778,7 @@ func show_settings() -> void:
 	state = "settings"
 	clear_page()
 	header("Configurações", "Áudio, imagem e preferências salvas neste dispositivo.")
-	var inner := scroll_area(184, 686, 1440)
+	var inner := scroll_area(184, 686, 1660)
 	setting_slider(inner, "Volume da música", 0, campaign.music_volume, set_music_volume)
 	setting_slider(inner, "Volume dos efeitos", 133, campaign.effects_volume, set_effects_volume)
 	panel(inner, Rect2(0, 266, 476, 134))
@@ -869,7 +869,47 @@ func show_settings() -> void:
 	button(inner, "Diário e história", Rect2(0, 1153, 476, 50), show_journal)
 	button(inner, "Créditos", Rect2(0, 1216, 476, 50), show_credits)
 	setting_slider(inner, "Vozes de ataque", 1283, campaign.voice_volume, set_voice_volume)
+	code_settings_section(inner,1430)
 	navigation("profile")
+
+
+func code_settings_section(parent:Control,top:float) -> void:
+	var box:=panel(parent,Rect2(0,top,476,210))
+	box.name="RedeemCodeSection"
+	label(box,"Códigos",Rect2(17,12,442,30),22)
+	var entry:=LineEdit.new()
+	entry.name="RedemptionCode"
+	entry.placeholder_text="Digite o código"
+	entry.max_length=32
+	entry.clear_button_enabled=true
+	entry.position=Vector2(17,56)
+	entry.size=Vector2(280,52)
+	entry.add_theme_font_size_override("font_size",20)
+	box.add_child(entry)
+	var feedback:=label(box,"Resgate um código para liberar recompensas.",Rect2(17,124,442,70),15,MUTED)
+	feedback.name="RedemptionFeedback"
+	button(box,"Resgatar",Rect2(309,56,150,52),redeem_settings_code.bind(entry,feedback),true)
+	entry.text_submitted.connect(func(_text):redeem_settings_code(entry,feedback))
+
+func redeem_settings_code(entry:LineEdit,feedback:Label) -> void:
+	if debug_session:
+		feedback.text="Saia do modo DEBUG para resgatar no progresso permanente."
+		feedback.add_theme_color_override("font_color",Color("edb778"))
+		return
+	var before_unlocked:Array[String]=campaign.unlocked.duplicate()
+	var before_party:Array[String]=campaign.party.duplicate()
+	var result:Dictionary=campaign.redeem_code(entry.text)
+	if result.ok and not campaign.save_to(save_path):
+		campaign.unlocked.assign(before_unlocked)
+		campaign.party.assign(before_party)
+		feedback.text="Não foi possível salvar. Tente resgatar o código novamente."
+		feedback.add_theme_color_override("font_color",Color("ed9a9c"))
+		return
+	feedback.text=result.message
+	feedback.add_theme_color_override("font_color",Color("9ce5b3") if result.ok else Color("ed9a9c"))
+	if result.ok:
+		entry.clear()
+		entry.release_focus()
 
 
 func toggle_motion() -> void:

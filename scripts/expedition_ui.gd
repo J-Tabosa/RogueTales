@@ -881,7 +881,7 @@ func show_settings() -> void:
 	state = "settings"
 	clear_page()
 	header("Configurações", "Som, apresentação e controles da sua jornada.")
-	var inner := scroll_area(190, 679, 1270)
+	var inner := scroll_area(190, 679, 1320)
 	setting_slider(inner, "Música", 0, campaign.music_volume, set_music_volume)
 	setting_slider(inner, "Efeitos", 132, campaign.effects_volume, set_effects_volume)
 	setting_slider(inner, "Vozes de ataque", 264, campaign.voice_volume, set_voice_volume)
@@ -893,7 +893,8 @@ func show_settings() -> void:
 	button(inner, "Tela cheia / Janela · F11", Rect2(0, 753, 476, 52), toggle_fullscreen).disabled = OS.has_feature("mobile")
 	button(inner, "Como jogar", Rect2(0, 835, 476, 52), show_help)
 	button(inner, "Créditos", Rect2(0, 903, 476, 52), show_credits)
-	button(inner, "Resetar conta deste dispositivo", Rect2(0, 1032, 476, 56), request_reset).add_theme_color_override("font_color", Color("ecaaa3"))
+	code_settings_section(inner,1000)
+	button(inner, "Resetar conta deste dispositivo", Rect2(0, 1230, 476, 56), request_reset).add_theme_color_override("font_color", Color("ecaaa3"))
 	navigation("profile")
 
 func show_help() -> void:

@@ -1,6 +1,6 @@
 # RogueTales: O Último Fio
 
-Roguelite em **Godot 4.7**, PC e Android, com 12 protagonistas e equipes de até cinco. Versão **1.0.0**: 65 cenários HD das quatro estações, 17 percursos autorais, bifurcações por estação e oito mapas por run. Cada mapa mantém seis fases. Neve, chuva, raios de sol e brasas usam shaders; a ULT da Lume aquece as bordas da arena. Detalhes em [ROTAS_100](docs/ROTAS_100.md).
+Roguelite em **Godot 4.7**, PC e Android, com 12 protagonistas e equipes de até cinco. Versão **1.0.1**: 65 cenários HD das quatro estações, 17 percursos autorais, bifurcações por estação e oito mapas por run. Cada mapa mantém seis fases. Neve, chuva, raios de sol e brasas usam shaders; a ULT da Lume aquece as bordas da arena. Detalhes em [ROTAS_100](docs/ROTAS_100.md).
 
 ## Regras e personagens
 
@@ -53,7 +53,11 @@ python3 tools/check_095.py --godot /caminho/para/godot
 
 No PC, **Configurações → Ferramentas DEBUG** ou **Ctrl+B** permite liberar os 12 personagens e as 48 bênçãos, montar uma equipe de até cinco e iniciar uma run de teste com os 39 itens na bolsa. O teste usa uma campanha temporária; sair do debug restaura o progresso normal e a tentativa pendente. Essas ferramentas não aparecem no Android.
 
-O preset **Android Teste** exporta APK arm64, código 21, versão 1.0.0-teste, pacote `com.jtabosa.roguetales.preview.v07`. Use a mesma chave das versões anteriores para instalar como atualização. Chaves e SDKs não são versionados.
+O preset **Android Teste** exporta APK arm64, código 22, versão 1.0.1-teste, pacote `com.jtabosa.roguetales.preview.v07`. Use a mesma chave das versões anteriores para instalar como atualização. Chaves e SDKs não são versionados.
+
+## Códigos de resgate
+
+Em **Configurações → Códigos**, digite `500.001` e toque em **Resgatar** (ou confirme pelo teclado). O código desbloqueia permanentemente todos os personagens neste dispositivo, sem gastar memórias, conceder bênçãos ou alterar a run em andamento. Repetir o código não duplica recompensas. O desbloqueio só é confirmado depois que o progresso é salvo.
 
 ## Código
 

@@ -174,6 +174,18 @@ func choose_memory(index: int, choice: String) -> bool:
 	return true
 
 
+## Local collection code. It grants heroes only, never currencies or blessings.
+func redeem_code(value:String) -> Dictionary:
+	if value.strip_edges()!="500.001":return {"ok":false,"added":0,"message":"Código inválido. Confira e tente novamente."}
+	var added:=0
+	for id in TaleCatalog.HEROES:
+		if not unlocked.has(id):
+			unlocked.append(id)
+			added+=1
+	if party.is_empty() and not unlocked.is_empty():party.append(unlocked[0])
+	return {"ok":true,"added":added,"message":"Todos os personagens já estão desbloqueados." if added==0 else "Código resgatado! Todos os personagens foram desbloqueados."}
+
+
 func to_dict() -> Dictionary:
 	return {
 		"version": 11,
