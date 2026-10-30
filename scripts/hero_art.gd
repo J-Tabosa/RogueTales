@@ -49,6 +49,6 @@ static func place_head(parent:Control,id:String) -> TextureRect:
 static func ink(sprite:Sprite2D,id:String,factor:float) -> void:
 	var material:=ShaderMaterial.new()
 	material.shader=preload("res://assets/hero/shaders/portrait_ink.gdshader")
-	material.set_shader_parameter("ink_width",(1.4 if id=="scarlet" else .8)/maxf(.01,absf(factor)))
-	material.set_shader_parameter("inner_width",(.45 if id=="scarlet" else .2)/maxf(.01,absf(factor)))
+	material.set_shader_parameter("ink_width",(.35 if id=="scarlet" else .8)/maxf(.01,absf(factor)))
+	material.set_shader_parameter("inner_width",(.1125 if id=="scarlet" else .2)/maxf(.01,absf(factor)))
 	sprite.material=material

@@ -1,0 +1,81 @@
+{
+  "generator": "built-in image_gen",
+  "reference": "Selected UI image supplied by the user on 2026-10-30",
+  "grid": [
+    4,
+    3
+  ],
+  "cell_pixels": [
+    362,
+    362
+  ],
+  "hero_order": [
+    "scarlet",
+    "alice",
+    "snow_white",
+    "ariel",
+    "rapunzel",
+    "mulan",
+    "maria",
+    "joao",
+    "matches",
+    "aladin",
+    "peter",
+    "puss"
+  ],
+  "shared_prompt": "Use the EXACT attached selected UI image as visual style reference/edit source, especially its small blue and orange illustrated ability pictures. Transform that icon visual language into ONE production game texture atlas, 4 columns by 3 rows, 12 equal SQUARE cells, total landscape 4:3 canvas ideally 1536x1152. No interface, no character portraits, NO TEXT, NO NUMBERS, NO LETTERS, no watermark. Each cell is a standalone richly colored sharp cartoon fantasy ability illustration, dark emerald background, subtle thin antique gold square border, hard-edged cel shading and bold clean shapes, bright magical focus, like the reference's blue projectile and orange slash. Identical framing and lighting across cells. Exact regular grid, no external margin, no gaps; content stays inside each cell, nothing crosses borders. Read cells left to right, top to bottom.",
+  "atlases": [
+    {
+      "path": "assets/ui/skills/basic.png",
+      "cell_subjects": [
+        "red-black thrown bomb and sparks",
+        "four playing cards fan with red-blue magic trail",
+        "steel mining pickaxe striking stone",
+        "turquoise water bolt chaining through droplets",
+        "golden hair defensive cocoon",
+        "three jade sword-slash arcs",
+        "purple poison flask splashing",
+        "silver rapier thrust with pink sugar shards",
+        "lit wooden match releasing ember",
+        "golden genie lamp firing violet energy",
+        "dark blue shadow sword slash",
+        "oversized greatsword brutal red slash"
+      ]
+    },
+    {
+      "path": "assets/ui/skills/passive.png",
+      "cell_subjects": [
+        "gunpowder sparks gathering around a red target",
+        "four card suits orbiting magical deck",
+        "shield broken by pickaxe impact",
+        "healing turquoise droplet with white sparkle",
+        "golden hair strands forming protective shield",
+        "jade blade parry and counterattack spark",
+        "three toxic purple droplets stacking",
+        "pink candy duelist mark on silhouette",
+        "growing match flame",
+        "bottled violet genie power above lamp",
+        "three shadows behind fairy wings",
+        "amber feline eye and rising red battle aura"
+      ]
+    },
+    {
+      "path": "assets/ui/skills/ultimate.png",
+      "cell_subjects": [
+        "bomb detonation with fragments",
+        "playing cards rushing in blue wave",
+        "pickaxe splitting giant boulder",
+        "towering turquoise tidal wave",
+        "tower spiraled from golden hair",
+        "jade dragon coiling around sword",
+        "violet curse sigil and thorn tendrils",
+        "six silver rapier thrusts converging in pink light",
+        "fiery dragon head formed from match flame",
+        "genie lamp and three wish stars in gold, green, purple",
+        "three shadow warriors surrounding fairy-winged silhouette",
+        "greatsword cutting giant silhouette"
+      ]
+    }
+  ],
+  "processing": "Generated PNGs copied unchanged; Godot AtlasTexture selects cells at runtime."
+}

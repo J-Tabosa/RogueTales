@@ -832,6 +832,34 @@ func equip_item(index: int,id: String,slot: int) -> bool:
 	a.hp=minf(hp,a.max_hp)
 	return true
 
+## Transfer exactly one equipped copy after the UI confirms both captured slots.
+func transfer_equipment(source:int,source_slot:int,target:int,target_slot:int,id:String,expected_target:String) -> bool:
+	if not expedition or interlude not in ["route","shop","reward","secret_reward"]:return false
+	if source<0 or source>=actors.size() or target<0 or target>=actors.size() or source==target:return false
+	if source_slot<0 or source_slot>=Equipment.SLOTS or target_slot<0 or target_slot>=Equipment.SLOTS:return false
+	if id.is_empty() or Equipment.data(id).is_empty() or inventory.count(id)<equipped_count(id):return false
+	var from:Dictionary=actors[source]
+	var to:Dictionary=actors[target]
+	if Equipment.item_at(from,source_slot)!=id or Equipment.item_at(to,target_slot)!=expected_target or to.equipment.has(id):return false
+	var from_items:Array=from.equipment.duplicate()
+	var to_items:Array=to.equipment.duplicate()
+	while from_items.size()<Equipment.SLOTS:from_items.append("")
+	while to_items.size()<Equipment.SLOTS:to_items.append("")
+	var from_hp:float=from.hp
+	var to_hp:float=to.hp
+	Equipment.detach(from)
+	Equipment.detach(to)
+	from_items[source_slot]=""
+	to_items[target_slot]=id
+	from.equipment=from_items
+	to.equipment=to_items
+	Equipment.attach(from)
+	Equipment.attach(to)
+	from.hp=minf(from_hp,from.max_hp)
+	to.hp=minf(to_hp,to.max_hp)
+	return true
+
+
 func equipment_snapshot() -> Dictionary:
 	var result:Dictionary={}
 	for a in actors:result[a.id]={"items":a.get("equipment",[]).duplicate(),"applied":a.get("equipment_applied",{}).duplicate()}

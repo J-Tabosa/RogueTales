@@ -151,7 +151,7 @@ func normalize_hero(actor: AnimatedSprite2D, id: String) -> void:
 	actor.scale = Vector2(preload("res://scripts/character_visuals.gd").width(id),1) * (height / maxf(1, bounds.size.y))
 	actor.offset = -Vector2(bounds.get_center().x, bounds.end.y)
 	actor.set_meta("visual_height", height)
-	if id=="scarlet" and actor.material is ShaderMaterial:actor.material.set_shader_parameter("ink_width",1.2/maxf(.01,actor.scale.y))
+	if id=="scarlet" and actor.material is ShaderMaterial:actor.material.set_shader_parameter("ink_width",.3/maxf(.01,actor.scale.y))
 
 
 

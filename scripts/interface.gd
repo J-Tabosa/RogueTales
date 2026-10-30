@@ -686,7 +686,9 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 		if is_instance_valid(equipment_panel):
-			if key == KEY_ESCAPE: close_equipment()
+			if key == KEY_ESCAPE:
+				if is_instance_valid(equipment_panel.transfer_prompt):equipment_panel.cancel_transfer()
+				else:close_equipment()
 			get_viewport().set_input_as_handled()
 			return
 		if state in ["battle", "travel", "route_travel", "encounter_intro", "battle_outro"] and not event.ctrl_pressed:

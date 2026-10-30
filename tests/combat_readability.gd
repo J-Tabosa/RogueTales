@@ -85,22 +85,24 @@ func checks() -> void:
 		var labels:=nodes.filter(func(n):return n is Label)
 		assert(labels.any(func(n):return n.text.contains("Dano Físico  +20.0%")))
 		assert(labels.any(func(n):return n.text.contains("Quantidade de Ataques  +1.0")))
-		var basic:Button=nodes.filter(func(n):return n.name=="Skill0")[0]
+		var basic:Button=nodes.filter(func(n):return n.name=="SkillInfo0")[0]
 		basic.mouse_entered.emit()
-		assert(is_instance_valid(inspector.detail) and not inspector.pinned)
+		assert(inspector.detail==null,"Skill descriptions open only on the information button click")
 		basic.mouse_exited.emit()
 		assert(inspector.detail==null)
 		await tap(basic)
 		assert(inspector.pinned and is_instance_valid(inspector.detail),"Finger plus emulated mouse opens one description")
 		await capture("sheet-"+str(dimensions.x))
 		inspector.hide_detail()
-		var special:Button=nodes.filter(func(n):return n.name=="Skill2")[0]
+		var special:Button=nodes.filter(func(n):return n.name=="SkillInfo2")[0]
 		# Scroll/focus may have moved after a finger press; reveal the tested card.
 		scroll.ensure_control_visible(special)
 		await process_frame
 		pointer_at(special)
 		for frame in 4:await process_frame
-		assert(is_instance_valid(inspector.detail) and not inspector.pinned,"Hover details remain visible without swallowing pointer events")
+		assert(inspector.detail==null,"Hover alone does not open skill information")
+		await tap(special)
+		assert(inspector.pinned and is_instance_valid(inspector.detail),"The information button opens the complete explanation")
 		inspector.hide_detail()
 		await capture("sheet-clear-"+str(dimensions.x))
 		game.close_character_information()
@@ -121,5 +123,5 @@ func checks() -> void:
 	assert(not game.attack_warmup.busy)
 	game.queue_free()
 	await process_frame
-	print("COMBAT READABILITY PASS: warmup, slots, compact stats, real touch/hover, left portrait, run bonuses, read-only previews")
+	print("COMBAT READABILITY PASS: warmup, slots, compact stats, real touch/info buttons, left portrait, run bonuses, read-only previews")
 	quit()

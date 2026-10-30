@@ -8,6 +8,10 @@ var selected_item := ""
 var category := "all"
 var mobile_tab := "appearance"
 var inventory_offset := 0
+var transfer_prompt:Control
+var pending_transfer:Dictionary={}
+var equipment_notice:=""
+var suspended_scrolls:Array[ScrollContainer]=[]
 func setup(owner_ui: Control, index: int, slot_index := 0) -> void:
 	ui = owner_ui
 	hero_index = clampi(index, 0, ui.run.actors.size() - 1)
@@ -34,6 +38,8 @@ func select_item(id: String) -> void:
 	rebuild()
 func select_category(value: String) -> void:
 	category = value
+	var previous:=find_child("InventoryScroll",true,false)
+	if previous!=null:previous.scroll_vertical=0
 	inventory_offset = 0
 	rebuild()
 func select_tab(value: String) -> void:
@@ -57,6 +63,7 @@ func editable() -> bool:
 	return ui.run.interlude in ["route", "shop", "reward", "secret_reward"]
 func rebuild() -> void:
 	if ui == null or size.x < 1: return
+	cancel_transfer()
 	var old_scroll := find_child("InventoryScroll", true, false)
 	if old_scroll != null: inventory_offset = old_scroll.scroll_vertical
 	for child in get_children():
@@ -74,7 +81,7 @@ func rebuild() -> void:
 	var height := extent.y
 	var actor: Dictionary = ui.run.actors[hero_index]
 	text(board, "EQUIPAMENTOS", Rect2(22, 10, width - 90, 36), 22, ui.GOLD)
-	text(board, "%d itens · %d ouro · %s" % [ui.run.inventory.size(), ui.run.run_gold, "trocas entre encontros" if editable() else "combate pausado · consulta"], Rect2(22, 49, width - 44, 23), 13, ui.MUTED)
+	text(board, equipment_notice if not equipment_notice.is_empty() else "%d itens · %d ouro · %s" % [ui.run.inventory.size(), ui.run.run_gold, "trocas entre encontros" if editable() else "combate pausado · consulta"], Rect2(22, 49, width - 44, 23), 13, ui.MUTED)
 	ui.button(board, "×", Rect2(width - 62, 12, 42, 44), ui.close_equipment)
 	ui.face_portrait(board, actor.id, Rect2(22, 87, 58, 58))
 	text(board, TaleCatalog.HEROES[actor.id].name, Rect2(91, 85, width - 280, 32), 21, ui.GOLD)
@@ -157,7 +164,7 @@ func build_description(parent: Node, rect: Rect2) -> void:
 	Art.picture(pane, selected_item, Rect2(24, 35, width - 48, art_height))
 	var scroll := ScrollContainer.new()
 	scroll.position = Vector2(18, 43 + art_height)
-	scroll.size = Vector2(width - 36, height - art_height - 122)
+	scroll.size = Vector2(width - 36, height - art_height - 184)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.set_script(preload("res://scripts/touch_scroll.gd"))
 	pane.add_child(scroll)
@@ -192,13 +199,82 @@ func build_description(parent: Node, rect: Rect2) -> void:
 			activate.pressed.connect(use_time_sands.bind(at))
 			stack.add_child(activate)
 	var actor: Dictionary = ui.run.actors[hero_index]
-	var equipped_here: bool = Gear.item_at(actor, selected_slot) == selected_item
-	var action: Button = ui.button(pane, "Equipado" if equipped_here else "Equipar · espaço %d" % (selected_slot + 1), Rect2(14, height - 63, width - 88, 46), ui.equip_from_panel.bind(hero_index, selected_item, selected_slot), true)
-	action.name = "EquipSelectedItem"
-	action.disabled = not editable() or free <= 0 or actor.equipment.has(selected_item)
-	var remove: Button = ui.button(pane, "−", Rect2(width - 63, height - 63, 49, 46), ui.equip_from_panel.bind(hero_index, "", selected_slot))
-	remove.tooltip_text = "Remover equipamento deste espaço"
-	remove.disabled = not editable() or str(Gear.item_at(actor, selected_slot)).is_empty()
+	var has_owner:=not equipped_owner(selected_item).is_empty()
+	var action:Button=ui.button(pane,"Equipado neste personagem" if actor.equipment.has(selected_item) else "Equipar · espaço %d"%(selected_slot+1),Rect2(14,height-120,width-28,48),request_equip,true)
+	action.name="EquipSelectedItem"
+	action.disabled=not editable() or (free<=0 and not has_owner) or actor.equipment.has(selected_item)
+	var remove:Button=ui.button(pane,"Remover equipamento · espaço %d"%(selected_slot+1),Rect2(14,height-62,width-28,48),ui.equip_from_panel.bind(hero_index,"",selected_slot))
+	remove.name="RemoveEquipment"
+	remove.add_theme_font_size_override("font_size",15)
+	remove.add_theme_color_override("font_color",Color("ffb5a5"))
+	remove.tooltip_text="Devolver à bolsa o equipamento deste espaço"
+	remove.disabled=not editable() or str(Gear.item_at(actor,selected_slot)).is_empty()
+
+func equipped_owner(id:String) -> Dictionary:
+	for index in ui.run.actors.size():
+		if index==hero_index:continue
+		for slot in Gear.SLOTS:
+			if Gear.item_at(ui.run.actors[index],slot)==id:return {"index":index,"slot":slot}
+	return {}
+
+func cancel_transfer() -> void:
+	for scroll in suspended_scrolls:
+		if is_instance_valid(scroll):scroll.set_process_input(true)
+	suspended_scrolls.clear()
+	if is_instance_valid(transfer_prompt):
+		if transfer_prompt.get_parent()!=null:transfer_prompt.get_parent().remove_child(transfer_prompt)
+		transfer_prompt.queue_free()
+	transfer_prompt=null
+	pending_transfer={}
+
+func request_equip() -> void:
+	if not editable() or selected_item.is_empty() or ui.run.actors[hero_index].equipment.has(selected_item):return
+	var owner:=equipped_owner(selected_item)
+	if owner.is_empty():
+		ui.equip_from_panel(hero_index,selected_item,selected_slot)
+		return
+	cancel_transfer()
+	pending_transfer={"source":owner.index,"source_slot":owner.slot,"target":hero_index,"target_slot":selected_slot,"item":selected_item,"expected_target":str(Gear.item_at(ui.run.actors[hero_index],selected_slot)),"source_id":ui.run.actors[owner.index].id,"target_id":ui.run.actors[hero_index].id}
+	transfer_prompt=Control.new()
+	transfer_prompt.name="EquipmentTransferConfirmation"
+	transfer_prompt.size=size
+	transfer_prompt.mouse_filter=Control.MOUSE_FILTER_STOP
+	transfer_prompt.z_index=20
+	add_child(transfer_prompt)
+	var shade:=ColorRect.new()
+	shade.size=size
+	shade.color=Color(0,.025,.02,.85)
+	transfer_prompt.add_child(shade)
+	var extent:=Vector2(minf(size.x-32,560),minf(size.y-32,370))
+	var board:=plain_panel(transfer_prompt,Rect2((size-extent)*.5,extent),Color("16372f"))
+	text(board,"Trocar equipamento?",Rect2(22,18,extent.x-44,42),24,ui.GOLD)
+	var explanation:="%s já está sendo usado por %s (espaço %d).\n\nDeseja transferi-lo para %s (espaço %d)?"%[Gear.data(selected_item).title,TaleCatalog.HEROES[ui.run.actors[owner.index].id].name,owner.slot+1,TaleCatalog.HEROES[ui.run.actors[hero_index].id].name,selected_slot+1]
+	if not str(pending_transfer.expected_target).is_empty():explanation+="\n\n%s voltará para a bolsa."%Gear.data(pending_transfer.expected_target).title
+	var message:=text(board,explanation,Rect2(22,76,extent.x-44,extent.y-165),17)
+	message.clip_text=false
+	message.name="TransferExplanation"
+	var button_width:=(extent.x-56)*.5
+	ui.button(board,"Sim, trocar",Rect2(22,extent.y-70,button_width,48),confirm_transfer,true).name="ConfirmTransfer"
+	var no:Button=ui.button(board,"Não, manter",Rect2(34+button_width,extent.y-70,button_width,48),cancel_transfer)
+	no.name="CancelTransfer"
+	no.grab_focus()
+	for scroll in find_children("*","ScrollContainer",true,false):
+		if scroll.is_processing_input():
+			suspended_scrolls.append(scroll)
+			scroll.set_process_input(false)
+
+func confirm_transfer() -> void:
+	if pending_transfer.is_empty():return
+	var choice:=pending_transfer.duplicate()
+	# Re-check identities as well as slots: a stale prompt cannot move another hero's item.
+	var same_actors:bool=choice.source<ui.run.actors.size() and choice.target<ui.run.actors.size() and ui.run.actors[choice.source].id==choice.source_id and ui.run.actors[choice.target].id==choice.target_id
+	var changed:bool=same_actors and ui.run.transfer_equipment(choice.source,choice.source_slot,choice.target,choice.target_slot,choice.item,choice.expected_target)
+	cancel_transfer()
+	equipment_notice="Equipamento transferido." if changed else "A troca foi cancelada: o equipamento ou a etapa mudou."
+	if changed:
+		if ui.has_method("persist_run"):ui.call("persist_run")
+		ui.update_hud()
+	rebuild()
 
 func use_time_sands(enemy:int) -> void:
 	if ui.combat_flow!=null and ui.combat_flow.delay_enemy(hero_index,enemy):
