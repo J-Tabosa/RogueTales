@@ -34,6 +34,12 @@ func checks() -> void:
 	data.shield=0
 	Health.update(bar,data)
 	assert(not segment.visible and bar.max_value==200)
+	for sample in [[200.0,"a2e2b2"],[101.0,"a2e2b2"],[100.0,"f2cf6b"],[51.0,"f2cf6b"],[50.0,"ff6969"],[0.0,"ff6969"]]:
+		data.hp=sample[0]
+		data.shield=1000.0
+		Health.update(bar,data)
+		assert(Health.tint(data)==Color(sample[1]))
+		assert(bar.get_theme_stylebox("fill").bg_color==Color(sample[1]))
 	bar.queue_free()
 	var account:=preload("res://tests/test_accounts.gd").legacy()
 	account.unlocked.assign(TaleCatalog.HEROES.keys())

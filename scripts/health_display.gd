@@ -2,7 +2,16 @@ extends RefCounted
 ## Shields extend the visible capacity without changing the unit's actual maximum HP.
 static func capacity(data:Dictionary) -> float:
 	return float(data.max_hp)+maxf(0,float(data.get("shield",0)))
+static func tint(data:Dictionary) -> Color:
+	var ratio:=clampf(float(data.hp)/maxf(1,float(data.max_hp)),0,1)
+	return Color("ff6969") if ratio<=.25 else Color("f2cf6b") if ratio<=.5 else Color("a2e2b2")
 static func update(bar:ProgressBar,data:Dictionary) -> void:
+	var color:=tint(data)
+	var fill:=bar.get_theme_stylebox("fill") as StyleBoxFlat
+	if fill==null or fill.bg_color!=color:
+		fill=fill.duplicate() if fill!=null else StyleBoxFlat.new()
+		fill.bg_color=color
+		bar.add_theme_stylebox_override("fill",fill)
 	var shield:=maxf(0,float(data.get("shield",0)))
 	var total:=maxf(1,capacity(data))
 	bar.max_value=total

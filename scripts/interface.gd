@@ -344,8 +344,9 @@ func build_battle() -> void:
 		ult_tag.set_meta("card_ult", true)
 		var status := label(card, "", Rect2(10, 123, 140, 19), 11, MUTED)
 		status.set_meta("card_status", true)
-		var hp_text := label(card, "", Rect2(10, 48, 140, 19), 12, Color("a2e2b2"))
+		var hp_text := label(card, "", Rect2(10, 48, 140, 19), 10, Color("a2e2b2"))
 		hp_text.set_meta("card_hp", true)
+		hp_text.autowrap_mode=TextServer.AUTOWRAP_OFF
 		var hp := bar(card, Rect2(10, 69, 140, 6), Color("88c8a0"))
 		hp.set_meta("card_hp_bar", true)
 		card_health.append(hp)
@@ -500,6 +501,8 @@ func update_hud() -> void:
 				child.text = "Caído" if actor.hp <= 0 else ("ULT na fila" if actor.get("ult_queued", false) else ("ULT em ação" if actor.ult_pending else ("ULT pronta" if run.tactics.ultimate_ready(index) else ("Selada" if actor.get("sealed", false) else "Aguardando"))))
 			elif child.has_meta("card_hp"):
 				child.text = "PV %d / %d%s" % [ceili(actor.hp), ceili(HealthDisplay.capacity(actor)), "  ESC %d" % ceili(actor.shield) if actor.shield > 0 else ""]
+				child.add_theme_color_override("font_color",HealthDisplay.tint(actor))
+				BattleType.fit_line(child,10,8,Vector2(child.size.x,19))
 			elif child.has_meta("card_items"):
 				var equipment_slot: int = child.get_meta("card_items")
 				ItemArt.refresh(child, ItemArt.equipped(actor,equipment_slot))
