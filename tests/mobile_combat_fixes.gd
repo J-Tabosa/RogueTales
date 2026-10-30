@@ -34,7 +34,7 @@ func checks() -> void:
 	data.shield=0
 	Health.update(bar,data)
 	assert(not segment.visible and bar.max_value==200)
-	for sample in [[200.0,"67cf85"],[161.0,"67cf85"],[160.0,"c5e85a"],[121.0,"c5e85a"],[120.0,"f2d36b"],[81.0,"f2d36b"],[80.0,"f5a052"],[41.0,"f5a052"],[40.0,"64b5ff"],[0.0,"64b5ff"]]:
+	for sample in [[200.0,"67cf85"],[161.0,"67cf85"],[160.0,"c5e85a"],[121.0,"c5e85a"],[120.0,"f2d36b"],[81.0,"f2d36b"],[80.0,"f5a052"],[41.0,"f5a052"],[40.0,"ff6969"],[0.0,"ff6969"]]:
 		data.hp=sample[0]
 		data.shield=1000.0
 		Health.update(bar,data)

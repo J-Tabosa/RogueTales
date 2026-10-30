@@ -8,7 +8,7 @@ static func tint(data:Dictionary) -> Color:
 	if ratio>.6:return Color("c5e85a")
 	if ratio>.4:return Color("f2d36b")
 	if ratio>.2:return Color("f5a052")
-	return Color("64b5ff")
+	return Color("ff6969")
 static func update(bar:ProgressBar,data:Dictionary) -> void:
 	var color:=tint(data)
 	var fill:=bar.get_theme_stylebox("fill") as StyleBoxFlat
