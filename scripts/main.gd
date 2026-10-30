@@ -14,7 +14,7 @@ var state := "menu"
 var selected_hero := "scarlet"
 var viewed_stage := 0
 var paused := false
-var game_speed := 1.0
+var game_speed := 2.0
 var cooldowns: Array[float] = []
 var enemy_timer := 0.0
 var travel_timer := 0.0
@@ -842,7 +842,7 @@ func show_settings() -> void:
 	label(inner, "Velocidade de combate", Rect2(17, 808, 442, 31), 21)
 	(
 		button(
-			inner, "%d×" % int(campaign.speed), Rect2(17, 856, 442, 40), change_default_speed, true
+			inner, "%d×" % TaleCampaign.speed_label(campaign.speed), Rect2(17, 856, 442, 40), change_default_speed, true
 		)
 		. add_theme_font_size_override("font_size", 16)
 	)
@@ -919,7 +919,7 @@ func toggle_motion() -> void:
 
 
 func change_default_speed() -> void:
-	campaign.speed = float(int(campaign.speed) % 3 + 1)
+	campaign.speed = TaleCampaign.next_speed(campaign.speed)
 	persist()
 	show_settings()
 
@@ -1042,7 +1042,7 @@ func build_battle() -> void:
 	log_label = label(page, "", Rect2(24, 764, 492, 64), 18, MUTED)
 	button(page, "Pausar", Rect2(24, 847, 236, 56), toggle_pause)
 	speed_button = button(
-		page, "Velocidade %d×" % int(game_speed), Rect2(280, 847, 236, 56), toggle_speed
+		page, "Velocidade %d×" % TaleCampaign.speed_label(game_speed), Rect2(280, 847, 236, 56), toggle_speed
 	)
 	label(page, "COMBATE AUTOMÁTICO  •  ESC PARA PAUSAR", Rect2(24, 925, 492, 22), 13, MUTED)
 	update_hud()
@@ -1411,11 +1411,11 @@ func abandon_expedition() -> void:
 
 
 func toggle_speed() -> void:
-	game_speed = float(int(game_speed) % 3 + 1)
+	game_speed = TaleCampaign.next_speed(game_speed)
 	campaign.speed = game_speed
 	persist()
 	arena.speed = game_speed
-	speed_button.text = "Velocidade %d×" % int(game_speed)
+	speed_button.text = "Velocidade %d×" % TaleCampaign.speed_label(game_speed)
 
 
 func show_victory(result: Dictionary) -> void:

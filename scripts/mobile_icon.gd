@@ -5,6 +5,12 @@ var tint := Color("e5c990")
 func _draw() -> void:
 	draw_set_transform(Vector2.ZERO, 0, size / 24.0)
 	match glyph:
+		"crown":
+			draw_polyline(PackedVector2Array([Vector2(4,19),Vector2(2,7),Vector2(8,12),Vector2(12,3),Vector2(16,12),Vector2(22,7),Vector2(20,19),Vector2(4,19)]),tint,2,true)
+			draw_line(Vector2(5,22),Vector2(19,22),tint,2,true)
+		"up":
+			draw_polyline(PackedVector2Array([Vector2(5,12),Vector2(12,4),Vector2(19,12)]),tint,2,true)
+			draw_line(Vector2(12,4),Vector2(12,22),tint,3,true)
 		"home":
 			draw_polyline(PackedVector2Array([Vector2(3,11),Vector2(12,3),Vector2(21,11)]),tint,2,true)
 			draw_polyline(PackedVector2Array([Vector2(5,10),Vector2(5,21),Vector2(19,21),Vector2(19,10)]),tint,2,true)

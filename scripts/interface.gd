@@ -361,7 +361,7 @@ func build_battle() -> void:
 	log_label.visible = false # Complete history remains available through Histórico.
 	auto_button = button(page, "", Rect2(), toggle_auto_ult)
 	battle_place(auto_button, Rect2(16, 0, 246, 46), Rect2(1018, 694, 248, 44), "bottom")
-	speed_button = button(page, "%d×" % int(game_speed), Rect2(), toggle_speed)
+	speed_button = button(page, "%d×" % TaleCampaign.speed_label(game_speed), Rect2(), toggle_speed)
 	battle_place(speed_button, Rect2(278, 0, 246, 46), Rect2(1018, 744, 248, 44), "bottom")
 	var gold_box := panel(page, Rect2())
 	gold_box.name="BattleGoldBox"

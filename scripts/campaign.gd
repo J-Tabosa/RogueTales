@@ -17,7 +17,11 @@ var journal: Array = []
 var checkpoint: Dictionary = {}
 var pending_story := -1
 var reduced_motion := false
-var speed := 1.0
+var speed := 2.0
+var goals:Dictionary={}
+var daily:Dictionary={}
+var goals_run:=0
+var goals_receipts:Array[String]=[]
 var save_error := ""
 var hero_levels: Dictionary = {}
 var hero_xp: Dictionary = {}
@@ -60,43 +64,65 @@ var discovered_synergies: Array[String] = []
 var discovered_events: Array[String] = []
 const IDLE_CAP := 8 * 3600
 const ACHIEVEMENTS := [
-	{
-		"id": "first",
-		"title": "O primeiro fio",
-		"detail": "Conclua o primeiro capítulo.",
-		"reward": 60
-	},
-	{
-		"id": "friends",
-		"title": "Companheiras de conto",
-		"detail": "Recrute três heroínas.",
-		"reward": 90
-	},
-	{
-		"id": "team",
-		"title": "Uma formação completa",
-		"detail": "Tenha três integrantes na formação.",
-		"reward": 50
-	},
-	{
-		"id": "training",
-		"title": "Além da primeira página",
-		"detail": "Leve uma heroína ao nível 5.",
-		"reward": 100
-	},
-	{
-		"id": "voices",
-		"title": "Vozes de todos os contos",
-		"detail": "Recrute todos os personagens.",
-		"reward": 200
-	},
-	{
-		"id": "ending",
-		"title": "Autoras do amanhã",
-		"detail": "Conclua os doze capítulos.",
-		"reward": 350
-	},
+	{"id":"first","title":"O primeiro fio","detail":"Vença um chefe de mapa.","reward":60,"icon":"map"},
+	{"id":"friends","title":"Companhia de conto","detail":"Desbloqueie três personagens.","reward":90,"icon":"heroes"},
+	{"id":"team","title":"Uma formação completa","detail":"Tenha três viajantes juntos numa run.","reward":50,"icon":"shield"},
+	{"id":"training","title":"Além da primeira página","detail":"Alcance o nível 5 do perfil.","reward":100,"icon":"up"},
+	{"id":"voices","title":"Vozes de todos os contos","detail":"Desbloqueie todos os personagens.","reward":200,"icon":"book"},
+	{"id":"ending","title":"Autores do amanhã","detail":"Conclua uma run do Conto.","reward":350,"icon":"crown"},
+	{"id":"battles10","title":"Dez páginas de coragem","detail":"Vença dez combates.","reward":75,"icon":"sword"},
+	{"id":"battles100","title":"Veterano dos contos","detail":"Vença cem combates.","reward":200,"icon":"sword"},
+	{"id":"bosses8","title":"Desafiador de guardiões","detail":"Vença oito chefes de mapa.","reward":150,"icon":"crown"},
+	{"id":"runs3","title":"Trilogia de vitórias","detail":"Conclua três runs do Conto.","reward":250,"icon":"book"},
+	{"id":"endless12","title":"Uma história sem fim","detail":"Avance doze fases além do Conto no infinito.","reward":150,"icon":"clock"}
 ]
+const DAILIES := [
+	{"id":"battles","title":"Mais cinco páginas","detail":"Vença 5 combates hoje.","goal":5,"reward":50,"icon":"sword"},
+	{"id":"enemies","title":"Limpando a trilha","detail":"Derrote 15 inimigos hoje.","goal":15,"reward":50,"icon":"target"},
+	{"id":"bosses","title":"Desafio do dia","detail":"Vença 1 chefe de mapa hoje.","goal":1,"reward":75,"icon":"crown"}
+]
+static func speed_label(value:float) -> int:return clampi(int(value)-1,1,3)
+static func next_speed(value:float) -> float:return float(2+(clampi(int(value),2,4)-1)%3)
+func refresh_daily(today:=Time.get_date_string_from_system()) -> void:
+	# A backward clock change cannot reopen a previously claimed day.
+	if today>str(daily.get("day","")):
+		daily={"day":today,"battles":0,"enemies":0,"bosses":0,"claimed":[]}
+func record_goal_combat(number:int,receipt:String,enemies:int,boss:bool,team_size:int,today:=Time.get_date_string_from_system()) -> void:
+	if number<goals_run:return
+	if number>goals_run:
+		goals_run=number
+		goals_receipts.clear()
+	if goals_receipts.has(receipt):return
+	goals_receipts.append(receipt)
+	refresh_daily(today)
+	for metric in ["battles","enemies","bosses"]:
+		var amount:=1 if metric=="battles" else maxi(0,enemies) if metric=="enemies" else int(boss)
+		goals[metric]=int(goals.get(metric,0))+amount
+		if daily.get("day")==today:daily[metric]=int(daily.get(metric,0))+amount
+	goals.team=maxi(int(goals.get("team",0)),team_size)
+func claim_daily(id:String,today:=Time.get_date_string_from_system()) -> bool:
+	refresh_daily(today)
+	if daily.get("day")!=today or daily.claimed.has(id):return false
+	for task in DAILIES:
+		if task.id==id and int(daily.get(id,0))>=task.goal:
+			daily.claimed.append(id)
+			earn_gold(task.reward)
+			return true
+	return false
+func achievement_progress(id:String) -> Vector2i:
+	match id:
+		"first":return Vector2i(maxi(cleared.size(),int(goals.get("bosses",0))),1)
+		"friends":return Vector2i(unlocked.size(),3)
+		"team":return Vector2i(maxi(party.size(),int(goals.get("team",0))),3)
+		"training":return Vector2i(player_level,5)
+		"voices":return Vector2i(unlocked.size(),TaleCatalog.HEROES.size())
+		"ending":return Vector2i(expedition_wins,1)
+		"battles10":return Vector2i(int(goals.get("battles",0)),10)
+		"battles100":return Vector2i(int(goals.get("battles",0)),100)
+		"bosses8":return Vector2i(int(goals.get("bosses",0)),8)
+		"runs3":return Vector2i(expedition_wins,3)
+		"endless12":return Vector2i(int(goals.get("endless",0)),12)
+	return Vector2i(0,1)
 
 
 func _init() -> void:
@@ -192,7 +218,8 @@ func redeem_code(value:String) -> Dictionary:
 
 func to_dict() -> Dictionary:
 	return {
-		"version": 11,
+		"version": 12,"speed_base":2,
+		"goals":goals.duplicate(true),"daily":daily.duplicate(true),"goals_run":goals_run,"goals_receipts":goals_receipts.duplicate(),
 		"hero_milestones":hero_milestones.duplicate(true),"blessing_credit":blessing_credit.duplicate(),
 		"best_endless": best_endless, "endless_runs": endless_runs,
 		"discovered_synergies": discovered_synergies.duplicate(), "discovered_events": discovered_events.duplicate(),
@@ -314,7 +341,16 @@ func load_data(data: Dictionary) -> void:
 	if not cleared.has(pending_story) or choices.has(str(pending_story)):
 		pending_story = -1
 	reduced_motion = bool(data.get("reduced_motion", false))
-	speed = float(clampi(int(data.get("speed", 1)),1,3))
+	speed = float(clampi(int(data.get("speed",2)) if int(data.get("speed_base",0))==2 else int(data.get("speed",1))+1,2,4))
+	goals=data.get("goals",{}).duplicate(true) if data.get("goals",{}) is Dictionary else {}
+	daily=data.get("daily",{}).duplicate(true) if data.get("daily",{}) is Dictionary else {}
+	if not daily.get("claimed",[]) is Array:daily["claimed"]=[]
+	if not daily.has("claimed"):daily["claimed"]=[]
+	goals_run=maxi(0,int(data.get("goals_run",0)))
+	goals_receipts.clear()
+	if data.get("goals_receipts",[]) is Array:
+		for receipt in data.get("goals_receipts",[]):goals_receipts.append(str(receipt))
+	refresh_daily()
 	checkpoint = {}
 	var candidate: Variant = data.get("checkpoint", {})
 	if candidate is Dictionary and candidate.has("stage") and (int(candidate.stage) in range(12) if candidate.get("expedition", false) else can_play(int(candidate.stage))):
@@ -437,7 +473,7 @@ func load_from(path: String = SAVE_PATH) -> bool:
 			parser.parse(FileAccess.get_file_as_string(candidate)) == OK
 			and parser.data is Dictionary
 		):
-			if int(parser.data.get("version", 0)) in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]:
+			if int(parser.data.get("version", 0)) in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]:
 				load_data(parser.data)
 				return true
 	return false
@@ -541,22 +577,8 @@ func claim_idle(now: int) -> Dictionary:
 
 
 func achievement_ready(id: String) -> bool:
-	match id:
-		"first":
-			return not cleared.is_empty()
-		"friends":
-			return unlocked.size() >= 3
-		"team":
-			return party.size() == 3
-		"voices":
-			return unlocked.size() == TaleCatalog.HEROES.size()
-		"ending":
-			return cleared.size() == TaleCatalog.CHAPTER_COUNT
-		"training":
-			for level in hero_levels.values():
-				if int(level) >= 5:
-					return true
-	return false
+	var progress:=achievement_progress(id)
+	return progress.x>=progress.y
 
 
 func claim_achievement(id: String) -> bool:
@@ -691,6 +713,7 @@ func finish_expedition(data: Dictionary, won: bool) -> Dictionary:
 		best_endless = maxi(best_endless, depth)
 		endless_runs += 1
 	best_depth = maxi(best_depth, mini(floori(depth / 6.0), 12))
+	if infinite:goals.endless=maxi(int(goals.get("endless",0)),depth-int(data.get("continuation_from",0)))
 	var new_depth := maxi(0, depth - (int(data.get("continuation_from", 0)) if infinite else 0))
 	# Markets (phase X-5) do not pay combat memories. Subtract already paid
 	# progress when a completed story continues into endless mode.

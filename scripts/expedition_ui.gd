@@ -266,7 +266,10 @@ func finish_encounter_now() -> void:
 	if state != "battle_outro": return
 	state = "resolving"
 	campaign.total_kills += run.tactics.enemies.size()
+	var secret_id:String=run.active_secret
+	var was_boss:bool=secret_id.is_empty() and Content.is_boss(run.stage,run.phase)
 	var finished: bool = run.clear_encounter()
+	campaign.record_goal_combat(run.run_id,"secret:"+secret_id if not secret_id.is_empty() else "room:"+str(run.rooms_cleared),run.tactics.enemies.size(),was_boss,run.actors.size())
 	campaign.best_score = maxi(campaign.best_score, run.score)
 	if finished:
 		var result := campaign.finish_expedition(run.to_checkpoint(), true)
@@ -870,6 +873,7 @@ func show_profile() -> void:
 	header(campaign.player_name, "Sua coleção e suas memórias atravessam as runs.")
 	face_portrait(page, campaign.avatar, Rect2(200, 198, 140, 142))
 	label(page, "RECORDE · %d pontos\n%d runs iniciadas\n%d vitórias completas\n%d tentativas encerradas\nMaior estágio alcançado: %02d\nInfinito: %d páginas\n%d personagens revelados" % [campaign.best_score, campaign.run_counter, campaign.expedition_wins, campaign.total_defeats, campaign.best_depth, campaign.best_endless, campaign.unlocked.size()], Rect2(54, 382, 432, 245), 23, GOLD)
+	button(page, "Conquistas e missões diárias",Rect2(24,636,492,52),show_goals,true)
 	button(page, "Nome e avatar", Rect2(24, 698, 492, 56), edit_profile)
 	button(page, "Configurações", Rect2(24, 776, 492, 56), show_settings)
 	navigation("profile")
@@ -888,7 +892,7 @@ func show_settings() -> void:
 	button(inner, "Movimento reduzido: " + ("ON" if campaign.reduced_motion else "OFF"), Rect2(0, 413, 476, 52), toggle_motion)
 	button(inner, "Qualidade: " + ("Alta" if campaign.high_quality else "Leve"), Rect2(0, 481, 476, 52), set_quality.bind(not campaign.high_quality))
 	button(inner, "%d FPS" % campaign.fps_limit, Rect2(0, 549, 476, 52), set_fps.bind(30 if campaign.fps_limit == 60 else 60))
-	button(inner, "Velocidade padrão: %d×" % int(campaign.speed), Rect2(0, 617, 476, 52), change_default_speed)
+	button(inner, "Velocidade padrão: %d×" % TaleCampaign.speed_label(campaign.speed), Rect2(0, 617, 476, 52), change_default_speed)
 	button(inner, "ULT automática: " + ("ON" if campaign.auto_ult else "OFF"), Rect2(0, 685, 476, 52), settings_auto_ult)
 	button(inner, "Tela cheia / Janela · F11", Rect2(0, 753, 476, 52), toggle_fullscreen).disabled = OS.has_feature("mobile")
 	button(inner, "Como jogar", Rect2(0, 835, 476, 52), show_help)
@@ -1183,3 +1187,41 @@ func show_map_choices() -> void:
 		var note:String="Mapa %d de 8 · %s"%[run.stage+1,run.Worlds.LABELS[run.journey.season]]
 		if not str(data.meeting).is_empty():note+="\nEncontro: "+str(TaleCatalog.HEROES[data.meeting].name)
 		label(card,note,Rect2(148,60,314,48),13,MUTED)
+
+func show_goals(tab:="daily") -> void:
+	state="goals"
+	clear_page()
+	campaign.refresh_daily()
+	header("Objetivos do viajante","Conquistas permanentes e três missões por dia.")
+	button(page,"Missões diárias",Rect2(24,181,242,48),show_goals.bind("daily"),tab=="daily")
+	button(page,"Conquistas",Rect2(274,181,242,48),show_goals.bind("achievements"),tab!="daily")
+	var daily_tab:=tab=="daily"
+	var tasks:Array=TaleCampaign.DAILIES if daily_tab else TaleCampaign.ACHIEVEMENTS
+	label(page,"Dia %s · renova à meia-noite do dispositivo"%campaign.daily.day if daily_tab else "Recompensas únicas · progresso salvo entre runs",Rect2(24,240,492,40),12,MUTED)
+	var inner:=scroll_area(290,564,tasks.size()*162)
+	for index in tasks.size():
+		var task:Dictionary=tasks[index]
+		var card:=panel(inner,Rect2(0,index*162,476,152))
+		var done:bool=campaign.daily.claimed.has(task.id) if daily_tab else campaign.claimed.has(task.id)
+		var progress:Vector2i=Vector2i(int(campaign.daily.get(task.id,0)),task.goal) if daily_tab else campaign.achievement_progress(task.id)
+		var ready:=progress.x>=progress.y
+		icon(card,task.icon,Rect2(12,14,36,36),GOLD if ready else MUTED)
+		label(card,task.title,Rect2(60,10,398,28),16,GOLD)
+		label(card,task.detail,Rect2(60,40,398,34),12)
+		var meter:=bar(card,Rect2(16,86,266,8),GOLD)
+		meter.max_value=progress.y
+		meter.value=mini(progress.x,progress.y)
+		label(card,"%d / %d · +%d Memórias"%[mini(progress.x,progress.y),progress.y,task.reward],Rect2(16,107,278,26),12,MUTED)
+		var collect:=button(card,"Resgatado" if done else "Resgatar",Rect2(302,94,158,44),claim_goal.bind(task.id,daily_tab),ready and not done)
+		collect.disabled=done or not ready
+		collect.name="Claim_"+task.id
+	navigation("profile")
+
+func claim_goal(id:String,daily_task:bool) -> void:
+	var before:=campaign.to_dict().duplicate(true)
+	var collected:bool=campaign.claim_daily(id) if daily_task else campaign.claim_achievement(id)
+	if collected:
+		if not campaign.save_to(save_path):
+			campaign.load_data(before)
+		else:audio.play_effect("achievement")
+	show_goals("daily" if daily_task else "achievements")
