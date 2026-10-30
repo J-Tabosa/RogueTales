@@ -58,6 +58,19 @@ func icon(parent:Node,glyph:String,at:Vector2,extent:=28.0,tint:=GOLD) -> void:
 	image.size=Vector2.ONE*extent
 	image.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	parent.add_child(image)
+func _input(event:InputEvent) -> void:
+	if not pinned or not is_instance_valid(detail):return
+	var point:=Vector2.ZERO
+	if event is InputEventMouseButton and event.pressed and event.button_index==MOUSE_BUTTON_LEFT:
+		point=event.position
+	elif event is InputEventScreenTouch and event.pressed:
+		point=event.position
+	else:return
+	if detail.get_global_rect().has_point(point):return
+	# Let the same information button toggle, or another information button switch.
+	for button in find_children("SkillInfo*","Button",true,false):
+		if button.get_global_rect().has_point(point):return
+	hide_detail()
 func hide_detail() -> void:
 	if is_instance_valid(detail):
 		# Detach immediately; a queued, still-interactive popup can swallow the next tap.
@@ -197,7 +210,7 @@ func rebuild() -> void:
 	text(skill_column,"HABILIDADES",Rect2(),11,GOLD)
 	var grid:=GridContainer.new()
 	grid.name="AbilityGrid"
-	grid.columns=2 if wide else 1
+	grid.columns=1
 	grid.add_theme_constant_override("h_separation",8)
 	grid.add_theme_constant_override("v_separation",8)
 	skill_column.add_child(grid)
@@ -270,9 +283,13 @@ func skill_card(grid:GridContainer,kind:int,title:String,wide:bool) -> void:
 	lines.custom_minimum_size.x=1
 	lines.add_theme_constant_override("separation",5)
 	row.add_child(lines)
-	var name_label:=text(lines,title,Rect2(),16 if wide else 14)
+	var name_label:=text(lines,title+" · "+["Básico","Passiva","Especial" if actor.id=="aladin" else "Habilidade"][kind],Rect2(),16 if wide else 14)
 	name_label.custom_minimum_size.x=1
 	name_label.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+	var short_text:=text(lines,Preview.SHORT[actor.id][kind],Rect2(),13 if wide else 12,Color("b8c6b5"))
+	short_text.name="AbilityDescription"
+	short_text.custom_minimum_size.x=1
+	short_text.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 	var summary:=RichTextLabel.new()
 	summary.name="AbilitySummary"
 	summary.bbcode_enabled=true
@@ -294,9 +311,15 @@ func skill_card(grid:GridContainer,kind:int,title:String,wide:bool) -> void:
 	var info_style:=style()
 	info_style.bg_color=Color("102c31")
 	info_style.border_color=Color("64c7ff")
-	info_style.set_corner_radius_all(22)
+	info_style.set_corner_radius_all(0)
+	info_style.set_content_margin_all(0)
 	for state in ["normal","hover","pressed","focus"]:info.add_theme_stylebox_override(state,info_style)
 	info.add_theme_color_override("font_color",Color("64c7ff"))
 	info.add_theme_font_size_override("font_size",20)
 	info.pressed.connect(func():show_detail("skill%d"%kind,title,data.detail,true))
-	row.add_child(info)
+	var info_margin:=MarginContainer.new()
+	info_margin.name="InfoMargin"
+	info_margin.size_flags_vertical=Control.SIZE_SHRINK_CENTER
+	for edge in ["left","right","top","bottom"]:info_margin.add_theme_constant_override("margin_"+edge,5)
+	row.add_child(info_margin)
+	info_margin.add_child(info)

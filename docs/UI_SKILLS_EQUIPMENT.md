@@ -34,3 +34,11 @@ Godot 4.7.2. `skills_equipment_102.gd` aprovado sem renderização e com OpenGL 
 Também aprovados: `equipment_ui.gd`, `combat_readability.gd` (ajustado ao botão de informação) e `arena_equipment_layout.gd`.
 
 São alterações no projeto; nenhum novo APK foi exportado nesta atualização. Sem teste em aparelho físico.
+
+## Ajuste da ficha e tipografia
+
+- Habilidades em coluna única em PC e celular, com uma frase de resumo própria por personagem e valores coloridos preservados.
+- Nome acompanhado de Básico, Passiva ou Habilidade; os desejos manuais de Aladin são Especial.
+- Informação em botão quadrado de 44 px com margem de 5 px nos quatro lados. Clicar/tocar fora fecha os detalhes; dentro mantém aberto; outro i troca o conteúdo.
+- Goldman Regular como fonte global e Goldman Bold para destaques de combate. Fontes distribuídas com licença SIL OFL em assets/fonts/goldman/OFL.txt.
+- Validado com Godot 4.7.2 em 1280×800, 540×960 e 360×640, incluindo renderização OpenGL e eventos de mouse/toque.

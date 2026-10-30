@@ -92,12 +92,29 @@ func checks() -> void:
 		var portrait:Sprite2D=nodes.filter(func(n):return n is Sprite2D and n.name=="HeroArt")[0]
 		assert(portrait.scale.x<0 and portrait.get_meta("visual_height")>180,"Large left-facing portrait on PC and mobile")
 		assert(nodes.filter(func(n):return n.name=="AbilityPicture").size()==3)
+		assert(sheet.find_child("AbilityGrid",true,false).columns==1)
+		assert(nodes.filter(func(n):return n.name=="AbilityDescription" and not n.text.is_empty()).size()==3)
 		var info:Button=nodes.filter(func(n):return n.name=="SkillInfo0")[0]
 		info.mouse_entered.emit()
 		assert(sheet.detail==null)
 		await click(info)
 		assert(is_instance_valid(sheet.detail) and sheet.pinned and sheet.detail_key=="skill0")
-		sheet.hide_detail()
+		var margin:MarginContainer=info.get_parent()
+		assert(margin.get_theme_constant("margin_left")==5)
+		assert(info.size.x==info.size.y)
+		assert(info.get_theme_stylebox("normal").corner_radius_top_left==0)
+		assert(info.get_theme_font("font").resource_path.ends_with("Goldman-Regular.ttf"))
+		var inside:=InputEventMouseButton.new()
+		inside.button_index=MOUSE_BUTTON_LEFT
+		inside.pressed=true
+		inside.position=sheet.detail.get_global_rect().get_center()
+		sheet._input(inside)
+		assert(is_instance_valid(sheet.detail))
+		var outside:=InputEventScreenTouch.new()
+		outside.pressed=true
+		outside.position=Vector2(2,2)
+		sheet._input(outside)
+		assert(sheet.detail==null)
 		await capture("sheet-"+str(extent.x))
 		game.close_character_information()
 		game.run.interlude="route"

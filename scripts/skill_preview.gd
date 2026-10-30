@@ -1,6 +1,20 @@
 extends RefCounted
 const Rules=preload("res://scripts/combat_rules.gd")
 const Details=preload("res://scripts/combat_details.gd")
+const SHORT={
+	"scarlet":["Lança uma bomba em um inimigo.","Acertos acumulam pólvora e aumentam o dano no alvo.","Detona a pólvora de todos os inimigos."],
+	"alice":["Ataca um alvo e avança para o próximo naipe.","A cada quatro básicos, ativa o Cortejo das Cartas.","Atravessa a linha do alvo com uma sequência de cartas."],
+	"snow_white":["Golpeia um inimigo com a picareta.","Causa dano adicional contra escudos.","Desfere um golpe poderoso em um alvo."],
+	"ariel":["A corrente pode saltar para até dois outros inimigos.","Cada acerto do básico cura o aliado mais ferido.","Atinge todos os inimigos e pode aplicar Bolha."],
+	"rapunzel":["Protege a si e um aliado; seu escudo permite retaliar.","Seus escudos reduzem o dano recebido.","Protege toda a equipe com escudo e Defesa Mágica."],
+	"mulan":["Cada terceiro básico causa dano aumentado.","Ao esquivar, pode responder com um contra-ataque.","Atinge todos os inimigos da coluna escolhida."],
+	"maria":["Atinge um alvo e aplica uma dose de veneno.","O veneno acumula até três doses e causa dano por turno.","Tenta amaldiçoar todos os inimigos e reduzir seus atributos."],
+	"joao":["Perfura um inimigo com sua espada.","Marca a presa e fortalece os básicos seguintes contra ela.","Executa seis estocadas, mais fortes contra a presa marcada."],
+	"matches":["Lança uma faísca e incendeia um alvo.","Acertos em inimigos incendiados fortalecem e renovam o fogo.","Atinge todos os inimigos e aplica ou fortalece a queimadura."],
+	"aladin":["Dispara uma rajada mágica em um alvo.","Cada desejo disponível aumenta seu Dano Mágico.","Escolha manualmente um desejo; cada opção vale uma vez por run."],
+	"peter":["Golpeia um alvo; suas sombras atacam junto.","Esquivas criam sombras; impactos diretos removem uma.","Completa três sombras e fortalece seus golpes temporariamente."],
+	"puss":["Desfere um corte em um inimigo.","Quanto menos vida possui, maior seu Dano Físico.","Atinge toda a coluna com o dano aumentado pela sua fúria."]
+}
 const COLORS=["ff6969","64c7ff","ead9ff"]
 static func coefficient_text(value:float) -> String:
 	var rendered:="%.4f"%value

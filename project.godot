@@ -23,6 +23,8 @@ window/size/min_height=640
 
 [gui]
 
+theme/custom_font="res://assets/fonts/goldman/Goldman-Regular.ttf"
+
 theme/default_font_multichannel_signed_distance_field=true
 
 [rendering]

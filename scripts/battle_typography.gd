@@ -1,6 +1,6 @@
 extends RefCounted
-const BODY = preload("res://assets/fonts/Nunito-Semibold.ttf")
-const STRONG = preload("res://assets/fonts/Nunito-Extrabold.ttf")
+const BODY = preload("res://assets/fonts/goldman/Goldman-Regular.ttf")
+const STRONG = preload("res://assets/fonts/goldman/Goldman-Bold.ttf")
 static func font(bold := false) -> Font:
 	return STRONG if bold else BODY
 static func apply(node: Control, bold := false) -> void:
