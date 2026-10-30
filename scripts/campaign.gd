@@ -63,19 +63,7 @@ var endless_runs := 0
 var discovered_synergies: Array[String] = []
 var discovered_events: Array[String] = []
 const IDLE_CAP := 8 * 3600
-const ACHIEVEMENTS := [
-	{"id":"first","title":"O primeiro fio","detail":"Vença um chefe de mapa.","reward":60,"icon":"map"},
-	{"id":"friends","title":"Companhia de conto","detail":"Desbloqueie três personagens.","reward":90,"icon":"heroes"},
-	{"id":"team","title":"Uma formação completa","detail":"Tenha três viajantes juntos numa run.","reward":50,"icon":"shield"},
-	{"id":"training","title":"Além da primeira página","detail":"Alcance o nível 5 do perfil.","reward":100,"icon":"up"},
-	{"id":"voices","title":"Vozes de todos os contos","detail":"Desbloqueie todos os personagens.","reward":200,"icon":"book"},
-	{"id":"ending","title":"Autores do amanhã","detail":"Conclua uma run do Conto.","reward":350,"icon":"crown"},
-	{"id":"battles10","title":"Dez páginas de coragem","detail":"Vença dez combates.","reward":75,"icon":"sword"},
-	{"id":"battles100","title":"Veterano dos contos","detail":"Vença cem combates.","reward":200,"icon":"sword"},
-	{"id":"bosses8","title":"Desafiador de guardiões","detail":"Vença oito chefes de mapa.","reward":150,"icon":"crown"},
-	{"id":"runs3","title":"Trilogia de vitórias","detail":"Conclua três runs do Conto.","reward":250,"icon":"book"},
-	{"id":"endless12","title":"Uma história sem fim","detail":"Avance doze fases além do Conto no infinito.","reward":150,"icon":"clock"}
-]
+const ACHIEVEMENTS = preload("res://scripts/achievement_catalog.gd").DATA
 const DAILIES := [
 	{"id":"battles","title":"Mais cinco páginas","detail":"Vença 5 combates hoje.","goal":5,"reward":50,"icon":"sword"},
 	{"id":"enemies","title":"Limpando a trilha","detail":"Derrote 15 inimigos hoje.","goal":15,"reward":50,"icon":"target"},
@@ -109,19 +97,57 @@ func claim_daily(id:String,today:=Time.get_date_string_from_system()) -> bool:
 			earn_gold(task.reward)
 			return true
 	return false
+func record_achievement_state(data:Dictionary,won:=false) -> void:
+	var g:=goals
+	var maps:Dictionary=g.get("maps",{})
+	var journey:Dictionary=data.get("journey",{})
+	var path:Array=journey.get("path",[])
+	for index in mini(path.size(),int(data.get("stage",0))+1):maps[str(path[index])]=true
+	g.maps=maps
+	var secrets:Dictionary=g.get("secrets",{})
+	for id in data.get("secret_defeated",[]):secrets[str(id)]=true
+	g.secrets=secrets
+	g.capacity=maxi(int(g.get("capacity",0)),int(data.get("party_capacity",0)))
+	if bool(data.get("endless",false)):
+		var depth:=maxi(0,int(data.get("rooms_cleared",0))-int(data.get("continuation_from",0)))
+		g.infinite_combat=maxi(int(g.get("infinite_combat",0)),memory_combats(depth))
+	var ids:Array=data.get("hero_ids",[])
+	var royal:=ids.size()==ExpeditionContent.MAX_PARTY
+	var equipment:Dictionary=data.get("equipment_state",{})
+	for id in ids:
+		var items:Array=equipment.get(id,{}).get("items",[])
+		if items.size()!=2:royal=false
+		for item in items:
+			if int(preload("res://scripts/equipment.gd").data(item).get("rarity",-1)) not in [4,5]:royal=false
+	if royal:g.royal_gear=1
+	if won and not data.get("endless",false):
+		g["hero_win_"+str(data.get("leader",""))]=1
+		g.stages8=8
+		if ids.size()==1 and data.get("drafted",[]).is_empty() and data.get("inactive_companions",[]).is_empty():g.solo=1
 func achievement_progress(id:String) -> Vector2i:
+	if id.begins_with("hero_win_"):
+		var hero:=id.trim_prefix("hero_win_")
+		return Vector2i(maxi(int(goals.get(id,0)),int(hero_milestones.get(hero,{}).get("win",false))),1)
 	match id:
-		"first":return Vector2i(maxi(cleared.size(),int(goals.get("bosses",0))),1)
-		"friends":return Vector2i(unlocked.size(),3)
-		"team":return Vector2i(maxi(party.size(),int(goals.get("team",0))),3)
-		"training":return Vector2i(player_level,5)
-		"voices":return Vector2i(unlocked.size(),TaleCatalog.HEROES.size())
-		"ending":return Vector2i(expedition_wins,1)
-		"battles10":return Vector2i(int(goals.get("battles",0)),10)
-		"battles100":return Vector2i(int(goals.get("battles",0)),100)
-		"bosses8":return Vector2i(int(goals.get("bosses",0)),8)
-		"runs3":return Vector2i(expedition_wins,3)
-		"endless12":return Vector2i(int(goals.get("endless",0)),12)
+		"blessings4":
+			var best:=0
+			for hero in TaleCatalog.HEROES:
+				var count:=0
+				for i in 4:
+					if preload("res://scripts/hero_blessings.gd").unlocked(self,preload("res://scripts/hero_blessings.gd").id_for(hero,i)):count+=1
+				best=maxi(best,count)
+			return Vector2i(best,4)
+		"stages8":return Vector2i(maxi(int(goals.get("stages8",0)),8 if expedition_wins>0 else mini(best_depth,8)),8)
+		"maps_all":return Vector2i(goals.get("maps",{}).size(),preload("res://scripts/world_routes.gd").NODES.size())
+		"secrets_all":return Vector2i(goals.get("secrets",{}).size(),preload("res://scripts/secret_encounters.gd").DATA.size())
+		"runs100":return Vector2i(run_counter,100)
+		"infinite25":return Vector2i(int(goals.get("infinite_combat",0)),25)
+		"infinite50":return Vector2i(int(goals.get("infinite_combat",0)),50)
+		"infinite100":return Vector2i(int(goals.get("infinite_combat",0)),100)
+		"tales_all":return Vector2i(unlocked.size(),TaleCatalog.HEROES.size())
+		"capacity":return Vector2i(int(goals.get("capacity",0)),ExpeditionContent.MAX_PARTY)
+		"memories100k":return Vector2i(maxi(gold,int(goals.get("memory_peak",0))),100000)
+		"solo","royal_gear":return Vector2i(int(goals.get(id,0)),1)
 	return Vector2i(0,1)
 
 
@@ -351,6 +377,7 @@ func load_data(data: Dictionary) -> void:
 	if data.get("goals_receipts",[]) is Array:
 		for receipt in data.get("goals_receipts",[]):goals_receipts.append(str(receipt))
 	refresh_daily()
+	goals.memory_peak=maxi(gold,int(goals.get("memory_peak",0)))
 	checkpoint = {}
 	var candidate: Variant = data.get("checkpoint", {})
 	if candidate is Dictionary and candidate.has("stage") and (int(candidate.stage) in range(12) if candidate.get("expedition", false) else can_play(int(candidate.stage))):
@@ -484,6 +511,7 @@ func earn_gold(amount: int) -> void:
 		return
 	gold = mini(9999999, gold + amount)
 	total_gold += amount
+	goals.memory_peak=maxi(int(goals.get("memory_peak",0)),gold)
 
 
 func player_next_xp() -> int:
@@ -704,6 +732,7 @@ func finish_expedition(data: Dictionary, won: bool) -> Dictionary:
 	if not data.get("expedition", false) or number <= last_resolved_run or number > run_counter:
 		return {}
 	preload("res://scripts/hero_blessings.gd").record(self,data,won and not data.get("endless",false))
+	record_achievement_state(data,won)
 	var newly_unlocked := resolve_run(data, won)
 	best_score = maxi(best_score, int(data.get("score", 0)))
 	var infinite := bool(data.get("endless", false))

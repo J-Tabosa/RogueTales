@@ -9,3 +9,9 @@ As três diárias são vencer 5 combates (50 Memórias), derrotar 15 inimigos (5
 Eventos são identificados por run e encontro, persistidos com o checkpoint. Resgates não se repetem; a tela reverte o resgate caso falhe ao salvar. Progresso diário não é reconstruído de combates antigos. Ganhos normais da run permanecem separados dos objetivos.
 
 Validação: defaults/migração/ciclo de velocidade, progresso por combate na UI real, recibos duplicados, resgates repetidos, salvamento/carregamento em disco, renovação diária, relógio regressivo e telas PC/mobile; regressão das recompensas de Memórias, jornada e infinito.
+
+## Lista revisada
+
+A lista anterior foi substituída por 25 conquistas, exclusivamente os objetivos solicitados. Doze usam os retratos oficiais dos protagonistas; treze usam regiões de um atlas ilustrado novo. Duas são ocultas, com arte de mistério até completar. As diárias ficam no Diário e a lista de histórias foi removida dessa tela.
+
+Quatro habilidades significa as quatro bênçãos desbloqueáveis de um conto. Oito fases significa os oito estágios do Conto. Equipe de lendas exige cinco integrantes, dois itens cada, todos de raridade 4 ou 5. Solo exige vitória sem recrutamentos durante toda a run. Infinito conta combates vencidos, exclui mercadores e o Conto já concluído. Memórias exige saldo máximo registrado de 100.000, não soma bruta dos ganhos. Novos resgates usam novos IDs; Memórias já recebidas permanecem.

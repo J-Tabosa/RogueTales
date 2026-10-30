@@ -167,10 +167,12 @@ func begin_expedition() -> void:
 
 func persist_run() -> void:
 	campaign.checkpoint = run.to_checkpoint()
+	campaign.record_achievement_state(campaign.checkpoint)
 	if run.expedition:Blessings.record(campaign,campaign.checkpoint)
 	persist()
 
 func enter_encounter() -> void:
+	if is_expedition():campaign.record_achievement_state(run.to_checkpoint())
 	if is_expedition() and run.needs_map():
 		run.roll_routes()
 		run.interlude="route"
@@ -854,18 +856,7 @@ func show_tactical_details(id: String) -> void:
 	show_hero_details(id)
 
 func show_journal() -> void:
-	state = "journal"
-	clear_page()
-	header("Memórias das expedições", "Descobertas permanecem; cada tentativa começa uma nova build.")
-	var inner := scroll_area(190, 670, 220 + campaign.journal.size() * 107)
-	label(inner, "CONTO · %02d / 12  |  INFINITO · %d\nVITÓRIAS COMPLETAS · %d\nVIAJANTES · %d / 12\nSINERGIAS DESCOBERTAS · %d / 3\nEVENTOS DESCOBERTOS · %d / 18" % [campaign.best_depth, campaign.best_endless, campaign.expedition_wins, campaign.unlocked.size(), campaign.discovered_synergies.size(), campaign.discovered_events.size()], Rect2(0, 0, 476, 170), 18, GOLD)
-	for index in campaign.journal.size():
-		var entry: Dictionary = campaign.journal[index]
-		var y := 198 + index * 107
-		var card := button(inner, "", Rect2(0, y, 476, 94), show_story.bind(int(entry.stage), "outro", 0, true))
-		label(card, "PÁGINA %02d" % (int(entry.stage) + 1), Rect2(14, 9, 448, 21), 11, GOLD)
-		label(card, entry.title, Rect2(14, 40, 448, 43), 21)
-	navigation("journal")
+	show_goals("daily")
 
 func show_profile() -> void:
 	state = "profile"
@@ -873,7 +864,7 @@ func show_profile() -> void:
 	header(campaign.player_name, "Sua coleção e suas memórias atravessam as runs.")
 	face_portrait(page, campaign.avatar, Rect2(200, 198, 140, 142))
 	label(page, "RECORDE · %d pontos\n%d runs iniciadas\n%d vitórias completas\n%d tentativas encerradas\nMaior estágio alcançado: %02d\nInfinito: %d páginas\n%d personagens revelados" % [campaign.best_score, campaign.run_counter, campaign.expedition_wins, campaign.total_defeats, campaign.best_depth, campaign.best_endless, campaign.unlocked.size()], Rect2(54, 382, 432, 245), 23, GOLD)
-	button(page, "Conquistas e missões diárias",Rect2(24,636,492,52),show_goals,true)
+	button(page, "Conquistas",Rect2(24,636,492,52),show_goals.bind("achievements"),true)
 	button(page, "Nome e avatar", Rect2(24, 698, 492, 56), edit_profile)
 	button(page, "Configurações", Rect2(24, 776, 492, 56), show_settings)
 	navigation("profile")
@@ -1178,6 +1169,7 @@ func show_map_choices() -> void:
 		var card:=button(overlay,"",Rect2(32,390+index*124,476,114),select_route.bind(key),true)
 		card.set_meta("map_choice",id)
 		var picture:=TextureRect.new()
+			picture.name="AchievementImage"
 		picture.texture=run.Worlds.texture(id)
 		picture.expand_mode=TextureRect.EXPAND_IGNORE_SIZE
 		picture.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_COVERED
@@ -1205,13 +1197,24 @@ func show_goals(tab:="daily") -> void:
 		var done:bool=campaign.daily.claimed.has(task.id) if daily_tab else campaign.claimed.has(task.id)
 		var progress:Vector2i=Vector2i(int(campaign.daily.get(task.id,0)),task.goal) if daily_tab else campaign.achievement_progress(task.id)
 		var ready:=progress.x>=progress.y
-		icon(card,task.icon,Rect2(12,14,36,36),GOLD if ready else MUTED)
-		label(card,task.title,Rect2(60,10,398,28),16,GOLD)
-		label(card,task.detail,Rect2(60,40,398,34),12)
+		var concealed:bool=not daily_tab and bool(task.get("hidden",false)) and not ready and not done
+		if daily_tab:icon(card,task.icon,Rect2(12,14,36,36),GOLD if ready else MUTED)
+		else:
+			var picture:=TextureRect.new()
+			picture.name="AchievementImage"
+			picture.expand_mode=TextureRect.EXPAND_IGNORE_SIZE
+			picture.texture=preload("res://scripts/achievement_art.gd").texture(task,concealed)
+			picture.position=Vector2(8,12)
+			picture.expand_mode=TextureRect.EXPAND_IGNORE_SIZE
+			picture.size=Vector2(44,44)
+			picture.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			card.add_child(picture)
+		label(card,"Conquista oculta" if concealed else task.title,Rect2(60,10,398,28),16,GOLD)
+		label(card,"Continue explorando para descobrir este feito." if concealed else task.detail,Rect2(60,40,398,34),12)
 		var meter:=bar(card,Rect2(16,86,266,8),GOLD)
 		meter.max_value=progress.y
-		meter.value=mini(progress.x,progress.y)
-		label(card,"%d / %d · +%d Memórias"%[mini(progress.x,progress.y),progress.y,task.reward],Rect2(16,107,278,26),12,MUTED)
+		meter.value=0 if concealed else mini(progress.x,progress.y)
+		label(card,"???" if concealed else "%d / %d · +%d Memórias"%[mini(progress.x,progress.y),progress.y,task.reward],Rect2(16,107,278,26),12,MUTED)
 		var collect:=button(card,"Resgatado" if done else "Resgatar",Rect2(302,94,158,44),claim_goal.bind(task.id,daily_tab),ready and not done)
 		collect.disabled=done or not ready
 		collect.name="Claim_"+task.id

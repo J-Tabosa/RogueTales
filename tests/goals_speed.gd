@@ -23,11 +23,12 @@ func checks() -> void:
 		assert(c.claim_daily(id,today))
 		assert(not c.claim_daily(id,today))
 	assert(c.gold-before==175)
-	assert(c.achievement_ready("team") and c.achievement_ready("first"))
-	assert(c.claim_achievement("team") and not c.claim_achievement("team"))
+	c.record_achievement_state({"party_capacity":5})
+	assert(c.achievement_ready("capacity"))
+	assert(c.claim_achievement("capacity") and not c.claim_achievement("capacity"))
 	assert(c.save_to("user://goals_speed_progress_test.json"))
 	assert(restored.load_from("user://goals_speed_progress_test.json"))
-	assert(restored.claimed.has("team") and not restored.claim_daily("battles",today))
+	assert(restored.claimed.has("capacity") and not restored.claim_daily("battles",today))
 	restored.refresh_daily("2099-01-01")
 	assert(restored.daily.battles==0 and restored.daily.claimed.is_empty())
 	restored.record_goal_combat(2,"0",3,false,1,"2099-01-01")
@@ -49,7 +50,7 @@ func checks() -> void:
 		for tab in ["daily","achievements"]:
 			game.show_goals(tab)
 			await process_frame
-			assert(game.page.find_child("Claim_"+("battles" if tab=="daily" else "first"),true,false)!=null)
+			assert(game.page.find_child("Claim_"+("battles" if tab=="daily" else "hero_win_scarlet"),true,false)!=null)
 			if DisplayServer.get_name()!="headless":
 				await RenderingServer.frame_post_draw
 				game.get_window().get_texture().get_image().save_png("/tmp/goals-"+tab+"-"+str(extent.x)+".png")
