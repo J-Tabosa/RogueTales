@@ -34,7 +34,7 @@ func checks() -> void:
 	for world in 8: assert(seen[world].size() >= 3, "All six identities appear within a world")
 	assert(run.rooms_cleared == 48 and run.upgrade_count("power") == 39)
 	var result := account.finish_expedition(run.to_checkpoint(), true)
-	assert(result.reward == 222 and account.best_depth == 8)
+	assert(result.reward == 1700 and account.best_depth == 8)
 	var damage: float = run.actors[0].damage
 	assert(run.continue_endless(account))
 	assert(run.continuation_from == 48 and run.actors[0].damage == damage)

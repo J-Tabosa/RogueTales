@@ -107,7 +107,7 @@ func checks() -> void:
 	var result := loaded.finish_expedition(resumed.to_checkpoint(), false)
 	assert(result.endless and result.milestones == 2 and loaded.best_endless == 29)
 	assert(loaded.expedition_wins == 1 and loaded.endless_runs == 1)
-	assert(result.reward == 29 * 4 + 40 and loaded.checkpoint.is_empty())
+	assert(result.reward == 24 * 25 + 4 * 50 + 2 * 100 and loaded.checkpoint.is_empty())
 	assert(loaded.finish_expedition(resumed.to_checkpoint(), false).is_empty())
 	var fresh := IdleRun.new()
 	assert(fresh.start_expedition(loaded, "scarlet", "vigor", true))

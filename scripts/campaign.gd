@@ -3,6 +3,10 @@ extends RefCounted
 ## Persistent progression. Combat checkpoints always begin at an encounter boundary.
 const SAVE_PATH := "user://campaign_v1.json"
 const HERO_PRICE := 5000
+const MEMORIES_PER_COMBAT := 25
+const MEMORIES_PER_BOSS := 50
+const MEMORIES_COMPLETION := 300
+const MEMORIES_ENDLESS_MILESTONE := 100
 var gold := HERO_PRICE
 var unlocked: Array[String] = []
 var party: Array[String] = []
@@ -670,6 +674,9 @@ func resolve_run(data: Dictionary, won: bool) -> Array[String]:
 	return newly_unlocked
 
 
+static func memory_combats(depth:int) -> int:
+	return depth-floori((depth+1)/6.0)
+
 func finish_expedition(data: Dictionary, won: bool) -> Dictionary:
 	var number := int(data.get("run_id", 0))
 	if not data.get("expedition", false) or number <= last_resolved_run or number > run_counter:
@@ -685,7 +692,12 @@ func finish_expedition(data: Dictionary, won: bool) -> Dictionary:
 		endless_runs += 1
 	best_depth = maxi(best_depth, mini(floori(depth / 6.0), 12))
 	var new_depth := maxi(0, depth - (int(data.get("continuation_from", 0)) if infinite else 0))
-	var fragments := mini(9999999, new_depth * 4 + (30 if won and not infinite else 0) + milestones * 20)
+	# Markets (phase X-5) do not pay combat memories. Subtract already paid
+	# progress when a completed story continues into endless mode.
+	var paid_depth:=clampi(int(data.get("continuation_from",0)),0,depth) if infinite else 0
+	var combats:=memory_combats(depth)-memory_combats(paid_depth)
+	var bosses:=floori(depth/6.0)-floori(paid_depth/6.0)
+	var fragments:=mini(9999999,combats*MEMORIES_PER_COMBAT+bosses*MEMORIES_PER_BOSS+(MEMORIES_COMPLETION if won and not infinite else 0)+milestones*MEMORIES_ENDLESS_MILESTONE)
 	for key in data.get("synergies_seen", []):
 		if preload("res://scripts/team_synergies.gd").PAIRS.has(key) and not discovered_synergies.has(key): discovered_synergies.append(key)
 	for key in data.get("events_discovered", []):
