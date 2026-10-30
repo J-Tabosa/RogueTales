@@ -4,7 +4,11 @@ static func capacity(data:Dictionary) -> float:
 	return float(data.max_hp)+maxf(0,float(data.get("shield",0)))
 static func tint(data:Dictionary) -> Color:
 	var ratio:=clampf(float(data.hp)/maxf(1,float(data.max_hp)),0,1)
-	return Color("ff6969") if ratio<=.25 else Color("f2cf6b") if ratio<=.5 else Color("a2e2b2")
+	if ratio>.8:return Color("67cf85")
+	if ratio>.6:return Color("c5e85a")
+	if ratio>.4:return Color("f2d36b")
+	if ratio>.2:return Color("f5a052")
+	return Color("64b5ff")
 static func update(bar:ProgressBar,data:Dictionary) -> void:
 	var color:=tint(data)
 	var fill:=bar.get_theme_stylebox("fill") as StyleBoxFlat
