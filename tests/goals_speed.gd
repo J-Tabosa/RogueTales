@@ -54,6 +54,16 @@ func checks() -> void:
 			if DisplayServer.get_name()!="headless":
 				await RenderingServer.frame_post_draw
 				game.get_window().get_texture().get_image().save_png("/tmp/goals-"+tab+"-"+str(extent.x)+".png")
+	for hero in ["scarlet","snow_white","rapunzel","aladin"]:
+		var texture=preload("res://scripts/achievement_art.gd").texture({"hero":hero})
+		assert(texture.resource_path=="res://assets/ui/achievement_heroes/"+hero+".png")
+		game.campaign.party.assign([hero])
+		game.show_menu()
+		await process_frame
+		assert(game.page.find_child("GoldenArtFrame",true,false)!=null)
+		if DisplayServer.get_name()!="headless":
+			await RenderingServer.frame_post_draw
+			game.get_window().get_texture().get_image().save_png("/tmp/hero-menu-"+hero+".png")
 	game.campaign=preload("res://tests/test_accounts.gd").legacy()
 	game.run=IdleRun.new()
 	assert(game.run.start_expedition(game.campaign,"scarlet","vigor"))
