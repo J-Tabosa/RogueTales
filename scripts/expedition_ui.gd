@@ -62,7 +62,7 @@ func show_menu() -> void:
 		UISkin.picture(art, UISkin.FOREST, Rect2(0, 0, 492, 352), true).modulate = Color(0.8, 0.8, 0.9)
 		gradient(art, Rect2(0, 0, 492, 352), Color("161c30", 0.15), Color("161c30", 0.95))
 		portrait_fitted(art, id, Vector2(246, 319), 283)
-	achievement_art.gold_frame(art,Rect2(70,0,352,352) if achievement_art.HERO_IMAGES.has(id) else Rect2(0,0,492,352))
+	achievement_art.gold_frame(art,achievement_art.fitted_rect(achievement_art.HERO_IMAGES[id],Rect2(0,0,492,352)) if achievement_art.HERO_IMAGES.has(id) else Rect2(0,0,492,352))
 	label(page, "Escolha. Arrisque. Recomece.", Rect2(24, 565, 492, 43), 26)
 	label(page, "Um protagonista. Companheiros raros.\nHabilidades e bônus que mudam a cada tentativa.", Rect2(24, 620, 492, 66), 17, MUTED)
 	var active := not campaign.checkpoint.is_empty()
@@ -98,7 +98,7 @@ func show_map() -> void:
 	if preload("res://scripts/achievement_art.gd").HERO_IMAGES.has(selected_hero):
 		UISkin.picture(hero,preload("res://scripts/achievement_art.gd").HERO_IMAGES[selected_hero],Rect2(14,14,90,90))
 	else:face_portrait(hero, selected_hero, Rect2(14, 14, 90, 90))
-	preload("res://scripts/achievement_art.gd").gold_frame(hero,Rect2(14,14,90,90))
+	preload("res://scripts/achievement_art.gd").gold_frame(hero,preload("res://scripts/achievement_art.gd").fitted_rect(preload("res://scripts/achievement_art.gd").HERO_IMAGES[selected_hero],Rect2(14,14,90,90)) if preload("res://scripts/achievement_art.gd").HERO_IMAGES.has(selected_hero) else Rect2(14,14,90,90))
 	label(hero, "Selecionar Personagem", Rect2(123, 11, 350, 21), 10, GOLD)
 	label(hero, TaleCatalog.HEROES[selected_hero].name, Rect2(123, 38, 350, 35), 22)
 	label(hero, "%s · trocar →" % TaleCatalog.hero_class_name(selected_hero), Rect2(123, 81, 350, 26), 14, MUTED)
@@ -1215,7 +1215,7 @@ func show_goals(tab:="daily") -> void:
 			picture.size=Vector2(44,44)
 			picture.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 			card.add_child(picture)
-			preload("res://scripts/achievement_art.gd").gold_frame(card,Rect2(8,12,44,44))
+			preload("res://scripts/achievement_art.gd").gold_frame(card,preload("res://scripts/achievement_art.gd").fitted_rect(picture.texture,Rect2(8,12,44,44)))
 		label(card,"Conquista oculta" if concealed else task.title,Rect2(60,10,398,28),16,GOLD)
 		label(card,"Continue explorando para descobrir este feito." if concealed else task.detail,Rect2(60,40,398,34),12)
 		var meter:=bar(card,Rect2(16,86,266,8),GOLD)

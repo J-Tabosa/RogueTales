@@ -3,9 +3,20 @@ const HERO_IMAGES={
 	"snow_white":preload("res://assets/ui/achievement_heroes/snow_white.png"),
 	"scarlet":preload("res://assets/ui/achievement_heroes/scarlet.png"),
 	"rapunzel":preload("res://assets/ui/achievement_heroes/rapunzel.png"),
-	"aladin":preload("res://assets/ui/achievement_heroes/aladin.png")
+	"aladin":preload("res://assets/ui/achievement_heroes/aladin.png"),
+	"maria":preload("res://assets/ui/achievement_heroes/maria.png"),
+	"matches":preload("res://assets/ui/achievement_heroes/matches.png"),
+	"mulan":preload("res://assets/ui/achievement_heroes/mulan.png"),
+	"ariel":preload("res://assets/ui/achievement_heroes/ariel.png"),
+	"peter":preload("res://assets/ui/achievement_heroes/peter.png"),
+	"alice":preload("res://assets/ui/achievement_heroes/alice.png"),
+	"joao":preload("res://assets/ui/achievement_heroes/joao.png")
 }
 static var atlas:Texture2D
+static func fitted_rect(texture:Texture2D,box:Rect2) -> Rect2:
+	var extent:=texture.get_size()
+	var fitted:=extent*minf(box.size.x/extent.x,box.size.y/extent.y)
+	return Rect2(box.position+(box.size-fitted)*.5,fitted)
 static func gold_frame(parent:Control,rect:Rect2) -> void:
 	var frame:=Panel.new()
 	frame.name="GoldenArtFrame"
