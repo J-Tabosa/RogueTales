@@ -22,6 +22,8 @@ var biome_id := 0
 var variant_id := 0
 var body_height := 210.0
 var secret_id := ""
+var species_id := ""
+var species_anchor := Vector2.ZERO
 
 
 static func warm(chapter: int) -> PackedScene:
@@ -60,6 +62,17 @@ func advance(dt: float, is_boss: bool, windup: float, interval: float) -> void:
 	hurt_left = maxf(0, hurt_left - dt)
 	dot_cooldown = maxf(0, dot_cooldown - dt)
 	modulate = hurt_color(hurt_left)
+	if not species_id.is_empty():
+		var id:String=("boss_" if is_boss else "")+"idle"
+		if strike_left>0:
+			id=("boss_" if is_boss else "")+"attack"
+			strike_left=maxf(0,strike_left-dt)
+			if strike_left>0:seek(id,animation_duration(id)-strike_left)
+			else:seek(("boss_" if is_boss else "")+"idle",idle_clock)
+		else:seek(id,idle_clock)
+		offset=-species_anchor
+		scale=Vector2.ONE*((boss_height if is_boss else regular_height)/body_height)
+		return
 	var prefix := "boss_" if is_boss else ""
 	var strike := prefix + "attack"
 	var fps := maxf(0.1, sprite_frames.get_animation_speed(strike))
@@ -83,6 +96,10 @@ func advance(dt: float, is_boss: bool, windup: float, interval: float) -> void:
 
 func begin_strike(is_boss: bool) -> void:
 	var id := "boss_attack" if is_boss else "attack"
+	if not species_id.is_empty():
+		strike_left=animation_duration(id)
+		seek(id,0)
+		return
 	var fps := maxf(0.1, sprite_frames.get_animation_speed(id))
 	var anticipation := (
 		(sprite_frames.get_frame_duration(id, 0) + sprite_frames.get_frame_duration(id, 1)) / fps
@@ -104,7 +121,7 @@ func animation_duration(id: String) -> float:
 
 func seek(id: String, seconds: float) -> void:
 	var fps := maxf(0.1, sprite_frames.get_animation_speed(id))
-	var remaining := fposmod(seconds, animation_duration(id)) * fps
+	var remaining := (clampf(seconds,0,maxf(0,animation_duration(id)-.00001)) if not species_id.is_empty() and not sprite_frames.get_animation_loop(id) else fposmod(seconds, animation_duration(id))) * fps
 	animation = id
 	for index in sprite_frames.get_frame_count(id):
 		var duration := sprite_frames.get_frame_duration(id, index)

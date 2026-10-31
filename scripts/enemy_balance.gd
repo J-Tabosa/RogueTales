@@ -3,6 +3,7 @@ extends RefCounted
 const Table = preload("res://scripts/xlsx_table.gd")
 const Biomes = preload("res://scripts/biomes.gd")
 const Secrets = preload("res://scripts/secret_encounters.gd")
+const Phase1 = preload("res://scripts/phase1_enemies.gd")
 const PATH := "res://data/inimigos.xlsx"
 const NUMBERS := ["vida_base", "ataque_base", "def_fisica_base", "def_magica_base", "iniciativa", "qtd_ataques", "esquiva", "intervalo_visual"]
 static var profiles: Dictionary = {}
@@ -28,6 +29,7 @@ static func defaults() -> Dictionary:
 	for hero in Secrets.DATA:
 		var id := "secret_" + str(hero)
 		result[id] = profile(id, "Secreto", ", ".join(Secrets.DATA[hero].biomes.map(func(b): return Biomes.NAMES[b])), Secrets.DATA[hero].name, Secrets.DATA[hero]["class"], 86.0 * 1.5, 13.0 * 1.32, 2.0, 2.9)
+	result.merge(Phase1.profiles())
 	original_profiles = result
 	return original_profiles
 

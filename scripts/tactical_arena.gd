@@ -14,6 +14,7 @@ const UltVFX = preload("res://scripts/ultimate_vfx.gd")
 const UltimateArt = preload("res://scripts/ultimate_art.gd")
 const EnemyArt = preload("res://scripts/enemy_art.gd")
 const Enemy = preload("res://scripts/enemy.gd")
+const Phase1 = preload("res://scripts/phase1_enemies.gd")
 var party_scenes: Array = []
 var simulation
 var heroes: Array[AnimatedSprite2D] = []
@@ -231,6 +232,31 @@ func sync_enemies() -> void:
 			model.sprite_frames=preload("res://scripts/secret_enemy_art.gd").frames(data.secret_id)
 			model.body_height=400
 			model.illustrated=true
+		elif data.has("species_id"):
+			model=AnimatedSprite2D.new()
+			model.set_script(Enemy)
+			model.species_id=data.species_id
+			model.sprite_frames=Phase1.frames(data.species_id)
+			var meta:=Phase1.metadata(data.species_id)
+			model.species_anchor=Vector2(meta.anchor[0],meta.anchor[1])
+			model.body_height=float(meta.reference_height)
+			model.flip_h=false
+			# The selection area inherits the same 1.25× boss transform.
+			var area:=Area2D.new()
+			area.name="Hitbox"
+			area.collision_layer=1
+			area.collision_mask=0
+			var shape:=CollisionShape2D.new()
+			var rectangle:=RectangleShape2D.new()
+			var bounds:=Rect2(model.sprite_frames.get_frame_texture("idle",0).get_image().get_used_rect())
+			rectangle.size=bounds.size
+			shape.shape=rectangle
+			shape.position=bounds.get_center()-model.species_anchor
+			area.add_child(shape)
+			area.input_event.connect(func(_viewport,event,_shape):
+				if event is InputEventMouseButton and event.pressed and event.button_index==MOUSE_BUTTON_LEFT:status_requested.emit(index,true)
+			)
+			model.add_child(area)
 		elif simulation.expedition:
 			model = AnimatedSprite2D.new()
 			model.set_script(Enemy)
@@ -243,6 +269,9 @@ func sync_enemies() -> void:
 		else: model = Enemy.warm(stage).instantiate()
 		model.regular_height = human_height() * (Biomes.height_factor(int(data.biome), int(data.variant))*(0.72 if ExpeditionContent.is_boss(simulation.stage,simulation.phase) and not data.boss else 1.0) if simulation.expedition else 1.0)
 		model.boss_height = human_height() * (1.25 if data.has("secret_id") else 1.40 if simulation.expedition else 1.22)
+		if data.has("species_id"):
+			model.regular_height=human_height()
+			model.boss_height=model.regular_height*1.25
 		add_child(model)
 		var home := home_for(str(data.row), index, true)
 		model.advance(0, data.boss, 0, data.interval)
@@ -366,7 +395,7 @@ func hurt_enemy(index: int, continuous := false) -> void:
 func enemy_strike(index: int, target: int) -> void:
 	if index < 0 or index >= foes.size() or target < 0 or target >= heroes.size():
 		return
-	foes[index].begin_strike(simulation.tactics.enemies[index].boss)
+	if not simulation.tactics.enemies[index].has("species_id"):foes[index].begin_strike(simulation.tactics.enemies[index].boss)
 	effects.append({"from": foe_homes[index] + Vector2(0, -60), "to": tracks[target].home + Vector2(0, -60), "time": 0.18, "duration": 0.18, "color": Color("d49096")})
 
 
@@ -444,15 +473,25 @@ func _process(delta: float) -> void:
 	if enemy_track.time >= 0 and dt > 0:
 		var index: int = enemy_track.index
 		enemy_track.time += dt
-		if not enemy_track.hit and enemy_track.time >= enemy_track.duration * 0.55:
+		if enemy_track.has("impacts"):
+			while int(enemy_track.impact_cursor)<enemy_track.impacts.size() and enemy_track.time>=float(enemy_track.impacts[enemy_track.impact_cursor]):
+				var strike_anim:String="boss_attack" if simulation.tactics.enemies[index].boss else "attack"
+				foes[index].seek(strike_anim,float(enemy_track.impacts[enemy_track.impact_cursor])+.000001)
+				enemy_track["impact_part"]=int(enemy_track.impact_cursor)
+				enemy_track.impact_cursor+=1
+				enemy_track.hit=true
+				enemy_attack_hit.emit(index)
+		elif not enemy_track.hit and enemy_track.time >= enemy_track.duration * 0.55:
 			enemy_track.hit = true
 			enemy_attack_hit.emit(index)
 		if enemy_track.time >= enemy_track.duration:
+			if enemy_track.has("impacts"):foes[index].strike_left=0
 			enemy_track.time = -1.0
 	for index in foes.size():
 		var data: Dictionary = simulation.tactics.enemies[index]
 		foes[index].advance(dt, data.boss, 0, simulation.tactics.interval_for(index))
 		foes[index].position = foe_homes[index] + Vector2(100 * entrance_left, 0)
+		if data.get("flying",false):foes[index].position.y-=human_height()*.55
 		if data.hp <= 0:
 			if data.get("was_alive", true): data.death_left = 0.75
 			data.was_alive = false
@@ -463,12 +502,17 @@ func _process(delta: float) -> void:
 			var anim := "idle" if enemy_track.get("support", false) else ("boss_attack" if data.boss else "attack")
 			foes[index].seek(anim, phase * foes[index].animation_duration(anim))
 			if not enemy_track.get("support", false) and data["class"] in ["vanguard", "assassin"] and enemy_track.target >= 0:
-				var dash := smoothstep(0, 0.52, phase) if phase < 0.55 else (1.0 - smoothstep(0.55, 1, phase))
+				var contact:float=float(enemy_track.get("contact",.55))
+				var recovery:float=float(enemy_track.get("recovery",contact))
+				var dash := smoothstep(0,maxf(.01,contact-.02),phase) if phase<contact else (1.0-smoothstep(recovery,1,phase))
 				var to: Vector2 = tracks[enemy_track.target].home + Vector2(60, 0)
 				foes[index].position = foe_homes[index].lerp(to, dash)
+				if data.get("flying",false):foes[index].position.y-=human_height()*.55
+				if data.has("species_id"):foes[index].flip_h=phase>recovery and not is_equal_approx(phase,1)
 			foes[index].z_index = int(foes[index].position.y)
 		else:
 			foes[index].z_index = int(foe_homes[index].y)
+			if data.has("species_id"):foes[index].flip_h=false
 	for area in enemy_areas: area.left -= dt
 	enemy_areas = enemy_areas.filter(func(area): return area.left > 0)
 	for burst in bursts: burst.left -= dt
@@ -560,10 +604,12 @@ func draw_combat_effects(canvas: Node2D) -> void:
 	if enemy_track.time >= 0 and not enemy_track.get("support", false) and enemy_track.target >= 0:
 		var index: int = enemy_track.index
 		var phase: float = enemy_track.time / enemy_track.duration
-		if phase >= 0.2 and phase < 0.55 and simulation.tactics.enemies[index]["class"] in ["mage", "ranger"]:
+		var release:float=float(enemy_track.get("contact",.2)) if enemy_track.has("impacts") else .2
+		var arrive:float=minf(.98,release+.18) if enemy_track.has("impacts") else .55
+		if phase >= release and phase < arrive and simulation.tactics.enemies[index]["class"] in ["mage", "ranger"]:
 			var from := foe_homes[index] + Vector2(0, -75)
 			var to: Vector2 = tracks[enemy_track.target].home + Vector2(0, -65)
-			var t := clampf((phase - 0.2) / 0.35, 0, 1)
+			var t := clampf((phase-release)/maxf(.001,arrive-release),0,1)
 			var point := from.lerp(to, t)
 			var tint: Color = Biomes.COLORS[simulation.current_biome() if simulation.expedition else Biomes.biome(stage)]
 			if simulation.tactics.enemies[index]["class"] == "ranger":
@@ -638,6 +684,9 @@ func fit_field(dimensions: Vector2) -> void:
 	for index in foes.size():
 		foes[index].regular_height = human_height() * (Biomes.height_factor(int(simulation.tactics.enemies[index].biome), int(simulation.tactics.enemies[index].variant))*(0.72 if ExpeditionContent.is_boss(simulation.stage,simulation.phase) and not simulation.tactics.enemies[index].boss else 1.0) if simulation.expedition else 1.0)
 		foes[index].boss_height = human_height() * (1.25 if simulation.tactics.enemies[index].has("secret_id") else 1.40 if simulation.expedition else 1.22)
+		if simulation.tactics.enemies[index].has("species_id"):
+			foes[index].regular_height=human_height()
+			foes[index].boss_height=human_height()*1.25
 		foe_homes[index] = home_for(simulation.tactics.enemies[index].row, index, true)
 		foes[index].position = foe_homes[index]
 		place_widget(foe_widgets[index],foe_homes[index])
@@ -658,6 +707,15 @@ func begin_enemy_attack(index: int, target: int) -> bool:
 	if is_action_busy() or index < 0 or index >= foes.size() or target < 0 or target >= heroes.size():
 		return false
 	enemy_track = {"time": 0.0, "duration": 1.3, "index": index, "target": target, "hit": false}
+	var data:Dictionary=simulation.tactics.enemies[index]
+	if data.has("species_id"):
+		var anim:String="boss_attack" if data.boss else "attack"
+		enemy_track.duration=foes[index].animation_duration(anim)
+		enemy_track["impacts"]=Phase1.impact_times(data.species_id)
+		enemy_track["impact_cursor"]=0
+		enemy_track["contact"]=float(enemy_track.impacts[0])/float(enemy_track.duration)
+		enemy_track["recovery"]=minf(.9,(float(enemy_track.impacts[-1])+1.0/foes[index].sprite_frames.get_animation_speed(anim))/float(enemy_track.duration))
+		foes[index].begin_strike(data.boss)
 	return true
 
 

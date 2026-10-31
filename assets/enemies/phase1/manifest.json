@@ -1,0 +1,1305 @@
+{
+  "winter_moose": {
+    "attack": [
+      "res://assets/enemies/phase1/winter_moose/attack/01.png",
+      "res://assets/enemies/phase1/winter_moose/attack/02.png",
+      "res://assets/enemies/phase1/winter_moose/attack/03.png",
+      "res://assets/enemies/phase1/winter_moose/attack/04.png",
+      "res://assets/enemies/phase1/winter_moose/attack/05.png",
+      "res://assets/enemies/phase1/winter_moose/attack/06.png",
+      "res://assets/enemies/phase1/winter_moose/attack/07.png",
+      "res://assets/enemies/phase1/winter_moose/attack/08.png"
+    ],
+    "idle": [
+      "res://assets/enemies/phase1/winter_moose/attack/01.png"
+    ],
+    "anchor": [
+      384,
+      640
+    ],
+    "canvas": [
+      768,
+      768
+    ],
+    "flying": false,
+    "fps": 10.0,
+    "impacts": [
+      5
+    ],
+    "source_boxes": [
+      [
+        28,
+        0,
+        474,
+        443
+      ],
+      [
+        485,
+        29,
+        905,
+        443
+      ],
+      [
+        848,
+        19,
+        1337,
+        443
+      ],
+      [
+        1269,
+        33,
+        1774,
+        443
+      ],
+      [
+        17,
+        443,
+        482,
+        887
+      ],
+      [
+        420,
+        443,
+        919,
+        887
+      ],
+      [
+        908,
+        443,
+        1399,
+        887
+      ],
+      [
+        1315,
+        443,
+        1774,
+        887
+      ]
+    ],
+    "segmentation": "connected-components",
+    "reference_height": 443
+  },
+  "winter_hunter": {
+    "attack": [
+      "res://assets/enemies/phase1/winter_hunter/attack/01.png",
+      "res://assets/enemies/phase1/winter_hunter/attack/02.png",
+      "res://assets/enemies/phase1/winter_hunter/attack/03.png",
+      "res://assets/enemies/phase1/winter_hunter/attack/04.png",
+      "res://assets/enemies/phase1/winter_hunter/attack/05.png",
+      "res://assets/enemies/phase1/winter_hunter/attack/06.png",
+      "res://assets/enemies/phase1/winter_hunter/attack/07.png",
+      "res://assets/enemies/phase1/winter_hunter/attack/08.png"
+    ],
+    "idle": [
+      "res://assets/enemies/phase1/winter_hunter/attack/01.png"
+    ],
+    "anchor": [
+      384,
+      640
+    ],
+    "canvas": [
+      768,
+      768
+    ],
+    "flying": false,
+    "fps": 10.0,
+    "impacts": [
+      5
+    ],
+    "source_boxes": [
+      [
+        42,
+        32,
+        423,
+        444
+      ],
+      [
+        487,
+        32,
+        863,
+        444
+      ],
+      [
+        924,
+        45,
+        1304,
+        444
+      ],
+      [
+        1359,
+        40,
+        1748,
+        444
+      ],
+      [
+        1,
+        472,
+        496,
+        870
+      ],
+      [
+        535,
+        465,
+        930,
+        868
+      ],
+      [
+        952,
+        479,
+        1331,
+        869
+      ],
+      [
+        1364,
+        473,
+        1747,
+        869
+      ]
+    ],
+    "segmentation": "connected-components",
+    "reference_height": 417
+  },
+  "winter_owl": {
+    "attack": [
+      "res://assets/enemies/phase1/winter_owl/attack/01.png",
+      "res://assets/enemies/phase1/winter_owl/attack/02.png",
+      "res://assets/enemies/phase1/winter_owl/attack/03.png",
+      "res://assets/enemies/phase1/winter_owl/attack/04.png",
+      "res://assets/enemies/phase1/winter_owl/attack/05.png",
+      "res://assets/enemies/phase1/winter_owl/attack/06.png",
+      "res://assets/enemies/phase1/winter_owl/attack/07.png",
+      "res://assets/enemies/phase1/winter_owl/attack/08.png"
+    ],
+    "idle": [
+      "res://assets/enemies/phase1/winter_owl/idle/01.png",
+      "res://assets/enemies/phase1/winter_owl/idle/02.png",
+      "res://assets/enemies/phase1/winter_owl/idle/03.png",
+      "res://assets/enemies/phase1/winter_owl/idle/04.png"
+    ],
+    "anchor": [
+      384,
+      384
+    ],
+    "canvas": [
+      768,
+      768
+    ],
+    "flying": true,
+    "fps": 10.0,
+    "impacts": [
+      6
+    ],
+    "source_boxes": [
+      [
+        92,
+        135,
+        378,
+        364
+      ],
+      [
+        537,
+        91,
+        807,
+        377
+      ],
+      [
+        988,
+        151,
+        1220,
+        348
+      ],
+      [
+        1395,
+        202,
+        1686,
+        327
+      ],
+      [
+        84,
+        531,
+        393,
+        781
+      ],
+      [
+        537,
+        557,
+        848,
+        781
+      ],
+      [
+        973,
+        513,
+        1234,
+        784
+      ],
+      [
+        1395,
+        539,
+        1690,
+        772
+      ]
+    ],
+    "segmentation": "connected-components",
+    "reference_height": 235
+  },
+  "winter_wolf": {
+    "attack": [
+      "res://assets/enemies/phase1/winter_wolf/attack/01.png",
+      "res://assets/enemies/phase1/winter_wolf/attack/02.png",
+      "res://assets/enemies/phase1/winter_wolf/attack/03.png",
+      "res://assets/enemies/phase1/winter_wolf/attack/04.png",
+      "res://assets/enemies/phase1/winter_wolf/attack/05.png",
+      "res://assets/enemies/phase1/winter_wolf/attack/06.png",
+      "res://assets/enemies/phase1/winter_wolf/attack/07.png",
+      "res://assets/enemies/phase1/winter_wolf/attack/08.png"
+    ],
+    "idle": [
+      "res://assets/enemies/phase1/winter_wolf/attack/01.png"
+    ],
+    "anchor": [
+      384,
+      640
+    ],
+    "canvas": [
+      768,
+      768
+    ],
+    "flying": false,
+    "fps": 10.0,
+    "impacts": [
+      5
+    ],
+    "source_boxes": [
+      [
+        30,
+        132,
+        429,
+        429
+      ],
+      [
+        473,
+        158,
+        869,
+        430
+      ],
+      [
+        902,
+        195,
+        1305,
+        432
+      ],
+      [
+        1338,
+        116,
+        1747,
+        403
+      ],
+      [
+        20,
+        535,
+        451,
+        804
+      ],
+      [
+        469,
+        535,
+        868,
+        835
+      ],
+      [
+        907,
+        541,
+        1314,
+        835
+      ],
+      [
+        1348,
+        526,
+        1738,
+        832
+      ]
+    ],
+    "segmentation": "connected-components",
+    "reference_height": 303
+  },
+  "autumn_hare": {
+    "attack": [
+      "res://assets/enemies/phase1/autumn_hare/attack/01.png",
+      "res://assets/enemies/phase1/autumn_hare/attack/02.png",
+      "res://assets/enemies/phase1/autumn_hare/attack/03.png",
+      "res://assets/enemies/phase1/autumn_hare/attack/04.png",
+      "res://assets/enemies/phase1/autumn_hare/attack/05.png",
+      "res://assets/enemies/phase1/autumn_hare/attack/06.png",
+      "res://assets/enemies/phase1/autumn_hare/attack/07.png",
+      "res://assets/enemies/phase1/autumn_hare/attack/08.png"
+    ],
+    "idle": [
+      "res://assets/enemies/phase1/autumn_hare/attack/01.png"
+    ],
+    "anchor": [
+      384,
+      640
+    ],
+    "canvas": [
+      768,
+      768
+    ],
+    "flying": false,
+    "fps": 10.0,
+    "impacts": [
+      5
+    ],
+    "source_boxes": [
+      [
+        15,
+        17,
+        480,
+        447
+      ],
+      [
+        457,
+        15,
+        901,
+        447
+      ],
+      [
+        819,
+        14,
+        1385,
+        447
+      ],
+      [
+        1273,
+        35,
+        1774,
+        447
+      ],
+      [
+        0,
+        447,
+        496,
+        887
+      ],
+      [
+        471,
+        447,
+        907,
+        855
+      ],
+      [
+        904,
+        447,
+        1348,
+        858
+      ],
+      [
+        1326,
+        447,
+        1756,
+        856
+      ]
+    ],
+    "segmentation": "connected-components",
+    "reference_height": 433
+  },
+  "autumn_lumberjack": {
+    "attack": [
+      "res://assets/enemies/phase1/autumn_lumberjack/attack/01.png",
+      "res://assets/enemies/phase1/autumn_lumberjack/attack/02.png",
+      "res://assets/enemies/phase1/autumn_lumberjack/attack/03.png",
+      "res://assets/enemies/phase1/autumn_lumberjack/attack/04.png",
+      "res://assets/enemies/phase1/autumn_lumberjack/attack/05.png",
+      "res://assets/enemies/phase1/autumn_lumberjack/attack/06.png",
+      "res://assets/enemies/phase1/autumn_lumberjack/attack/07.png",
+      "res://assets/enemies/phase1/autumn_lumberjack/attack/08.png"
+    ],
+    "idle": [
+      "res://assets/enemies/phase1/autumn_lumberjack/attack/01.png"
+    ],
+    "anchor": [
+      384,
+      640
+    ],
+    "canvas": [
+      768,
+      768
+    ],
+    "flying": false,
+    "fps": 10.0,
+    "impacts": [
+      6
+    ],
+    "source_boxes": [
+      [
+        53,
+        49,
+        440,
+        443
+      ],
+      [
+        441,
+        78,
+        867,
+        442
+      ],
+      [
+        965,
+        109,
+        1377,
+        442
+      ],
+      [
+        1392,
+        112,
+        1774,
+        442
+      ],
+      [
+        12,
+        490,
+        447,
+        846
+      ],
+      [
+        431,
+        515,
+        912,
+        847
+      ],
+      [
+        903,
+        512,
+        1318,
+        847
+      ],
+      [
+        1368,
+        476,
+        1752,
+        850
+      ]
+    ],
+    "segmentation": "connected-components",
+    "reference_height": 399
+  },
+  "autumn_wolf": {
+    "attack": [
+      "res://assets/enemies/phase1/autumn_wolf/attack/01.png",
+      "res://assets/enemies/phase1/autumn_wolf/attack/02.png",
+      "res://assets/enemies/phase1/autumn_wolf/attack/03.png",
+      "res://assets/enemies/phase1/autumn_wolf/attack/04.png",
+      "res://assets/enemies/phase1/autumn_wolf/attack/05.png",
+      "res://assets/enemies/phase1/autumn_wolf/attack/06.png",
+      "res://assets/enemies/phase1/autumn_wolf/attack/07.png",
+      "res://assets/enemies/phase1/autumn_wolf/attack/08.png"
+    ],
+    "idle": [
+      "res://assets/enemies/phase1/autumn_wolf/attack/01.png"
+    ],
+    "anchor": [
+      384,
+      640
+    ],
+    "canvas": [
+      768,
+      768
+    ],
+    "flying": false,
+    "fps": 10.0,
+    "impacts": [
+      5
+    ],
+    "source_boxes": [
+      [
+        30,
+        133,
+        430,
+        429
+      ],
+      [
+        474,
+        159,
+        869,
+        432
+      ],
+      [
+        903,
+        197,
+        1305,
+        433
+      ],
+      [
+        1338,
+        117,
+        1748,
+        403
+      ],
+      [
+        20,
+        535,
+        450,
+        804
+      ],
+      [
+        469,
+        535,
+        868,
+        836
+      ],
+      [
+        907,
+        541,
+        1316,
+        836
+      ],
+      [
+        1348,
+        526,
+        1738,
+        833
+      ]
+    ],
+    "segmentation": "connected-components",
+    "reference_height": 302
+  },
+  "autumn_fox": {
+    "attack": [
+      "res://assets/enemies/phase1/autumn_fox/attack/01.png",
+      "res://assets/enemies/phase1/autumn_fox/attack/02.png",
+      "res://assets/enemies/phase1/autumn_fox/attack/03.png",
+      "res://assets/enemies/phase1/autumn_fox/attack/04.png",
+      "res://assets/enemies/phase1/autumn_fox/attack/05.png",
+      "res://assets/enemies/phase1/autumn_fox/attack/06.png",
+      "res://assets/enemies/phase1/autumn_fox/attack/07.png",
+      "res://assets/enemies/phase1/autumn_fox/attack/08.png"
+    ],
+    "idle": [
+      "res://assets/enemies/phase1/autumn_fox/attack/01.png"
+    ],
+    "anchor": [
+      384,
+      640
+    ],
+    "canvas": [
+      768,
+      768
+    ],
+    "flying": false,
+    "fps": 10.0,
+    "impacts": [
+      5
+    ],
+    "source_boxes": [
+      [
+        32,
+        45,
+        464,
+        443
+      ],
+      [
+        477,
+        25,
+        904,
+        443
+      ],
+      [
+        876,
+        39,
+        1349,
+        443
+      ],
+      [
+        1313,
+        33,
+        1774,
+        438
+      ],
+      [
+        0,
+        443,
+        472,
+        835
+      ],
+      [
+        435,
+        444,
+        904,
+        837
+      ],
+      [
+        884,
+        443,
+        1344,
+        863
+      ],
+      [
+        1331,
+        444,
+        1774,
+        843
+      ]
+    ],
+    "segmentation": "connected-components",
+    "reference_height": 401
+  },
+  "spring_hunter": {
+    "attack": [
+      "res://assets/enemies/phase1/spring_hunter/attack/01.png",
+      "res://assets/enemies/phase1/spring_hunter/attack/02.png",
+      "res://assets/enemies/phase1/spring_hunter/attack/03.png",
+      "res://assets/enemies/phase1/spring_hunter/attack/04.png",
+      "res://assets/enemies/phase1/spring_hunter/attack/05.png",
+      "res://assets/enemies/phase1/spring_hunter/attack/06.png",
+      "res://assets/enemies/phase1/spring_hunter/attack/07.png",
+      "res://assets/enemies/phase1/spring_hunter/attack/08.png"
+    ],
+    "idle": [
+      "res://assets/enemies/phase1/spring_hunter/attack/01.png"
+    ],
+    "anchor": [
+      384,
+      640
+    ],
+    "canvas": [
+      768,
+      768
+    ],
+    "flying": false,
+    "fps": 10.0,
+    "impacts": [
+      5
+    ],
+    "source_boxes": [
+      [
+        49,
+        11,
+        514,
+        437
+      ],
+      [
+        479,
+        8,
+        893,
+        436
+      ],
+      [
+        846,
+        21,
+        1407,
+        436
+      ],
+      [
+        1289,
+        30,
+        1774,
+        436
+      ],
+      [
+        0,
+        459,
+        496,
+        873
+      ],
+      [
+        517,
+        444,
+        972,
+        872
+      ],
+      [
+        943,
+        458,
+        1413,
+        875
+      ],
+      [
+        1348,
+        455,
+        1774,
+        887
+      ]
+    ],
+    "segmentation": "connected-components",
+    "reference_height": 432
+  },
+  "spring_boar": {
+    "attack": [
+      "res://assets/enemies/phase1/spring_boar/attack/01.png",
+      "res://assets/enemies/phase1/spring_boar/attack/02.png",
+      "res://assets/enemies/phase1/spring_boar/attack/03.png",
+      "res://assets/enemies/phase1/spring_boar/attack/04.png",
+      "res://assets/enemies/phase1/spring_boar/attack/05.png",
+      "res://assets/enemies/phase1/spring_boar/attack/06.png",
+      "res://assets/enemies/phase1/spring_boar/attack/07.png",
+      "res://assets/enemies/phase1/spring_boar/attack/08.png",
+      "res://assets/enemies/phase1/spring_boar/attack/09.png",
+      "res://assets/enemies/phase1/spring_boar/attack/10.png",
+      "res://assets/enemies/phase1/spring_boar/attack/11.png",
+      "res://assets/enemies/phase1/spring_boar/attack/12.png"
+    ],
+    "idle": [
+      "res://assets/enemies/phase1/spring_boar/attack/01.png"
+    ],
+    "anchor": [
+      384,
+      640
+    ],
+    "canvas": [
+      768,
+      768
+    ],
+    "flying": false,
+    "fps": 10.0,
+    "impacts": [
+      9
+    ],
+    "source_boxes": [
+      [
+        0,
+        21,
+        425,
+        413
+      ],
+      [
+        447,
+        64,
+        870,
+        443
+      ],
+      [
+        888,
+        66,
+        1312,
+        436
+      ],
+      [
+        1325,
+        9,
+        1774,
+        443
+      ],
+      [
+        0,
+        461,
+        480,
+        855
+      ],
+      [
+        424,
+        443,
+        871,
+        854
+      ],
+      [
+        870,
+        450,
+        1311,
+        854
+      ],
+      [
+        1291,
+        443,
+        1755,
+        859
+      ],
+      [
+        0,
+        4,
+        443,
+        371
+      ],
+      [
+        468,
+        0,
+        888,
+        371
+      ],
+      [
+        899,
+        0,
+        1328,
+        371
+      ],
+      [
+        1327,
+        16,
+        1774,
+        371
+      ]
+    ],
+    "segmentation": "connected-components",
+    "reference_height": 398
+  },
+  "spring_wolf": {
+    "attack": [
+      "res://assets/enemies/phase1/spring_wolf/attack/01.png",
+      "res://assets/enemies/phase1/spring_wolf/attack/02.png",
+      "res://assets/enemies/phase1/spring_wolf/attack/03.png",
+      "res://assets/enemies/phase1/spring_wolf/attack/04.png",
+      "res://assets/enemies/phase1/spring_wolf/attack/05.png",
+      "res://assets/enemies/phase1/spring_wolf/attack/06.png",
+      "res://assets/enemies/phase1/spring_wolf/attack/07.png",
+      "res://assets/enemies/phase1/spring_wolf/attack/08.png"
+    ],
+    "idle": [
+      "res://assets/enemies/phase1/spring_wolf/attack/01.png"
+    ],
+    "anchor": [
+      384,
+      640
+    ],
+    "canvas": [
+      768,
+      768
+    ],
+    "flying": false,
+    "fps": 10.0,
+    "impacts": [
+      5
+    ],
+    "source_boxes": [
+      [
+        31,
+        25,
+        468,
+        443
+      ],
+      [
+        467,
+        51,
+        933,
+        443
+      ],
+      [
+        888,
+        82,
+        1333,
+        442
+      ],
+      [
+        1338,
+        9,
+        1759,
+        443
+      ],
+      [
+        0,
+        443,
+        581,
+        804
+      ],
+      [
+        454,
+        443,
+        905,
+        887
+      ],
+      [
+        878,
+        443,
+        1367,
+        863
+      ],
+      [
+        1348,
+        443,
+        1760,
+        855
+      ]
+    ],
+    "segmentation": "connected-components",
+    "reference_height": 421
+  },
+  "spring_bear": {
+    "attack": [
+      "res://assets/enemies/phase1/spring_bear/attack/01.png",
+      "res://assets/enemies/phase1/spring_bear/attack/02.png",
+      "res://assets/enemies/phase1/spring_bear/attack/03.png",
+      "res://assets/enemies/phase1/spring_bear/attack/04.png",
+      "res://assets/enemies/phase1/spring_bear/attack/05.png",
+      "res://assets/enemies/phase1/spring_bear/attack/06.png",
+      "res://assets/enemies/phase1/spring_bear/attack/07.png",
+      "res://assets/enemies/phase1/spring_bear/attack/08.png"
+    ],
+    "idle": [
+      "res://assets/enemies/phase1/spring_bear/attack/01.png"
+    ],
+    "anchor": [
+      384,
+      640
+    ],
+    "canvas": [
+      768,
+      768
+    ],
+    "flying": false,
+    "fps": 10.0,
+    "impacts": [
+      4,
+      5,
+      6
+    ],
+    "source_boxes": [
+      [
+        0,
+        31,
+        452,
+        447
+      ],
+      [
+        469,
+        34,
+        903,
+        447
+      ],
+      [
+        920,
+        0,
+        1336,
+        447
+      ],
+      [
+        1303,
+        35,
+        1774,
+        447
+      ],
+      [
+        0,
+        447,
+        506,
+        887
+      ],
+      [
+        483,
+        447,
+        914,
+        865
+      ],
+      [
+        904,
+        448,
+        1336,
+        862
+      ],
+      [
+        1339,
+        447,
+        1774,
+        862
+      ]
+    ],
+    "segmentation": "connected-components",
+    "reference_height": 419
+  },
+  "summer_falcon": {
+    "attack": [
+      "res://assets/enemies/phase1/summer_falcon/attack/01.png",
+      "res://assets/enemies/phase1/summer_falcon/attack/02.png",
+      "res://assets/enemies/phase1/summer_falcon/attack/03.png",
+      "res://assets/enemies/phase1/summer_falcon/attack/04.png",
+      "res://assets/enemies/phase1/summer_falcon/attack/05.png",
+      "res://assets/enemies/phase1/summer_falcon/attack/06.png"
+    ],
+    "idle": [
+      "res://assets/enemies/phase1/summer_falcon/idle/01.png",
+      "res://assets/enemies/phase1/summer_falcon/idle/02.png",
+      "res://assets/enemies/phase1/summer_falcon/idle/03.png",
+      "res://assets/enemies/phase1/summer_falcon/idle/04.png"
+    ],
+    "anchor": [
+      384,
+      384
+    ],
+    "canvas": [
+      768,
+      768
+    ],
+    "flying": true,
+    "fps": 10.0,
+    "impacts": [
+      4
+    ],
+    "source_boxes": [
+      [
+        19,
+        209,
+        339,
+        514
+      ],
+      [
+        363,
+        186,
+        637,
+        521
+      ],
+      [
+        696,
+        221,
+        995,
+        494
+      ],
+      [
+        1024,
+        301,
+        1389,
+        470
+      ],
+      [
+        1403,
+        185,
+        1682,
+        521
+      ],
+      [
+        1709,
+        209,
+        2042,
+        517
+      ]
+    ],
+    "segmentation": "connected-components",
+    "reference_height": 311
+  },
+  "summer_raccoon": {
+    "attack": [
+      "res://assets/enemies/phase1/summer_raccoon/attack/01.png",
+      "res://assets/enemies/phase1/summer_raccoon/attack/02.png",
+      "res://assets/enemies/phase1/summer_raccoon/attack/03.png",
+      "res://assets/enemies/phase1/summer_raccoon/attack/04.png",
+      "res://assets/enemies/phase1/summer_raccoon/attack/05.png",
+      "res://assets/enemies/phase1/summer_raccoon/attack/06.png",
+      "res://assets/enemies/phase1/summer_raccoon/attack/07.png",
+      "res://assets/enemies/phase1/summer_raccoon/attack/08.png"
+    ],
+    "idle": [
+      "res://assets/enemies/phase1/summer_raccoon/idle/01.png"
+    ],
+    "anchor": [
+      384,
+      640
+    ],
+    "canvas": [
+      768,
+      768
+    ],
+    "flying": false,
+    "fps": 10.0,
+    "impacts": [
+      5,
+      6
+    ],
+    "source_boxes": [
+      [
+        66,
+        95,
+        468,
+        437
+      ],
+      [
+        494,
+        83,
+        895,
+        437
+      ],
+      [
+        854,
+        71,
+        1348,
+        441
+      ],
+      [
+        1323,
+        61,
+        1762,
+        441
+      ],
+      [
+        25,
+        515,
+        482,
+        831
+      ],
+      [
+        495,
+        503,
+        883,
+        832
+      ],
+      [
+        893,
+        545,
+        1352,
+        833
+      ],
+      [
+        1359,
+        505,
+        1758,
+        843
+      ]
+    ],
+    "segmentation": "connected-components",
+    "reference_height": 348
+  },
+  "summer_wolf": {
+    "attack": [
+      "res://assets/enemies/phase1/summer_wolf/attack/01.png",
+      "res://assets/enemies/phase1/summer_wolf/attack/02.png",
+      "res://assets/enemies/phase1/summer_wolf/attack/03.png",
+      "res://assets/enemies/phase1/summer_wolf/attack/04.png",
+      "res://assets/enemies/phase1/summer_wolf/attack/05.png",
+      "res://assets/enemies/phase1/summer_wolf/attack/06.png",
+      "res://assets/enemies/phase1/summer_wolf/attack/07.png",
+      "res://assets/enemies/phase1/summer_wolf/attack/08.png"
+    ],
+    "idle": [
+      "res://assets/enemies/phase1/summer_wolf/attack/01.png"
+    ],
+    "anchor": [
+      384,
+      640
+    ],
+    "canvas": [
+      768,
+      768
+    ],
+    "flying": false,
+    "fps": 10.0,
+    "impacts": [
+      5
+    ],
+    "source_boxes": [
+      [
+        37,
+        129,
+        431,
+        432
+      ],
+      [
+        467,
+        161,
+        884,
+        430
+      ],
+      [
+        892,
+        195,
+        1326,
+        430
+      ],
+      [
+        1341,
+        114,
+        1753,
+        399
+      ],
+      [
+        10,
+        512,
+        470,
+        777
+      ],
+      [
+        460,
+        499,
+        888,
+        825
+      ],
+      [
+        904,
+        528,
+        1330,
+        828
+      ],
+      [
+        1344,
+        521,
+        1753,
+        830
+      ]
+    ],
+    "segmentation": "connected-components",
+    "reference_height": 309
+  },
+  "summer_snake": {
+    "attack": [
+      "res://assets/enemies/phase1/summer_snake/attack/01.png",
+      "res://assets/enemies/phase1/summer_snake/attack/02.png",
+      "res://assets/enemies/phase1/summer_snake/attack/03.png",
+      "res://assets/enemies/phase1/summer_snake/attack/04.png",
+      "res://assets/enemies/phase1/summer_snake/attack/05.png",
+      "res://assets/enemies/phase1/summer_snake/attack/06.png",
+      "res://assets/enemies/phase1/summer_snake/attack/07.png",
+      "res://assets/enemies/phase1/summer_snake/attack/08.png"
+    ],
+    "idle": [
+      "res://assets/enemies/phase1/summer_snake/attack/01.png"
+    ],
+    "anchor": [
+      384,
+      640
+    ],
+    "canvas": [
+      768,
+      768
+    ],
+    "flying": false,
+    "fps": 10.0,
+    "impacts": [
+      6
+    ],
+    "source_boxes": [
+      [
+        0,
+        37,
+        463,
+        443
+      ],
+      [
+        332,
+        23,
+        950,
+        443
+      ],
+      [
+        743,
+        21,
+        1375,
+        443
+      ],
+      [
+        1245,
+        19,
+        1774,
+        443
+      ],
+      [
+        19,
+        443,
+        488,
+        887
+      ],
+      [
+        394,
+        443,
+        935,
+        887
+      ],
+      [
+        846,
+        443,
+        1353,
+        853
+      ],
+      [
+        1337,
+        443,
+        1773,
+        855
+      ]
+    ],
+    "segmentation": "connected-components",
+    "reference_height": 409
+  }
+}

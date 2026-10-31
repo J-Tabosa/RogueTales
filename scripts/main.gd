@@ -2355,7 +2355,7 @@ func on_enemy_attack_hit(index: int) -> void:
 	if state != "battle" or paused or run == null:
 		return
 	var resources: Array = run.actors.map(func(actor): return {"hp": actor.hp, "shield": actor.shield})
-	var hit: Dictionary = run.hit_party(index)
+	var hit: Dictionary = run.tactics.phase1_impact(index,int(arena.enemy_track.get("impact_part",0)),arena.enemy_track.impacts.size()) if arena.enemy_track.has("impacts") else run.hit_party(index)
 	if hit.is_empty():
 		return
 	if not hit.get("non_attack", false):

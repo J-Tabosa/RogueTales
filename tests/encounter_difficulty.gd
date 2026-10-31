@@ -5,6 +5,7 @@ func checks() -> void:
 	var account:=preload("res://tests/test_accounts.gd").legacy()
 	var run:=IdleRun.new()
 	assert(run.start_expedition(account,"scarlet","blessing:scarlet:0"))
+	run.journey.clear() # Legacy-biome caps; authored forest rosters are covered in phase1_enemies.
 	assert(run.actors.size()==1)
 	var generated:=0
 	for stage in 12:

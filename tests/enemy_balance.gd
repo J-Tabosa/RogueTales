@@ -58,7 +58,7 @@ func matches_defaults() -> bool:
 func test() -> void:
 	Balance.reload_if_changed()
 	check(Balance.last_error.is_empty(), "Real delivered workbook must parse")
-	check(Balance.profiles.size() == 63, "All 48 common, 3 boss, 12 secret profiles load")
+	check(Balance.profiles.size() == 79, "Original 63 profiles plus 16 starting-forest profiles load")
 	check(matches_defaults(), "Workbook preserves every original base value")
 	var pack_path := "user://enemy_balance.pck"
 	var pack := PCKPacker.new()

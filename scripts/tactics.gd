@@ -7,6 +7,7 @@ const Biomes = preload("res://scripts/biomes.gd")
 const EnemyBalance = preload("res://scripts/enemy_balance.gd")
 const BossRules = preload("res://scripts/boss_rules.gd")
 const UltRules = preload("res://scripts/ultimate_rules.gd")
+const Phase1 = preload("res://scripts/phase1_enemies.gd")
 ## Formation rules and all combat results; contains no nodes or rendering logic.
 ## The weak owner avoids a Run -> Tactics -> Run reference cycle.
 var owner_ref: WeakRef
@@ -89,6 +90,13 @@ func spawn() -> void:
 	if owner.expedition and owner.active_secret.is_empty() and ExpeditionContent.is_market(owner.phase):
 		sync_totals()
 		return
+	if not Phase1.season_for(owner).is_empty():
+		enemies=Phase1.spawn(owner,EnemyBalance.profiles)
+		Rules.start_combat(self)
+		for at in enemies.size():enemies[at]["slot"]=at
+		BossRules.setup(self)
+		sync_totals()
+		return
 	var count: int = 1 if owner.stage == 0 and owner.wave == 0 else (2 if owner.stage < 3 else 3)
 	var total: float = TaleCatalog.STAGES[owner.stage].hp * [1.0, 1.25, 2.4][owner.wave]
 	if owner.expedition:
@@ -165,6 +173,7 @@ static func eligible(attacker: Dictionary, defenders: Array) -> Array[int]:
 			"front": front.append(index)
 			"middle": middle.append(index)
 			_: back.append(index)
+	if attacker.get("range","")=="medium":return front+middle if not (front+middle).is_empty() else back
 	match str(attacker["class"]):
 		"vanguard": return front if not front.is_empty() else (middle if not middle.is_empty() else back)
 		"ranger": return back if not back.is_empty() else (middle if not middle.is_empty() else front)
@@ -209,6 +218,21 @@ func hit_enemy(index:int,requested:=-1) -> Dictionary:
 func hit_party(index:=0) -> Dictionary:
 	enemy_action_serial+=1
 	return BossRules.execute(self,index) if run().expedition else Rules.incoming(self,index)
+
+func phase1_impact(index:int,part:int,total:int) -> Dictionary:
+	var foe:Dictionary=enemies[index]
+	if part==0:
+		enemy_action_serial+=1
+		foe["strike_target"]=int(BossRules.plan(self,index).get("target",-1))
+		foe.action_count=int(foe.get("action_count",0))+1
+		foe.intent={}
+	var target:int=int(foe.get("strike_target",-1))
+	if foe.hp<=0 or target<0 or run().actors[target].hp<=0:return {}
+	var power:float=foe.damage
+	foe.damage=power/maxi(1,total)
+	var result:Dictionary=Rules.incoming(self,index,target)
+	foe.damage=power
+	return result
 
 
 func interval_for(index: int) -> float:

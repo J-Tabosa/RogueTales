@@ -1,6 +1,6 @@
 # Balanceamento por Excel
 
-Edite **[data/inimigos.xlsx](../data/inimigos.xlsx)**. A aba `Inimigos` contém 63 fichas: 48 inimigos dos oito biomas, os três chefes usados nas expedições e 12 desafios secretos. A aba `Guia` explica os campos. As células amarelas aceitam edição; as cinza identificam o cadastro existente.
+Edite **[data/inimigos.xlsx](../data/inimigos.xlsx)**. A aba `Inimigos` contém 79 fichas: 48 inimigos dos oito biomas, os três chefes usados nas expedições, 12 desafios secretos e 16 monstros exclusivos das quatro florestas iniciais. Veja [Fase 1](FASE1_INIMIGOS.md) para as novas bases e animações. A aba `Guia` explica os campos. As células amarelas aceitam edição; as cinza identificam o cadastro existente.
 
 ## Aplicar alterações
 

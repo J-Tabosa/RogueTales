@@ -23,6 +23,7 @@ static func setup(tactics) -> void:
 		foe["action_count"] = 0
 		foe["intent"] = {}
 	if owner.expedition and not owner.active_secret.is_empty(): return
+	if not preload("res://scripts/phase1_enemies.gd").season_for(owner).is_empty():return
 	if not (ExpeditionContent.is_boss(owner.stage, owner.phase) if owner.expedition else ExpeditionContent.is_boss(owner.stage)) or tactics.enemies.is_empty(): return
 	var boss: Dictionary = tactics.enemies[0]
 	boss["mechanic"] = owner.current_boss_rule() if owner.expedition else owner.stage
@@ -82,6 +83,9 @@ static func plan(tactics, index: int) -> Dictionary:
 	var owner = tactics.run()
 	var target: int = tactics.choose_target(foe, owner.actors)
 	var result := {"key": "attack", "title": "Ataque", "glyph": "sword", "target": target, "targets": [target] if target >= 0 else [], "power": 1.0, "magical": foe["class"] == "mage", "locked": false}
+	if foe.has("species_id"):
+		foe.intent=result
+		return result
 	if foe.has("secret_id"):
 		var spec: Dictionary=preload("res://scripts/secret_encounters.gd").DATA[foe.secret_id]
 		var charged: bool=int(foe.get("action_count",0))%3==2
