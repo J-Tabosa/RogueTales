@@ -500,12 +500,16 @@ func _process(delta: float) -> void:
 		if enemy_track.time >= 0 and enemy_track.index == index:
 			var phase: float = clampf(enemy_track.time / enemy_track.duration, 0, 0.999)
 			var anim := "idle" if enemy_track.get("support", false) else ("boss_attack" if data.boss else "attack")
-			foes[index].seek(anim, phase * foes[index].animation_duration(anim))
+			var visual_time:float=phase*foes[index].animation_duration(anim)
+			if enemy_track.has("coil_start"):
+				visual_time=float(enemy_track.time)-clampf(float(enemy_track.time)-float(enemy_track.coil_start),0,float(enemy_track.coil_hold))
+			foes[index].seek(anim,visual_time)
 			if not enemy_track.get("support", false) and data["class"] in ["vanguard", "assassin"] and enemy_track.target >= 0:
 				var contact:float=float(enemy_track.get("contact",.55))
 				var recovery:float=float(enemy_track.get("recovery",contact))
 				var dash := smoothstep(0,maxf(.01,contact-.02),phase) if phase<contact else (1.0-smoothstep(recovery,1,phase))
 				var to: Vector2 = tracks[enemy_track.target].home + Vector2(60, 0)
+				if enemy_track.has("coil_start"):to=tracks[enemy_track.target].home
 				foes[index].position = foe_homes[index].lerp(to, dash)
 				if data.get("flying",false):foes[index].position.y-=human_height()*.55
 				if data.has("species_id"):foes[index].flip_h=phase>recovery and not is_equal_approx(phase,1)
@@ -653,9 +657,27 @@ func draw_combat_effects(canvas: Node2D) -> void:
 
 	for impact in enemy_impacts:
 		var progress: float = 1.0 - impact.left / 0.85
-		var texture := EnemyArt.frame(int(impact.biome), progress)
-		var extent := Vector2.ONE * human_height() * 1.15
-		canvas.draw_texture_rect(texture, Rect2(impact.at - extent * 0.5, extent), false, Color(1, 1, 1, minf(1, impact.left * 4)))
+		var species:String=impact.get("species","")
+		if not species.is_empty():
+			var at:Vector2=impact.at
+			var radius:float=human_height()*.22
+			var tint:=Color("f4d389",clampf(float(impact.left)*3,0,1))
+			if species.contains("hunter"):
+				for n in 4:
+					var angle:float=n*PI*.5+PI*.25
+					canvas.draw_line(at+Vector2.from_angle(angle)*radius*.25,at+Vector2.from_angle(angle)*radius*(.6+progress),tint,3,true)
+			elif species in ["spring_boar","winter_moose"]:
+				canvas.draw_arc(at,radius*(.4+progress),0,TAU,24,tint,3,true)
+			elif species=="summer_snake":
+				canvas.draw_arc(at,radius,-PI*.7,PI*.7,24,Color("82b56a",tint.a),4,true)
+			else:
+				for n in 2:
+					var offset:=Vector2(n*radius*.35,0)
+					canvas.draw_line(at+offset+Vector2(-radius,-radius)*(.5+progress),at+offset+Vector2(radius,radius)*(.5+progress),tint,3,true)
+		else:
+			var texture := EnemyArt.frame(int(impact.biome), progress)
+			var extent := Vector2.ONE * human_height() * 1.15
+			canvas.draw_texture_rect(texture, Rect2(impact.at - extent * 0.5, extent), false, Color(1, 1, 1, minf(1, impact.left * 4)))
 
 
 func set_home(index: int, at: Vector2) -> void:
@@ -715,6 +737,12 @@ func begin_enemy_attack(index: int, target: int) -> bool:
 		enemy_track["impact_cursor"]=0
 		enemy_track["contact"]=float(enemy_track.impacts[0])/float(enemy_track.duration)
 		enemy_track["recovery"]=minf(.9,(float(enemy_track.impacts[-1])+1.0/foes[index].sprite_frames.get_animation_speed(anim))/float(enemy_track.duration))
+		if data.species_id=="summer_snake":
+			enemy_track["coil_start"]=float(enemy_track.impacts[0])
+			enemy_track["coil_hold"]=3.6
+			enemy_track.duration+=3.6
+			enemy_track.contact=float(enemy_track.coil_start)/float(enemy_track.duration)
+			enemy_track.recovery=(float(enemy_track.coil_start)+3.6)/float(enemy_track.duration)
 		foes[index].begin_strike(data.boss)
 	return true
 
@@ -737,6 +765,8 @@ func damage_number(message: String, at: Vector2, tint: Color) -> void:
 
 
 func present_result(result: Dictionary, hostile: bool, attacker: int) -> void:
+	if hostile and result.has("constricted"):
+		damage_number("CONSTRIÇÃO · ATORDOADO",tracks[int(result.constricted)].home,Color("b4d88c"))
 	if hostile and result.get("blocked_spirit",false):
 		var guarded:int=result.get("blocked_target",result.get("target",-1))
 		if guarded>=0:
@@ -744,7 +774,7 @@ func present_result(result: Dictionary, hostile: bool, attacker: int) -> void:
 	if hostile and not result.get("non_attack", false) and not result.get("blocked_spirit",false):
 		for target in result.get("targets", [result.get("target", -1)]):
 			if target >= 0 and target < tracks.size():
-				enemy_impacts.append({"at": tracks[target].home + Vector2(0, -human_height() * 0.45), "biome": simulation.current_biome() if simulation.expedition else Biomes.biome(stage), "left": 0.85})
+				enemy_impacts.append({"at": tracks[target].home + Vector2(0, -human_height() * 0.45), "species":str(simulation.tactics.enemies[attacker].get("species_id","")), "biome": simulation.current_biome() if simulation.expedition else Biomes.biome(stage), "left": 0.85})
 	if hostile and simulation.tactics.enemies[attacker]["class"] == "mage" and not result.get("non_attack", false):
 		for target in result.get("targets", [result.get("target", -1)]):
 			if target >= 0 and target<tracks.size(): enemy_areas.append({"at": tracks[target].home, "left": 1.0})

@@ -42,8 +42,8 @@ func test() -> void:
 					check(foe.boss==(phase==5),"Boss never enters common pool")
 					check(foe["class"]!="mage" and foe.evasion==0 and foe.attacks==1,"Physical forest roster, zero evasion, one basic")
 					check(foe.category in ["beast","humanoid"],"Explicit category powers beast bonuses")
-					check(is_equal_approx(foe.hp,Balance.profiles[foe.balance_id].vida_base),"No duplicated boss/growth multiplier")
-					check(is_equal_approx(foe.damage,Balance.profiles[foe.balance_id].ataque_base),"No damage dilution by group")
+					check(is_equal_approx(foe.hp,Balance.profiles[foe.balance_id].vida_base*.85),"No duplicated boss/growth multiplier")
+					check(is_equal_approx(foe.damage,Balance.profiles[foe.balance_id].ataque_base*.80),"No damage dilution by group")
 					check(run.tactics.intent_for(foe.slot).key=="attack","Old boss/support magic cannot leak into forests")
 		check(seen.size()==4,"All three commons and the correct boss reachable: "+season)
 		# Other route nodes retain the original catalog and mechanics.
@@ -71,7 +71,7 @@ func test() -> void:
 		var scale_before=model.scale
 		model.begin_strike(false)
 		check(model.animation=="attack" and model.frame==0,"Attack starts at frame one")
-		model.advance(float(expected)/10+.001,false,0,3)
+		model.advance(model.animation_duration("attack")+.001,false,0,3)
 		check(model.animation=="idle" and model.scale==scale_before,"Immediate idle, no final-frame hold or size change")
 		model.queue_free()
 	var owner=fixture("spring");owner.phase=5;owner.spawn_enemy()
@@ -82,5 +82,19 @@ func test() -> void:
 	for part in 3:owner.tactics.phase1_impact(0,part,3)
 	check(is_equal_approx(before-owner.actors[0].hp,power),"Bear damage distributed across three impact frames without tripling")
 	check(owner.tactics.enemies[0].action_count==1,"Multiple impact frames still one attack action")
+	var snake=fixture("summer");snake.phase=5;snake.spawn_enemy()
+	var victim:Dictionary=snake.actors[0]
+	victim.evasion=0;victim.hp=10000;victim.max_hp=10000
+	var hit=snake.tactics.phase1_impact(0,0,1)
+	check(hit.has("constricted") and snake.tactics.Rules.has_status(victim,"stun"),"Snake applies constriction stun")
+	var turn=snake.tactics.Rules.start_turn(snake.tactics,victim)
+	check(turn.skip and turn.attacks==0,"Stun always skips next action")
+	snake.tactics.Rules.end_turn(victim)
+	check(not snake.tactics.Rules.has_status(victim,"stun"),"Stun expires after one action")
+	victim.immune_control=true
+	check(not snake.tactics.Rules.status(victim,"stun","snake",1),"Control immunity respected")
+	for id in Phase1.DATA:
+		check(Phase1.animation_fps(id)<10,"All forest attacks slower")
+		check(Phase1.animation_fps(id)<=4.5 if id in ["winter_owl","summer_falcon"] else true,"Flying attacks particularly readable")
 	print("PHASE1 ENEMIES: %d checks, %d failures"%[checks,failures])
 	quit(1 if failures else 0)

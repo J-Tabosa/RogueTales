@@ -64,7 +64,7 @@ static func immune(a:Dictionary,kind:String) -> bool:
 	if a.get("id","")=="aladin" and boon(a,1) and wishes_left(a)>0:return true
 	if a.get("id","")=="snow_white" and boon(a,2) and kind in ["burn","poison","bleed"]:return true
 	if a.get("immune_all",false) or a.get("immune_"+kind,false):return true
-	if a.get("immune_control",false) and kind in ["bubble","hangover","sleep"]:return true
+	if a.get("immune_control",false) and kind in ["bubble","hangover","sleep","stun"]:return true
 	return a.get("immunities",[]).has(kind)
 
 static func status(a:Dictionary,kind:String,source:String,turns:int,potency:=0.0,stacks:=1,cap:=1,permanent:=false,tactics=null) -> bool:
@@ -72,7 +72,7 @@ static func status(a:Dictionary,kind:String,source:String,turns:int,potency:=0.0
 	if not a.has("statuses"):a.statuses=[]
 	for s in a.statuses:
 		# Controls and bleed never stack. Damage effects retain ownership per source.
-		if s.kind==kind and (s.source==source or kind in ["bubble","hangover","bleed","sleep"]):
+		if s.kind==kind and (s.source==source or kind in ["bubble","hangover","bleed","sleep","stun"]):
 			s.turns=turns
 			s["applied_turn"]=int(a.get("own_turn",0))
 			s.potency=potency
@@ -386,6 +386,7 @@ static func start_turn(tactics,a:Dictionary) -> Dictionary:
 				if attached.source==s.source and attached.get("requires_curse",false):attached.turns=0
 		if s.kind=="bubble" and not a.get("gear_banner",false) and tactics.run().rng.randf()<float(s.get("chance",1)):attacks=maxi(0,attacks-1)
 		if s.kind=="sleep" and tactics.run().rng.randf()<.5:skip=true
+		if s.kind=="stun":skip=true
 		if s.kind in ["burn","poison","bleed"] and a.hp>0:
 			var source:=actor(tactics.run(),str(s.source))
 			if source.is_empty():source={"id":str(s.source)}

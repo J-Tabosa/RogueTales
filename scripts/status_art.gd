@@ -1,7 +1,7 @@
 extends RefCounted
 ## Presentation only: recognizes existing and future status fields without applying damage.
 const PATHS={"coin":"res://assets/fx/status_coin.png","bleed":"res://assets/fx/status_bleed.png","curse":"res://assets/fx/status_curse.png"}
-const NAMES={"powder":"Pólvora","poison":"Veneno","burn":"Queimadura","bleed":"Sangramento","curse":"Maldição","sleep":"Sono","immortal":"Imortalidade","bubble":"Bolha","hangover":"Ressaca","antiheal":"Corta-Cura","shield_break":"Quebra-Escudos"}
+const NAMES={"stun":"Atordoamento","powder":"Pólvora","poison":"Veneno","burn":"Queimadura","bleed":"Sangramento","curse":"Maldição","sleep":"Sono","immortal":"Imortalidade","bubble":"Bolha","hangover":"Ressaca","antiheal":"Corta-Cura","shield_break":"Quebra-Escudos"}
 static var textures:Dictionary={}
 static func texture(kind:String) -> Texture2D:
 	if textures.has(kind):return textures[kind]
@@ -25,6 +25,7 @@ static func active(data:Dictionary,hostile:=false) -> Dictionary:
 			duration=maxf(duration,float(data.get("bleeding_left",data.get("bleed_left",0))))
 		if amount>0 and duration>0:result[kind]=[amount,duration]
 	if float(data.get("curse_left",0))>0:result.curse=[0.0,float(data.curse_left)]
+	if data.get("statuses",[]).any(func(s):return s.kind=="stun" and int(s.turns)!=0):result.stun=[0.0,1.0]
 	if int(data.get("sleep_turns",0))>0:result.sleep=[0.0,float(data.sleep_turns)]
 	if int(data.get("powder",0))>0:result.powder=[float(clampi(int(data.powder),0,10)),0.0]
 	if protected(data):result.immortal=[0.0,float(data.get("immortal_turns",data.get("invulnerable_turns",0)))]

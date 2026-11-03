@@ -48,10 +48,24 @@ func test() -> void:
 	game.arena.frozen=true;game.arena._process(.2)
 	check(game.arena.enemy_track.time==0,"Pause freezes attack and damage")
 	game.arena.frozen=false
-	for n in 17:
+	for n in 30:
 		game.arena.hit_stop=0
 		game.arena._process(.05)
 	check(impact_frames==[4,5,6],"Damage emitted on authored bear impact frames")
 	check(game.arena.enemy_track.time<0 and game.arena.foes[0].animation=="boss_idle","No terminal-frame hold or animation loop")
+	game.run.journey={"format":1,"season":"summer","path":["FlorestaVerao"]}
+	game.run.phase=5;game.run.spawn_enemy();game.arena.sync_enemies()
+	game.arena.attack_warmup.busy=false;game.arena.attack_warmup.set_process(false)
+	game.arena.speed=3
+	check(game.arena.begin_enemy_attack(0,0),"Snake starts at unchanged global speed")
+	for n in 8:
+		game.arena.hit_stop=0;game.arena._process(.05)
+	check(game.arena.enemy_track.time>=game.arena.enemy_track.coil_start,"Snake reaches contact")
+	var held:int=game.arena.foes[0].frame
+	for n in 12:
+		game.arena.hit_stop=0;game.arena._process(.05)
+	check(game.arena.foes[0].frame==held,"Coil holds the contact frame")
+	check(game.arena.foes[0].position.distance_to(game.arena.tracks[0].home)<1,"Coil stays directly on victim")
+	check(game.arena.speed==3,"Global combat speed unchanged")
 	print("PHASE1 VISUAL: %d checks, %d failures"%[checks,failures])
 	game.queue_free();quit(1 if failures else 0)

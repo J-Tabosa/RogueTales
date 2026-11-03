@@ -81,9 +81,10 @@ static func spawn(owner, edited:Dictionary) -> Array[Dictionary]:
 		# the old 1.5× boss pool, group dilution, or intra-map growth again.
 		var depth:int=owner.rooms_cleared if owner.endless else owner.stage*6
 		var growth:float=(1+depth*.05)*pow(1.045,mini(depth,120))*(1+maxi(0,depth-120)*.08)
-		var hp:float=float(stats.vida_base)*growth*(1.35 if owner.room_kind=="elite" else 1.0)
+		var opening:bool=not owner.endless and owner.stage==0
+		var hp:float=float(stats.vida_base)*(.85 if opening else 1.0)*growth*(1.35 if owner.room_kind=="elite" else 1.0)
 		result.append({"id":"enemy_%d"%n,"species_id":id,"balance_id":"phase1_"+id,"name":stats.nome,"class":spec[1],"category":spec[2],"range":spec[7],"flying":id in ["winter_owl","summer_falcon"],
-			"row":row,"hp":hp,"max_hp":hp,"damage":float(stats.ataque_base)*(1+depth*.85/13)*(1.15 if owner.room_kind=="elite" else 1.0),
+			"row":row,"hp":hp,"max_hp":hp,"damage":float(stats.ataque_base)*(.80 if opening else 1.0)*(1+depth*.85/13)*(1.15 if owner.room_kind=="elite" else 1.0),
 			"armor":float(stats.def_fisica_base),"magic_defense":float(stats.def_magica_base),"initiative":float(stats.iniciativa),"attacks":int(stats.qtd_ataques),"evasion":float(stats.esquiva),
 			"boss":is_boss,"interval":float(stats.intervalo_visual),"timer":1.8+n*.5,"biome":owner.current_biome(),"variant":0,
 			"burn":0.0,"burn_left":0.0,"poison":0.0,"poison_left":0.0})
@@ -92,6 +93,9 @@ static func spawn(owner, edited:Dictionary) -> Array[Dictionary]:
 static func metadata(id:String) -> Dictionary:
 	if animation_data.is_empty():animation_data=JSON.parse_string(FileAccess.get_file_as_string("res://assets/enemies/phase1/manifest.json"))
 	return animation_data.get(id,{})
+
+static func animation_fps(id:String) -> float:
+	return 4.5 if id in ["winter_owl","summer_falcon"] else 6.0
 
 static func frames(id:String) -> SpriteFrames:
 	if frame_cache.has(id):return frame_cache[id]
@@ -103,7 +107,7 @@ static func frames(id:String) -> SpriteFrames:
 	for name in ["idle","attack","boss_idle","boss_attack"]:
 		var attack:bool=name.ends_with("attack")
 		result.add_animation(name)
-		result.set_animation_speed(name,float(data.fps) if attack else 6.0)
+		result.set_animation_speed(name,animation_fps(id) if attack else 2.5 if id in ["winter_owl","summer_falcon"] else 4.0)
 		result.set_animation_loop(name,not attack)
 		for path in data.attack if attack else data.idle:result.add_frame(name,load(path))
 	frame_cache[id]=result
@@ -112,5 +116,5 @@ static func frames(id:String) -> SpriteFrames:
 static func impact_times(id:String) -> Array[float]:
 	var d:=metadata(id)
 	var times:Array[float]=[]
-	for frame in d.impacts:times.append((float(frame)-1)/float(d.fps))
+	for frame in d.impacts:times.append((float(frame)-1)/animation_fps(id))
 	return times

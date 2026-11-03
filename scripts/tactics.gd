@@ -232,6 +232,9 @@ func phase1_impact(index:int,part:int,total:int) -> Dictionary:
 	foe.damage=power/maxi(1,total)
 	var result:Dictionary=Rules.incoming(self,index,target)
 	foe.damage=power
+	if foe.get("species_id","")=="summer_snake" and part==0 and not result.get("evaded",false) and not result.get("blocked_spirit",false):
+		var victim:int=int(result.get("target",target))
+		if victim>=0 and victim<run().actors.size() and Rules.status(run().actors[victim],"stun",foe.id,1):result["constricted"]=victim
 	return result
 
 
