@@ -36,6 +36,15 @@ func test() -> void:
 			check(close(boss.boss_height/boss.regular_height,1.25),"Boss visual and inherited hitbox multiplier exactly1.25")
 			game.arena.enemy_visible=true;game.arena._process(0)
 			await capture(map+"-boss-%d"%extent.x)
+	# Two enemies occupy the intermediate depths rather than the outer slots.
+	game.run.journey={"format":1,"season":"autumn","path":["FlorestaOutono"]}
+	game.run.phase=1;game.run.spawn_enemy()
+	for i in 2:
+		game.run.tactics.enemies[i].row="middle"
+		game.run.tactics.enemies[i]["species_id"]=["autumn_wolf","autumn_hare"][i]
+	game.arena.sync_enemies();game.arena.enemy_visible=true;game.arena._process(0)
+	check(game.arena.foe_homes[0].y<game.arena.foe_homes[1].y,"Two centered enemy slots in arena")
+	await capture("two-intermediate-slots")
 	# Actual arena clock: three bear impacts on frames4/5/6; pause freezes;
 	# finishing the eight frames immediately selects the static idle.
 	game.run.journey={"format":1,"season":"spring","path":["FlorestaPrimavera"]}

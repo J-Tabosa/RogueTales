@@ -239,7 +239,7 @@ func sync_enemies() -> void:
 			model.sprite_frames=Phase1.frames(data.species_id)
 			var meta:=Phase1.metadata(data.species_id)
 			model.species_anchor=Vector2(meta.anchor[0],meta.anchor[1])
-			model.body_height=float(meta.reference_height)
+			model.body_height=Phase1.visual_span(data.species_id)
 			model.flip_h=false
 			# The selection area inherits the same 1.25× boss transform.
 			var area:=Area2D.new()
@@ -248,7 +248,7 @@ func sync_enemies() -> void:
 			area.collision_mask=0
 			var shape:=CollisionShape2D.new()
 			var rectangle:=RectangleShape2D.new()
-			var bounds:=Rect2(model.sprite_frames.get_frame_texture("idle",0).get_image().get_used_rect())
+			var bounds:=Rect2(Phase1.visual_bounds(model.sprite_frames.get_frame_texture("idle",0).get_image()))
 			rectangle.size=bounds.size
 			shape.shape=rectangle
 			shape.position=bounds.get_center()-model.species_anchor

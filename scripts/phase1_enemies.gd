@@ -24,6 +24,7 @@ const DATA = {
 }
 static var animation_data:Dictionary={}
 static var frame_cache:Dictionary={}
+static var visual_spans:Dictionary={}
 
 static func season_for(owner) -> String:
 	if not owner.expedition or not owner.active_secret.is_empty():return ""
@@ -118,3 +119,32 @@ static func impact_times(id:String) -> Array[float]:
 	var times:Array[float]=[]
 	for frame in d.impacts:times.append((float(frame)-1)/animation_fps(id))
 	return times
+
+## One fixed reference per animation family; weapon trails and later poses never
+## change a unit's scale. A common animal occupies the same maximum idle span.
+static func visual_span(id:String,attack:=false) -> float:
+	var key:=id+(":attack" if attack else ":idle")
+	if visual_spans.has(key):return float(visual_spans[key])
+	var texture:Texture2D=load(metadata(id)["attack" if attack else "idle"][0])
+	var bounds:=visual_bounds(texture.get_image())
+	var span:=maxf(1,maxf(bounds.size.x,bounds.size.y))
+	visual_spans[key]=span
+	return span
+
+static func visual_bounds(image:Image) -> Rect2i:
+	# Ignore barely visible export noise when measuring a silhouette. Pixels and
+	# the displayed artwork remain untouched.
+	var source:=image.duplicate() as Image
+	source.convert(Image.FORMAT_RGBA8)
+	var bytes:=source.get_data()
+	var width:=source.get_width()
+	var left:=width
+	var top:=source.get_height()
+	var right:=0
+	var bottom:=0
+	for y in source.get_height():
+		for x in width:
+			if bytes[(y*width+x)*4+3]<=25:continue
+			left=mini(left,x);top=mini(top,y)
+			right=maxi(right,x+1);bottom=maxi(bottom,y+1)
+	return Rect2i(left,top,right-left,bottom-top) if right>left else Rect2i()

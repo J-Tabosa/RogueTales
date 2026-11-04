@@ -71,7 +71,7 @@ func advance(dt: float, is_boss: bool, windup: float, interval: float) -> void:
 			else:seek(("boss_" if is_boss else "")+"idle",idle_clock)
 		else:seek(id,idle_clock)
 		offset=-species_anchor
-		scale=Vector2.ONE*((boss_height if is_boss else regular_height)/body_height)
+		scale=Vector2.ONE*((boss_height if is_boss else regular_height)/preload("res://scripts/phase1_enemies.gd").visual_span(species_id,str(animation).ends_with("attack")))
 		return
 	var prefix := "boss_" if is_boss else ""
 	var strike := prefix + "attack"

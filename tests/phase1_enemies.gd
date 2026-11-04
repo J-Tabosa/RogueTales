@@ -96,5 +96,26 @@ func test() -> void:
 	for id in Phase1.DATA:
 		check(Phase1.animation_fps(id)<10,"All forest attacks slower")
 		check(Phase1.animation_fps(id)<=4.5 if id in ["winter_owl","summer_falcon"] else true,"Flying attacks particularly readable")
+	var Layout=preload("res://scripts/formation_layout.gd")
+	for hostile in [false,true]:
+		for row in Layout.ROWS:
+			var units:Array=[{"row":row},{"row":row}]
+			check(is_equal_approx(Layout.home(units,0,hostile).y,.53) and is_equal_approx(Layout.home(units,1,hostile).y,.79),"Two units use intermediate slots")
+			units.append({"row":row})
+			for at in 3:check(is_equal_approx(Layout.home(units,at,hostile).y,[.40,.66,.92][at]),"Three-unit slots unchanged")
+			units.resize(1)
+			check(is_equal_approx(Layout.home(units,0,hostile).y,.66),"Single unit remains centered")
+	for id in Phase1.DATA:
+		var sprite:=AnimatedSprite2D.new()
+		sprite.set_script(Model)
+		sprite.species_id=id;sprite.sprite_frames=Phase1.frames(id)
+		sprite.regular_height=100;sprite.boss_height=125
+		sprite.advance(0,Phase1.DATA[id][8],0,3)
+		var image:=sprite.sprite_frames.get_frame_texture(sprite.animation,0).get_image()
+		var bounds:=Phase1.visual_bounds(image)
+		check(is_equal_approx(maxf(bounds.size.x,bounds.size.y)*sprite.scale.x,125.0 if Phase1.DATA[id][8] else 100.0),"Shared visible span; only bosses larger: "+id)
+		sprite.free()
+	var cleaned:Image=(load("res://assets/enemies/phase1/autumn_lumberjack/attack/01.png") as Texture2D).get_image()
+	for point in [Vector2i(450,472),Vector2i(456,471)]:check(cleaned.get_pixelv(point).a<.04,"Arm/torso gap is transparent")
 	print("PHASE1 ENEMIES: %d checks, %d failures"%[checks,failures])
 	quit(1 if failures else 0)
