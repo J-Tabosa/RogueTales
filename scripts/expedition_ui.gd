@@ -24,7 +24,7 @@ var route_walk_left := 0.0
 func is_expedition() -> bool:
 	return run != null and run.expedition
 
-func label(parent: Node, text: String, rect: Rect2, font_size := 18, color := Color("eeeae2")) -> Label:
+func label(parent: Node, text: String, rect: Rect2, font_size := 18, color := TaleTheme.c("text")) -> Label:
 	var node := super.label(parent, text, rect, font_size, color)
 	BattleType.apply(node,font_size>=20)
 	node.size=rect.size
@@ -45,6 +45,7 @@ func header(title: String, subtitle: String) -> void:
 	button(page, "", Rect2(464, 8, 52, 44), show_settings)
 	icon(page, "settings", Rect2(480, 21, 20, 20))
 	label(page, title, Rect2(24, 66, 492, 55), 30)
+	UISkin.divider(page,Rect2(100,116,340,10))
 	label(page, subtitle, Rect2(24, 126, 492, 46), 15, MUTED)
 
 func show_menu() -> void:
@@ -60,7 +61,7 @@ func show_menu() -> void:
 		UISkin.picture(art,achievement_art.HERO_IMAGES[id],Rect2(0,0,492,352))
 	else:
 		UISkin.picture(art, UISkin.FOREST, Rect2(0, 0, 492, 352), true).modulate = Color(0.8, 0.8, 0.9)
-		gradient(art, Rect2(0, 0, 492, 352), Color("161c30", 0.15), Color("161c30", 0.95))
+		gradient(art, Rect2(0, 0, 492, 352), TaleTheme.c("surface", 0.15), TaleTheme.c("surface", 0.95))
 		portrait_fitted(art, id, Vector2(246, 319), 283)
 	achievement_art.gold_frame(art,achievement_art.fitted_rect(achievement_art.HERO_IMAGES[id],Rect2(0,0,492,352)) if achievement_art.HERO_IMAGES.has(id) else Rect2(0,0,492,352))
 	label(page, "Escolha. Arrisque. Recomece.", Rect2(24, 565, 492, 43), 26)
@@ -113,8 +114,8 @@ func show_map() -> void:
 		card.set_meta("locked",not owned)
 		if owned:
 			label(card,data.title,Rect2(20,12,416,30),20,GOLD)
-			label(card,data.detail,Rect2(20,48,416,40),14,Color("cad5c1"))
-			label(card,"SELECIONADA" if chosen_blessing==key else "TOQUE PARA ESCOLHER",Rect2(20,97,416,20),10,Color("8fba9d"))
+			label(card,data.detail,Rect2(20,48,416,40),14,TaleTheme.c("muted"))
+			label(card,"SELECIONADA" if chosen_blessing==key else "TOQUE PARA ESCOLHER",Rect2(20,97,416,20),10,TaleTheme.c("accent"))
 		else:
 			for child in card.get_children():child.queue_free()
 			card.disabled=true
@@ -123,8 +124,8 @@ func show_map() -> void:
 			seal.size=card.size
 			seal.mouse_filter=Control.MOUSE_FILTER_IGNORE
 			card.add_child(seal)
-			icon(card,"lock",Rect2(218,25,40,40),Color("c5b27e"))
-			var condition:=label(card,blessing_condition(key),Rect2(48,74,380,38),14,Color("c7c2b2"))
+			icon(card,"lock",Rect2(218,25,40,40),TaleTheme.c("accent"))
+			var condition:=label(card,blessing_condition(key),Rect2(48,74,380,38),14,TaleTheme.c("muted"))
 			condition.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
 
 	var note:=label(page, "Memórias e desbloqueios permanecem entre expedições.", Rect2(24, 722, 492, 44), 13, MUTED)
@@ -433,7 +434,7 @@ func show_run_shop() -> void:
 		var capped:bool=key=="item:travelers_page" and run.party_capacity>=Content.MAX_PARTY
 		card.disabled=bought or cost<0 or run.run_gold<cost or capped
 		for child in card.get_children():child.queue_free()
-		for skin in ["normal","disabled"]:card.add_theme_stylebox_override(skin,box(Color("142f27"),Color("486047"),12))
+		for skin in ["normal","disabled"]:card.add_theme_stylebox_override(skin,box(TaleTheme.c("surface"),TaleTheme.c("border"),12))
 		if key.begins_with("item:"):
 			ItemArt.picture(card,key.trim_prefix("item:"),Rect2(12,20,82,82))
 		else:
@@ -444,7 +445,7 @@ func show_run_shop() -> void:
 		var title:=label(card,data.title,Rect2(108,12,306,42),19,GOLD)
 		title.set_meta("shop_title",true)
 		effect_badges(card,EffectBadges.for_supply(key,run.party_capacity),Vector2(108,80 if key.begins_with("bonus:") else 61),340)
-		label(card,"EQUIPE COMPLETA" if cost<0 or capped else "COMPRADO" if bought else "%d OURO"%cost,Rect2(108,110,296,21),12,Color("92b99d") if bought else GOLD)
+		label(card,"EQUIPE COMPLETA" if cost<0 or capped else "COMPRADO" if bought else "%d OURO"%cost,Rect2(108,110,296,21),12,TaleTheme.c("muted") if bought else GOLD)
 		var info:=button(card,"i",Rect2(422,90,42,40),show_supply_details.bind(key))
 		info.tooltip_text="Ver todos os efeitos"
 	var inventory:=button(page,"Equipar itens · %d na bolsa"%run.inventory.size(),Rect2(24,752,492,48),show_equipment.bind(0))
@@ -469,10 +470,10 @@ func effect_badges(parent: Node, entries: Array, at: Vector2, available: float) 
 		badge.size=Vector2(width,30)
 		badge.mouse_filter=Control.MOUSE_FILTER_IGNORE
 		badge.set_meta("effect_badge",entry.glyph)
-		badge.add_theme_stylebox_override("panel",box(Color("0b231e"),Color("3e5947"),6))
+		badge.add_theme_stylebox_override("panel",box(TaleTheme.c("surface"),TaleTheme.c("border"),6))
 		parent.add_child(badge)
-		icon(badge,entry.glyph,Rect2(6,6,18,18),Color(entry.get("color","e2c487")))
-		label(badge,entry.text,Rect2(29,2,width-33,26),12,Color("cbd6bf"))
+		icon(badge,entry.glyph,Rect2(6,6,18,18),TaleTheme.c("accent"))
+		label(badge,entry.text,Rect2(29,2,width-33,26),12,TaleTheme.c("muted"))
 		x+=width+7
 
 func show_supply_details(key: String) -> void:
@@ -512,7 +513,7 @@ func show_team_event() -> void:
 	for index in lines.size():
 		var data: Dictionary = lines[index]
 		var speaker: String = data.speaker
-		var tint := GOLD if speaker == "narrator" else Color(TaleCatalog.HEROES[speaker].color)
+		var tint := GOLD if speaker == "narrator" else TaleTheme.c("accent")
 		var y := 184 + index * 88.0
 		panel(page, Rect2(24, y, 492, 81))
 		label(page, "Narradora" if speaker == "narrator" else str(TaleCatalog.HEROES[speaker].name), Rect2(38, y + 4, 464, 21), 12, tint)
@@ -526,7 +527,7 @@ func show_team_event() -> void:
 		var option: Array = options[index]
 		var card := button(page, "", Rect2(24, 468 + index * 117, 492, 106), select_team_event.bind(str(option[0])))
 		card.disabled = index == 2 and not can_pair
-		label(card, option[1], Rect2(14, 5, 464, 31), 18, GOLD if index == 2 and can_pair else Color("e6e5df"))
+		label(card, option[1], Rect2(14, 5, 464, 31), 18, GOLD if index == 2 and can_pair else TaleTheme.c("text"))
 		label(card, option[2], Rect2(14, 42, 464, 57), 14, MUTED)
 	button(page, "Salvar e sair", Rect2(24, 842, 492, 52), leave_battle)
 
@@ -574,7 +575,7 @@ func show_run_build() -> void:
 		var recipient:String="Equipe e futuros recrutados" if entry.mode=="group" else str(TaleCatalog.HEROES.get(entry.target,{}).get("name",entry.target))
 		label(card,data.note,Rect2(12,6,452,20),11,Bonuses.tint(entry.id))
 		label(card,data.title,Rect2(12,31,452,31),19)
-		label(card,recipient+(" · Agir depois" if entry.attribute=="initiative" and int(entry.sign)<0 else " · Agir antes" if entry.attribute=="initiative" else ""),Rect2(12,70,452,30),13,Color("e1e4dc"))
+		label(card,recipient+(" · Agir depois" if entry.attribute=="initiative" and int(entry.sign)<0 else " · Agir antes" if entry.attribute=="initiative" else ""),Rect2(12,70,452,30),13,TaleTheme.c("text"))
 		y+=120
 	if not run.relics.is_empty():
 		label(inner,"BÔNUS LEGADOS · efeitos originais preservados",Rect2(0,y,476,40),13,GOLD)
@@ -709,7 +710,7 @@ func show_heroes() -> void:
 	clear_page()
 	page.size = Vector2(logical_width, logical_height)
 	page.get_child(0).size = page.size
-	gradient(page, Rect2(0, 0, logical_width, logical_height), Color("18392e"), Color("0c1c1a"))
+	gradient(page, Rect2(0, 0, logical_width, logical_height), TaleTheme.c("surface"), TaleTheme.c("surface"))
 	var w := logical_width
 	label(page, "O LIVRO DOS VIAJANTES", Rect2(24, 20, w - 120, 28), 12, GOLD)
 	label(page, "Heróis dos contos", Rect2(24, 57, w - 48, 54), 32)
@@ -743,12 +744,12 @@ func show_heroes() -> void:
 		card.set_meta("hero_id", id)
 		card.set_meta("silhouette", not owned)
 		card.clip_contents = true
-		card.add_theme_stylebox_override("normal", box(Color("092b22") if selected else Color("1c3d31"), GOLD if selected else Color("5b6e51"), 10))
-		gradient(card, Rect2(8, 8, card_width-16, card_height-88), Color("42664c"), Color("122f27"))
+		card.add_theme_stylebox_override("normal", box(TaleTheme.c("surface") if selected else TaleTheme.c("surface"), GOLD if selected else TaleTheme.c("border"), 10))
+		gradient(card, Rect2(8, 8, card_width-16, card_height-88), TaleTheme.c("border"), TaleTheme.c("surface"))
 		banner_portrait(card, id, Rect2(12, 24, card_width-24, card_height-114), not owned, true)
 		label(card, "%02d" % (i + 1), Rect2(20, 14, card_width-40, 21), 11, GOLD)
 		label(card, str(TaleCatalog.HEROES[id].get("short_name", TaleCatalog.HEROES[id].name)) if owned else str(TaleCatalog.HEROES[id].name), Rect2(16, card_height-76, card_width-32, 36), 24).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		label(card, TaleCatalog.hero_class_name(id) if owned else "BLOQUEADO · 5.000 MEMÓRIAS", Rect2(16, card_height-36, card_width-32, 22), 12,Color("a7bea2")).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label(card, TaleCatalog.hero_class_name(id) if owned else "BLOQUEADO · 5.000 MEMÓRIAS", Rect2(16, card_height-36, card_width-32, 22), 12,TaleTheme.c("muted")).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var owned := hero_revealed(selected_hero)
 	var note: String = "%s · %s\nAtiva: %s" % [TaleCatalog.HEROES[selected_hero].name, TaleCatalog.hero_class_name(selected_hero), Content.KITS[selected_hero][0]] if owned else "Compre este personagem por 5.000 memórias. A primeira conta recebe 5.000 para escolher seu primeiro viajante."
 	var note_y:=220+gallery_height+12
@@ -838,7 +839,7 @@ func show_hero_details(id: String) -> void:
 	header(TaleCatalog.HEROES[id].name, "%s · uma ativa, uma reação e uma ULT própria." % TaleCatalog.hero_class_name(id))
 	var inner := scroll_area(184, 605, 1570)
 	var art := panel(inner, Rect2(0, 0, 476, 228))
-	gradient(art, Rect2(0, 0, 476, 228), Color(TaleCatalog.HEROES[id].color, 0.18), Color("212338"))
+	gradient(art, Rect2(0, 0, 476, 228), TaleTheme.c("accent", .18), TaleTheme.c("surface"))
 	banner_portrait(art, id, Rect2(76, 4, 324, 217), false)
 	var stats:=TaleCatalog.hero_stats(id,[0,0,0],{})
 	if is_expedition():
@@ -883,20 +884,21 @@ func show_settings() -> void:
 	state = "settings"
 	clear_page()
 	header("Configurações", "Som, apresentação e controles da sua jornada.")
-	var inner := scroll_area(190, 679, 1320)
+	var inner := scroll_area(190, 679, 1388)
 	setting_slider(inner, "Música", 0, campaign.music_volume, set_music_volume)
 	setting_slider(inner, "Efeitos", 132, campaign.effects_volume, set_effects_volume)
 	setting_slider(inner, "Vozes de ataque", 264, campaign.voice_volume, set_voice_volume)
-	button(inner, "Movimento reduzido: " + ("ON" if campaign.reduced_motion else "OFF"), Rect2(0, 413, 476, 52), toggle_motion)
-	button(inner, "Qualidade: " + ("Alta" if campaign.high_quality else "Leve"), Rect2(0, 481, 476, 52), set_quality.bind(not campaign.high_quality))
-	button(inner, "%d FPS" % campaign.fps_limit, Rect2(0, 549, 476, 52), set_fps.bind(30 if campaign.fps_limit == 60 else 60))
-	button(inner, "Velocidade padrão: %d×" % TaleCampaign.speed_label(campaign.speed), Rect2(0, 617, 476, 52), change_default_speed)
-	button(inner, "ULT automática: " + ("ON" if campaign.auto_ult else "OFF"), Rect2(0, 685, 476, 52), settings_auto_ult)
-	button(inner, "Tela cheia / Janela · F11", Rect2(0, 753, 476, 52), toggle_fullscreen).disabled = OS.has_feature("mobile")
-	button(inner, "Como jogar", Rect2(0, 835, 476, 52), show_help)
-	button(inner, "Créditos", Rect2(0, 903, 476, 52), show_credits)
-	code_settings_section(inner,1000)
-	button(inner, "Resetar conta deste dispositivo", Rect2(0, 1230, 476, 56), request_reset).add_theme_color_override("font_color", Color("ecaaa3"))
+	button(inner, theme_button_text(), Rect2(0, 399, 476, 52), toggle_ui_theme).name = "ThemeToggle"
+	button(inner, "Movimento reduzido: " + ("ON" if campaign.reduced_motion else "OFF"), Rect2(0, 481, 476, 52), toggle_motion)
+	button(inner, "Qualidade: " + ("Alta" if campaign.high_quality else "Leve"), Rect2(0, 549, 476, 52), set_quality.bind(not campaign.high_quality))
+	button(inner, "%d FPS" % campaign.fps_limit, Rect2(0, 617, 476, 52), set_fps.bind(30 if campaign.fps_limit == 60 else 60))
+	button(inner, "Velocidade padrão: %d×" % TaleCampaign.speed_label(campaign.speed), Rect2(0, 685, 476, 52), change_default_speed)
+	button(inner, "ULT automática: " + ("ON" if campaign.auto_ult else "OFF"), Rect2(0, 753, 476, 52), settings_auto_ult)
+	button(inner, "Tela cheia / Janela · F11", Rect2(0, 821, 476, 52), toggle_fullscreen).disabled = OS.has_feature("mobile")
+	button(inner, "Como jogar", Rect2(0, 903, 476, 52), show_help)
+	button(inner, "Créditos", Rect2(0, 971, 476, 52), show_credits)
+	code_settings_section(inner,1068)
+	button(inner, "Resetar conta deste dispositivo", Rect2(0, 1298, 476, 56), request_reset).add_theme_color_override("font_color", TaleTheme.c("accent"))
 	navigation("profile")
 
 func show_help() -> void:
@@ -959,11 +961,11 @@ func continue_into_endless() -> void:
 
 func journey_modal(title: String, subtitle: String) -> void:
 	modal(title, subtitle)
-	overlay.get_child(0).color = Color(0.02, 0.03, 0.06, 0.60)
+	overlay.get_child(0).color = TaleTheme.c("background", .60)
 	var card := Panel.new()
 	card.position = Vector2(16, 148)
 	card.size = Vector2(508, 718)
-	card.add_theme_stylebox_override("panel", box(Color("111a2b", 0.96), Color("947e50"), 19))
+	card.add_theme_stylebox_override("panel", box(TaleTheme.c("surface", 0.96), TaleTheme.c("border"), 19))
 	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	overlay.add_child(card)
 	register_layout(card, "center")
@@ -1033,7 +1035,7 @@ func perform_wish(id:String) -> void:
 				arena.tracks[at].time=-1.0
 				arena.heroes[at].modulate=Color.WHITE
 				arena.heroes[at].show_animation("idle")
-				arena.damage_number("RESSURREIÇÃO",arena.tracks[at].home,Color("9ce5b3"))
+				arena.damage_number("RESSURREIÇÃO",arena.tracks[at].home,TaleTheme.c("accent"))
 			arena.sync_health(run.actors)
 		push_battle_log("Aladin · "+{"life":"Ressurreição","death":"Abate","wealth":"Riqueza"}.get(id,id))
 		update_hud()
@@ -1075,7 +1077,7 @@ func show_bonus_selection(id:String,source:="reward",target:="",direction:=0) ->
 	overlay.set_meta("bonus_offer",id)
 	var strip:=panel(overlay,Rect2(32,382,476,52))
 	bonus_skin(strip,id,false)
-	label(strip,"PRÉVIA · escolha e confirme abaixo",Rect2(14,8,448,36),17,Color("f4efdf"))
+	label(strip,"PRÉVIA · escolha e confirme abaixo",Rect2(14,8,448,36),17,TaleTheme.c("text"))
 	var initiative:bool=data.attribute=="initiative"
 	if initiative:
 		for sign_value in [1,-1]:
@@ -1103,8 +1105,8 @@ func show_bonus_selection(id:String,source:="reward",target:="",direction:=0) ->
 		recipient.set_meta("bonus_recipient",a.id)
 		recipient.disabled=data.mode=="group" or not eligible
 		face_portrait(recipient,a.id,Rect2(9,9,58,58))
-		label(recipient,str(TaleCatalog.HEROES[a.id].name)+(" · CAÍDO" if a.hp<=0 else ""),Rect2(78,7,365,26),16,GOLD if a.id==target else Color("edf0e3"))
-		label(recipient,"Escolha o sentido acima" if initiative and direction==0 and eligible else preview.text,Rect2(78,37,365,34),14,Color("c9d9c5"))
+		label(recipient,str(TaleCatalog.HEROES[a.id].name)+(" · CAÍDO" if a.hp<=0 else ""),Rect2(78,7,365,26),16,GOLD if a.id==target else TaleTheme.c("text"))
+		label(recipient,"Escolha o sentido acima" if initiative and direction==0 and eligible else preview.text,Rect2(78,37,365,34),14,TaleTheme.c("muted"))
 		if preview.eligible and (data.mode=="group" or a.id==target):valid=true
 	var help_text:="Caídos recebem o bônus sem reviver. Nada é consumido ao voltar."
 	if data.mode=="group":help_text="Uma aplicação por integrante compatível, incluindo futuros recrutados."

@@ -15,7 +15,7 @@ const SHORT={
 	"peter":["Golpeia um alvo; suas sombras atacam junto.","Esquivas criam sombras; impactos diretos removem uma.","Completa três sombras e fortalece seus golpes temporariamente."],
 	"puss":["Desfere um corte em um inimigo.","Quanto menos vida possui, maior seu Dano Físico.","Atinge toda a coluna com o dano aumentado pela sua fúria."]
 }
-const COLORS=["ff6969","64c7ff","ead9ff"]
+const COLOR_ROLES=["physical","magical","text"]
 static func coefficient_text(value:float) -> String:
 	var rendered:="%.4f"%value
 	while rendered.ends_with("0"):rendered=rendered.trim_suffix("0")
@@ -66,7 +66,7 @@ static func preview(a:Dictionary,kind:int) -> Dictionary:
 	var lines:Array[String]=[]
 	for i in 3:
 		if values[i]<=0:continue
-		lines.append("[color=#%s]%s %s[/color]"%[COLORS[i],Details.n(values[i]),["físico","mágico","real"][i]])
+		lines.append("[color=#%s]%s %s[/color]"%[TaleTheme.c(COLOR_ROLES[i]).to_html(false),Details.n(values[i]),["físico","mágico","real"][i]])
 		if i<2:
 			var base:=Rules.power(a,i==1)
 			var coefficient:float=values[i]/maxf(.001,base)

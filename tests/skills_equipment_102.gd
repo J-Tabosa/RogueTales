@@ -102,8 +102,8 @@ func checks() -> void:
 		var margin:MarginContainer=info.get_parent()
 		assert(margin.get_theme_constant("margin_left")==5)
 		assert(info.size.x==info.size.y)
-		assert(info.get_theme_stylebox("normal").corner_radius_top_left==0)
-		assert(info.get_theme_font("font").resource_path.ends_with("Goldman-Regular.ttf"))
+		assert(info.get_theme_stylebox("normal") is StyleBoxTexture and info.get_theme_stylebox("normal").get_meta("theme_variant", "").ends_with("_true"))
+		assert(info.get_theme_font("font").resource_path.ends_with("Lora.ttf"))
 		var inside:=InputEventMouseButton.new()
 		inside.button_index=MOUSE_BUTTON_LEFT
 		inside.pressed=true

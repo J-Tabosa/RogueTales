@@ -17,6 +17,7 @@ var journal: Array = []
 var checkpoint: Dictionary = {}
 var pending_story := -1
 var reduced_motion := false
+var ui_theme := "dark"
 var speed := 2.0
 var goals:Dictionary={}
 var daily:Dictionary={}
@@ -265,6 +266,7 @@ func to_dict() -> Dictionary:
 		"checkpoint": checkpoint,
 		"pending_story": pending_story,
 		"reduced_motion": reduced_motion,
+		"ui_theme": ui_theme,
 		"speed": speed,
 		"hero_levels": hero_levels,
 		"hero_xp": hero_xp,
@@ -367,6 +369,7 @@ func load_data(data: Dictionary) -> void:
 	if not cleared.has(pending_story) or choices.has(str(pending_story)):
 		pending_story = -1
 	reduced_motion = bool(data.get("reduced_motion", false))
+	ui_theme = "light" if data.get("ui_theme", "dark") == "light" else "dark"
 	speed = float(clampi(int(data.get("speed",2)) if int(data.get("speed_base",0))==2 else int(data.get("speed",1))+1,2,4))
 	goals=data.get("goals",{}).duplicate(true) if data.get("goals",{}) is Dictionary else {}
 	daily=data.get("daily",{}).duplicate(true) if data.get("daily",{}) is Dictionary else {}

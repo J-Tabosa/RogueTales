@@ -25,7 +25,7 @@ func tag(parent: Node, at: Vector2, dims: Vector2, font: int, bold := false) -> 
 	node.position = at
 	node.size = dims
 	node.add_theme_font_size_override("font_size", font)
-	node.add_theme_color_override("font_color", Color("fff1d5"))
+	node.add_theme_color_override("font_color", TaleTheme.c("muted"))
 	Type.apply(node,bold)
 	node.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	node.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -33,25 +33,13 @@ func tag(parent: Node, at: Vector2, dims: Vector2, font: int, bold := false) -> 
 	return node
 func skin(color: Color) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0,0,0,0)
-	style.border_color = color.lerp(Color("b99a56"),.5)
+	style.bg_color = Color.TRANSPARENT
+	style.border_color = color.lerp(TaleTheme.c("accent"),.5)
 	style.set_border_width_all(0)
 	style.set_corner_radius_all(6)
 	return style
 func frame(parent: Panel) -> void:
-	var path := "res://assets/ui/ability_ribbon.png"
-	if banner_texture == null and ResourceLoader.exists(path):
-		var source: Texture2D = load(path)
-		var atlas := AtlasTexture.new()
-		atlas.atlas = source
-		# The PNG has large transparent margins. Normalize the drawn frame,
-		# then place face/text relative to the painted interior, not the source file.
-		atlas.region = Rect2(84,142,1994,406)
-		banner_texture = atlas
-	if banner_texture == null:return
-	var art := RibbonSkin.picture(parent,banner_texture,Rect2(Vector2.ZERO,parent.size))
-	art.stretch_mode = TextureRect.STRETCH_SCALE
-	art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	RibbonSkin.decorate(parent)
 func face(parent: Panel) -> TextureRect:
 	var holder := Panel.new()
 	holder.position = Vector2(10,10)
@@ -59,7 +47,7 @@ func face(parent: Panel) -> TextureRect:
 	holder.clip_contents = true
 	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var portrait_plate:=StyleBoxFlat.new()
-	portrait_plate.bg_color=Color("102d27")
+	portrait_plate.bg_color=TaleTheme.c("surface")
 	portrait_plate.set_corner_radius_all(5)
 	holder.add_theme_stylebox_override("panel",portrait_plate)
 	parent.add_child(holder)

@@ -4,12 +4,13 @@ static func capacity(data:Dictionary) -> float:
 	return float(data.max_hp)+maxf(0,float(data.get("shield",0)))
 static func tint(data:Dictionary) -> Color:
 	var ratio:=clampf(float(data.hp)/maxf(1,float(data.max_hp)),0,1)
-	if ratio>.8:return Color("67cf85")
-	if ratio>.6:return Color("c5e85a")
-	if ratio>.4:return Color("f2d36b")
-	if ratio>.2:return Color("f5a052")
-	return Color("ff6969")
+	if ratio>.8:return TaleTheme.c("health_full")
+	if ratio>.6:return TaleTheme.c("health_high")
+	if ratio>.4:return TaleTheme.c("health_half")
+	if ratio>.2:return TaleTheme.c("health_low")
+	return TaleTheme.c("health_critical")
 static func update(bar:ProgressBar,data:Dictionary) -> void:
+	bar.set_meta("health_bar",true)
 	var color:=tint(data)
 	var fill:=bar.get_theme_stylebox("fill") as StyleBoxFlat
 	if fill==null or fill.bg_color!=color:
@@ -26,8 +27,9 @@ static func update(bar:ProgressBar,data:Dictionary) -> void:
 		segment=ColorRect.new()
 		segment.name="ShieldSegment"
 		segment.mouse_filter=Control.MOUSE_FILTER_IGNORE
-		segment.color=Color("8ddbee")
+		segment.color=TaleTheme.c("secondary")
 		bar.add_child(segment)
+	segment.color=TaleTheme.c("secondary")
 	segment.position=Vector2(bar.size.x*maxf(0,data.hp)/total,0)
 	segment.size=Vector2(bar.size.x*shield/total,bar.size.y)
 	segment.visible=shield>0 and data.hp>0

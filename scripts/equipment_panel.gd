@@ -51,11 +51,11 @@ func plain_panel(parent: Node, rect: Rect2, color: Color) -> Panel:
 	node.size = rect.size
 	var style := Art.plate()
 	style.bg_color = color
-	style.border_color = Color("52665a")
+	style.border_color = TaleTheme.c("border")
 	node.add_theme_stylebox_override("panel", style)
 	parent.add_child(node)
 	return node
-func text(parent: Node, value: String, rect: Rect2, font_size := 16, tint := Color("e8e5d8")) -> Label:
+func text(parent: Node, value: String, rect: Rect2, font_size := 16, tint := TaleTheme.c("text")) -> Label:
 	var node: Label = ui.label(parent, value, rect, font_size, tint)
 	node.clip_text = true
 	return node
@@ -70,12 +70,12 @@ func rebuild() -> void:
 		remove_child(child)
 		child.queue_free()
 	var shade := ColorRect.new()
-	shade.color = Color(.015, .03, .025, .91)
+	shade.color = TaleTheme.c("background", .91)
 	shade.size = size
 	add_child(shade)
 	var wide := size.x >= 900
 	var extent := Vector2(minf(size.x - 24, 1120), minf(size.y - 24, 736 if wide else 940))
-	var board := plain_panel(self, Rect2((size - extent) * .5, extent), Color("122c26"))
+	var board := plain_panel(self, Rect2((size - extent) * .5, extent), TaleTheme.c("surface"))
 	board.name = "EquipmentBoard"
 	var width := extent.x
 	var height := extent.y
@@ -103,7 +103,7 @@ func rebuild() -> void:
 		var details_x := 32 + left_width if wide else 22.0
 		build_description(board, Rect2(details_x, body_y, width - details_x - 22, body_height))
 func build_inventory(parent: Node, rect: Rect2) -> void:
-	var pane := plain_panel(parent, rect, Color("1a332c"))
+	var pane := plain_panel(parent, rect, TaleTheme.c("surface"))
 	pane.name = "AppearancePane"
 	var width := rect.size.x
 	text(pane, "APARÊNCIA", Rect2(14, 10, width - 28, 23), 12, ui.GOLD)
@@ -149,7 +149,7 @@ func build_inventory(parent: Node, rect: Rect2) -> void:
 	if unique.is_empty(): text(pane, "Nenhum item nesta categoria.\nEncontre equipamentos nas recompensas,\nno mercador e em duelos secretos.", Rect2(18, 114, width - 36, 150), 16, ui.MUTED)
 	scroll.set_deferred("scroll_vertical", inventory_offset)
 func build_description(parent: Node, rect: Rect2) -> void:
-	var pane := plain_panel(parent, rect, Color("213a31"))
+	var pane := plain_panel(parent, rect, TaleTheme.c("surface"))
 	pane.name = "DescriptionPane"
 	pane.clip_contents = true
 	var width := rect.size.x
@@ -172,7 +172,7 @@ func build_description(parent: Node, rect: Rect2) -> void:
 	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	stack.add_theme_constant_override("separation", 12)
 	scroll.add_child(stack)
-	for line in [[data.title, 24, ui.GOLD], [Gear.rarity_name(selected_item).to_upper()+" · "+("ITEM DE VILÃO" if data.has("trophy") else "EQUIPAMENTO"), 11, Gear.tint(selected_item)], [data.detail, 17, Color("eee8d6")]]:
+	for line in [[data.title, 24, ui.GOLD], [Gear.rarity_name(selected_item).to_upper()+" · "+("ITEM DE VILÃO" if data.has("trophy") else "EQUIPAMENTO"), 11, Gear.tint(selected_item)], [data.detail, 17, TaleTheme.c("text")]]:
 		var label := Label.new()
 		label.text = line[0]
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -206,7 +206,7 @@ func build_description(parent: Node, rect: Rect2) -> void:
 	var remove:Button=ui.button(pane,"Remover equipamento · espaço %d"%(selected_slot+1),Rect2(14,height-62,width-28,48),ui.equip_from_panel.bind(hero_index,"",selected_slot))
 	remove.name="RemoveEquipment"
 	remove.add_theme_font_size_override("font_size",15)
-	remove.add_theme_color_override("font_color",Color("ffb5a5"))
+	remove.add_theme_color_override("font_color",TaleTheme.c("accent"))
 	remove.tooltip_text="Devolver à bolsa o equipamento deste espaço"
 	remove.disabled=not editable() or str(Gear.item_at(actor,selected_slot)).is_empty()
 
@@ -243,10 +243,10 @@ func request_equip() -> void:
 	add_child(transfer_prompt)
 	var shade:=ColorRect.new()
 	shade.size=size
-	shade.color=Color(0,.025,.02,.85)
+	shade.color=TaleTheme.c("background", .85)
 	transfer_prompt.add_child(shade)
 	var extent:=Vector2(minf(size.x-32,560),minf(size.y-32,370))
-	var board:=plain_panel(transfer_prompt,Rect2((size-extent)*.5,extent),Color("16372f"))
+	var board:=plain_panel(transfer_prompt,Rect2((size-extent)*.5,extent),TaleTheme.c("surface"))
 	text(board,"Trocar equipamento?",Rect2(22,18,extent.x-44,42),24,ui.GOLD)
 	var explanation:="%s já está sendo usado por %s (espaço %d).\n\nDeseja transferi-lo para %s (espaço %d)?"%[Gear.data(selected_item).title,TaleCatalog.HEROES[ui.run.actors[owner.index].id].name,owner.slot+1,TaleCatalog.HEROES[ui.run.actors[hero_index].id].name,selected_slot+1]
 	if not str(pending_transfer.expected_target).is_empty():explanation+="\n\n%s voltará para a bolsa."%Gear.data(pending_transfer.expected_target).title

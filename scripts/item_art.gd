@@ -18,8 +18,8 @@ static func item_plate(id:String,selected:=false) -> StyleBoxFlat:
 	return style
 static func plate(selected := false, trophy := false) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color("49374d") if trophy else Color("263b35")
-	style.border_color = Color("f1d18a") if selected else Color("8a8064")
+	style.bg_color = TaleTheme.c("border") if trophy else TaleTheme.c("surface")
+	style.border_color = TaleTheme.c("accent") if selected else TaleTheme.c("border")
 	style.set_border_width_all(2 if selected else 1)
 	style.set_corner_radius_all(6)
 	style.set_content_margin_all(2)
@@ -41,10 +41,11 @@ static func slot(parent: Node, id: String, rect: Rect2, callback: Callable, sele
 	button.size = rect.size
 	for state in ["normal", "hover", "pressed", "focus"]:
 		button.add_theme_stylebox_override(state, item_plate(id,selected or state != "normal"))
-	button.add_theme_color_override("font_color", Color("b4bba7"))
+	button.add_theme_color_override("font_color", TaleTheme.c("muted"))
 	button.add_theme_font_size_override("font_size", 22)
 	button.pressed.connect(callback)
 	parent.add_child(button)
+	button.set_meta("theme_active", selected)
 	var art := picture(button, id, Rect2(Vector2(3, 3), rect.size - Vector2(6, 6)))
 	art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	art.offset_left = 3

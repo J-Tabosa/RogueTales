@@ -12,7 +12,7 @@ func test() -> void:
 	var unique:={"magic_damage":[5,8,12,16,20,25],"physical_damage":[5,8,12,16,20,25],"physical_defense":[8,12,17,23,29,35],"magic_defense":[8,12,17,23,29,35],"attacks":[0,0,1,1,2,3],"mana_hit":[5,7,10,13,16,20],"mana_turn":[2,3,4,6,8,10],"max_hp":[20,30,45,60,80,100],"crit":[10,15,20,30,40,50],"crit_multiplier":[5,10,20,30,40,50],"evasion":[5,7,10,13,16,20],"initiative":[5,8,12,16,20,25],"healing":[5,8,12,16,20,25],"spread":[0,0,1,1,2,3]}
 	var group:={"magic_damage":[3,4,6,8,10,13],"physical_damage":[3,4,6,8,10,13],"physical_defense":[4,6,9,12,15,18],"magic_defense":[4,6,9,12,15,18],"attacks":[0,0,0,0,1,1],"mana_hit":[3,4,5,7,8,10],"mana_turn":[1,2,2,3,4,5],"max_hp":[10,15,23,30,40,50],"crit":[5,8,10,15,20,25],"crit_multiplier":[3,5,10,15,20,25],"evasion":[3,4,5,7,8,10],"initiative":[3,4,6,8,10,13],"healing":[3,4,6,8,10,13]}
 	check(B.UNIQUE==unique and B.GROUP==group,"All exact approved tables")
-	check(B.COLORS==["858b94","50b86a","5097ee","ac6bef","ef9c39","ee5555"],"Gray green blue purple orange red")
+	check(B.tint("bonus:1:max_hp:unique:5")==TaleTheme.rarity(5),"Rarity uses the current theme palette")
 	for mode in ["unique","group"]:
 		var table:Dictionary=unique if mode=="unique" else group
 		for key in table:

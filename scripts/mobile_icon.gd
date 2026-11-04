@@ -1,7 +1,7 @@
 extends Control
 ## Small vector UI icons, independent of device font glyph coverage.
 var glyph := "home"
-var tint := Color("e5c990")
+var tint := Color.WHITE
 func _draw() -> void:
 	draw_set_transform(Vector2.ZERO, 0, size / 24.0)
 	match glyph:
@@ -58,15 +58,15 @@ func _draw() -> void:
 		"lock":
 			draw_arc(Vector2(12,10),5,PI,TAU,20,tint,2,true)
 			draw_style_box(lock_plate(),Rect2(4,10,16,12))
-			draw_circle(Vector2(12,15),1.8,Color("101c18"))
-			draw_line(Vector2(12,15),Vector2(12,19),Color("101c18"),2,true)
+			draw_circle(Vector2(12,15),1.8,TaleTheme.c("surface"))
+			draw_line(Vector2(12,15),Vector2(12,19),TaleTheme.c("surface"),2,true)
 		"heart":
 			draw_colored_polygon(PackedVector2Array([Vector2(12,21),Vector2(3,12),Vector2(2,8),Vector2(4,4),Vector2(8,3),Vector2(12,7),Vector2(16,3),Vector2(20,4),Vector2(22,8),Vector2(21,12)]),tint)
 		"skull":
 			draw_circle(Vector2(12,10),8,tint)
 			draw_rect(Rect2(7,14,10,7),tint)
-			for x in [8.5,15.5]:draw_circle(Vector2(x,10),2.4,Color("14291f"))
-			for x in [9,12,15]:draw_line(Vector2(x,18),Vector2(x,22),Color("14291f"),1.2,true)
+			for x in [8.5,15.5]:draw_circle(Vector2(x,10),2.4,TaleTheme.c("surface"))
+			for x in [9,12,15]:draw_line(Vector2(x,18),Vector2(x,22),TaleTheme.c("surface"),1.2,true)
 		"bomb":
 			bomb(Vector2(10,15),7)
 		"blast_pair":
@@ -85,7 +85,7 @@ func _draw() -> void:
 			draw_line(Vector2(18,12),Vector2(23,12),tint,1.5,true)
 		"flame":
 			draw_colored_polygon(PackedVector2Array([Vector2(12,1),Vector2(19,10),Vector2(22,16),Vector2(19,21),Vector2(7,22),Vector2(2,16),Vector2(5,8),Vector2(9,13)]),tint)
-			draw_colored_polygon(PackedVector2Array([Vector2(12,11),Vector2(16,18),Vector2(12,21),Vector2(8,18)]),Color("15271d"))
+			draw_colored_polygon(PackedVector2Array([Vector2(12,11),Vector2(16,18),Vector2(12,21),Vector2(8,18)]),TaleTheme.c("surface"))
 		_:
 			draw_circle(Vector2(12,12),8,tint,false,2,true)
 

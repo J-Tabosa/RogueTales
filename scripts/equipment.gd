@@ -4,7 +4,6 @@ const SLOTS := 2
 const FORMAT := 2
 const CAPACITY_PRICES := [150,400]
 const RARITIES := ["Comum","Incomum","Raro","Épico","Lendário","Mítico","Especial"]
-const COLORS := ["858b94","50b86a","5097ee","ac6bef","ef9c39","ee5555","e6cb79"]
 const WEIGHTS := [36,28,20,10,5,1]
 const LEGACY := {"ember_pearl":"star_powder","winter_match":"blue_hourglass","venom_vial":"black_apple","hunters_lens":"hunter_glasses","tower_braid":"stone_heart","red_goblet":"absinthe_goblet","jade_seal":"enchanted_needle"}
 const ITEMS := {
@@ -447,7 +446,7 @@ static func migrate(id:String) -> String:
 	return str(LEGACY.get(id,id))
 
 static func tint(id:String) -> Color:
-	return Color(COLORS[clampi(int(data(id).get("rarity",0)),0,6)])
+	return TaleTheme.rarity(clampi(int(data(id).get("rarity",0)),0,6))
 
 static func rarity_name(id:String) -> String:
 	return RARITIES[clampi(int(data(id).get("rarity",0)),0,6)]

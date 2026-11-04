@@ -4,9 +4,12 @@ const GameAudio = preload("res://scripts/audio.gd")
 const UISkin = preload("res://scripts/ui_skin.gd")
 const Arena = preload("res://scripts/arena.gd")
 const HERO_SCENES = TaleCatalog.HERO_SCENES
-const GOLD := Color("f2d28e")
-const MUTED := Color("aab3ca")
-const INK := Color("0b2927")
+var GOLD: Color:
+	get: return TaleTheme.c("accent")
+var MUTED: Color:
+	get: return TaleTheme.c("muted")
+var INK: Color:
+	get: return TaleTheme.c("surface")
 @export var save_path := TaleCampaign.SAVE_PATH
 var campaign: TaleCampaign
 var run: IdleRun
@@ -66,6 +69,7 @@ var loading_elapsed := 0.0
 var loading_frames := 0
 var loading_stage := 0
 var loading_bar: ProgressBar
+var ui_theme: TaleTheme
 
 
 func _ready() -> void:
@@ -73,13 +77,16 @@ func _ready() -> void:
 	campaign.load_from(save_path)
 	campaign.settle_idle(int(Time.get_unix_time_from_system()))
 	install_controls_theme()
+	ui_theme = TaleTheme.new()
+	add_child(ui_theme)
+	ui_theme.install(self, campaign.ui_theme)
 	audio = Node.new()
 	audio.set_script(GameAudio)
 	add_child(audio)
 	apply_preferences()
 	persist()
 	game_speed = campaign.speed
-	var background := UISkin.picture(self, UISkin.FOREST, Rect2(Vector2.ZERO, size), true)
+	var background := UISkin.background(self)
 	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	content = Control.new()
 	content.size = Vector2(540, 960)
@@ -127,7 +134,7 @@ func center_content(usable_override: Rect2 = Rect2()) -> void:
 	relayout_page()
 
 
-func box(color: Color, border := Color("34404f"), radius := 16) -> StyleBoxFlat:
+func box(color: Color, border := TaleTheme.c("border"), radius := 16) -> StyleBoxFlat:
 	var key := "%s:%s:%d" % [color.to_html(), border.to_html(), radius]
 	if shared_boxes.has(key):
 		return shared_boxes[key]
@@ -142,7 +149,7 @@ func box(color: Color, border := Color("34404f"), radius := 16) -> StyleBoxFlat:
 	return result
 
 
-func panel(parent: Node, rect: Rect2, color := INK) -> Panel:
+func panel(parent: Node, rect: Rect2, color := TaleTheme.c("surface")) -> Panel:
 	var node := Panel.new()
 	node.position = rect.position
 	node.size = rect.size
@@ -155,12 +162,12 @@ func panel(parent: Node, rect: Rect2, color := INK) -> Panel:
 
 
 func label(
-	parent: Node, text: String, rect: Rect2, font_size := 18, color := Color("eeeae2")
+	parent: Node, text: String, rect: Rect2, font_size := 18, color := TaleTheme.c("text")
 ) -> Label:
 	var node := Label.new()
 	node.add_theme_font_size_override("font_size", font_size)
 	node.add_theme_color_override("font_color", color)
-	node.add_theme_color_override("font_shadow_color", Color(0.01, 0.04, 0.03, 0.9))
+	node.add_theme_color_override("font_shadow_color", TaleTheme.c("shadow", .9))
 	node.add_theme_constant_override("shadow_offset_y", 1)
 	node.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	node.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -184,22 +191,22 @@ func button(
 	node.position = rect.position
 	node.size = Vector2(rect.size.x, maxf(44, rect.size.y))
 	node.add_theme_font_size_override("font_size", 19)
-	node.add_theme_color_override("font_color", GOLD if primary else Color("fff1d5"))
+	node.add_theme_color_override("font_color", GOLD if primary else TaleTheme.c("muted"))
 	node.add_theme_color_override("font_hover_color", Color.WHITE)
 	node.add_theme_color_override("font_pressed_color", GOLD)
-	node.add_theme_color_override("font_disabled_color", Color("7c998c"))
-	node.add_theme_color_override("font_shadow_color", Color("051714"))
+	node.add_theme_color_override("font_disabled_color", TaleTheme.c("border"))
+	node.add_theme_color_override("font_shadow_color", TaleTheme.c("surface"))
 	node.add_theme_constant_override("shadow_offset_y", 1)
 	node.add_theme_stylebox_override(
 		"normal",
-		box(Color(1.0, 0.75, 0.3, 0.16) if primary else Color(0, 0, 0, 0), Color(0, 0, 0, 0), 8)
+		box(TaleTheme.c("accent", .16) if primary else Color.TRANSPARENT, Color.TRANSPARENT, 8)
 	)
-	node.add_theme_stylebox_override("hover", box(Color(0.8, 1.0, 0.7, 0.12), GOLD, 8))
-	node.add_theme_stylebox_override("pressed", box(Color(0.0, 0.06, 0.04, 0.3), GOLD, 8))
+	node.add_theme_stylebox_override("hover", box(TaleTheme.c("accent", .12), GOLD, 8))
+	node.add_theme_stylebox_override("pressed", box(TaleTheme.c("pressed", .3), GOLD, 8))
 	node.add_theme_stylebox_override(
-		"disabled", box(Color(0.01, 0.04, 0.03, 0.65), Color(0, 0, 0, 0), 8)
+		"disabled", box(TaleTheme.c("pressed", .65), Color.TRANSPARENT, 8)
 	)
-	node.add_theme_stylebox_override("focus", box(Color(0, 0, 0, 0), GOLD))
+	node.add_theme_stylebox_override("focus", box(Color.TRANSPARENT, GOLD))
 	node.pressed.connect(
 		func():
 			if is_instance_valid(audio):
@@ -216,7 +223,7 @@ func bar(parent: Node, rect: Rect2, color: Color) -> ProgressBar:
 	var node := ProgressBar.new()
 	node.show_percentage = false
 	node.mouse_filter=Control.MOUSE_FILTER_IGNORE
-	node.add_theme_stylebox_override("background", box(Color("080f18"), Color("34404f"), 5))
+	node.add_theme_stylebox_override("background", box(TaleTheme.c("surface"), TaleTheme.c("border"), 5))
 	node.add_theme_stylebox_override("fill", box(color, color, 5))
 	parent.add_child(node)
 	node.position = rect.position
@@ -241,7 +248,7 @@ func clear_page() -> void:
 	overlay = null
 	arena = null
 	var bg := ColorRect.new()
-	bg.color = Color("041d1b", 0.77)
+	bg.color = TaleTheme.c("surface", 0.77)
 	bg.size = Vector2(540, 960)
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	page.add_child(bg)
@@ -249,8 +256,8 @@ func clear_page() -> void:
 
 
 func header(title: String, subtitle: String) -> void:
-	UISkin.picture(page, UISkin.artwork("logo"), Rect2(24, 15, 183, 51))
-	UISkin.picture(page, UISkin.artwork("wallet"), Rect2(225, 17, 188, 50))
+	label(page, "RogueTales", Rect2(24, 15, 183, 51), 24)
+	panel(page, Rect2(225, 17, 188, 50))
 	label(page, format_gold(campaign.gold), Rect2(282, 28, 113, 25), 17, GOLD).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button(page, "Opções", Rect2(423, 22, 93, 40), show_settings).add_theme_font_size_override(
 		"font_size", 15
@@ -377,7 +384,7 @@ func show_menu() -> void:
 		. add_theme_font_size_override("font_size", 16)
 	)
 	if not campaign.save_error.is_empty():
-		label(page, campaign.save_error, Rect2(24, 855, 492, 26), 13, Color("ed9a9c"))
+		label(page, campaign.save_error, Rect2(24, 855, 492, 26), 13, TaleTheme.c("accent"))
 	navigation("menu")
 
 
@@ -408,7 +415,7 @@ func show_map() -> void:
 	var line := Line2D.new()
 	line.points = route.tessellate()
 	line.width = 5
-	line.default_color = Color("f7df9e", 0.8)
+	line.default_color = TaleTheme.c("accent", 0.8)
 	line.antialiased = true
 	inner.add_child(line)
 	for index in TaleCatalog.CHAPTER_COUNT:
@@ -421,7 +428,7 @@ func show_map() -> void:
 			inner, "", Rect2(x, y, 355, 103), show_chapter.bind(index), open and not done
 		)
 		card.disabled = not open
-		label(card, data.name, Rect2(25, 11, 305, 52), 20, Color("fff2d3") if open else MUTED)
+		label(card, data.name, Rect2(25, 11, 305, 52), 20, TaleTheme.c("muted") if open else MUTED)
 		label(
 			card,
 			(
@@ -682,7 +689,7 @@ func show_party() -> void:
 			"Formação bloqueada durante a expedição.",
 			Rect2(24, 218, 492, 26),
 			14,
-			Color("dfb48a")
+			TaleTheme.c("accent")
 		)
 	navigation("heroes")
 
@@ -894,7 +901,7 @@ func code_settings_section(parent:Control,top:float) -> void:
 func redeem_settings_code(entry:LineEdit,feedback:Label) -> void:
 	if debug_session:
 		feedback.text="Saia do modo DEBUG para resgatar no progresso permanente."
-		feedback.add_theme_color_override("font_color",Color("edb778"))
+		feedback.add_theme_color_override("font_color",TaleTheme.c("accent"))
 		return
 	var before_unlocked:Array[String]=campaign.unlocked.duplicate()
 	var before_party:Array[String]=campaign.party.duplicate()
@@ -903,10 +910,10 @@ func redeem_settings_code(entry:LineEdit,feedback:Label) -> void:
 		campaign.unlocked.assign(before_unlocked)
 		campaign.party.assign(before_party)
 		feedback.text="Não foi possível salvar. Tente resgatar o código novamente."
-		feedback.add_theme_color_override("font_color",Color("ed9a9c"))
+		feedback.add_theme_color_override("font_color",TaleTheme.c("accent"))
 		return
 	feedback.text=result.message
-	feedback.add_theme_color_override("font_color",Color("9ce5b3") if result.ok else Color("ed9a9c"))
+	feedback.add_theme_color_override("font_color",TaleTheme.c("accent") if result.ok else TaleTheme.c("accent"))
 	if result.ok:
 		entry.clear()
 		entry.release_focus()
@@ -1026,7 +1033,7 @@ func build_battle() -> void:
 		25
 	)
 	enemy_label = label(page, "", Rect2(24, 106, 492, 47), 18, MUTED)
-	enemy_hp = bar(page, Rect2(24, 164, 492, 12), Color("d27a91"))
+	enemy_hp = bar(page, Rect2(24, 164, 492, 12), TaleTheme.c("accent"))
 	make_arena(196, run.actor_ids(), run.stage)
 	arena.speed = game_speed
 	arena.sync_health(run.actors)
@@ -1251,7 +1258,7 @@ func modal(title: String, subtitle: String) -> void:
 	overlay.size = Vector2(540, logical_height)
 	content.add_child(overlay)
 	var shade := ColorRect.new()
-	shade.color = Color(0.02, 0.03, 0.05, 0.96)
+	shade.color = TaleTheme.c("background", .96)
 	shade.size = Vector2(540, 960)
 	overlay.add_child(shade)
 	register_layout(shade, "fill")
@@ -1362,6 +1369,20 @@ func toggle_pause() -> void:
 	button(overlay, "Continuar", Rect2(32, 418, 476, 60), resume_battle, true)
 	button(overlay, "Salvar e voltar ao início", Rect2(32, 503, 476, 56), leave_battle)
 	button(overlay, "Abandonar expedição", Rect2(32, 584, 476, 56), request_abandon)
+	button(overlay, theme_button_text(), Rect2(32, 665, 476, 52), toggle_ui_theme).name = "ThemeToggle"
+
+
+func theme_button_text() -> String:
+	return "Tema: Escuro  ·  Mudar para claro" if campaign.ui_theme == "dark" else "Tema: Claro  ·  Mudar para escuro"
+
+
+func toggle_ui_theme() -> void:
+	campaign.ui_theme = "light" if campaign.ui_theme == "dark" else "dark"
+	ui_theme.switch_to(campaign.ui_theme)
+	for control in find_children("ThemeToggle", "Button", true, false): control.text = theme_button_text()
+	# Refresh health fills immediately, including in a paused battle.
+	if run != null and is_instance_valid(arena): update_hud()
+	persist()
 
 
 func resume_battle() -> void:
@@ -1556,7 +1577,7 @@ func show_debug_panel() -> void:
 	debug_panel.size = Vector2(540, 960)
 	debug_panel.position.x=maxf(0,(content.size.x-540)*.5)
 	content.add_child(debug_panel)
-	panel(debug_panel, Rect2(24, 96, 492, 620), Color("273044"))
+	panel(debug_panel, Rect2(24, 96, 492, 620), TaleTheme.c("surface"))
 	label(debug_panel, "DEBUG  •  CTRL+B PARA DESATIVAR", Rect2(40, 112, 460, 32), 17, GOLD)
 	label(
 		debug_panel,
@@ -1963,8 +1984,8 @@ func edit_profile() -> void:
 	profile_name.max_length = 20
 	profile_name.text = campaign.player_name
 	profile_name.add_theme_font_size_override("font_size", 23)
-	profile_name.add_theme_stylebox_override("normal", box(Color("092a25"), GOLD, 9))
-	profile_name.add_theme_stylebox_override("focus", box(Color("10392f"), GOLD, 9))
+	profile_name.add_theme_stylebox_override("normal", box(TaleTheme.c("surface"), GOLD, 9))
+	profile_name.add_theme_stylebox_override("focus", box(TaleTheme.c("surface"), GOLD, 9))
 	overlay.add_child(profile_name)
 	register_layout(profile_name)
 	var avatar_scroll := ScrollContainer.new()
@@ -1999,9 +2020,9 @@ func select_avatar(id: String) -> void:
 	for candidate in profile_avatar_buttons:
 		var choice: Button = profile_avatar_buttons[candidate]
 		choice.add_theme_stylebox_override(
-			"normal", box(Color("123d32"), GOLD if candidate == id else Color("426957"))
+			"normal", box(TaleTheme.c("surface"), GOLD if candidate == id else TaleTheme.c("border"))
 		)
-		choice.add_theme_color_override("font_color", GOLD if candidate == id else Color("eeeae2"))
+		choice.add_theme_color_override("font_color", GOLD if candidate == id else TaleTheme.c("text"))
 	if is_instance_valid(profile_avatar_label):
 		profile_avatar_label.text = "Retrato: " + str(TaleCatalog.HEROES[id].name)
 	else:
@@ -2222,8 +2243,9 @@ func show_loading(callback: Callable, index: int) -> void:
 	loading_frames = 0
 	loading_stage = index
 	var veil := page.get_child(0) as ColorRect
-	veil.color = Color("041d1b", 0.24)
-	var logo := UISkin.picture(page, UISkin.artwork("logo"), Rect2(30, 245, 480, 164))
+	veil.color = TaleTheme.c("surface", 0.24)
+	var logo := label(page, "RogueTales", Rect2(30, 245, 480, 164), 48)
+	logo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	register_layout(logo, "center")
 	var subtitle := label(page, "O ÚLTIMO FIO", Rect2(32, 414, 476, 37), 23, GOLD)
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -2274,16 +2296,7 @@ func advance_loading(delta: float) -> void:
 
 
 func install_controls_theme() -> void:
-	theme = Theme.new()
-	for control in ["VScrollBar", "HScrollBar"]:
-		theme.set_stylebox("scroll", control, box(Color("07241e"), Color("214b3a"), 5))
-		theme.set_stylebox("grabber", control, box(Color("b8a465"), Color("526b42"), 5))
-		theme.set_stylebox("grabber_highlight", control, box(GOLD, GOLD, 5))
-		theme.set_stylebox("grabber_pressed", control, box(Color("90c393"), GOLD, 5))
-	theme.set_stylebox("slider", "HSlider", box(Color("07241e"), Color("426957"), 4))
-	theme.set_stylebox("grabber_area", "HSlider", box(Color("7bba8a"), GOLD, 4))
-	theme.set_stylebox("grabber_area_highlight", "HSlider", box(GOLD, GOLD, 4))
-
+	theme = TaleTheme.native_theme()
 
 func set_voice_volume(value: float) -> void:
 	campaign.voice_volume = value
@@ -2338,7 +2351,7 @@ func process_tactical_combat(dt: float) -> void:
 		if intent.get("key","")=="sleep":
 			combat_flow.begin(entry)
 			var skipped:Dictionary=run.hit_party(index)
-			arena.damage_number("SONO · TURNO PERDIDO",arena.foe_homes[index]+Vector2(0,-arena.human_height()),Color("c5a4f1"))
+			arena.damage_number("SONO · TURNO PERDIDO",arena.foe_homes[index]+Vector2(0,-arena.human_height()),TaleTheme.c("accent"))
 			push_battle_log(str(run.tactics.enemies[index].name)+" perdeu o turno por Sono")
 			combat_flow.complete()
 			update_hud()

@@ -4,7 +4,6 @@ const Gear=preload("res://scripts/equipment.gd")
 const RARITIES=["Comum","Incomum","Raro","Épico","Lendário","Mítico"]
 const WEIGHTS=[40,28,18,9,4,1]
 const MODE_WEIGHTS=[70,30]
-const COLORS=["858b94","50b86a","5097ee","ac6bef","ef9c39","ee5555"]
 const NAMES={"magic_damage":"Dano Mágico","physical_damage":"Dano Físico","physical_defense":"Defesa Física","magic_defense":"Defesa Mágica","attacks":"Quantidade de Ataques","mana_hit":"Mana por Acerto","mana_turn":"Mana por Turno","max_hp":"Vida Máxima","crit":"Chance Crítica","crit_multiplier":"Dano Crítico","evasion":"Esquiva","initiative":"Iniciativa","healing":"Aumento de Cura","spread":"Espalhamento"}
 const UNIQUE={"magic_damage":[5,8,12,16,20,25],"physical_damage":[5,8,12,16,20,25],"physical_defense":[8,12,17,23,29,35],"magic_defense":[8,12,17,23,29,35],"attacks":[0,0,1,1,2,3],"mana_hit":[5,7,10,13,16,20],"mana_turn":[2,3,4,6,8,10],"max_hp":[20,30,45,60,80,100],"crit":[10,15,20,30,40,50],"crit_multiplier":[5,10,20,30,40,50],"evasion":[5,7,10,13,16,20],"initiative":[5,8,12,16,20,25],"healing":[5,8,12,16,20,25],"spread":[0,0,1,1,2,3]}
 const GROUP={"magic_damage":[3,4,6,8,10,13],"physical_damage":[3,4,6,8,10,13],"physical_defense":[4,6,9,12,15,18],"magic_defense":[4,6,9,12,15,18],"attacks":[0,0,0,0,1,1],"mana_hit":[3,4,5,7,8,10],"mana_turn":[1,2,2,3,4,5],"max_hp":[10,15,23,30,40,50],"crit":[5,8,10,15,20,25],"crit_multiplier":[3,5,10,15,20,25],"evasion":[3,4,5,7,8,10],"initiative":[3,4,6,8,10,13],"healing":[3,4,6,8,10,13]}
@@ -70,7 +69,7 @@ static func describe(id:String) -> Dictionary:
 
 static func tint(id:String) -> Color:
 	var b:=parse(id)
-	return Color(COLORS[int(b.rarity)]) if not b.is_empty() else Color(COLORS[0])
+	return TaleTheme.rarity(int(b.rarity)) if not b.is_empty() else TaleTheme.rarity(0)
 
 static func rarity(rng:RandomNumberGenerator) -> int:
 	var ticket:=rng.randi_range(1,100)

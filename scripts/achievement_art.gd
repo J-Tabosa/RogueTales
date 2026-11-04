@@ -25,7 +25,7 @@ static func gold_frame(parent:Control,rect:Rect2) -> void:
 	frame.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	var skin:=StyleBoxFlat.new()
 	skin.bg_color=Color.TRANSPARENT
-	skin.border_color=Color("edc56e")
+	skin.border_color=TaleTheme.c("accent")
 	skin.set_border_width_all(3)
 	skin.set_corner_radius_all(4)
 	frame.add_theme_stylebox_override("panel",skin)

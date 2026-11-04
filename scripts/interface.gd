@@ -65,11 +65,11 @@ func clear_page() -> void:
 	ult_meters.clear()
 	card_health.clear()
 	super.clear_page()
-	page.get_child(0).color = Color("0d201e")
+	page.get_child(0).color = TaleTheme.c("surface")
 	center_content()
 
 
-func panel(parent: Node, rect: Rect2, color := INK) -> Panel:
+func panel(parent: Node, rect: Rect2, color := TaleTheme.c("surface")) -> Panel:
 	var node := Panel.new()
 	node.position = rect.position
 	node.size = rect.size
@@ -90,13 +90,13 @@ func button(parent: Node, text: String, rect: Rect2, callback: Callable, primary
 	node.custom_minimum_size.y = 44
 	node.add_theme_font_size_override("font_size", 18)
 	BattleType.apply(node,true)
-	node.add_theme_color_override("font_color", Color("fff0ce") if primary else Color("e3e9d7"))
-	node.add_theme_color_override("font_disabled_color", Color("84918f"))
-	node.add_theme_stylebox_override("normal", box(Color("082e24") if primary else Color("214a3b"), Color("b39a60") if primary else Color("59795d"), 10))
-	node.add_theme_stylebox_override("hover", box(Color("123c2e") if primary else Color("2b5945"), GOLD, 10))
-	node.add_theme_stylebox_override("pressed", box(Color("061f18"), GOLD, 10))
-	node.add_theme_stylebox_override("disabled", box(Color("172c26"), Color("45554b"), 10))
-	node.add_theme_stylebox_override("focus", box(Color(0, 0, 0, 0), GOLD, 8))
+	node.add_theme_color_override("font_color", TaleTheme.c("muted") if primary else TaleTheme.c("text"))
+	node.add_theme_color_override("font_disabled_color", TaleTheme.c("border"))
+	node.add_theme_stylebox_override("normal", box(TaleTheme.c("surface") if primary else TaleTheme.c("surface"), TaleTheme.c("accent") if primary else TaleTheme.c("border"), 10))
+	node.add_theme_stylebox_override("hover", box(TaleTheme.c("surface") if primary else TaleTheme.c("border"), GOLD, 10))
+	node.add_theme_stylebox_override("pressed", box(TaleTheme.c("surface"), GOLD, 10))
+	node.add_theme_stylebox_override("disabled", box(TaleTheme.c("surface"), TaleTheme.c("border"), 10))
+	node.add_theme_stylebox_override("focus", box(Color.TRANSPARENT, GOLD, 8))
 	node.set_meta("primary",primary)
 	UISkin.decorate(node, true, true,0.10)
 	node.pressed.connect(func():
@@ -129,7 +129,7 @@ func show_menu() -> void:
 	var hero_card := panel(page, Rect2(20, 184, 500, 405))
 	hero_card.clip_contents = true
 	UISkin.picture(hero_card, preload("res://assets/ui/storybook_battle.png"), Rect2(2, 2, 496, 401), true).modulate = Color(0.70, 0.76, 0.91)
-	gradient(hero_card, Rect2(2, 2, 496, 401), Color(0.07,0.09,0.17,0.08), Color("101522"))
+	gradient(hero_card, Rect2(2, 2, 496, 401), TaleTheme.c("background", .08), TaleTheme.c("surface"))
 	label(hero_card, "CAPÍTULO %02d / 12" % (chapter + 1), Rect2(22, 16, 300, 28), 12, GOLD)
 	button(hero_card, "Editar", Rect2(376, 14, 102, 44), show_party)
 	for index in campaign.party.size():
@@ -163,9 +163,9 @@ func show_map() -> void:
 		var done := campaign.cleared.has(index)
 		var card := button(inner, "", Rect2(x, y, 232, 158), show_chapter.bind(index), open and not done)
 		card.disabled = not open
-		label(card, "%02d  %s" % [index + 1, "✓" if done else ("" if open else "· bloqueado")], Rect2(14, 10, 204, 23), 14, Color("172124") if open and not done else GOLD)
-		label(card, data.name, Rect2(14, 43, 204, 62), 20, Color("172124") if open and not done else Color("e3e9e8"))
-		label(card, "Revisitar" if done else ("Entrar →" if open else "Conclua o anterior"), Rect2(14, 119, 204, 25), 13, Color("303c36") if open and not done else MUTED)
+		label(card, "%02d  %s" % [index + 1, "✓" if done else ("" if open else "· bloqueado")], Rect2(14, 10, 204, 23), 14, TaleTheme.c("surface") if open and not done else GOLD)
+		label(card, data.name, Rect2(14, 43, 204, 62), 20, TaleTheme.c("surface") if open and not done else TaleTheme.c("text"))
+		label(card, "Revisitar" if done else ("Entrar →" if open else "Conclua o anterior"), Rect2(14, 119, 204, 25), 13, TaleTheme.c("surface") if open and not done else MUTED)
 	inner.get_parent().set_deferred("scroll_vertical", int(maxf(0, floori(mini(11, campaign.cleared.size()) / 2.0) * 174 - 120)))
 	navigation("map")
 
@@ -313,7 +313,7 @@ func build_battle() -> void:
 		card.set_meta("deck_index",slot)
 		var face := face_portrait(card, actor.id, Rect2(10,10,40,40))
 		face.set_meta("card_face",true)
-		card.add_theme_color_override("font_disabled_color", Color("eeeae2"))
+		card.add_theme_color_override("font_disabled_color", TaleTheme.c("text"))
 		var information := Button.new()
 		information.name="CharacterInformation"
 		information.text="i"
@@ -321,7 +321,7 @@ func build_battle() -> void:
 		information.add_theme_font_size_override("font_size",20)
 		information.add_theme_color_override("font_color",GOLD)
 		for skin in ["normal","hover","pressed"]:
-			var plate:=box(Color("19382d") if skin=="normal" else Color("395b40"),GOLD,10).duplicate()
+			var plate:=box(TaleTheme.c("surface") if skin=="normal" else TaleTheme.c("border"),GOLD,10).duplicate()
 			plate.content_margin_left=4
 			plate.content_margin_right=4
 			information.add_theme_stylebox_override(skin,plate)
@@ -344,15 +344,15 @@ func build_battle() -> void:
 		ult_tag.set_meta("card_ult", true)
 		var status := label(card, "", Rect2(10, 123, 140, 19), 11, MUTED)
 		status.set_meta("card_status", true)
-		var hp_text := label(card, "", Rect2(10, 48, 140, 19), 10, Color("a2e2b2"))
+		var hp_text := label(card, "", Rect2(10, 48, 140, 19), 10, TaleTheme.c("accent"))
 		hp_text.set_meta("card_hp", true)
 		hp_text.autowrap_mode=TextServer.AUTOWRAP_OFF
-		var hp := bar(card, Rect2(10, 69, 140, 6), Color("88c8a0"))
+		var hp := bar(card, Rect2(10, 69, 140, 6), TaleTheme.c("accent"))
 		hp.set_meta("card_hp_bar", true)
 		card_health.append(hp)
-		var mana_text := label(card, "", Rect2(10, 76, 140, 17), 11, Color("a9c9ff"))
+		var mana_text := label(card, "", Rect2(10, 76, 140, 17), 11, TaleTheme.c("accent"))
 		mana_text.set_meta("card_mana", true)
-		var meter := bar(card, Rect2(10, 94, 140, 6), Color("8ab4f0"))
+		var meter := bar(card, Rect2(10, 94, 140, 6), TaleTheme.c("accent"))
 		meter.set_meta("card_mana_bar", true)
 		ult_meters.append(meter)
 		for field in ["name","hp","mana","ult","status"]: battle_text_box(card,field)
@@ -366,7 +366,7 @@ func build_battle() -> void:
 	var gold_box := panel(page, Rect2())
 	gold_box.name="BattleGoldBox"
 	for child in gold_box.get_children():child.queue_free()
-	gold_box.add_theme_stylebox_override("panel",box(Color("0b3027"),Color("b69a59"),8))
+	gold_box.add_theme_stylebox_override("panel",box(TaleTheme.c("surface"),TaleTheme.c("accent"),8))
 	gold_box.z_index=1800
 	battle_place(gold_box,Rect2(312,11,132,34),Rect2(1006,10,170,34),"gold")
 	battle_gold=label(page,"",Rect2(),15,GOLD)
@@ -389,7 +389,7 @@ func battle_text_box(card: Button,key: String) -> void:
 	var frame:=Panel.new()
 	frame.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	frame.set_meta("card_box",key)
-	frame.add_theme_stylebox_override("panel",box(Color("102d27"),Color("776943"),5).duplicate())
+	frame.add_theme_stylebox_override("panel",box(TaleTheme.c("surface"),TaleTheme.c("border"),5).duplicate())
 	card.add_child(frame)
 	card.move_child(frame,1)
 
@@ -501,7 +501,7 @@ func update_hud() -> void:
 				child.text = "Caído" if actor.hp <= 0 else ("ULT na fila" if actor.get("ult_queued", false) else ("ULT em ação" if actor.ult_pending else ("ULT pronta" if run.tactics.ultimate_ready(index) else ("Selada" if actor.get("sealed", false) else "Aguardando"))))
 			elif child.has_meta("card_hp"):
 				child.text = "PV %d / %d%s" % [ceili(actor.hp), ceili(HealthDisplay.capacity(actor)), "  ESC %d" % ceili(actor.shield) if actor.shield > 0 else ""]
-				child.add_theme_color_override("font_color",HealthDisplay.tint(actor))
+				child.add_theme_color_override("font_color",TaleTheme.c("text"))
 				BattleType.fit_line(child,10,8,Vector2(child.size.x,19))
 			elif child.has_meta("card_items"):
 				var equipment_slot: int = child.get_meta("card_items")
@@ -552,7 +552,7 @@ func modal(title: String, subtitle: String) -> void:
 	shade.remove_meta("base_rect")
 	shade.position.x = -overlay.position.x
 	shade.size = Vector2(logical_width, logical_height)
-	shade.color = Color(0.035, 0.06, 0.08, 0.96)
+	shade.color = TaleTheme.c("background", .96)
 
 
 func toggle_auto_ult() -> void:
@@ -574,7 +574,7 @@ func show_settings() -> void:
 	button(inner, "AUTO ULT  " + ("ON" if campaign.auto_ult else "OFF"), Rect2(0, 1430, 476, 52), settings_auto_ult)
 	button(inner, "Tela cheia / Janela  ·  F11", Rect2(0, 1500, 476, 52), toggle_fullscreen).disabled = OS.has_feature("mobile")
 	var reset := button(inner, "Resetar conta deste dispositivo", Rect2(0, 1600, 476, 56), request_reset)
-	reset.add_theme_color_override("font_color", Color("ecaaa3"))
+	reset.add_theme_color_override("font_color", TaleTheme.c("accent"))
 	if debug_tools_allowed():button(inner,"Ferramentas DEBUG",Rect2(0,1680,476,52),open_debug_tools)
 
 
@@ -592,7 +592,7 @@ func settings_auto_ult() -> void:
 func request_reset() -> void:
 	modal("Recomeçar do zero?", "Isso apaga neste dispositivo: ouro, EXP, personagens, capítulos, conquistas, formação, preferências e saves de recuperação. Você recomeça com a Chapeuzinho. Esta ação não pode ser desfeita.")
 	reset_confirm = button(overlay, "Apagar progresso e recomeçar", Rect2(32, 500, 476, 60), confirm_reset)
-	reset_confirm.add_theme_color_override("font_color", Color("ecaaa3"))
+	reset_confirm.add_theme_color_override("font_color", TaleTheme.c("accent"))
 	button(overlay, "Cancelar", Rect2(32, 590, 476, 56), show_settings, true)
 
 
@@ -604,6 +604,7 @@ func confirm_reset() -> void:
 	run = null
 	campaign = TaleCampaign.new()
 	campaign.load_from(save_path)
+	ui_theme.switch_to(campaign.ui_theme)
 	paused = false
 	selected_hero = "scarlet"
 	debug_enabled = false
@@ -735,7 +736,7 @@ func update_desktop_shell() -> void:
 	label(desktop_shell, "NO COMBATE\n\n1–3  ULT\nEspaço  Pausa\nA  ULT automática\nF11  Tela cheia", Rect2(right, 528, 190, 240), 15, MUTED)
 
 
-func icon(parent: Node, glyph: String, rect: Rect2, tint := GOLD) -> Control:
+func icon(parent: Node, glyph: String, rect: Rect2, tint := TaleTheme.c("accent")) -> Control:
 	var node := Control.new()
 	node.set_script(MobileIcon)
 	node.glyph = glyph
@@ -764,7 +765,7 @@ func face_portrait(parent: Node,id: String,rect: Rect2) -> Control:
 	slot.size=rect.size
 	slot.clip_contents=true
 	slot.mouse_filter=Control.MOUSE_FILTER_IGNORE
-	slot.add_theme_stylebox_override("panel",box(Color("26372f"),Color(TaleCatalog.HEROES[id].color,.65),9))
+	slot.add_theme_stylebox_override("panel",box(TaleTheme.c("surface"),TaleTheme.c("border", .65),9))
 	parent.add_child(slot)
 	register_layout(slot)
 	preload("res://scripts/hero_art.gd").place_head(slot,id)
@@ -785,8 +786,8 @@ func navigation(active: String) -> void:
 		var entry: Array = entries[index]
 		var selected: bool = active == entry[0]
 		var item := button(page, "", Rect2(22 + index * 100, 887, 96, 58), entry[3])
-		item.add_theme_stylebox_override("normal", box(Color("383346") if selected else Color(0,0,0,0), Color(0,0,0,0), 12))
-		icon(item, entry[2], Rect2(37, 6, 22, 22), GOLD if selected else Color("8e98b3"))
+		item.add_theme_stylebox_override("normal", box(TaleTheme.c("surface") if selected else Color.TRANSPARENT, Color.TRANSPARENT, 12))
+		icon(item, entry[2], Rect2(37, 6, 22, 22), GOLD if selected else TaleTheme.c("muted"))
 		label(item, entry[1], Rect2(0, 32, 96, 22), 11, GOLD if selected else MUTED).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 
@@ -805,11 +806,11 @@ func show_heroes() -> void:
 		var x := (index % 2) * 244.0
 		var y := floori(index/2.0) * 284
 		var card := button(inner, "", Rect2(x,y,232,272), show_hero_details.bind(id) if owned else show_unlock_details.bind(id))
-		card.add_theme_stylebox_override("normal", box(Color("252a40") if owned else Color("1c2233"), Color(data.color, 0.55 if owned else 0.22), 18))
-		gradient(card, Rect2(2,2,228,180), Color(data.color,0.17), Color(data.color,0))
+		card.add_theme_stylebox_override("normal", box(TaleTheme.c("surface") if owned else TaleTheme.c("surface"), TaleTheme.c("border", .55 if owned else .22), 18))
+		gradient(card, Rect2(2,2,228,180), TaleTheme.c("accent", .17), TaleTheme.c("accent", 0))
 		label(card, "NÍVEL %02d" % campaign.hero_levels[id] if owned else "VÍNCULO A DESCOBRIR", Rect2(14,10,204,24), 10, data.color)
 		portrait_fitted(card, id, Vector2(116,183), 156)
-		label(card, data.get("short_name", data.name), Rect2(14,187,204,34), 19, Color("f0e9dc") if owned else MUTED)
+		label(card, data.get("short_name", data.name), Rect2(14,187,204,34), 19, TaleTheme.c("text") if owned else MUTED)
 		label(card, TaleCatalog.hero_class_name(id), Rect2(14,225,204,22), 12, data.color)
 		var progress := bar(card, Rect2(14,254,204,5), data.color)
 		progress.max_value = 30 if owned else TaleCatalog.UNLOCKS[id].goal
@@ -839,26 +840,12 @@ func refresh_timeline() -> void:
 		var entry: Dictionary = upcoming[at]
 		var unit: Dictionary = combat_flow.unit(entry)
 		var x := 104 + at * 79.0
-		var tint := Color("e7c78b") if entry.side == "ally" else Color("e59aab")
+		var tint := TaleTheme.c("accent") if entry.side == "ally" else TaleTheme.c("accent")
 		if entry.side == "ally":
 			face_portrait(timeline, unit.id, Rect2(x,3,34,36))
 		else:
 			icon(timeline, "sword", Rect2(x,8,26,26), tint)
 		label(timeline, "%d×" % int(unit.get("ap",unit.get("attacks",1))), Rect2(x+38,8,36,24), 10, tint)
-
-
-func install_controls_theme() -> void:
-	super.install_controls_theme()
-	for control in ["VScrollBar","HScrollBar"]:
-		for state_name in ["scroll","grabber","grabber_highlight","grabber_pressed"]:
-			var style := StyleBoxFlat.new()
-			style.bg_color = Color(0,0,0,0) if state_name == "scroll" else Color("666a84")
-			style.set_corner_radius_all(3)
-			style.content_margin_left = 2
-			style.content_margin_right = 2
-			style.content_margin_top = 4
-			style.content_margin_bottom = 4
-			theme.set_stylebox(state_name,control,style)
 
 
 func current_action(message: String) -> void:
@@ -922,10 +909,10 @@ func record_result(hit: Dictionary, hostile: bool, index: int, before: Array) ->
 		var shield: float = maxf(0, actor.shield - float(before[at].shield))
 		if healed > 0:
 			push_battle_log("%s recuperou %d PV" % [TaleCatalog.HEROES[actor.id].name, ceili(healed)])
-			arena.damage_number("+%d PV" % ceili(healed), arena.tracks[at].home + Vector2(0, 30), Color("9ce5b3"))
+			arena.damage_number("+%d PV" % ceili(healed), arena.tracks[at].home + Vector2(0, 30), TaleTheme.c("accent"))
 		if shield > 0:
 			push_battle_log("%s ganhou %d de escudo" % [TaleCatalog.HEROES[actor.id].name, ceili(shield)])
-			arena.damage_number("+%d ESCUDO" % ceili(shield), arena.tracks[at].home + Vector2(0, 58), Color("a9c9ff"))
+			arena.damage_number("+%d ESCUDO" % ceili(shield), arena.tracks[at].home + Vector2(0, 58), TaleTheme.c("accent"))
 	if hit.get("absorbed", 0) > 0: push_battle_log("O escudo absorveu %d de dano" % ceili(hit.absorbed))
 
 var information_was_paused := false

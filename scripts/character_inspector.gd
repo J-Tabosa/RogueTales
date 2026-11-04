@@ -6,7 +6,8 @@ const Content=preload("res://scripts/expedition_content.gd")
 const InspectorSkin=preload("res://scripts/ui_skin.gd")
 const Rules=preload("res://scripts/combat_rules.gd")
 const Icon=preload("res://scripts/mobile_icon.gd")
-const GOLD=Color("f2d28e")
+var GOLD: Color:
+	get: return TaleTheme.c("accent")
 var ui:Control
 var actor:Dictionary
 var built_size:=Vector2.ZERO
@@ -25,12 +26,12 @@ func setup(owner_ui:Control,unit:Dictionary) -> void:
 	rebuild()
 func style() -> StyleBoxFlat:
 	var result:=StyleBoxFlat.new()
-	result.bg_color=Color("19332e")
-	result.border_color=Color("796344")
+	result.bg_color=TaleTheme.c("surface")
+	result.border_color=TaleTheme.c("border")
 	result.set_border_width_all(1)
 	result.set_corner_radius_all(8)
 	return result
-func frame(parent:Node,rect:Rect2,tint:=Color("19332e")) -> Panel:
+func frame(parent:Node,rect:Rect2,tint:=TaleTheme.c("surface")) -> Panel:
 	var p:=Panel.new()
 	p.position=rect.position
 	p.size=rect.size
@@ -39,7 +40,7 @@ func frame(parent:Node,rect:Rect2,tint:=Color("19332e")) -> Panel:
 	p.add_theme_stylebox_override("panel",skin)
 	parent.add_child(p)
 	return p
-func text(parent:Node,value:String,rect:Rect2,points:int,color:=Color("eee9da")) -> Label:
+func text(parent:Node,value:String,rect:Rect2,points:int,color:=TaleTheme.c("text")) -> Label:
 	var l:=Label.new()
 	l.text=value
 	l.position=rect.position
@@ -50,7 +51,7 @@ func text(parent:Node,value:String,rect:Rect2,points:int,color:=Color("eee9da"))
 	l.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	parent.add_child(l)
 	return l
-func icon(parent:Node,glyph:String,at:Vector2,extent:=28.0,tint:=GOLD) -> void:
+func icon(parent:Node,glyph:String,at:Vector2,extent:=28.0,tint:= TaleTheme.c("accent")) -> void:
 	var image:=Icon.new()
 	image.glyph=glyph
 	image.tint=tint
@@ -95,8 +96,8 @@ func show_detail(key:String,title:String,body:String,tap:=false) -> void:
 	detail.size=extent
 	detail.mouse_filter=Control.MOUSE_FILTER_STOP if tap else Control.MOUSE_FILTER_IGNORE
 	var skin:=style()
-	skin.bg_color=Color("0d252b")
-	skin.border_color=Color("64c7ff")
+	skin.bg_color=TaleTheme.c("surface")
+	skin.border_color=TaleTheme.c("magical")
 	skin.set_content_margin_all(12)
 	detail.add_theme_stylebox_override("panel",skin)
 	board.add_child(detail)
@@ -130,17 +131,17 @@ func rebuild() -> void:
 		remove_child(child)
 		child.queue_free()
 	var shade:=ColorRect.new()
-	shade.color=Color(.015,.035,.035,.95)
+	shade.color=TaleTheme.c("background", .95)
 	shade.size=size
 	add_child(shade)
 	var wide:=size.x>=900
 	var bw:=minf(size.x-24,1120)
 	var bh:=minf(size.y-24,760)
-	board=frame(self,Rect2((size-Vector2(bw,bh))*.5,Vector2(bw,bh)),Color("102421"))
+	board=frame(self,Rect2((size-Vector2(bw,bh))*.5,Vector2(bw,bh)),TaleTheme.c("surface"))
 	InspectorSkin.decorate(board,false,true,.075)
 	text(board,"FICHA DO VIAJANTE",Rect2(20,14,bw-90,20),11,GOLD)
 	text(board,TaleCatalog.HEROES[actor.id].name,Rect2(20,38,bw-150,40),25 if wide else 21)
-	text(board,TaleCatalog.hero_class_name(actor.id),Rect2(20,80,bw-160,24),13,Color("b8c6b5"))
+	text(board,TaleCatalog.hero_class_name(actor.id),Rect2(20,80,bw-160,24),13,TaleTheme.c("muted"))
 	var close:=Button.new()
 	close.text="×"
 	close.position=Vector2(bw-62,16)
@@ -171,14 +172,14 @@ func rebuild() -> void:
 		cell.set_meta("stat",stat[0])
 		cell.add_theme_stylebox_override("normal",style())
 		board.add_child(cell)
-		icon(cell,stat[1],Vector2(6,5),19,Color("64c7ff") if stat[0]=="AP" else Color("ff6969") if stat[0]=="AD" else GOLD)
+		icon(cell,stat[1],Vector2(6,5),19,TaleTheme.c("magical") if stat[0]=="AP" else TaleTheme.c("physical") if stat[0]=="AD" else GOLD)
 		text(cell,stat[0],Rect2(28,4,cw-31,19),10,GOLD)
 		text(cell,stat[2],Rect2(6,25,cw-12,ch-25),12 if cw<100 else 15)
 		bind_detail(cell,str(stat[0]),str(stat[0]),str(stat[3]))
 	var sy:=116+ceili(stats.size()/float(cols))*(ch+6)+8
 	var content_w:=stats_w if wide else (stats_w-12)*.60
 	var art_rect:=Rect2(stats_w+32,116,bw-stats_w-52,bh-192) if wide else Rect2(32+content_w,sy,bw-content_w-52,bh-sy-74)
-	var art:=frame(board,art_rect,Color("24372e"))
+	var art:=frame(board,art_rect,TaleTheme.c("surface"))
 	art.name="CharacterArt"
 	art.clip_contents=true
 	ui.banner_portrait(art,actor.id,Rect2(6,6,art.size.x-12,art.size.y-12),false)
@@ -262,7 +263,7 @@ func skill_card(grid:GridContainer,kind:int,title:String,wide:bool) -> void:
 	card.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 	card.custom_minimum_size=Vector2(1,100)
 	var skin:=style()
-	skin.bg_color=Color("122d28")
+	skin.bg_color=TaleTheme.c("surface")
 	skin.set_content_margin_all(8)
 	card.add_theme_stylebox_override("panel",skin)
 	grid.add_child(card)
@@ -286,7 +287,7 @@ func skill_card(grid:GridContainer,kind:int,title:String,wide:bool) -> void:
 	var name_label:=text(lines,title+" · "+["Básico","Passiva","Especial" if actor.id=="aladin" else "Habilidade"][kind],Rect2(),16 if wide else 14)
 	name_label.custom_minimum_size.x=1
 	name_label.size_flags_horizontal=Control.SIZE_EXPAND_FILL
-	var short_text:=text(lines,Preview.SHORT[actor.id][kind],Rect2(),13 if wide else 12,Color("b8c6b5"))
+	var short_text:=text(lines,Preview.SHORT[actor.id][kind],Rect2(),13 if wide else 12,TaleTheme.c("muted"))
 	short_text.name="AbilityDescription"
 	short_text.custom_minimum_size.x=1
 	short_text.size_flags_horizontal=Control.SIZE_EXPAND_FILL
@@ -309,12 +310,12 @@ func skill_card(grid:GridContainer,kind:int,title:String,wide:bool) -> void:
 	info.custom_minimum_size=Vector2(44,44)
 	info.size_flags_vertical=Control.SIZE_SHRINK_CENTER
 	var info_style:=style()
-	info_style.bg_color=Color("102c31")
-	info_style.border_color=Color("64c7ff")
+	info_style.bg_color=TaleTheme.c("surface")
+	info_style.border_color=TaleTheme.c("magical")
 	info_style.set_corner_radius_all(0)
 	info_style.set_content_margin_all(0)
 	for state in ["normal","hover","pressed","focus"]:info.add_theme_stylebox_override(state,info_style)
-	info.add_theme_color_override("font_color",Color("64c7ff"))
+	info.add_theme_color_override("font_color",TaleTheme.c("magical"))
 	info.add_theme_font_size_override("font_size",20)
 	info.pressed.connect(func():show_detail("skill%d"%kind,title,data.detail,true))
 	var info_margin:=MarginContainer.new()

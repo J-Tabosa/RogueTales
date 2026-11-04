@@ -69,7 +69,7 @@ func test() -> void:
 		await prepare(id)
 		var offers:Array=game.run.offers.duplicate()
 		var card:Button=descendants(game.overlay).filter(func(n):return n is Button and n.has_meta("bonus_rarity"))[0]
-		check(card.get_meta("bonus_rarity")==5 and card.get_meta("rarity_color")==Color(B.COLORS[5]),"Mythic reward red")
+		check(card.get_meta("bonus_rarity")==5 and card.get_meta("rarity_color")==TaleTheme.rarity(5),"Mythic reward retains rarity in the current theme")
 		await click(card,card.size*.5,extent.x==540)
 		check(game.state=="bonus_choice" and game.run.actors[0].initiative==10,"Open preview only via actual tap")
 		var confirm:Button=game.overlay.find_child("ConfirmBonus",true,false)
@@ -116,8 +116,8 @@ func test() -> void:
 			id="bonus:%d:max_hp:unique:%d"%[800+rarity,rarity]
 			await prepare(id)
 			card=descendants(game.overlay).filter(func(n):return n is Button and n.has_meta("bonus_rarity"))[0]
-			check(card.get_meta("rarity_color")==Color(B.COLORS[rarity]),"Each rarity card background")
-			check((card.get_theme_stylebox("normal") as StyleBoxFlat).bg_color==Color(B.COLORS[rarity]).darkened(.72),"Color used as actual background")
+			check(card.get_meta("rarity_color")==TaleTheme.rarity(rarity),"Each rarity card background")
+			check(card.get_theme_stylebox("normal").get_meta("theme_generation",-1)==TaleTheme.generation,"Reward uses the current themed surface")
 			if extent.x==540:await capture("rarity-%d"%rarity)
 		game.run.interlude="shop";game.run.run_gold=100;game.run.shop_stock.assign(["bonus:900:max_hp:unique:0"])
 		game.show_run_shop();await process_frame
