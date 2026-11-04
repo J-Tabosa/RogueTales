@@ -1,76 +1,115 @@
-# Interface — temas Escuro e Claro
+# Interface — temas, ornamentos e cores de gameplay
 
-A mudança é visual e mantém a navegação, a formação, os tempos e as regras do jogo. Alterne em **Configurações → Tema** ou em **Pausa → Tema**. A escolha é aplicada à tela aberta, sem reconstruir a run, e salva como `ui_theme` no mesmo save. Saves anteriores usam o tema Escuro.
+Alterne em **Configurações → switch Tema** ou em **Pausa → switch Tema**. O controle aceita clique, toque e teclado; ligado seleciona o Claro, desligado seleciona o Escuro. A escolha fica salva como `ui_theme`. A troca atualiza a tela aberta sem recriar a run.
 
-## Tokens de cor
+## Cores da interface
 
-A única fonte de valores é `TaleTheme.PALETTES`, em `scripts/ui_theme.gd`. Use `TaleTheme.c("token", alpha)` nos componentes. `GOLD`, `MUTED` e `INK` são acessores de compatibilidade que consultam os tokens atuais, sem guardar uma cópia da paleta.
+Os valores ficam em `TaleTheme.PALETTES`, em `scripts/ui_theme.gd`. Consulte-os com `TaleTheme.c("token", alpha)`. Fundos, painéis, cartões e espaços internos têm tons distintos, gradientes com três paradas, luz superior e sombra inferior. Botões principais e estados de hover/foco também têm tratamentos próprios.
 
-| Token | Escuro | Claro | Uso |
-|---|---|---|---|
-| `background` | `#07253f` | `#e5d0a1` | Fundo principal e véus |
-| `surface` | `#0b304b` | `#ddbd82` | Painel base |
-| `surface_top` | `#123e58` | `#e8cea0` | Início do gradiente dos painéis |
-| `secondary` | `#3c95a9` | `#ddbd82` | Controles secundários e escudos |
-| `button` | `#17465f` | `#ddbd82` | Botão em repouso |
-| `hover` | `#205971` | `#ead3a9` | Botão sob mouse |
-| `pressed` | `#092e49` | `#ceb078` | Botão pressionado |
-| `border` | `#3c95a9` | `#99723c` | Borda externa e divisórias |
-| `accent` | `#aceaf1` | `#684921` | Ícones e bordas de seleção/foco |
-| `text` | `#ffffff` | `#3b2414` | Texto principal |
-| `muted` | `#d2edf2` | `#5b3d23` | Texto auxiliar |
-| `disabled` | `#97b6c3` | `#735434` | Texto de controle desativado |
-| `ornament` | `#aceaf1` | `#a27632` | Filigranas, rosáceas e molduras |
-| `shadow` | `#031524` | `#8c693c` | Sombra e profundidade |
-| `track` | `#041c30` | `#c3a36d` | Trilho de barras e sliders |
-| `progress` | `#aceaf1` | `#684921` | Preenchimento de progresso |
-| `selection` | `#3c95a9` | `#c4a069` | Seleção de texto |
-| `physical` | `#ffffff` | `#3b2414` | Valor de dano físico, com rótulo explícito |
-| `magical` | `#aceaf1` | `#684921` | Valor de dano mágico, com rótulo explícito |
-| `health_full` | `#aceaf1` | `#684921` | Vida acima de 80% |
-| `health_high` | `#8fd9e4` | `#78572c` | Vida acima de 60% |
-| `health_half` | `#71c4d3` | `#886536` | Vida acima de 40% |
-| `health_low` | `#55adbf` | `#987440` | Vida acima de 20% |
-| `health_critical` | `#3c95a9` | `#a7834d` | Vida em 20% ou menos |
-
-Os preenchimentos de botões escuros são derivados mais escuros do azul médio para garantir contraste de texto pequeno. Todos os estados ativos de texto são testados com contraste mínimo de **4,5:1**. O dourado ornamental do tema Claro foi escurecido para se distinguir do papel. Raridades usam `TaleTheme.rarity()` com variações tonais; seus nomes e metadados continuam explícitos. Os cinco níveis de vida também seguem a paleta escolhida. Artes de personagens, itens, cenários e efeitos de combate preservam suas cores originais.
-
-## Tipografia e acabamento
-
-- Títulos: **Cinzel**. Texto corrido, números e botões: **Lora**. Ambas incluem os acentos portugueses e licença SIL OFL em `assets/fonts/renaissance/`.
-- Painéis e botões têm gradiente discreto, borda dupla e brilho de relevo. Hover, foco de teclado e seleção têm borda destacada.
-- Fundos e painéis amplos recebem textura e rosácea com baixa opacidade. Filigranas maiores ficam fora das áreas de texto; painéis de conteúdo automático usam apenas a moldura fina.
-- Decorações ignoram mouse/toque, não participam dos containers e não alteram as dimensões das telas. Os botões `i` mantêm formato quadrado e margem de 5.
-
-## Assets transparentes para substituir
-
-Pasta: **`assets/ui/themes/shared/`**. Já existem SVGs provisórios transparentes utilizáveis. Para usar suas artes, substitua o SVG correspondente ou adicione um PNG **com o mesmo nome base**; PNG tem prioridade. A importação e o cache são feitos uma vez por execução.
-
-Produza as peças em **branco monocromático sobre transparência**, sem fundo, texto ou cor fixa. O jogo as colore pelo token `ornament` de cada tema. Isso permite reutilizar cada peça nos dois temas.
-
-| Nome esperado | Tamanho sugerido | Uso e margens |
+| Token | Escuro | Claro |
 |---|---|---|
-| `panel_frame.png` / `.svg` | 384 × 384 px | Moldura de painéis e janelas. Centro transparente. 9-slice: **72 px por lado** (18,75%); cantos ficam com 18 px lógicos. A peça SVG provisória usa 96 × 96 e margens 18. |
-| `button_frame.png` / `.svg` | 384 × 384 px | Contorno de botões e cartões clicáveis. Mesmo 9-slice, centro transparente; ornamentos contidos na faixa externa. |
-| `corner_filigrane.png` / `.svg` | 256 × 256 px | Canto superior esquerdo. Os outros três são espelhados automaticamente. Sem margem transparente externa. Exibido em até 27 px lógicos. |
-| `section_divider.png` / `.svg` | 1280 × 64 px | Divisor horizontal com rosácea/flor no centro, sob os títulos. Exibição proporcional, centro óptico no meio da imagem. |
-| `mandala_watermark.png` / `.svg` | 1024 × 1024 px | Rosácea circular nos fundos e painéis grandes. Traços leves, sem letras. Opacidade final de 3,5–4,5%. |
-| `surface_texture.png` / `.svg` | 256 × 256 px | Textura discreta de papel/gravura, repetível sem emenda nos quatro lados. Opacidade de 3,5%. |
+| `background` | `#07253f` | `#e5d0a1` |
+| `background_bottom` | `#031522` | `#c7a36f` |
+| `surface` | `#10394b` | `#ddbd82` |
+| `surface_top` | `#1c4f61` | `#f5e7c9` |
+| `surface_bottom` | `#092737` | `#c9a772` |
+| `card` | `#17485a` | `#ead1a1` |
+| `card_top` | `#286175` | `#faefd9` |
+| `card_bottom` | `#103647` | `#d9b67e` |
+| `well` | `#071f2c` | `#c5a670` |
+| `well_top` | `#103444` | `#dfc490` |
+| `well_bottom` | `#051a28` | `#bea06b` |
+| `secondary` | `#3c95a9` | `#ddbd82` |
+| `button` | `#205468` | `#d8b474` |
+| `button_top` | `#316b7d` | `#f2dab0` |
+| `primary` | `#225f70` | `#c29a59` |
+| `primary_top` | `#307b87` | `#dec18c` |
+| `hover` | `#30697d` | `#ebcf98` |
+| `pressed` | `#0c3042` | `#c6a066` |
+| `border` | `#3c95a9` | `#99723c` |
+| `accent` | `#aceaf1` | `#684921` |
+| `text` | `#ffffff` | `#3b2414` |
+| `muted` | `#d2edf2` | `#5b3d23` |
+| `disabled` | `#97b6c3` | `#735434` |
+| `ornament` | `#aceaf1` | `#a27632` |
+| `shadow` | `#031524` | `#8c693c` |
+| `track` | `#041c30` | `#c3a36d` |
+| `progress` | `#aceaf1` | `#684921` |
+| `selection` | `#3c95a9` | `#c4a069` |
 
-Não pinte o fundo dos arquivos de moldura: o gradiente é feito pelo componente para escalar sem distorção. Os trechos de borda devem permitir repetição/estiramento sem elementos narrativos. Mantenha filigranas dentro da faixa de canto para não invadir textos.
+## Cores de gameplay preservadas
 
-## Implementação e verificação
+**Vida, mana, escudos, dano, status e raridades não acompanham a paleta decorativa.** Os tokens abaixo ficam em `TaleTheme.SEMANTIC`, com os mesmos valores nos dois temas. Barras e números de combate usam a superfície escura original para manter leitura; valores de dano nas fichas também recebem fundo escuro, preservando vermelho/azul.
 
-- `scripts/ui_theme.gd`: tokens, Theme nativo Godot, estados e aplicação aos controles criados dinamicamente; atualização por eventos, sem percorrer a árvore a cada frame.
-- `scripts/theme_surface.gd`: gradientes, marca d'água, textura e renderização das peças com 9-slice normalizado pela resolução da imagem.
-- `scripts/ui_skin.gd`: integração dos componentes existentes e divisores.
-- Camadas de shaders do cenário/combate são excluídas da aplicação do tema. As fichas, equipamentos, conquistas, diário, menus, carregamento e pausa usam a mesma camada visual.
-- `tests/ui_themes.gd`: persistência/migração, contraste, troca na ficha aberta sem alterar estado/vida/arte/escala, telas novas após a troca, pausa, PC e celular. Gera capturas reais quando há display disponível.
+| Token | Cor |
+|---|---|
+| `health_full` | `#67cf85` |
+| `health_high` | `#c5e85a` |
+| `health_half` | `#f2d36b` |
+| `health_low` | `#f5a052` |
+| `health_critical` | `#ff6969` |
+| `mana` | `#8ab4f0` |
+| `mana_text` | `#a9c9ff` |
+| `shield` | `#8ddbee` |
+| `physical` | `#ff6969` |
+| `magical` | `#64c7ff` |
+| `true_damage` | `#ead9ff` |
+| `combat_surface` | `#102a24` |
+| `combat_border` | `#8c7043` |
+| `combat_text` | `#f5e8c3` |
+| `combat_track` | `#091a19` |
+| `damage_outline` | `#101321` |
+| `rarity_text` | `#fff4df` |
+| `rarity_disabled` | `#c5c8c2` |
+
+| Raridade | Cor fixa |
+|---|---|
+| Comum | `#858b94` — cinza |
+| Incomum | `#50b86a` — verde |
+| Raro | `#5097ee` — azul |
+| Épico | `#ac6bef` — roxo |
+| Lendário | `#ef9c39` — laranja |
+| Mítico | `#ee5555` — vermelho |
+| Especial / troféu | `#e6cb79` — dourado |
+
+Inventário, slots equipados, recompensas, mercador e bônus exibem bordas e fundos coloridos pela raridade. A seleção reforça a borda sem substituir sua cor. A camada de tema preserva as cores de BBCode de dano e o tom próprio dos números de combate.
+
+## Tipografia
+
+**Nunito Semibold** para textos e números; **Nunito Extrabold** para botões, nomes e destaques; **Cinzel** para títulos maiores. São fontes já incluídas no projeto com suas licenças OFL. Os tamanhos, rolagem, funções e hierarquia permanecem; o sistema de ajuste de texto mede a fonte efetiva.
+
+## PNGs integrados
+
+As 12 imagens originais estão em **`assets/ui/themes/dark/`** e **`assets/ui/themes/light/`**, seis por tema. As artes coloridas são desenhadas com modulação branca, preservando a paleta e o relevo originais. Os SVGs de `shared/` continuam como fallback. Mipmaps e filtragem linear mantêm os desenhos pequenos nítidos e estáveis.
+
+| Nome em cada pasta | Resolução | Onde é usado |
+|---|---|---|
+| `corner_filigrane.png` | 1254 × 1254 | Cantos externos do fundo no PC; uma região do canto é reutilizada e espelhada. |
+| `horizontal_border.png` | 2172 × 724 | Faixa horizontal repetida no acabamento inferior do fundo. |
+| `section_divider.png` | 2172 × 724 | Divisor com roseta sob títulos. O atlas retira as margens transparentes. |
+| `mandala_watermark.png` | 1254 × 1254 | Rosácea discreta em fundos e painéis grandes. |
+| `surface_texture.png` | 1254 × 1254 | Textura repetida em escala reduzida, com baixa opacidade. |
+| `panel_frame.png` | 1536 × 1024 | Moldura completa com centro transparente; painéis e botões principais. |
+
+A moldura usa 9-slice com reservas de **350 px horizontais e 330 px verticais** na imagem original, mantendo os arabescos fora dos trechos esticáveis. Os cantos de destino ficam entre 14 e 28 px lógicos conforme o tamanho do controle. Painéis pequenos e espaços de combate usam acabamento contido para não invadir números. Nenhum PNG foi redimensionado, recolorido ou recomprimido no arquivo de origem; recortes são feitos por `AtlasTexture`.
+
+## Convenções para novos componentes
+
+- `theme_rarity` ou `bonus_rarity`: índice da raridade, independente do tema.
+- `theme_bar_role`: token semântico do preenchimento, como `mana`.
+- `health_bar`: preenchimento atualizado por `HealthDisplay` e suas cinco faixas.
+- `theme_semantic_color`: cor autoral de um rótulo; não é substituída pelo tema.
+- `theme_text_role` / `theme_icon_role`: token explícito de texto ou ícone, por exemplo `physical` e `magical`.
+- `combat_readout`: superfície escura legível em ambos os temas.
+- `theme_surface_role`: `surface`, `card` ou `well` para a profundidade do painel.
+
+`ui_theme.gd` centraliza a aplicação; `theme_surface.gd` desenha os PNGs, gradientes e 9-slice. Atualizações ocorrem por eventos de criação/troca de tema, sem varrer a árvore a cada frame. Texturas do tema anterior são liberadas do cache ao alternar. Cenários, personagens e shaders do combate preservam suas cores e escalas.
+
+## Verificação
+
+`tests/ui_themes.gd` verifica cores originais das cinco faixas de vida e das sete raridades, barras reais, números de dano, BBCode físico/mágico, inventário, switch por mouse/toque/teclado, persistência e troca em uma ficha aberta, além de contraste e telas PC/mobile. Gera capturas reais quando há display.
 
 ```sh
 godot --headless --path . --script tests/ui_themes.gd
-# Capturas reais, com um display disponível:
 godot --path . --script tests/ui_themes.gd -- /tmp/rogue-tales-themes
 ```
-
-Os testes anteriores de equipamentos e bônus foram atualizados apenas nas expectativas de fonte, estilo de borda e paleta, que mudaram neste redesign.

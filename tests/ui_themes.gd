@@ -19,9 +19,31 @@ func capture(key: String) -> void:
 	if destination.is_empty() or DisplayServer.get_name() == "headless": return
 	await RenderingServer.frame_post_draw
 	game.get_window().get_texture().get_image().save_png(destination.path_join(key + ".png"))
+func click(control:Control) -> void:
+	var point:=control.get_global_transform_with_canvas()*(control.size*.5)
+	var move:=InputEventMouseMotion.new()
+	move.position=point
+	move.global_position=point
+	game.get_viewport().push_input(move,true)
+	for down in [true,false]:
+		if game.get_window().size.x<600:
+			var finger:=InputEventScreenTouch.new()
+			finger.index=0
+			finger.position=point
+			finger.pressed=down
+			game.get_viewport().push_input(finger,true)
+		var event:=InputEventMouseButton.new()
+		event.button_index=MOUSE_BUTTON_LEFT
+		event.device=InputEvent.DEVICE_ID_EMULATION if game.get_window().size.x<600 else 0
+		event.position=point
+		event.global_position=point
+		event.pressed=down
+		event.button_mask=MOUSE_BUTTON_MASK_LEFT if down else 0
+		game.get_viewport().push_input(event,true)
+	await settle()
 func verify(node: Node) -> void:
 	if node is Label or node is Button:
-		check(node.get_theme_color("font_color") == TaleTheme.c(str(node.get_meta("theme_text_role", "text"))), "Text follows active theme: " + str(node.get_path()))
+		check(node.get_theme_color("font_color") == TaleTheme.text_color(node), "Text follows active theme: " + str(node.get_path()))
 	if node is Button:
 		check(node.get_theme_stylebox("normal").get_meta("theme_generation", -1) == TaleTheme.generation, "Button uses native themed style")
 	for child in node.get_children(): verify(child)
@@ -39,8 +61,15 @@ func test() -> void:
 	check(restored.ui_theme == "light", "Theme preference survives save serialization")
 	for mode in ["dark", "light"]:
 		TaleTheme.set_mode(mode)
-		for fill in ["background", "surface", "surface_top", "button", "hover", "pressed"]:
+		for fill in ["background", "surface", "surface_top", "card", "card_top", "well", "button", "button_top", "primary", "primary_top", "hover", "pressed"]:
 			check(contrast(TaleTheme.c("text"), TaleTheme.c(fill)) >= 4.5, mode + " text contrast on " + fill)
+		var health=preload("res://scripts/health_display.gd")
+		for i in 5:
+			check(health.tint({"hp":90-i*20,"max_hp":100})==Color(["67cf85","c5e85a","f2d36b","f5a052","ff6969"][i]),"Original five health colors in "+mode)
+		for i in 7:check(TaleTheme.rarity(i)==Color(["858b94","50b86a","5097ee","ac6bef","ef9c39","ee5555","e6cb79"][i]),"Original rarity color in "+mode)
+		check(TaleTheme.c("physical")==Color("ff6969") and TaleTheme.c("magical")==Color("64c7ff"),"Damage colors survive the theme")
+		for key in ["corner_filigrane","horizontal_border","section_divider","mandala_watermark","surface_texture","panel_frame"]:
+			check(TaleTheme.asset(key)!=null and TaleTheme.asset(key).get_meta("theme_colorized",false),"Generated PNG ornament loaded: "+mode+"/"+key)
 	game = load("res://scenes/main.tscn").instantiate()
 	game.save_path = "user://ui_themes_isolated.json"
 	root.add_child(game)
@@ -63,17 +92,39 @@ func test() -> void:
 				await capture("%s-%s-%d" % [mode, screen, extent.x])
 				verify(game.page)
 				if screen == "settings":
-					var toggle := game.page.find_child("ThemeToggle", true, false) as Button
-					check(toggle != null and not toggle.disabled, "Settings exposes theme switch")
-					toggle.pressed.emit()
+					var toggle := game.page.find_child("ThemeToggle", true, false) as CheckButton
+					check(toggle != null and not toggle.disabled and toggle.button_pressed==(mode=="light"), "Settings exposes a synchronized native switch")
+					await click(toggle)
 					await settle()
 					check(game.campaign.ui_theme != mode, "Settings button activates theme switch")
-					toggle.pressed.emit()
+					await click(toggle)
 					await settle()
 					var saved := TaleCampaign.new()
 					check(saved.load_from(game.save_path) and saved.ui_theme == mode, "Button choice persists to disk")
+					toggle.grab_focus()
+					for trial in 2:
+						for down in [true,false]:
+							var key:=InputEventKey.new()
+							key.keycode=KEY_SPACE
+							key.pressed=down
+							game.get_viewport().push_input(key,true)
+						await settle()
+						check(toggle.button_pressed==(game.campaign.ui_theme=="light"),"Keyboard keeps switch synchronized")
+					check(game.campaign.ui_theme==mode,"Keyboard toggles twice without resetting preferences")
 			game.run = IdleRun.new()
 			check(game.run.start_expedition(game.campaign, "alice", "vigor"), "Start test run")
+			var gear=preload("res://scripts/equipment.gd")
+			for rank in 6:
+				for id in gear.ITEMS:
+					if int(gear.ITEMS[id].rarity)==rank and not gear.ITEMS[id].get("consumable",false):
+						game.run.inventory.append(id)
+						break
+			game.run.interlude="route"
+			check(game.run.equip_item(0,game.run.inventory[1],0),"Equip colored item for real HUD")
+			game.run.interlude=""
+			game.run.actors[0].hp=game.run.actors[0].max_hp*.5
+			game.run.actors[0].shield=18
+			game.run.actors[0].energy=40
 			game.run.spawn_enemy()
 			game.build_battle()
 			game.arena.sync_enemies()
@@ -88,11 +139,19 @@ func test() -> void:
 			game.update_hud()
 			check(not game.arena.atmosphere.weather.has_node("ThemeSurface"), "Weather never receives an opaque UI surface")
 			await capture("%s-battle-%d" % [mode, extent.x])
+			check(game.card_health[0].get_theme_stylebox("fill").bg_color==Color("f2d36b") and game.card_health[0].get_theme_stylebox("fill").border_color==Color("f2d36b"),"Real combat HP and its border are yellow at half life")
+			check(game.ult_meters[0].get_theme_stylebox("fill").bg_color==Color("8ab4f0"),"Real combat resource bar remains blue")
 			verify(game.page)
+			game.arena.damage_number("17",Vector2(350,200),Color("ffb5b4"))
+			await settle()
+			var damage:Label=game.arena.numbers.back().node
+			check(damage.get_theme_color("font_color")==Color("ffb5b4"),"Combat damage keeps its authored color")
 			game.show_character_information(0)
 			await capture("%s-inspector-%d" % [mode, extent.x])
 			verify(game.overlay)
 			var sheet: Control = game.overlay
+			var summary:=sheet.find_child("AbilitySummary",true,false) as RichTextLabel
+			check(summary.text.contains("#ff6969") and summary.text.contains("#64c7ff"),"Physical/magical damage remain red/blue in real ability text")
 			var hp: float = game.run.actors[0].hp
 			var scene_art: Texture2D = game.arena.backdrop.texture
 			var hero_extent: Vector2 = game.arena.heroes[0].scale
@@ -101,6 +160,9 @@ func test() -> void:
 			game.toggle_ui_theme()
 			await settle()
 			verify(sheet)
+			check(summary.text.contains("#ff6969") and summary.text.contains("#64c7ff"),"Switch does not rewrite semantic BBCode colors")
+			check(damage.get_theme_color("font_color")==Color("ffb5b4"),"Switch does not flatten damage feedback")
+			check(game.card_health[0].get_theme_stylebox("fill").bg_color==Color("f2d36b"),"Switch does not recolor a live HP bar")
 			check(game.overlay == sheet and game.state == state and game.get_child_count() == nodes_before, "Live switch preserves existing screen and controls")
 			check(game.arena.backdrop.texture == scene_art and game.arena.heroes[0].scale == hero_extent, "Art and character scale survive theme change")
 			check(game.run.actors[0].hp == hp, "Switch does not simulate or restart combat")
@@ -110,6 +172,10 @@ func test() -> void:
 			game.show_equipment(0)
 			await capture("%s-equipment-%d" % [mode, extent.x])
 			verify(game.equipment_panel)
+			for tile in game.equipment_panel.find_children("*","Button",true,false):
+				if tile.has_meta("inventory_item"):
+					var id:String=tile.get_meta("inventory_item")
+					check(tile.get_theme_stylebox("normal").get_meta("rarity_color")==gear.tint(id),"Inventory border keeps the actual item rarity")
 			game.close_equipment()
 			game.state = "battle"
 			game.paused = false

@@ -181,10 +181,11 @@ func widget(at: Vector2,title: String,tint: Color,hostile:=false,unit_index:=-1)
 	group.z_index=900
 	add_child(group)
 	var panel:=Panel.new()
+	panel.set_meta("combat_readout",true)
 	panel.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	var plate:=StyleBoxFlat.new()
-	plate.bg_color=TaleTheme.c("surface")
-	plate.border_color=TaleTheme.c("border")
+	plate.bg_color=TaleTheme.c("combat_surface")
+	plate.border_color=TaleTheme.c("combat_border")
 	plate.set_border_width_all(1)
 	plate.set_corner_radius_all(4)
 	panel.add_theme_stylebox_override("panel",plate)
@@ -193,19 +194,20 @@ func widget(at: Vector2,title: String,tint: Color,hostile:=false,unit_index:=-1)
 	text.text=title
 	text.clip_text=true
 	text.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
-	text.add_theme_color_override("font_color",TaleTheme.c("text"))
+	text.add_theme_color_override("font_color",TaleTheme.c("combat_text"))
 	panel.add_child(text)
 	var bars:Array[ProgressBar]=[]
 	for index in 2:
 		var bar:=ProgressBar.new()
 		bar.show_percentage=false
+		if index==1:bar.set_meta("theme_bar_role","mana")
 		bar.position=Vector2(8,20 if index==0 else 28)
 		bar.size=Vector2(64,5 if index==0 else 3)
 		var bg:=StyleBoxFlat.new()
 		bg.bg_color=TaleTheme.c("track")
 		bg.set_corner_radius_all(2)
 		var fill:=bg.duplicate()
-		fill.bg_color=tint if index==0 else TaleTheme.c("progress")
+		fill.bg_color=tint if index==0 else TaleTheme.c("mana")
 		bar.add_theme_stylebox_override("background",bg)
 		bar.add_theme_stylebox_override("fill",fill)
 		panel.add_child(bar)
@@ -750,6 +752,7 @@ func begin_enemy_attack(index: int, target: int) -> bool:
 func damage_number(message: String, at: Vector2, tint: Color) -> void:
 	var text := Label.new()
 	text.text = message
+	text.set_meta("theme_semantic_color",tint)
 	text.position = at + Vector2(-80, -110)
 	text.position.x = clampf(text.position.x, 6, field_width - 166)
 	text.size = Vector2(160, 44)
@@ -757,7 +760,7 @@ func damage_number(message: String, at: Vector2, tint: Color) -> void:
 	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	text.add_theme_font_size_override("font_size", 13 if message.length() > 12 else 15 if message.contains("ESCUDO") else (18 if message.begins_with("+") else 22))
 	text.add_theme_color_override("font_color", tint)
-	text.add_theme_color_override("font_outline_color", TaleTheme.c("background"))
+	text.add_theme_color_override("font_outline_color", TaleTheme.c("damage_outline"))
 	text.add_theme_constant_override("outline_size", 5)
 	text.z_index = 1500
 	add_child(text)

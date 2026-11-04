@@ -1,0 +1,50 @@
+[
+  {
+    "path": "assets/ui/themes/dark/corner_filigrane.png",
+    "sha256": "b08757939b1b8766ed5ebab81f0e7b6cdd6f8b37b1fb1ba0194efd8b96e9cfa0"
+  },
+  {
+    "path": "assets/ui/themes/dark/horizontal_border.png",
+    "sha256": "fac516d45fb3a7ff6235a46f054e9bc937d5ff20c8a38299c03bc2173b47510d"
+  },
+  {
+    "path": "assets/ui/themes/dark/mandala_watermark.png",
+    "sha256": "1720ecbda88bedd538677b487d017ef640eed08fa00554d459e28683c50f5426"
+  },
+  {
+    "path": "assets/ui/themes/dark/panel_frame.png",
+    "sha256": "7113bc01c4daab46a0fb322fdf44c6d2012130d120baa073910095f812a18b98"
+  },
+  {
+    "path": "assets/ui/themes/dark/section_divider.png",
+    "sha256": "4931d5bb0877a24425cd6e9ea66374c063815ce53f77289abedefa9cd32701a3"
+  },
+  {
+    "path": "assets/ui/themes/dark/surface_texture.png",
+    "sha256": "0bbd86040868b48f70ae92e8730b05620f90e030996197c98583c99e559d8eba"
+  },
+  {
+    "path": "assets/ui/themes/light/corner_filigrane.png",
+    "sha256": "eb3b89b26da435f32f7fddfb925af4ad4108dca8b34f779c8d77d9e4ff319460"
+  },
+  {
+    "path": "assets/ui/themes/light/horizontal_border.png",
+    "sha256": "d54b0eef923f9221d8334bc55f5c139851186b86fdc24c71057dab167f2e6a36"
+  },
+  {
+    "path": "assets/ui/themes/light/mandala_watermark.png",
+    "sha256": "ec7db99ba47ec945b98fcb5dc6afbd2c0c28c8cdd438270f51eb2e29e9c984c5"
+  },
+  {
+    "path": "assets/ui/themes/light/panel_frame.png",
+    "sha256": "fd62104ece18c6977e8c0a043f20bd77b3930676c9167f7a0f3be9b4e3dbccda"
+  },
+  {
+    "path": "assets/ui/themes/light/section_divider.png",
+    "sha256": "11c2860ca39a70350ff60fa1861b8ff14a0907709b948e39a8f41399f1302ba2"
+  },
+  {
+    "path": "assets/ui/themes/light/surface_texture.png",
+    "sha256": "4eab0ef3eee278dafdf590f4490a5742efc43a9c9e5a1d103e947c3a015a193a"
+  }
+]

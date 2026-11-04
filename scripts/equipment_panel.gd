@@ -178,6 +178,11 @@ func build_description(parent: Node, rect: Rect2) -> void:
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		label.add_theme_font_size_override("font_size", line[1])
 		label.add_theme_color_override("font_color", line[2])
+		if int(line[1])==11:
+			label.set_meta("theme_semantic_color",Gear.tint(selected_item))
+			# Colored rarity names stay legible over both parchment and blue panels.
+			label.add_theme_color_override("font_outline_color",TaleTheme.c("damage_outline"))
+			label.add_theme_constant_override("outline_size",2)
 		stack.add_child(label)
 	var owners: Array[String] = []
 	for actor in ui.run.actors:

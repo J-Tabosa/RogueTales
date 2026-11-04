@@ -33,7 +33,8 @@ static func background(parent: Control) -> Control:
 static func divider(parent: Control, rect: Rect2) -> TextureRect:
 	var node := picture(parent, TaleTheme.asset("section_divider"), rect)
 	node.set_meta("theme_divider", true)
-	node.modulate = TaleTheme.c("ornament", .7)
+	node.texture_filter=CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	node.modulate = TaleTheme.asset_tint("section_divider", .85)
 	return node
 
 static func decorate(node: Control, _button_style := false, frame_only := false, _factor_override := 0.0) -> Control:

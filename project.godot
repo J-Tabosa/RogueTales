@@ -23,7 +23,7 @@ window/size/min_height=640
 
 [gui]
 
-theme/custom_font="res://assets/fonts/renaissance/Lora.ttf"
+theme/custom_font="res://assets/fonts/Nunito-Semibold.ttf"
 
 theme/default_font_multichannel_signed_distance_field=true
 

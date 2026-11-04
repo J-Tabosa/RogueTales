@@ -59,6 +59,7 @@ static func slot(parent: Node, id: String, rect: Rect2, callback: Callable, sele
 static func refresh(button: Button, id: String) -> void:
 	if button.get_meta("item_id", "__unset") == id: return
 	button.set_meta("item_id", id)
+	button.set_meta("theme_rarity",int(Gear.data(id).get("rarity",0)) if not id.is_empty() else -1)
 	button.text = "+" if id.is_empty() else ""
 	button.tooltip_text = (Gear.rarity_name(id)+" · " if not id.is_empty() else "")+Gear.data(id).get("title", "Espaço vazio · escolher equipamento")
 	button.get_meta("item_picture").texture = texture(id)

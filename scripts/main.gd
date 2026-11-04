@@ -1369,17 +1369,41 @@ func toggle_pause() -> void:
 	button(overlay, "Continuar", Rect2(32, 418, 476, 60), resume_battle, true)
 	button(overlay, "Salvar e voltar ao início", Rect2(32, 503, 476, 56), leave_battle)
 	button(overlay, "Abandonar expedição", Rect2(32, 584, 476, 56), request_abandon)
-	button(overlay, theme_button_text(), Rect2(32, 665, 476, 52), toggle_ui_theme).name = "ThemeToggle"
+	theme_switch(overlay,Rect2(32,665,476,52))
 
 
 func theme_button_text() -> String:
-	return "Tema: Escuro  ·  Mudar para claro" if campaign.ui_theme == "dark" else "Tema: Claro  ·  Mudar para escuro"
+	return "Tema: Claro" if campaign.ui_theme=="light" else "Tema: Escuro"
+
+
+func theme_switch(parent:Node,rect:Rect2) -> CheckButton:
+	var control:=CheckButton.new()
+	control.name="ThemeToggle"
+	control.set_meta("theme_switch",true)
+	control.text=theme_button_text()
+	control.position=rect.position
+	control.size=rect.size
+	control.custom_minimum_size.y=44
+	control.alignment=HORIZONTAL_ALIGNMENT_LEFT
+	control.add_theme_font_size_override("font_size",17)
+	control.set_pressed_no_signal(campaign.ui_theme=="light")
+	control.tooltip_text="Alternar tema claro / escuro"
+	control.toggled.connect(set_light_theme)
+	parent.add_child(control)
+	register_layout(control)
+	return control
 
 
 func toggle_ui_theme() -> void:
-	campaign.ui_theme = "light" if campaign.ui_theme == "dark" else "dark"
+	set_light_theme(campaign.ui_theme!="light")
+
+
+func set_light_theme(enabled:bool) -> void:
+	campaign.ui_theme = "light" if enabled else "dark"
 	ui_theme.switch_to(campaign.ui_theme)
-	for control in find_children("ThemeToggle", "Button", true, false): control.text = theme_button_text()
+	for control in find_children("ThemeToggle", "CheckButton", true, false):
+		control.text=theme_button_text()
+		control.set_pressed_no_signal(enabled)
 	# Refresh health fills immediately, including in a paused battle.
 	if run != null and is_instance_valid(arena): update_hud()
 	persist()

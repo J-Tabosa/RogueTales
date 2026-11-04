@@ -55,6 +55,8 @@ func icon(parent:Node,glyph:String,at:Vector2,extent:=28.0,tint:= TaleTheme.c("a
 	var image:=Icon.new()
 	image.glyph=glyph
 	image.tint=tint
+	if tint==TaleTheme.c("physical"):image.set_meta("theme_icon_role","physical")
+	elif tint==TaleTheme.c("magical"):image.set_meta("theme_icon_role","magical")
 	image.position=at
 	image.size=Vector2.ONE*extent
 	image.mouse_filter=Control.MOUSE_FILTER_IGNORE
@@ -293,6 +295,7 @@ func skill_card(grid:GridContainer,kind:int,title:String,wide:bool) -> void:
 	short_text.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 	var summary:=RichTextLabel.new()
 	summary.name="AbilitySummary"
+	summary.set_meta("combat_readout",true)
 	summary.bbcode_enabled=true
 	summary.text=data.summary
 	summary.fit_content=true

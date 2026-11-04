@@ -11,4 +11,4 @@ Cinzel (titles) and Lora (body) are distributed under SIL Open Font License.
 - https://github.com/google/fonts/tree/main/ofl/cinzel
 - https://github.com/google/fonts/tree/main/ofl/lora
 
-Original variable font files are in `renaissance/`, with both OFL notices. Goldman files remain for historical assets; the active interface uses Cinzel/Lora.
+Original variable font files are in `renaissance/`, with both OFL notices. Goldman files remain for historical assets; the active interface uses Nunito Semibold/Extrabold for body text and Cinzel for large titles. Lora remains available as an alternate.

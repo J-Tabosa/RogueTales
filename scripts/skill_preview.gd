@@ -15,7 +15,7 @@ const SHORT={
 	"peter":["Golpeia um alvo; suas sombras atacam junto.","Esquivas criam sombras; impactos diretos removem uma.","Completa três sombras e fortalece seus golpes temporariamente."],
 	"puss":["Desfere um corte em um inimigo.","Quanto menos vida possui, maior seu Dano Físico.","Atinge toda a coluna com o dano aumentado pela sua fúria."]
 }
-const COLOR_ROLES=["physical","magical","text"]
+const COLOR_ROLES=["physical","magical","true_damage"]
 static func coefficient_text(value:float) -> String:
 	var rendered:="%.4f"%value
 	while rendered.ends_with("0"):rendered=rendered.trim_suffix("0")

@@ -1,6 +1,6 @@
 extends RefCounted
-const BODY = preload("res://assets/fonts/renaissance/Lora.ttf")
-const STRONG = preload("res://assets/fonts/renaissance/Cinzel.ttf")
+const BODY = preload("res://assets/fonts/Nunito-Semibold.ttf")
+const STRONG = preload("res://assets/fonts/Nunito-Extrabold.ttf")
 static func font(bold := false) -> Font:
 	return STRONG if bold else BODY
 static func apply(node: Control, bold := false) -> void:
@@ -12,7 +12,7 @@ static func fit_line(node: Label, preferred: int, minimum := 9, bounds := Vector
 	# Measure the actual font; changing resolutions or the number of gold digits
 	# must not push the label beyond the interior of its frame.
 	var extent:Vector2=bounds if bounds.x>0 else node.size
-	var key:="%s:%s:%d"%[node.text,extent,preferred]
+	var key:="%s:%s:%d:%s"%[node.text,extent,preferred,node.get_theme_font("font").resource_path]
 	if node.get_meta("line_fit","")==key:
 		node.size=extent
 		return

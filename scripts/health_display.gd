@@ -13,9 +13,10 @@ static func update(bar:ProgressBar,data:Dictionary) -> void:
 	bar.set_meta("health_bar",true)
 	var color:=tint(data)
 	var fill:=bar.get_theme_stylebox("fill") as StyleBoxFlat
-	if fill==null or fill.bg_color!=color:
+	if fill==null or fill.bg_color!=color or fill.border_color!=color:
 		fill=fill.duplicate() if fill!=null else StyleBoxFlat.new()
 		fill.bg_color=color
+		fill.border_color=color
 		bar.add_theme_stylebox_override("fill",fill)
 	var shield:=maxf(0,float(data.get("shield",0)))
 	var total:=maxf(1,capacity(data))
@@ -27,9 +28,9 @@ static func update(bar:ProgressBar,data:Dictionary) -> void:
 		segment=ColorRect.new()
 		segment.name="ShieldSegment"
 		segment.mouse_filter=Control.MOUSE_FILTER_IGNORE
-		segment.color=TaleTheme.c("secondary")
+		segment.color=TaleTheme.c("shield")
 		bar.add_child(segment)
-	segment.color=TaleTheme.c("secondary")
+	segment.color=TaleTheme.c("shield")
 	segment.position=Vector2(bar.size.x*maxf(0,data.hp)/total,0)
 	segment.size=Vector2(bar.size.x*shield/total,bar.size.y)
 	segment.visible=shield>0 and data.hp>0

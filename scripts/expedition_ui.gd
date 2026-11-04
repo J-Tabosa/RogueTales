@@ -45,7 +45,7 @@ func header(title: String, subtitle: String) -> void:
 	button(page, "", Rect2(464, 8, 52, 44), show_settings)
 	icon(page, "settings", Rect2(480, 21, 20, 20))
 	label(page, title, Rect2(24, 66, 492, 55), 30)
-	UISkin.divider(page,Rect2(100,116,340,10))
+	UISkin.divider(page,Rect2(100,112,340,16))
 	label(page, subtitle, Rect2(24, 126, 492, 46), 15, MUTED)
 
 func show_menu() -> void:
@@ -312,7 +312,9 @@ func show_relics() -> void:
 		if offer.has("bonus"):
 			note=offer.note
 			bonus_skin(card,id)
-		elif offer.has("item"):note="RELÍQUIA MÍTICA · +1 VAGA · LIMITE 5" if offer.get("consumable",false) else "EQUIPAMENTO · ESCOLHA O PORTADOR NO INVENTÁRIO"
+		elif offer.has("item"):
+			card.set_meta("theme_rarity",int(offer.rarity))
+			note="RELÍQUIA MÍTICA · +1 VAGA · LIMITE 5" if offer.get("consumable",false) else Equipment.rarity_name(offer.item).to_upper()+" · EQUIPAMENTO · ESCOLHA O PORTADOR"
 		elif offer.has("owner"): note = "HABILIDADE · " + str(TaleCatalog.HEROES[offer.owner].name)
 		elif offer.has("hero"):
 			var owned := campaign.unlocked.has(offer.hero)
@@ -436,6 +438,7 @@ func show_run_shop() -> void:
 		for child in card.get_children():child.queue_free()
 		for skin in ["normal","disabled"]:card.add_theme_stylebox_override(skin,box(TaleTheme.c("surface"),TaleTheme.c("border"),12))
 		if key.begins_with("item:"):
+			card.set_meta("theme_rarity",int(data.rarity))
 			ItemArt.picture(card,key.trim_prefix("item:"),Rect2(12,20,82,82))
 		else:
 			icon(card,EffectBadges.symbol(key),Rect2(28,35,48,48),GOLD)
@@ -888,7 +891,7 @@ func show_settings() -> void:
 	setting_slider(inner, "Música", 0, campaign.music_volume, set_music_volume)
 	setting_slider(inner, "Efeitos", 132, campaign.effects_volume, set_effects_volume)
 	setting_slider(inner, "Vozes de ataque", 264, campaign.voice_volume, set_voice_volume)
-	button(inner, theme_button_text(), Rect2(0, 399, 476, 52), toggle_ui_theme).name = "ThemeToggle"
+	theme_switch(inner,Rect2(0,399,476,52))
 	button(inner, "Movimento reduzido: " + ("ON" if campaign.reduced_motion else "OFF"), Rect2(0, 481, 476, 52), toggle_motion)
 	button(inner, "Qualidade: " + ("Alta" if campaign.high_quality else "Leve"), Rect2(0, 549, 476, 52), set_quality.bind(not campaign.high_quality))
 	button(inner, "%d FPS" % campaign.fps_limit, Rect2(0, 617, 476, 52), set_fps.bind(30 if campaign.fps_limit == 60 else 60))

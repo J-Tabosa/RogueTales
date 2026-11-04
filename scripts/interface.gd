@@ -346,14 +346,18 @@ func build_battle() -> void:
 		status.set_meta("card_status", true)
 		var hp_text := label(card, "", Rect2(10, 48, 140, 19), 10, TaleTheme.c("accent"))
 		hp_text.set_meta("card_hp", true)
+		hp_text.set_meta("theme_semantic_color",HealthDisplay.tint(actor))
 		hp_text.autowrap_mode=TextServer.AUTOWRAP_OFF
 		var hp := bar(card, Rect2(10, 69, 140, 6), TaleTheme.c("accent"))
 		hp.set_meta("card_hp_bar", true)
+		hp.set_meta("health_bar",true)
 		card_health.append(hp)
 		var mana_text := label(card, "", Rect2(10, 76, 140, 17), 11, TaleTheme.c("accent"))
 		mana_text.set_meta("card_mana", true)
+		mana_text.set_meta("theme_text_role","mana_text")
 		var meter := bar(card, Rect2(10, 94, 140, 6), TaleTheme.c("accent"))
 		meter.set_meta("card_mana_bar", true)
+		meter.set_meta("theme_bar_role","mana")
 		ult_meters.append(meter)
 		for field in ["name","hp","mana","ult","status"]: battle_text_box(card,field)
 		ult_buttons.append(card)
@@ -389,6 +393,7 @@ func battle_text_box(card: Button,key: String) -> void:
 	var frame:=Panel.new()
 	frame.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	frame.set_meta("card_box",key)
+	if key in ["hp","mana"]:frame.set_meta("combat_readout",true)
 	frame.add_theme_stylebox_override("panel",box(TaleTheme.c("surface"),TaleTheme.c("border"),5).duplicate())
 	card.add_child(frame)
 	card.move_child(frame,1)
@@ -501,7 +506,8 @@ func update_hud() -> void:
 				child.text = "Caído" if actor.hp <= 0 else ("ULT na fila" if actor.get("ult_queued", false) else ("ULT em ação" if actor.ult_pending else ("ULT pronta" if run.tactics.ultimate_ready(index) else ("Selada" if actor.get("sealed", false) else "Aguardando"))))
 			elif child.has_meta("card_hp"):
 				child.text = "PV %d / %d%s" % [ceili(actor.hp), ceili(HealthDisplay.capacity(actor)), "  ESC %d" % ceili(actor.shield) if actor.shield > 0 else ""]
-				child.add_theme_color_override("font_color",TaleTheme.c("text"))
+				child.set_meta("theme_semantic_color",HealthDisplay.tint(actor))
+				child.add_theme_color_override("font_color",HealthDisplay.tint(actor))
 				BattleType.fit_line(child,10,8,Vector2(child.size.x,19))
 			elif child.has_meta("card_items"):
 				var equipment_slot: int = child.get_meta("card_items")
