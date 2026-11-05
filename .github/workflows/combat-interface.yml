@@ -28,6 +28,7 @@ jobs:
           chmod +x "$RUNNER_TEMP/godot/Godot_v4.7-stable_linux.x86_64"
           echo "GODOT_RUNNER=$RUNNER_TEMP/godot/Godot_v4.7-stable_linux.x86_64" >> "$GITHUB_ENV"
       - name: Import project
+        id: import
         shell: bash
         run: |
           set -euo pipefail
@@ -54,7 +55,7 @@ jobs:
           sys.exit(bool(failed))
           PY
       - name: Render interface fixtures
-        if: success() && hashFiles('tests/manuscript_combat_ui.gd') != ''
+        if: always() && steps.import.outcome == 'success' && hashFiles('tests/manuscript_combat_ui.gd') != ''
         shell: bash
         run: |
           set -euo pipefail
