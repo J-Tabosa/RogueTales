@@ -5,6 +5,7 @@ extends Node
 const BODY = preload("res://assets/fonts/Nunito-Semibold.ttf")
 const STRONG = preload("res://assets/fonts/Nunito-Extrabold.ttf")
 const HEADING = preload("res://assets/fonts/renaissance/Cinzel.ttf")
+const NUMERIC = preload("res://assets/fonts/numeric/DejaVuSansMono-Bold.ttf")
 const MANUSCRIPT = preload("res://assets/fonts/renaissance/Lora.ttf")
 ## Gameplay colors are semantic: changing the UI theme must never recolor them.
 const RARITIES = ["858b94", "50b86a", "5097ee", "ac6bef", "ef9c39", "ee5555", "e6cb79"]
@@ -21,6 +22,7 @@ const PALETTES = {
 		"secondary": "3c95a9", "button": "205468", "button_top":"316b7d", "primary":"225f70", "primary_top":"307b87", "hover": "30697d", "pressed": "0c3042",
 		"border": "3c95a9", "accent": "aceaf1", "text": "ffffff", "muted": "d2edf2",
 		"disabled": "97b6c3", "ornament": "aceaf1", "shadow": "031524",
+		"bar_track":"091a19", "bar_health":"67cf85", "bar_enemy":"ff6969", "bar_shield":"8ddbee", "bar_edge":"3c95a9", "bar_text":"ffffff", "bar_outline":"101321",
 		"track": "041c30", "progress": "aceaf1", "selection": "3c95a9"
 	},
 	"light": {
@@ -29,6 +31,7 @@ const PALETTES = {
 		"secondary": "ddbd82", "button": "d8b474", "button_top":"f2dab0", "primary":"c29a59", "primary_top":"dec18c", "hover": "ebcf98", "pressed": "c6a066",
 		"border": "99723c", "accent": "684921", "text": "3b2414", "muted": "5b3d23",
 		"disabled": "735434", "ornament": "a27632", "shadow": "8c693c",
+		"bar_track":"091a19", "bar_health":"67cf85", "bar_enemy":"ff6969", "bar_shield":"8ddbee", "bar_edge":"99723c", "bar_text":"ffffff", "bar_outline":"101321",
 		"track": "c3a36d", "progress": "684921", "selection": "c4a069"
 	}
 }
@@ -88,7 +91,7 @@ static func manuscript_style(state: String) -> StyleBoxFlat:
 	var key := "manuscript_"+state
 	if styles.has(key): return styles[key]
 	var style := flat("surface","border",0)
-	style.bg_color = c("hover" if state=="hover" else "pressed" if state=="pressed" else "surface")
+	style.bg_color = Color.TRANSPARENT
 	style.set_border_width_all(1 if state=="focus" else 0)
 	style.border_color = c("accent")
 	style.set_meta("theme_variant",key)
@@ -256,14 +259,20 @@ func apply_control(node: Control) -> void:
 	applying = true
 	if node is Label or node is Button or node is LineEdit:
 		var title: bool = (node is Label and node.get_theme_font_size("font_size") >= 26 and not node.get_meta("combat_readout",false)) or node.get_meta("theme_heading", false)
-		var face: Font = HEADING if title or (is_manuscript(node) and node.has_meta("card_name")) else MANUSCRIPT if is_manuscript(node) else STRONG if node is Button or node.get_theme_font_size("font_size")>=19 or node.has_meta("card_name") or node.has_meta("card_hp") else BODY
-		if node.get_theme_font("font") != face: node.add_theme_font_override("font", face)
+		var face: Font = NUMERIC if node.get_meta("bar_readout",false) else HEADING if title or (is_manuscript(node) and node.has_meta("card_name")) else MANUSCRIPT if is_manuscript(node) else STRONG if node is Button or node.get_theme_font_size("font_size")>=19 or node.has_meta("card_name") or node.has_meta("card_hp") else BODY
+		if not node.get_meta("status_italic",false) and node.get_theme_font("font") != face: node.add_theme_font_override("font", face)
 		for key in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_hover_pressed_color"]:
 			color_override(node, key, text_color(node))
 		color_override(node, "font_disabled_color", c("rarity_disabled") if has_dark_readout(node) else c("disabled"))
 		color_override(node, "font_shadow_color", c("shadow", 0))
 		# Damage labels over artwork keep their outline for contrast.
 		color_override(node, "font_outline_color", c("damage_outline") if node.get_theme_constant("outline_size") > 0 else c("shadow", 0))
+	if node is Label and node.get_meta("bar_readout",false):
+		color_override(node,"font_color",c("bar_text"))
+		color_override(node,"font_outline_color",c("bar_outline"))
+		color_override(node,"font_shadow_color",c("bar_outline"))
+		node.add_theme_constant_override("outline_size",2)
+		node.add_theme_constant_override("shadow_offset_y",1)
 	if node is RichTextLabel:
 		# BBCode damage/rarity colors convey game information and remain untouched.
 		color_override(node, "default_color", text_color(node))
@@ -307,7 +316,7 @@ func apply_control(node: Control) -> void:
 		color_override(node, "font_selected_color", c("text"))
 	elif node is ProgressBar:
 		var combat:=node.has_meta("health_bar") or node.has_meta("theme_bar_role")
-		style_override(node, "background", flat("combat_track" if combat else "track", "border", 3))
+		style_override(node, "background", flat("bar_track" if combat else "track", "bar_edge" if combat else "border", 0 if combat else 3))
 		if not node.has_meta("health_bar"): style_override(node, "fill", flat(str(node.get_meta("theme_bar_role","progress")), str(node.get_meta("theme_bar_role","progress")), 3))
 		if node.get_meta("manuscript_role","") == "bar":
 			for key in ["background","fill"]:
@@ -318,7 +327,7 @@ func apply_control(node: Control) -> void:
 					node.add_theme_stylebox_override(key,style)
 			ensure_surface(node,true)
 	elif node is ColorRect:
-		if node.name == "ShieldSegment": node.color = c("shield")
+		if node.name == "ShieldSegment": node.color = c("bar_shield")
 		elif node.size.x >= 300 and node.size.y >= 400:
 			if not node.has_meta("theme_shade_alpha"):node.set_meta("theme_shade_alpha",node.color.a)
 			node.color = c("background", 1.0 if node.get_parent()==host.get("page") else float(node.get_meta("theme_shade_alpha")))

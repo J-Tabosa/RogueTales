@@ -70,17 +70,17 @@ func checks() -> void:
 			await process_frame
 		assert(not game.arena.warming_attacks(),"Render preparation completes")
 		assert(preload("res://scripts/combat_warmup.gd").prepared.size()>0,"Prepared resources remain cached")
-		assert(game.arena.human_height()+game.arena.widget_size().y+8<=game.arena.field_height*.26+.01,"Body and plate fit the reserved slot")
+		if game.desktop:assert(game.arena.human_height()+game.arena.widget_size().y+8<=game.arena.field_height*.26+.01,"Body and plate fit the reserved slot")
 		game.show_character_information(0)
 		for frame in 4:await process_frame
 		var inspector=game.overlay
 		var nodes:=descendants(inspector)
-		var art:Sprite2D=nodes.filter(func(n):return n is Sprite2D and n.name=="HeroArt")[0]
-		assert(art.scale.x<0,"Sheet portrait faces left")
+		var art:TextureRect=nodes.filter(func(n):return n is TextureRect and n.name=="CharacterArt")[0]
+		assert(art.flip_h and art.stretch_mode==TextureRect.STRETCH_KEEP_ASPECT_CENTERED,"Sheet portrait faces left and fits fully")
 		var stats:=nodes.filter(func(n):return n.has_meta("stat"))
 		assert(stats.size()==11)
-		for stat in stats:assert(Rect2(Vector2.ZERO,inspector.board.size).encloses(Rect2(stat.position,stat.size)),"Stats stay on board")
-		var scroll:ScrollContainer=nodes.filter(func(n):return n.name=="SkillScroll")[0]
+		for stat in stats:assert(inspector.board.get_global_rect().encloses(stat.get_global_rect()),"Stats stay on board")
+		var scroll:ScrollContainer=inspector.shell.scroll
 		assert(scroll.size.y>=150 and scroll.position.y+scroll.size.y<inspector.board.size.y-60)
 		var labels:=nodes.filter(func(n):return n is Label)
 		assert(labels.any(func(n):return n.text.contains("Dano Físico  +20.0%")))

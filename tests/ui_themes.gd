@@ -65,7 +65,7 @@ func test() -> void:
 			check(contrast(TaleTheme.c("text"), TaleTheme.c(fill)) >= 4.5, mode + " text contrast on " + fill)
 		var health=preload("res://scripts/health_display.gd")
 		for i in 5:
-			check(health.tint({"hp":90-i*20,"max_hp":100})==Color(["67cf85","c5e85a","f2d36b","f5a052","ff6969"][i]),"Original five health colors in "+mode)
+			check(health.tint({"hp":90-i*20,"max_hp":100})==TaleTheme.c("bar_health"),"Solid green health at every fill level in "+mode)
 		for i in 7:check(TaleTheme.rarity(i)==Color(["858b94","50b86a","5097ee","ac6bef","ef9c39","ee5555","e6cb79"][i]),"Original rarity color in "+mode)
 		check(TaleTheme.c("physical")==Color("ff6969") and TaleTheme.c("magical")==Color("64c7ff"),"Damage colors survive the theme")
 		for key in ["corner_filigrane","horizontal_border","section_divider","mandala_watermark","surface_texture","panel_frame"]:
@@ -139,7 +139,7 @@ func test() -> void:
 			game.update_hud()
 			check(not game.arena.atmosphere.weather.has_node("ThemeSurface"), "Weather never receives an opaque UI surface")
 			await capture("%s-battle-%d" % [mode, extent.x])
-			check(game.card_health[0].get_theme_stylebox("fill").bg_color==Color("f2d36b") and game.card_health[0].get_theme_stylebox("fill").border_color==Color("f2d36b"),"Real combat HP and its border are yellow at half life")
+			check(game.card_health[0].get_theme_stylebox("fill").bg_color==TaleTheme.c("bar_health"),"Real combat HP stays solid green at half life")
 			check(game.ult_meters[0].get_theme_stylebox("fill").bg_color==Color("8ab4f0"),"Real combat resource bar remains blue")
 			verify(game.page)
 			game.arena.damage_number("17",Vector2(350,200),Color("ffb5b4"))
@@ -162,7 +162,7 @@ func test() -> void:
 			verify(sheet)
 			check(summary.text.contains("#ff6969") and summary.text.contains("#64c7ff"),"Switch does not rewrite semantic BBCode colors")
 			check(damage.get_theme_color("font_color")==Color("ffb5b4"),"Switch does not flatten damage feedback")
-			check(game.card_health[0].get_theme_stylebox("fill").bg_color==Color("f2d36b"),"Switch does not recolor a live HP bar")
+			check(game.card_health[0].get_theme_stylebox("fill").bg_color==TaleTheme.c("bar_health"),"Switch keeps a live HP bar green")
 			check(game.overlay == sheet and game.state == state and game.get_child_count() == nodes_before, "Live switch preserves existing screen and controls")
 			check(game.arena.backdrop.texture == scene_art and game.arena.heroes[0].scale == hero_extent, "Art and character scale survive theme change")
 			check(game.run.actors[0].hp == hp, "Switch does not simulate or restart combat")
