@@ -87,10 +87,9 @@ func checks() -> void:
 			body_depth.append(sprite.z_index)
 			assert(sprite.z_index == int(sprite.position.y))
 		for item in game.arena.unit_widgets + game.arena.foe_widgets:
-			var transform:Transform2D=game.arena.global_transform.affine_inverse()*item.panel.get_global_transform()
-			var plate:Rect2=transform*Rect2(Vector2.ZERO,item.panel.size)
+			var plate := Rect2(item.root.position, item.panel.size)
 			assert(Rect2(Vector2.ZERO,game.battle_viewport.size).encloses(plate), "Plate clipped outside arena")
-			for other in plates: assert(not plate.intersects(other), "Health plates overlap at %s: %s / %s"%[dimensions,plate,other])
+			for other in plates: assert(not plate.intersects(other), "Health plates overlap")
 
 			plates.append(plate)
 		# Partial sprite overlap is intentional; no target may disappear behind the rest.
@@ -110,7 +109,7 @@ func checks() -> void:
 		assert(game.battle_gold.text.contains("OURO") and game.battle_gold.z_index>1600)
 		assert(game.action_label.z_index>1600)
 		assert(game.battle_viewport.position.y <= 76)
-		if game.desktop:assert(game.arena.human_height()+game.arena.widget_size().y+8 <= game.arena.field_height*.26+.01,"Body, health plate and gap fit each vertical slot")
+		assert(game.arena.human_height()+game.arena.widget_size().y+8 <= game.arena.field_height*.26+.01,"Body, health plate and gap fit each vertical slot")
 		assert(game.ult_buttons[0].get_children().filter(func(node):return node.has_meta("card_box")).is_empty(),"Values are inside bars without five extra text boxes")
 		assert(not game.page.get_children().any(func(node):return node is Button and node.text in ["F11","Histórico"]))
 		game.feedback.queue.clear();game.feedback.ribbon_left=0
@@ -118,7 +117,7 @@ func checks() -> void:
 		game.feedback._process(.3)
 		assert(game.feedback.ribbon_face.texture != null and game.feedback.ribbon.size.y<=70)
 		assert(game.feedback.ribbon.position.x==12 and not game.feedback.ribbon_detail.visible)
-		assert(game.battle_viewport.size.y > (560 if game.desktop else 200))
+		assert(game.battle_viewport.size.y > (560 if game.desktop else 490))
 		var slots: Array = game.ult_buttons[0].get_children().filter(func(n): return n.has_meta("card_items"))
 		assert(slots.size() == 2)
 		assert(slots[0].get_meta("item_picture").texture == Art.texture("star_powder"))

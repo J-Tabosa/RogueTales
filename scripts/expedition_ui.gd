@@ -306,7 +306,6 @@ func show_relics() -> void:
 		var id: String = run.offers[index]
 		var offer := TaleCatalog.offer_data(id)
 		var card := button(overlay, "", Rect2(32, 390 + index * 126, 476, 116), select_relic.bind(id))
-		card.set_meta("modal_option",true)
 		var title: String = offer.title
 		var detail: String = run.upgrade_detail(id)
 		var note := "BÔNUS LEGADO · ACÚMULO %d" % (run.upgrade_count(id) + 1)
@@ -963,8 +962,17 @@ func continue_into_endless() -> void:
 	show_relics()
 
 
-func journey_modal(title:String,subtitle:String) -> void:
-	modal(title,subtitle)
+func journey_modal(title: String, subtitle: String) -> void:
+	modal(title, subtitle)
+	overlay.get_child(0).color = TaleTheme.c("background", .60)
+	var card := Panel.new()
+	card.position = Vector2(16, 148)
+	card.size = Vector2(508, 718)
+	card.add_theme_stylebox_override("panel", box(TaleTheme.c("surface", 0.96), TaleTheme.c("border"), 19))
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.add_child(card)
+	register_layout(card, "center")
+	overlay.move_child(card, 1)
 
 func show_secret_reward() -> void:
 	var secrets=preload("res://scripts/secret_encounters.gd")

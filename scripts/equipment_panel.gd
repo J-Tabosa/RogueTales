@@ -19,7 +19,6 @@ func setup(owner_ui: Control, index: int, slot_index := 0) -> void:
 	selected_item = str(Gear.item_at(ui.run.actors[hero_index], selected_slot))
 	mobile_tab = "description" if not selected_item.is_empty() else "appearance"
 	name = "EquipmentPanel"
-	set_meta("viewport_modal",true)
 	z_index = 4000
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	resized.connect(rebuild)
@@ -75,7 +74,7 @@ func rebuild() -> void:
 	shade.size = size
 	add_child(shade)
 	var wide := size.x >= 900
-	var extent := Vector2(minf(size.x*.92,920),size.y*.9)
+	var extent := Vector2(minf(size.x - 24, 1120), minf(size.y - 24, 736 if wide else 940))
 	var board := plain_panel(self, Rect2((size - extent) * .5, extent), TaleTheme.c("surface"))
 	board.name = "EquipmentBoard"
 	var width := extent.x

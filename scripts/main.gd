@@ -69,7 +69,6 @@ var loading_elapsed := 0.0
 var loading_frames := 0
 var loading_stage := 0
 var loading_bar: ProgressBar
-var side_rails: Control
 var ui_theme: TaleTheme
 
 
@@ -89,10 +88,6 @@ func _ready() -> void:
 	game_speed = campaign.speed
 	var background := UISkin.background(self)
 	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	side_rails = preload("res://scripts/side_rails.gd").new()
-	side_rails.name="SideRails"
-	add_child(side_rails)
-	side_rails.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	content = Control.new()
 	content.size = Vector2(540, 960)
 	add_child(content)
@@ -120,8 +115,7 @@ func _notification(what: int) -> void:
 func center_content(usable_override: Rect2 = Rect2()) -> void:
 	if content == null:
 		return
-	var rail := preload("res://scripts/side_rails.gd").width_for(size.x)+8.0
-	var usable := Rect2(Vector2(rail,0), Vector2(maxf(1,size.x-rail*2),size.y))
+	var usable := Rect2(Vector2.ZERO, size)
 	if OS.has_feature("mobile"):
 		var safe := DisplayServer.get_display_safe_area()
 		var window_size := Vector2(DisplayServer.window_get_size())
@@ -251,7 +245,6 @@ func clear_page() -> void:
 	content.add_child(page)
 	if state != "loading":
 		loading_callback = Callable()
-	if is_instance_valid(overlay):overlay.queue_free()
 	overlay = null
 	arena = null
 	var bg := ColorRect.new()
@@ -1258,11 +1251,19 @@ func float_text(text: String, at: Vector2, color: Color) -> void:
 
 
 func modal(title: String, subtitle: String) -> void:
-	if is_instance_valid(overlay):overlay.queue_free()
-	overlay=preload("res://scripts/modal_shell.gd").new()
-	add_child(overlay)
-	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	overlay.setup(title,subtitle)
+	if is_instance_valid(overlay):
+		overlay.queue_free()
+	overlay = Control.new()
+	overlay.z_index = 1000
+	overlay.size = Vector2(540, logical_height)
+	content.add_child(overlay)
+	var shade := ColorRect.new()
+	shade.color = TaleTheme.c("background", .96)
+	shade.size = Vector2(540, 960)
+	overlay.add_child(shade)
+	register_layout(shade, "fill")
+	label(overlay, title, Rect2(32, 166, 476, 98), 32, GOLD)
+	label(overlay, subtitle, Rect2(32, 278, 476, 100), 19, MUTED)
 
 
 func show_relics() -> void:
@@ -1459,7 +1460,7 @@ func toggle_speed() -> void:
 	campaign.speed = game_speed
 	persist()
 	arena.speed = game_speed
-	speed_button.text = "▶▶ %d×" % TaleCampaign.speed_label(game_speed)
+	speed_button.text = "Velocidade %d×" % TaleCampaign.speed_label(game_speed)
 
 
 func show_victory(result: Dictionary) -> void:
@@ -2203,7 +2204,6 @@ func format_gold(amount: int) -> String:
 
 func register_layout(node: Control, kind := "auto") -> void:
 	var parent := node.get_parent()
-	if parent==overlay and overlay.get_meta("viewport_modal",false):return
 	if parent != page and parent != overlay:
 		return
 	if not node.has_meta("base_rect"):
@@ -2239,7 +2239,7 @@ func relayout_page() -> void:
 	for child in page.get_children():
 		if child is Control:
 			place_control(child)
-	if is_instance_valid(overlay) and not overlay.get_meta("viewport_modal",false):
+	if is_instance_valid(overlay):
 		overlay.size = Vector2(540, logical_height)
 		for child in overlay.get_children():
 			if child is Control:

@@ -76,4 +76,4 @@ Arte e áudio mantêm os créditos nas respectivas pastas de `assets/`. Os 65 ce
 
 ## Interface de combate
 
-Barras com valores integrados na arena e no gestor, fontes Lora/Cinzel, números monoespaçados, molduras uniformes e escudos integrados às barras. Ambos os temas preservam suas paletas e as cores de gameplay. Consulte [interface em manuscrito](docs/COMBAT_INTERFACE.md) para comportamento e validação.
+Barras com valores integrados na arena e no gestor, fontes Lora/Cinzel, molduras uniformes e escudos de fragmentos com runas flutuantes. Ambos os temas preservam suas paletas e as cores de gameplay. Consulte [interface em manuscrito](docs/COMBAT_INTERFACE.md) para comportamento e validação.

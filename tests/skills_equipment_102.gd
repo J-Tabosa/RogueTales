@@ -89,8 +89,8 @@ func checks() -> void:
 		var sheet=game.overlay
 		var nodes:=descendants(sheet)
 		assert(nodes.filter(func(n):return n.has_meta("stat")).size()==11)
-		var portrait:TextureRect=nodes.filter(func(n):return n is TextureRect and n.name=="CharacterArt")[0]
-		assert(portrait.flip_h and portrait.stretch_mode==TextureRect.STRETCH_KEEP_ASPECT_CENTERED and portrait.size.y>=180,"Complete left-facing portrait on PC and mobile")
+		var portrait:Sprite2D=nodes.filter(func(n):return n is Sprite2D and n.name=="HeroArt")[0]
+		assert(portrait.scale.x<0 and portrait.get_meta("visual_height")>180,"Large left-facing portrait on PC and mobile")
 		assert(nodes.filter(func(n):return n.name=="AbilityPicture").size()==3)
 		assert(sheet.find_child("AbilityGrid",true,false).columns==1)
 		assert(nodes.filter(func(n):return n.name=="AbilityDescription" and not n.text.is_empty()).size()==3)
@@ -103,7 +103,7 @@ func checks() -> void:
 		assert(margin.get_theme_constant("margin_left")==5)
 		assert(info.size.x==info.size.y)
 		assert(info.get_theme_stylebox("normal") is StyleBoxTexture and info.get_theme_stylebox("normal").get_meta("theme_variant", "").ends_with("_true"))
-		assert(info.get_theme_font("font").resource_path.ends_with("Lora.ttf"))
+		assert(info.get_theme_font("font").resource_path.ends_with("Nunito-Extrabold.ttf"))
 		var inside:=InputEventMouseButton.new()
 		inside.button_index=MOUSE_BUTTON_LEFT
 		inside.pressed=true

@@ -104,16 +104,7 @@ func _ready() -> void:
 
 
 func home_for(_row: String,index: int,hostile: bool) -> Vector2:
-	if field_width<400:
-		var count:int=simulation.tactics.enemies.size() if hostile else simulation.actors.size()
-		return Vector2(field_width*(.88 if hostile else .26),field_height*(.28+(index+.5)*.64/maxi(1,count)))
-	var slot:=Formation.home(simulation.tactics.enemies if hostile else simulation.actors,index,hostile)
-	# Readable display spacing; formation membership and targeting stay in Rules.
-	if field_width>=700:
-		var row:String=(simulation.tactics.enemies if hostile else simulation.actors)[index].row
-		var x:float={"back":.10,"middle":.28,"front":.46}[row]
-		slot.x=1.0-x if hostile else x
-	return slot*Vector2(field_width,field_height)
+	return Formation.home(simulation.tactics.enemies if hostile else simulation.actors,index,hostile)*Vector2(field_width,field_height)
 
 func spawn_zone(hostile: bool) -> Rect2:
 	var zone := Formation.zone(hostile)
@@ -123,49 +114,26 @@ func max_row_size() -> int:
 	return maxi(Formation.max_stack(simulation.actors),Formation.max_stack(simulation.tactics.enemies))
 
 func widget_size() -> Vector2:
-	return Vector2(140,48)
+	# Each plate fits inside one formation column, including at nine vs nine.
+	return Vector2(clampf(field_width * 0.115, 54, 104), 30)
 
-func place_widget(item:Dictionary,at:Vector2) -> void:
-	var hostile:bool=item.hostile
-	var units:Array=simulation.tactics.enemies if hostile else simulation.actors
-	var data:Dictionary=units[item.index]
-	var model:AnimatedSprite2D=foes[item.index] if hostile else heroes[item.index]
-	var chief:bool=hostile and data.get("boss",false)
-	var width:float=clampf(float(model.get_meta("visual_height",human_height()))*.8,48,140) if hostile else 160
-	if chief:width=clampf(field_width*.28,200,320)
-	width=minf(width,field_width-8)
-	var height:=28.0 if chief else 10.0 if hostile else 48.0
-	item.panel.size=Vector2(width,height)
-	# Own HUD is a child of the sprite. Cancel art scale, keeping screen-sized text.
-	if item.root.get_parent()!=model:
-		item.root.reparent(model)
-	item.root.scale=Vector2.ONE/model.scale
-	var visual_height:float=human_height()*(1.4 if chief else 1.0)
-	var y:float=-visual_height-height-6 if hostile else 5
-	var left:=clampf(at.x-width*.5,4,field_width-width-4)-at.x
-	y=clampf(at.y+y,4,field_height-height-4)-at.y
-	item.root.position=Vector2(left,y)/model.scale
-	item.root.z_index=1100-int(at.y)
-	item.health.position=Vector2.ZERO
-	item.health.size=Vector2(width,28 if chief else 10 if hostile else 24)
-	item.energy.position=Vector2(0,26)
-	item.energy.size=Vector2(width,22)
-	item.text.position=Vector2(4,0)
-	item.text.size=Vector2(width-8,item.health.size.y)
-	item.text.add_theme_font_size_override("font_size",14 if field_width<700 else 16)
-	item.mana_text.position=item.energy.position+Vector2(4,0)
-	item.mana_text.size=item.energy.size-Vector2(8,0)
-	item.mana_text.add_theme_font_size_override("font_size",14 if field_width<700 else 16)
-	item.text.visible=not hostile or chief
-	item.shield.position=Vector2(width-66,height if hostile and not chief else 0)
-	item.shield.size=Vector2(66,22)
-	item.shield.add_theme_font_size_override("font_size",14 if field_width<700 else 16)
-	if hostile:
-		item.energy.visible=false
-		item.mana_text.visible=false
-		item.text.visible=chief
-		item.health.mouse_filter=Control.MOUSE_FILTER_STOP
-		item.health.tooltip_text="%d / %d"%[ceili(data.hp),ceili(data.max_hp)]
+func place_widget(item: Dictionary, at: Vector2) -> void:
+	var extent := widget_size()
+	# Depth follows the owner, so nearer bodies occlude rear plates.
+	item.root.z_index=int(at.y)+1
+	item.panel.size = extent
+	item.root.position = Vector2(clampf(at.x - extent.x * .5, 4, field_width - extent.x - 4), minf(at.y + 5, field_height - extent.y - 4))
+	item.health.position = Vector2(3, 2)
+	item.health.size = Vector2(extent.x-6, 14)
+	item.text.position = item.health.position+Vector2(1,0)
+	item.text.size = item.health.size-Vector2(2,0)
+	item.text.add_theme_font_size_override("font_size",8 if extent.x<80 else 9)
+	item.energy.position = Vector2(3, 18)
+	item.energy.size = Vector2(extent.x-6, 11)
+	item.mana_text.position=item.energy.position+Vector2(1,0)
+	item.mana_text.size=item.energy.size-Vector2(2,0)
+	item.mana_text.add_theme_font_size_override("font_size",7)
+
 
 func hero_bounds(actor: AnimatedSprite2D) -> Rect2:
 	var texture: Texture2D = actor.sprite_frames.get_frame_texture("idle", 0)
@@ -231,7 +199,7 @@ func widget(at: Vector2,title: String,tint: Color,hostile:=false,unit_index:=-1)
 	var text:=Label.new()
 	text.text=title
 	text.z_index=3
-	HealthDisplay.readout(text)
+	text.add_theme_constant_override("outline_size",1)
 	text.clip_text=true
 	text.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
 	text.add_theme_color_override("font_color",TaleTheme.c("combat_text"))
@@ -242,9 +210,7 @@ func widget(at: Vector2,title: String,tint: Color,hostile:=false,unit_index:=-1)
 		bar.show_percentage=false
 		if index==1:bar.set_meta("theme_bar_role","mana")
 		bar.set_meta("manuscript_role","bar")
-		if index==0:
-			bar.set_meta("health_bar",true)
-			bar.set_meta("hostile",hostile)
+		if index==0:bar.set_meta("health_bar",true)
 		bar.position=Vector2(8,20 if index==0 else 28)
 		bar.size=Vector2(64,5 if index==0 else 3)
 		var bg:=StyleBoxFlat.new()
@@ -262,32 +228,11 @@ func widget(at: Vector2,title: String,tint: Color,hostile:=false,unit_index:=-1)
 	mana_text.set_meta("theme_text_role","combat_text")
 	mana_text.z_index=3
 	mana_text.mouse_filter=Control.MOUSE_FILTER_IGNORE
-	HealthDisplay.readout(mana_text)
+	mana_text.add_theme_constant_override("outline_size",1)
 	panel.add_child(mana_text)
-	var shield:=Label.new()
-	shield.name="ShieldReadout"
-	HealthDisplay.readout(shield)
-	HealthDisplay.shield_icon(shield)
-	shield.z_index=4
-	shield.mouse_filter=Control.MOUSE_FILTER_IGNORE
-	panel.add_child(shield)
-	var item:={"shield":shield,"root":group,"panel":panel,"text":text,"mana_text":mana_text,"health":bars[0],"energy":bars[1],"hostile":hostile,"index":unit_index,"badges":{}}
+	var item:={"root":group,"panel":panel,"text":text,"mana_text":mana_text,"health":bars[0],"energy":bars[1],"hostile":hostile,"index":unit_index,"badges":{}}
 	place_widget(item,at)
-	if hostile:
-		bars[0].gui_input.connect(func(event:InputEvent):
-			if (event is InputEventScreenTouch and event.pressed) or (event is InputEventMouseButton and event.pressed):
-				reveal_foe_readout(item,not item.text.visible))
-		bars[0].mouse_entered.connect(func():reveal_foe_readout(item,true))
-		bars[0].mouse_exited.connect(func():reveal_foe_readout(item,false))
 	return item
-
-func reveal_foe_readout(item:Dictionary,shown:bool) -> void:
-	if simulation.tactics.enemies[item.index].get("boss",false):return
-	item.text.visible=shown
-	var at:Vector2=global_transform.affine_inverse()*item.panel.global_position
-	var width:=minf(field_width-8,maxf(140,item.health.size.x))
-	item.text.position=Vector2(clampf(at.x+(item.health.size.x-width)*.5,4,field_width-width-4)-at.x,-24 if at.y>=26 else item.health.size.y+2)
-	item.text.size=Vector2(width,24)
 
 func sync_enemies() -> void:
 	for actor in foes:
@@ -442,38 +387,19 @@ func sync_health(actors: Array[Dictionary]) -> void:
 		HealthDisplay.update(unit_widgets[index].health,actors[index])
 		unit_widgets[index].energy.max_value = 4 if simulation.expedition and actors[index].id=="alice" else maxf(1,simulation.tactics.Rules.cost(actors[index]))
 		unit_widgets[index].energy.value = actors[index].get("card_charge",0) if simulation.expedition and actors[index].id=="alice" else actors[index].energy
-		unit_widgets[index].mana_text.text="%s / %s" % [compact_hp(unit_widgets[index].energy.value),compact_hp(unit_widgets[index].energy.max_value)]
-		if actors[index].id=="aladin":
-			unit_widgets[index].energy.max_value=3
-			unit_widgets[index].energy.value=simulation.tactics.Rules.wishes_left(actors[index])
-			unit_widgets[index].mana_text.text="%d desejos"%int(unit_widgets[index].energy.value)
-		sync_shield_readout(unit_widgets[index],actors[index])
+		unit_widgets[index].mana_text.text="%s/%s" % [compact_hp(unit_widgets[index].energy.value),compact_hp(unit_widgets[index].energy.max_value)]
 		sync_conditions(unit_widgets[index],actors[index],index,false)
-		unit_widgets[index].text.text = "%s / %s" % [compact_hp(actors[index].hp),compact_hp(actors[index].max_hp)]
-
+		unit_widgets[index].text.text = ("%s/%s" if unit_widgets[index].panel.size.x<90 else "%s/%s PV") % [compact_hp(actors[index].hp),compact_hp(HealthDisplay.capacity(actors[index]))]
+		if actors[index].id=="alice":unit_widgets[index].text.text=CharacterEffects.SUITS[int(actors[index].get("suit",0))%4]+" "+unit_widgets[index].text.text
 	for index in foes.size():
 		var data: Dictionary = simulation.tactics.enemies[index]
 		foes[index].visible = enemy_visible and (data.hp > 0 or data.get("death_left", 0) > 0)
-		var widget:Dictionary=foe_widgets[index]
-		if data.hp<=0 and not widget.root.get_meta("fading",false):
-			widget.root.set_meta("fading",true)
-			var fade:Tween=widget.root.create_tween()
-			fade.tween_property(widget.root,"modulate:a",0.0,.2)
-			fade.tween_callback(widget.root.hide)
-		elif data.hp>0:widget.root.visible=enemy_visible
+		foe_widgets[index].root.visible = enemy_visible and data.hp > 0
 		HealthDisplay.update(foe_widgets[index].health,data)
 		foe_widgets[index].energy.visible = false
 		foe_widgets[index].mana_text.visible = false
-		sync_shield_readout(foe_widgets[index],data)
 		sync_conditions(foe_widgets[index],data,index,true)
-		foe_widgets[index].text.text = "%s / %s" % [compact_hp(data.hp),compact_hp(data.max_hp)]
-
-func sync_shield_readout(item:Dictionary,data:Dictionary) -> void:
-	var shielded:bool=data.hp>0 and float(data.get("shield",0))>0
-	item.shield.visible=shielded
-	item.shield.text="   %d"%ceili(maxf(0,float(data.get("shield",0))))
-	if not item.hostile or data.get("boss",false):
-		item.text.size.x=item.health.size.x-8-(64 if shielded else 0)
+		foe_widgets[index].text.text = ("%s/%s" if foe_widgets[index].panel.size.x<90 else "%s/%s PV") % [compact_hp(data.hp),compact_hp(HealthDisplay.capacity(data))]
 
 
 
@@ -613,8 +539,6 @@ func _process(delta: float) -> void:
 		else:
 			foes[index].z_index = int(foe_homes[index].y)
 			if data.has("species_id"):foes[index].flip_h=false
-		fit_hero_in_view(foes[index])
-		foes[index].z_index=int(foes[index].position.y)
 	for area in enemy_areas: area.left -= dt
 	enemy_areas = enemy_areas.filter(func(area): return area.left > 0)
 	for burst in bursts: burst.left -= dt
@@ -812,29 +736,8 @@ func fit_field(dimensions: Vector2, reserved_bottom := 0.0) -> void:
 		foe_homes[index] = home_for(simulation.tactics.enemies[index].row, index, true)
 		foes[index].position = foe_homes[index]
 		place_widget(foe_widgets[index],foe_homes[index])
-	separate_readouts()
 	queue_redraw()
 
-
-func separate_readouts() -> void:
-	var occupied:Array[Rect2]=[]
-	for item in unit_widgets+foe_widgets:
-		var transform:Transform2D=global_transform.affine_inverse()*item.panel.get_global_transform()
-		var rect:Rect2=transform*Rect2(Vector2.ZERO,item.panel.size)
-		var original_y:=rect.position.y
-		for attempt in 24:
-			var conflict:=false
-			for other in occupied:
-				if rect.intersects(other):
-					var above:=other.position.y-rect.size.y-3
-					rect.position.y=above if above>=4 else other.end.y+3
-					conflict=true
-					break
-			if not conflict:break
-		rect.position.y=clampf(rect.position.y,4,field_height-rect.size.y-4)
-		var model:Node2D=item.root.get_parent()
-		item.root.position.y+=(rect.position.y-original_y)/model.scale.y
-		occupied.append(rect)
 
 func is_action_busy() -> bool:
 	if warming_attacks():return true
