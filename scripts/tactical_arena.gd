@@ -123,13 +123,13 @@ func place_widget(item: Dictionary, at: Vector2) -> void:
 	item.root.z_index=int(at.y)+1
 	item.panel.size = extent
 	item.root.position = Vector2(clampf(at.x - extent.x * .5, 4, field_width - extent.x - 4), minf(at.y + 5, field_height - extent.y - 4))
-	item.health.position = Vector2(3, 3)
-	item.health.size = Vector2(extent.x-6, 12)
+	item.health.position = Vector2(3, 2)
+	item.health.size = Vector2(extent.x-6, 14)
 	item.text.position = item.health.position+Vector2(1,0)
 	item.text.size = item.health.size-Vector2(2,0)
 	item.text.add_theme_font_size_override("font_size",8 if extent.x<80 else 9)
 	item.energy.position = Vector2(3, 18)
-	item.energy.size = Vector2(extent.x-6, 9)
+	item.energy.size = Vector2(extent.x-6, 11)
 	item.mana_text.position=item.energy.position+Vector2(1,0)
 	item.mana_text.size=item.energy.size-Vector2(2,0)
 	item.mana_text.add_theme_font_size_override("font_size",7)
@@ -708,12 +708,14 @@ func set_home(index: int, at: Vector2) -> void:
 		heroes[index].position = at
 
 
-func fit_field(dimensions: Vector2) -> void:
+func fit_field(dimensions: Vector2, reserved_bottom := 0.0) -> void:
+	var view_dimensions := dimensions
+	dimensions.y=maxf(120,dimensions.y-maxf(0,reserved_bottom))
 	var ratio := dimensions / Vector2(field_width, field_height)
 	field_width = dimensions.x
 	field_height = dimensions.y
 	if is_instance_valid(backdrop):
-		backdrop.size = dimensions + Vector2(24, 0)
+		backdrop.size = view_dimensions + Vector2(24, 0)
 		if simulation.expedition and not simulation.journey.is_empty():
 			backdrop.material.set_shader_parameter("arena_aspect",backdrop.size.x/backdrop.size.y)
 			backdrop.material.set_shader_parameter("source_aspect",backdrop.texture.get_size().aspect())

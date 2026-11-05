@@ -14,7 +14,7 @@ static func frame(canvas: CanvasItem, extent: Vector2, role: String, owner: Cont
 	var full := Rect2(Vector2.ONE,extent-Vector2.ONE*2)
 	var edge := TaleTheme.c("ornament",.85)
 	var fine := TaleTheme.c("border",.65)
-	var active := owner is BaseButton and (owner.has_focus() or owner.is_hovered())
+	var active: bool = owner is BaseButton and (owner.has_focus() or owner.is_hovered())
 	if role == "chapter":
 		canvas.draw_colored_polygon(contour(full,5).slice(0,8),TaleTheme.c("well",.72))
 		canvas.draw_line(Vector2(8,extent.y-2),Vector2(extent.x-8,extent.y-2),fine,1.0,true)
