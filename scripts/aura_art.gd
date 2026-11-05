@@ -93,7 +93,6 @@ static func _tide(canvas:CanvasItem,feet:Vector2,h:float,color:Color,time:float)
 static func draw_tinted(canvas:CanvasItem,feet:Vector2,height:float,color:Color,clock:float,reduced:bool,style:="flame") -> void:
 	var h:=maxf(12,height)
 	var time:=0.0 if reduced else clock
-	_floor(canvas,feet,h,color,time)
 	match style:
 		"orbit":_orbit(canvas,feet,h,color,time)
 		"spiral":_spiral(canvas,feet,h,color,time)

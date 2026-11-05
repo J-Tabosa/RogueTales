@@ -204,7 +204,7 @@ func build_battle() -> void:
 	arena.feedback = feedback
 	auto_button.add_theme_font_size_override("font_size", 15)
 	auto_button.set_meta("mobile_rect", Rect2(16, 0, 246, 46))
-	auto_button.set_meta("pc_rect", Rect2(1018, 694, 248, 44))
+	auto_button.set_meta("pc_rect", Rect2(986, 638, 270, 44))
 	speed_button.set_meta("mobile_rect", Rect2(278, 0, 246, 46))
 	relayout_battle()
 

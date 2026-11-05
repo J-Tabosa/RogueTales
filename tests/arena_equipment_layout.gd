@@ -108,9 +108,9 @@ func checks() -> void:
 		assert(game.stage_label.text.contains("ESTÁGIO") and game.stage_label.text.contains("FASE"))
 		assert(game.battle_gold.text.contains("OURO") and game.battle_gold.z_index>1600)
 		assert(game.action_label.z_index>1600)
-		assert(game.battle_viewport.position.y < 70)
+		assert(game.battle_viewport.position.y <= 76)
 		assert(game.arena.human_height()+game.arena.widget_size().y+8 <= game.arena.field_height*.26+.01,"Body, health plate and gap fit each vertical slot")
-		assert(game.ult_buttons[0].get_children().filter(func(node):return node.has_meta("card_box")).size()==5)
+		assert(game.ult_buttons[0].get_children().filter(func(node):return node.has_meta("card_box")).is_empty(),"Values are inside bars without five extra text boxes")
 		assert(not game.page.get_children().any(func(node):return node is Button and node.text in ["F11","Histórico"]))
 		game.feedback.queue.clear();game.feedback.ribbon_left=0
 		game.feedback.enqueue({"hero":"alice","kind":"passive","title":"Carta na manga","detail":"Avançou o naipe e ganhou 25 mana"})
