@@ -65,22 +65,9 @@ func _draw() -> void:
 			var extent:=minf(size.x*.80,size.y*.86)
 			if rosette!=null:draw_texture_rect(rosette,Rect2(size*.5-Vector2.ONE*extent*.5,Vector2.ONE*extent),false,TaleTheme.asset_tint("mandala_watermark",.055 if backdrop else .045))
 	if backdrop:
-		if TaleTheme.is_manuscript(parent):
-			Manuscript.folio(self,size)
-			return
-		if size.x>700:
-			var corner:=TaleTheme.asset("corner_filigrane")
-			if corner!=null:
-				for i in 4:
-					var at:=Vector2(12 if i%2==0 else size.x-12,12 if i<2 else size.y-12)
-					draw_set_transform(at,0,Vector2(1 if i%2==0 else -1,1 if i<2 else -1))
-					draw_texture_rect(corner,Rect2(0,0,76,76),false,TaleTheme.asset_tint("corner_filigrane",.30))
-				draw_set_transform(Vector2.ZERO)
-		var strip:=TaleTheme.asset("horizontal_border")
-		if strip!=null:
-			draw_set_transform(Vector2(0,size.y-9),0,Vector2.ONE*.028)
-			draw_texture_rect(strip,Rect2(0,0,size.x/.028,strip.get_height()),true,TaleTheme.asset_tint("horizontal_border",.3))
-			draw_set_transform(Vector2.ZERO)
+		# Draw the complete outer folio once, on the root surface. The battle
+		# page already has its own arena/chapter frames and must not duplicate it.
+		if not TaleTheme.is_manuscript(parent): Manuscript.folio(self,size)
 		return
 	if rank>=0:
 		var tint:=TaleTheme.rarity(rank)

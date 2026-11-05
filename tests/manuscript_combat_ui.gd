@@ -102,7 +102,7 @@ func test() -> void:
 				check(mana.get_theme_stylebox("fill").bg_color==TaleTheme.c("mana"),"Mana remains blue")
 				for child in card.get_children():
 					if child is Control and not child.get_meta("theme_decoration",false):
-						check(Rect2(Vector2.ZERO,card.size).encloses(child.get_rect()),"Card child fits: "+str(child.name))
+						check(Rect2(Vector2.ZERO,card.size).encloses(child.get_rect()),"Card child fits: %s %s / %s" % [child.name,child.get_rect(),card.size])
 				var plate: Dictionary=game.arena.unit_widgets[i]
 				var plate_rect := Rect2(game.battle_viewport.position+plate.root.position,plate.panel.size)
 				check(not plate_rect.intersects(gold.get_rect()),"Currency does not cover a unit readout")

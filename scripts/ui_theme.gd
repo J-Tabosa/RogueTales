@@ -88,7 +88,7 @@ static func manuscript_style(state: String) -> StyleBoxFlat:
 	var key := "manuscript_"+state
 	if styles.has(key): return styles[key]
 	var style := flat("surface","border",0)
-	style.bg_color = Color.TRANSPARENT
+	style.bg_color = c("hover" if state=="hover" else "pressed" if state=="pressed" else "surface")
 	style.set_border_width_all(1 if state=="focus" else 0)
 	style.border_color = c("accent")
 	style.set_meta("theme_variant",key)

@@ -32,7 +32,7 @@ static func frame(canvas: CanvasItem, extent: Vector2, role: String, owner: Cont
 				canvas.draw_colored_polygon(PackedVector2Array([at,at+direction*Vector2(4,0),at+direction*Vector2(0,4)]),mask)
 		canvas.draw_polyline(contour(full,4),edge,1.0,true)
 		return
-	if role != "portrait" and role != "arena":
+	if role != "portrait" and role != "arena" and not owner is BaseButton:
 		canvas.draw_colored_polygon(contour(full,6).slice(0,8),TaleTheme.c("combat_surface" if role=="plate" else "hover" if active else "surface",.96))
 	canvas.draw_polyline(contour(full,6),edge,1.0,true)
 	if minf(extent.x,extent.y) > 20:
@@ -58,6 +58,7 @@ static func folio(canvas: CanvasItem, extent: Vector2) -> void:
 	var edge := TaleTheme.c("ornament",.62)
 	var fine := TaleTheme.c("border",.5)
 	var margin := 9.0
+	var ornament := clampf(extent.x/820.0,.8,2.2)
 	var bottom := extent.y-38.0
 	for x in [margin,extent.x-margin]:
 		canvas.draw_line(Vector2(x,48),Vector2(x,bottom-34),fine,1.0,true)
@@ -71,13 +72,13 @@ static func folio(canvas: CanvasItem, extent: Vector2) -> void:
 			var vine := PackedVector2Array()
 			for i in 17:
 				var t := float(i)/16
-				vine.append(origin+direction*Vector2(4+38*t,4+12*sin(t*PI*.5)))
+				vine.append(origin+direction*Vector2(4+38*t,4+12*sin(t*PI*.5))*ornament)
 			canvas.draw_polyline(vine,edge,1.0,true)
 			for i in [3,7,11]:
 				var at := vine[i]
 				var angle := Vector2(direction.x,direction.y*(-.8 if i%2 else .8)).angle()
-				leaf(canvas,at,angle,7,edge)
-			var bloom := origin+direction*Vector2(10,23)
+				leaf(canvas,at,angle,7*ornament,edge)
+			var bloom := origin+direction*Vector2(10,23)*ornament
 			for petal in 5:
-				leaf(canvas,bloom,petal*TAU/5,5,edge)
-			canvas.draw_circle(bloom,1.3,edge,true,-1,true)
+				leaf(canvas,bloom,petal*TAU/5,5*ornament,edge)
+			canvas.draw_circle(bloom,1.3*ornament,edge,true,-1,true)

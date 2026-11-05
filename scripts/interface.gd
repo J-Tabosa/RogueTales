@@ -423,7 +423,10 @@ func manuscript(node: Control, role: String) -> void:
 func compact_resource(actor: Dictionary, meter: ProgressBar) -> String:
 	if run.expedition and actor.id=="alice":return "%d / 4 cartas" % int(actor.get("card_charge",0))
 	if actor.id=="aladin":return "%d desejos" % run.tactics.Rules.wishes_left(actor)
-	return "%s / %s" % [str(snappedf(meter.value,.1)),str(snappedf(meter.max_value,.1))]
+	return "%s / %s" % [resource_number(meter.value),resource_number(meter.max_value)]
+
+func resource_number(value: float) -> String:
+	return str(roundi(value)) if is_equal_approx(value,roundf(value)) else "%.1f" % value
 
 func battle_place(node: Control, mobile: Rect2, pc: Rect2, kind := "fixed") -> void:
 	node.set_meta("mobile_rect", mobile)
@@ -433,7 +436,7 @@ func battle_place(node: Control, mobile: Rect2, pc: Rect2, kind := "fixed") -> v
 
 
 func relayout_battle() -> void:
-	if not battle_view:
+	if not battle_view or run==null or run.tactics==null:
 		return
 	for node in battle_nodes:
 		if not is_instance_valid(node):
@@ -474,6 +477,7 @@ func relayout_battle() -> void:
 				child.size=Vector2(26,26)
 			elif child.has_meta("card_items"):
 				var equipment_slot: int=child.get_meta("card_items")
+				child.add_theme_font_size_override("font_size",16)
 				child.position=Vector2(10+equipment_slot*36,100) if desktop else Vector2(104+equipment_slot*36,108)
 				child.size=Vector2(30,30)
 			elif child.has_meta("card_face"):
