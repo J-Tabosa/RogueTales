@@ -1,0 +1,71 @@
+name: Combat interface
+on:
+  push:
+    branches: [main, codex/manuscript-combat-ui]
+    paths: ['scripts/**', 'tests/**', 'assets/**', 'project.godot', '.github/workflows/combat-interface.yml']
+  pull_request:
+    paths: ['scripts/**', 'tests/**', 'assets/**', 'project.godot', '.github/workflows/combat-interface.yml']
+permissions:
+  contents: read
+concurrency:
+  group: combat-interface-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  godot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GODOT_SILENCE_ROOT_WARNING: '1'
+      LIBGL_ALWAYS_SOFTWARE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Godot 4.7
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 'https://downloads.godotengine.org/?version=4.7&flavor=stable&platform=linux.64&slug=linux.x86_64.zip' -o "$RUNNER_TEMP/godot.zip"
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP/godot"
+          chmod +x "$RUNNER_TEMP/godot/Godot_v4.7-stable_linux.x86_64"
+          echo "GODOT_RUNNER=$RUNNER_TEMP/godot/Godot_v4.7-stable_linux.x86_64" >> "$GITHUB_ENV"
+      - name: Import project
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _artifacts
+          timeout 600 "$GODOT_RUNNER" --headless --path . --editor --import --quit 2>&1 | tee _artifacts/import.log
+          if rg 'SCRIPT ERROR|Parse Error|Compile Error' _artifacts/import.log; then exit 1; fi
+      - name: Combat regression checks
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, subprocess, sys
+          suites = ['ui_themes', 'arena_equipment_layout', 'combat_readability', 'skills_equipment_102', 'wishes_silk_097']
+          if pathlib.Path('tests/manuscript_combat_ui.gd').exists():
+              suites.append('manuscript_combat_ui')
+          failed = []
+          for suite in suites:
+              result = subprocess.run([os.environ['GODOT_RUNNER'], '--headless', '--path', '.', '--script', 'res://tests/' + suite + '.gd'], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=180)
+              pathlib.Path('_artifacts', suite + '.log').write_text(result.stdout, encoding='utf-8')
+              ok = result.returncode == 0 and not any(token in result.stdout for token in ('SCRIPT ERROR', 'ERROR:', 'Assertion failed'))
+              print(('PASS ' if ok else 'FAIL ') + suite, flush=True)
+              if not ok:
+                  failed.append(suite)
+                  print(result.stdout[-16000:], flush=True)
+          sys.exit(bool(failed))
+          PY
+      - name: Render interface fixtures
+        if: success() && hashFiles('tests/manuscript_combat_ui.gd') != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb libgl1-mesa-dri
+          xvfb-run -a -s '-screen 0 1920x1080x24' timeout 240 "$GODOT_RUNNER" --path . --rendering-method gl_compatibility --script res://tests/manuscript_combat_ui.gd -- _artifacts/previews 2>&1 | tee _artifacts/render.log
+          if rg 'SCRIPT ERROR|ERROR:|Assertion failed' _artifacts/render.log; then exit 1; fi
+      - name: Save validation logs and previews
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: combat-interface-${{ github.sha }}
+          path: _artifacts/
+          retention-days: 14
