@@ -127,10 +127,10 @@ func layout() -> void:
 	if not is_instance_valid(ribbon): return
 	var width := minf(280,size.x-24)
 	ribbon.size = Vector2(width,64)
-	ribbon.position = Vector2(12,46)
+	ribbon.position = Vector2(12,60)
 	if not reduced_motion:ribbon.position.x -= maxf(0,1.0-ribbon_age/.22)*(width+12)
 	cutin.size = Vector2(width,64)
-	cutin.position = Vector2(12,118 if ribbon.visible else 46)
+	cutin.position = Vector2(12,132 if ribbon.visible else 60)
 	if not reduced_motion:cutin.position.x -= maxf(0,1.0-cutin_age/.18)*(width+12)
 	for node in [ribbon_name,ribbon_title,cutin_name,cutin_title]:
 		node.size.x=width-84

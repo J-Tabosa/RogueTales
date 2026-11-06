@@ -86,11 +86,24 @@ func checks() -> void:
 			game.relayout_battle()
 			game.update_hud()
 			assert(not game.action_label.visible,"Only stage and passive remain above the battle")
-			assert(game.battle_gold.position.x<80 and game.battle_gold.position.y>game.battle_viewport.get_rect().end.y,"Gold stays below the arena on the left")
+			var arena_rect: Rect2 = game.battle_viewport.get_rect()
+			var gold_rect: Rect2 = game.page.get_node("BattleGoldBox").get_rect()
+			assert(arena_rect.encloses(gold_rect) and gold_rect.position.x<40,"Gold overlays the upper left of the arena")
+			assert(arena_rect.encloses(game.reward_return.get_rect()) and game.reward_return.position.x>arena_rect.get_center().x,"Reward button overlays the upper right")
+			assert(gold_rect.end.y<game.battle_viewport.position.y+game.feedback.ribbon.position.y,"Passive stays below the gold")
+			if game.desktop:
+				assert(arena_rect.size==Vector2(984,726) and game.hero_deck_scroll.position.x>arena_rect.end.x,"Arena reaches its new edges without entering the narrower manager")
 			for card in game.ult_buttons:
 				for key in ["hp","mana","info","items","face","name","ult","status"]:
 					assert(Rect2(Vector2.ZERO,card.size).encloses(field(card,key).get_rect()),key+" fits its team card")
 				assert(not field(card,"hp").get_rect().intersects(field(card,"mana").get_rect()))
+				if game.desktop:
+					for key in ["name","ult"]:
+						var text: Label = field(card,key)
+						assert(text.get_theme_font("font").get_string_size(text.text,HORIZONTAL_ALIGNMENT_LEFT,-1,text.get_theme_font_size("font_size")).x<=text.size.x,"Narrow cards keep the complete character and ability names")
+				for key in ["hp_bar","mana_bar"]:
+					var edge: Panel = field(card,key).get_node("BarOutline")
+					assert(edge.get_theme_stylebox("panel").border_color==Color.BLACK and edge.get_theme_stylebox("panel").border_width_left==2,"Manager bars retain a black 2px border in both themes")
 			var first: Control = game.ult_buttons[0]
 			assert(field(first,"hp").text=="463 / 580","Shields do not inflate the maximum HP label")
 			assert(not field(first,"hp").get_rect().intersects(field(first,"shield").get_rect()),"Shield count has its own space")
@@ -120,6 +133,7 @@ func checks() -> void:
 			await click(sheet.find_child("BackWithoutReward",true,false))
 			assert(game.overlay==null and game.reward_return.visible,"Back dismisses the sheet and offers a return button")
 			assert(game.paused and game.run.to_checkpoint()==before,"Back never applies, rerolls or discards the reward")
+			await capture("battle-choice-%s-%dx%d"%[mode,dimensions.x,dimensions.y])
 			await click(game.reward_return)
 			assert(game.overlay!=null and game.run.to_checkpoint()==before,"Reopen preserves the same offers")
 			game.dismiss_reward()

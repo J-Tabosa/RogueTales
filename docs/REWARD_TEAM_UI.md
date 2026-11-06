@@ -4,9 +4,9 @@ Correção incremental sobre a versão anterior às runas (`e1aaf16`).
 
 - **Recompensa:** “Rodada vencida” centralizado, “Escolha uma melhoria” como subtítulo, sem contagem de pontos. O painel acompanha o centro da tela, limita a altura e rola somente as opções quando necessário.
 - **Voltar:** a seta fecha o modal, mantém a batalha pausada e conserva as ofertas. “Escolher melhoria” reabre a mesma recompensa. Nenhum bônus é aplicado, descartado ou sorteado novamente ao voltar.
-- **HUD:** faixa de quem ataca removida; estágio, fase, mapa e aviso de passiva preservados. Ouro no canto inferior esquerdo, abaixo da arena.
+- **HUD:** faixa de quem ataca removida; estágio, fase, mapa e aviso de passiva preservados. Ouro sobreposto no canto superior esquerdo da arena e “Escolher melhoria” no superior direito. Arena ampliada para 984×726 no PC, com gestor mais estreito; passiva posicionada abaixo do ouro.
 - **Gestor:** retrato quadrado à esquerda, moldura dupla chanfrada, divisores com losango, nome em serifa, botão de informação em losango, números dentro de vida/mana e espaço separado para escudo. Os dois espaços de equipamento e o acionamento de ULT/desejos mantêm os mesmos comandos.
-- **Barras:** cantos arredondados e números claros com contorno escuro nos dois temas. As placas sob os personagens também ficam arredondadas. Paletas, cores de raridade, cores por faixa de vida e regras de combate preservadas.
+- **Barras:** cantos arredondados, contorno preto de 2 px no gestor e números claros com contorno escuro nos dois temas. As placas sob os personagens usam raio de 6 px. Paletas, cores de raridade, cores por faixa de vida e regras de combate preservadas.
 
 ## Código
 
