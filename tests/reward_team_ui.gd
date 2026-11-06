@@ -98,12 +98,19 @@ func checks() -> void:
 			if game.desktop:
 				assert(arena_rect.size==Vector2(984,726) and game.hero_deck_scroll.position.x>arena_rect.end.x,"Arena reaches its new edges without entering the narrower manager")
 			for card in game.ult_buttons:
-				for key in ["hp","mana","info","items","face","name","ult","status"]:
+				for key in ["hp","mana","info","items","face","name","status"]:
 					assert(Rect2(Vector2.ZERO,card.size).encloses(field(card,key).get_rect()),key+" fits its team card")
 				assert(not field(card,"hp").get_rect().intersects(field(card,"mana").get_rect()))
 				var name_tag: Label = field(card,"name")
 				assert(name_tag.get_theme_font("font").get_string_size(name_tag.text,HORIZONTAL_ALIGNMENT_LEFT,-1,name_tag.get_theme_font_size("font_size")).x<=name_tag.size.x,"Complete character name")
-				assert(field(card,"ult").get_visible_line_count()>=field(card,"ult").get_line_count(),"Complete ability name")
+				assert(not field(card,"ult").visible,"Only the status is shown in the bottom row")
+				assert(field(card,"status").tooltip_text==field(card,"ult").text and field(card,"status").accessibility_description==field(card,"ult").text,"Ability name remains in the tooltip and accessibility description")
+				var item: Control = field(card,"items")
+				assert(absf(item.get_rect().get_center().y-field(card,"status").get_rect().get_center().y)<2,"Status is centered with the item slots")
+				if game.desktop:
+					assert(card.size.y==146 and field(card,"hp_bar").size.y==25 and field(card,"mana_bar").size.y==20,"Only desktop cards and bars shrink")
+				else:
+					assert(card.size.y==192 and field(card,"hp_bar").size.y==30 and field(card,"mana_bar").size.y==24 and item.size.x==40,"Mobile keeps its approved dimensions and gets larger item squares")
 				assert(field(card,"status").get_theme_font_size("font_size")>=13,"Readable existing status")
 				assert(field(card,"face").size.y>card.size.y*.7,"Portrait occupies the left side height")
 				for key in ["hp_bar","mana_bar"]:

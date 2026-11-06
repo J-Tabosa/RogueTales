@@ -76,10 +76,11 @@ func test() -> void:
 			check(not game.paused and not is_instance_valid(game.overlay),"Swipe over the card does not open wishes")
 			check(not game.hero_deck_scroll.suppress_mouse_release,"Drag release does not swallow the next tap")
 			game.hero_deck_scroll.scroll_horizontal=0
-		# Tap the actual card, including its decorative health/mana bars.
-		var area:Vector2=game.ult_meters[0].position+game.ult_meters[0].size*.5
+		# The status text keeps the existing wish activation after the title is hidden.
+		var status:Label=card.get_children().filter(func(n):return n.has_meta("card_status"))[0]
+		var area:Vector2=status.position+status.size*.5
 		await click(card,area,extent.x==540)
-		check(game.paused and is_instance_valid(game.overlay),"Actual mouse/touch tap opens wishes during combat")
+		check(game.paused and is_instance_valid(game.overlay),"Actual mouse/touch tap on the status opens wishes during combat")
 		if not is_instance_valid(game.overlay):quit(1);return
 		await capture("wishes-%d"%extent.x)
 		var life:Button=descendants(game.overlay).filter(func(n):return n is Button and n.text.begins_with("Ressurreição"))[0]

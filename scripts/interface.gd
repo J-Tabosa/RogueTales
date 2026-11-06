@@ -350,6 +350,8 @@ func build_battle() -> void:
 		ult_tag.add_theme_font_size_override("font_size",16)
 		var status := label(card, "", Rect2(10, 123, 140, 19), 11, MUTED)
 		status.set_meta("card_status", true)
+		status.tooltip_text = ult_tag.text
+		status.accessibility_description = ult_tag.text
 		var italic := FontVariation.new()
 		italic.base_font = TeamCard.SERIF
 		italic.variation_transform = Transform2D(Vector2(1,0),Vector2(-.18,1),Vector2.ZERO)
@@ -466,11 +468,11 @@ func relayout_battle() -> void:
 	if is_instance_valid(hero_deck_scroll):
 		hero_deck_scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED if desktop else ScrollContainer.SCROLL_MODE_AUTO
 		hero_deck_scroll.vertical_scroll_mode=ScrollContainer.SCROLL_MODE_AUTO if desktop else ScrollContainer.SCROLL_MODE_DISABLED
-		hero_deck.custom_minimum_size=Vector2(242,maxf(622,ult_buttons.size()*200)) if desktop else Vector2(maxf(508,ult_buttons.size()*390-14),192)
+		hero_deck.custom_minimum_size=Vector2(242,maxf(622,ult_buttons.size()*154)) if desktop else Vector2(maxf(508,ult_buttons.size()*390-14),192)
 	for card in ult_buttons:
 		var at:int=card.get_meta("deck_index",0)
-		card.position=Vector2(0,at*200) if desktop else Vector2(at*390,0)
-		card.size=Vector2(242,192) if desktop else Vector2(376,192)
+		card.position=Vector2(0,at*154) if desktop else Vector2(at*390,0)
+		card.size=Vector2(242,146) if desktop else Vector2(376,192)
 		card.layout_fields()
 	if is_instance_valid(stage_label):BattleType.fit_line(stage_label,20 if desktop else 14,9,stage_label.get_meta("pc_rect" if desktop else "mobile_rect").size)
 	if is_instance_valid(battle_gold):BattleType.fit_line(battle_gold,15)
@@ -539,6 +541,8 @@ func update_hud() -> void:
 				if child.has_meta("card_status"):
 					child.text="Usar desejos" if run.tactics.Rules.wishes_left(actor)>0 else "Esgotados"
 					child.add_theme_color_override("font_color",GOLD)
+		for child in ult_buttons[index].get_children():
+			if child.has_meta("card_status"): child.accessibility_name = child.text
 		ult_buttons[index].tooltip_text = "%s · %s\n%s" % [TaleCatalog.HERO_TACTICS[actor.id].ult, ("%d/4 cartas"%int(actor.get("card_charge",0))) if run.expedition and actor.id=="alice" else run.tactics.Rules.resource(actor), TaleCatalog.HERO_TACTICS[actor.id].detail]
 	if is_instance_valid(auto_button):
 		auto_button.text = "AUTO ULT  " + ("ON" if campaign.auto_ult else "OFF")
