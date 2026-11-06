@@ -7,6 +7,8 @@ var hero_deck: Control
 var equipment_panel: Control
 var equipment_was_paused:=false
 var battle_gold: Label
+var reward_return: Button
+const TeamCard = preload("res://scripts/team_card.gd")
 const HealthDisplay = preload("res://scripts/health_display.gd")
 const BattleType = preload("res://scripts/battle_typography.gd")
 var battle_view := false
@@ -248,7 +250,7 @@ func build_battle() -> void:
 	header_frame.name="BattleHeader"
 	battle_place(header_frame, Rect2(8, 6, 524, 50), Rect2(12, 5, 1256, 50))
 	stage_label = label(page, "%02d / 12   %s" % [run.stage + 1, TaleCatalog.STAGES[run.stage].name], Rect2(20, 10, 412, 53), 20)
-	battle_place(stage_label, Rect2(25, 16, 280, 28), Rect2(40, 16, 930, 28))
+	battle_place(stage_label, Rect2(25, 16, 416, 28), Rect2(40, 16, 930, 28))
 	BattleType.apply(stage_label,true)
 	stage_label.autowrap_mode=TextServer.AUTOWRAP_OFF
 	stage_label.text_overrun_behavior=TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -262,7 +264,7 @@ func build_battle() -> void:
 	battle_viewport = Control.new()
 	battle_viewport.clip_contents = true
 	page.add_child(battle_viewport)
-	battle_place(battle_viewport, Rect2(0, 66, 540, 590), Rect2(12, 62, 994, 726))
+	battle_place(battle_viewport, Rect2(0, 66, 540, 590), Rect2(12, 62, 904, 672))
 	arena = Node2D.new()
 	arena.set_script(TacticalArena)
 	arena.simulation = run
@@ -288,31 +290,31 @@ func build_battle() -> void:
 	page.add_child(timeline)
 	timeline.visible = false
 	timeline_key = ""
-	var action_panel := panel(page, Rect2(0,0,512,36))
-	battle_place(action_panel, Rect2(14,72,512,36), Rect2(28,70,962,36))
-	action_panel.modulate.a = 0.94
-	action_panel.z_index=1700
-	action_label = label(page, "Preparando encontro", Rect2(34,175,472,36), 14, GOLD)
-	action_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	action_label.z_index=1701
-	BattleType.apply(action_label,true)
-	battle_place(action_label, Rect2(30,77,480,26), Rect2(44,75,930,26))
+	# Preserve the action history, but no attacker banner covers the arena.
+	action_label = label(page, "", Rect2(), 14, GOLD)
+	action_label.visible = false
+	action_label.z_index = 1701
 	hero_deck_scroll=ScrollContainer.new()
 	hero_deck_scroll.name="HeroDeck"
 	hero_deck_scroll.scroll_deadzone=10
 	hero_deck_scroll.set_script(preload("res://scripts/touch_scroll.gd"))
 	page.add_child(hero_deck_scroll)
-	battle_place(hero_deck_scroll,Rect2(16,0,508,156),Rect2(1018,62,248,622),"deck")
+	battle_place(hero_deck_scroll,Rect2(16,0,508,156),Rect2(928,62,338,622),"deck")
 	hero_deck=Control.new()
 	hero_deck_scroll.add_child(hero_deck)
 	for index in run.actors.size():
 		cooldowns.append(0.15 + index * 0.28)
 		var actor: Dictionary = run.actors[index]
-		var card := button(hero_deck, "", Rect2(), try_ultimate.bind(index))
+		var card := TeamCard.new()
+		card.set_meta("theme_decoration",true)
+		card.pressed.connect(try_ultimate.bind(index))
+		hero_deck.add_child(card)
 		var slot := int(index)
 		card.set_meta("deck_index",slot)
 		var face := face_portrait(card, actor.id, Rect2(10,10,40,40))
 		face.set_meta("card_face",true)
+		face.set_meta("theme_decoration",true)
+		face.add_theme_stylebox_override("panel",StyleBoxEmpty.new())
 		card.add_theme_color_override("font_disabled_color", TaleTheme.c("text"))
 		var information := Button.new()
 		information.name="CharacterInformation"
@@ -320,11 +322,9 @@ func build_battle() -> void:
 		information.custom_minimum_size=Vector2(30,30)
 		information.add_theme_font_size_override("font_size",20)
 		information.add_theme_color_override("font_color",GOLD)
-		for skin in ["normal","hover","pressed"]:
-			var plate:=box(TaleTheme.c("surface") if skin=="normal" else TaleTheme.c("border"),GOLD,10).duplicate()
-			plate.content_margin_left=4
-			plate.content_margin_right=4
-			information.add_theme_stylebox_override(skin,plate)
+		information.set_meta("theme_decoration",true)
+		for skin in ["normal","hover","pressed","disabled","focus"]:
+			information.add_theme_stylebox_override(skin,StyleBoxEmpty.new())
 		information.tooltip_text="Atributos, habilidades e passivas atuais"
 		information.set_meta("card_info",true)
 		information.pressed.connect(show_character_information.bind(index))
@@ -335,6 +335,7 @@ func build_battle() -> void:
 			item_slot.set_meta("card_items", equipment_slot)
 		var name_tag := label(card, str(TaleCatalog.HEROES[actor.id].get("short_name", TaleCatalog.HEROES[actor.id].name)), Rect2(58, 6, 94, 43), 14)
 		name_tag.set_meta("card_name", true)
+		name_tag.set_meta("theme_font", TeamCard.SERIF)
 		name_tag.set_meta("full_name",name_tag.text)
 		name_tag.set_meta("short_name",{"snow_white":"Branca","puss":"Gato","matches":"Fósforos"}.get(actor.id,name_tag.text))
 		name_tag.autowrap_mode=TextServer.AUTOWRAP_OFF
@@ -342,61 +343,82 @@ func build_battle() -> void:
 		name_tag.clip_text=true
 		var ult_tag := label(card, str(TaleCatalog.HERO_TACTICS[actor.id].ult), Rect2(10, 101, 140, 21), 12, GOLD)
 		ult_tag.set_meta("card_ult", true)
+		ult_tag.set_meta("theme_font",TeamCard.SERIF)
+		ult_tag.add_theme_font_size_override("font_size",16)
 		var status := label(card, "", Rect2(10, 123, 140, 19), 11, MUTED)
 		status.set_meta("card_status", true)
+		var italic := FontVariation.new()
+		italic.base_font = TeamCard.SERIF
+		italic.variation_transform = Transform2D(Vector2(1,0),Vector2(.18,1),Vector2.ZERO)
+		status.set_meta("theme_font",italic)
+		status.add_theme_font_size_override("font_size",16)
 		var hp_text := label(card, "", Rect2(10, 48, 140, 19), 10, TaleTheme.c("accent"))
 		hp_text.set_meta("card_hp", true)
-		hp_text.set_meta("theme_semantic_color",HealthDisplay.tint(actor))
+		hp_text.set_meta("theme_text_role","combat_text")
+		hp_text.set_meta("bar_number",true)
+		hp_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		hp_text.z_index = 2
 		hp_text.autowrap_mode=TextServer.AUTOWRAP_OFF
 		var hp := bar(card, Rect2(10, 69, 140, 6), TaleTheme.c("accent"))
 		hp.set_meta("card_hp_bar", true)
 		hp.set_meta("health_bar",true)
+		hp.set_meta("theme_radius",12)
+		card.move_child(hp,0)
+		var shield_text := label(card,"",Rect2(),16)
+		shield_text.set_meta("card_shield",true)
+		shield_text.set_meta("theme_text_role","combat_text")
+		shield_text.set_meta("bar_number",true)
+		shield_text.z_index = 2
+		shield_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		shield_text.autowrap_mode = TextServer.AUTOWRAP_OFF
+		var shield_icon := UISkin.picture(card,preload("res://assets/ui/team_shield.svg"),Rect2())
+		shield_icon.set_meta("card_shield_icon",true)
+		shield_icon.set_meta("theme_decoration",true)
+		shield_icon.z_index = 2
 		card_health.append(hp)
 		var mana_text := label(card, "", Rect2(10, 76, 140, 17), 11, TaleTheme.c("accent"))
 		mana_text.set_meta("card_mana", true)
-		mana_text.set_meta("theme_text_role","mana_text")
+		mana_text.set_meta("theme_text_role","combat_text")
+		mana_text.set_meta("bar_number",true)
+		mana_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		mana_text.autowrap_mode = TextServer.AUTOWRAP_OFF
+		mana_text.z_index = 2
 		var meter := bar(card, Rect2(10, 94, 140, 6), TaleTheme.c("accent"))
 		meter.set_meta("card_mana_bar", true)
 		meter.set_meta("theme_bar_role","mana")
+		meter.set_meta("theme_radius",12)
+		card.move_child(meter,0)
 		ult_meters.append(meter)
-		for field in ["name","hp","mana","ult","status"]: battle_text_box(card,field)
 		ult_buttons.append(card)
 	log_label = label(page, "", Rect2(), 12, MUTED)
 	log_label.visible = false # Complete history remains available through Histórico.
 	auto_button = button(page, "", Rect2(), toggle_auto_ult)
-	battle_place(auto_button, Rect2(16, 0, 246, 46), Rect2(1018, 694, 248, 44), "bottom")
+	battle_place(auto_button, Rect2(16, 0, 246, 46), Rect2(928, 694, 338, 44), "bottom")
 	speed_button = button(page, "%d×" % TaleCampaign.speed_label(game_speed), Rect2(), toggle_speed)
-	battle_place(speed_button, Rect2(278, 0, 246, 46), Rect2(1018, 744, 248, 44), "bottom")
+	battle_place(speed_button, Rect2(278, 0, 246, 46), Rect2(928, 744, 338, 44), "bottom")
 	var gold_box := panel(page, Rect2())
 	gold_box.name="BattleGoldBox"
 	for child in gold_box.get_children():child.queue_free()
 	gold_box.add_theme_stylebox_override("panel",box(TaleTheme.c("surface"),TaleTheme.c("accent"),8))
 	gold_box.z_index=1800
-	battle_place(gold_box,Rect2(312,11,132,34),Rect2(1006,10,170,34),"gold")
+	battle_place(gold_box,Rect2(16,0,166,36),Rect2(26,748,170,38),"gold")
 	battle_gold=label(page,"",Rect2(),15,GOLD)
 	battle_gold.name="BattleGold"
 	battle_gold.z_index=1801
 	BattleType.apply(battle_gold,true)
 	battle_gold.autowrap_mode=TextServer.AUTOWRAP_OFF
 	battle_gold.clip_text=true
-	battle_place(battle_gold,Rect2(348,15,88,26),Rect2(1044,14,124,26),"gold_text")
+	battle_place(battle_gold,Rect2(50,0,124,28),Rect2(62,753,124,28),"gold_text")
 	var coin:=UISkin.picture(page,preload("res://scripts/status_art.gd").texture("coin"),Rect2())
 	coin.name="BattleCoin"
 	coin.z_index=1801
-	battle_place(coin,Rect2(318,14,28,28),Rect2(1013,13,30,28),"gold_coin")
+	battle_place(coin,Rect2(20,0,28,28),Rect2(30,753,28,28),"gold_coin")
+	reward_return = button(page,"Escolher melhoria  →",Rect2(),show_relics)
+	reward_return.name = "ReturnToReward"
+	reward_return.visible = false
+	battle_place(reward_return,Rect2(192,0,332,44),Rect2(218,745,280,44),"reward_return")
 	relayout_battle()
 	update_hud()
-
-func battle_text_box(card: Button,key: String) -> void:
-	var field: Control = card.get_children().filter(func(child):return child.has_meta("card_"+key))[0]
-	BattleType.apply(field,key in ["name","hp"])
-	var frame:=Panel.new()
-	frame.mouse_filter=Control.MOUSE_FILTER_IGNORE
-	frame.set_meta("card_box",key)
-	if key in ["hp","mana"]:frame.set_meta("combat_readout",true)
-	frame.add_theme_stylebox_override("panel",box(TaleTheme.c("surface"),TaleTheme.c("border"),5).duplicate())
-	card.add_child(frame)
-	card.move_child(frame,1)
 
 func battle_place(node: Control, mobile: Rect2, pc: Rect2, kind := "fixed") -> void:
 	node.set_meta("mobile_rect", mobile)
@@ -415,61 +437,66 @@ func relayout_battle() -> void:
 		if not desktop:
 			match str(node.get_meta("battle_kind")):
 				"deck":
-					rect.position.y = logical_height - 258
-					rect.size.y = 184
+					rect.position.y = logical_height - 274
+					rect.size.y = 200
 
 				"bottom": rect.position.y = logical_height - 67
+				"gold": rect.position.y = logical_height - 318
+				"gold_text", "gold_coin": rect.position.y = logical_height - 314
+				"reward_return": rect.position.y = logical_height - 322
 			if node == battle_viewport:
-				rect.size.y = logical_height - 334
+				rect.size.y = logical_height - 392
 		if node.has_meta("desktop_fullscreen"):node.visible=desktop
 		node.position = rect.position
 		node.size = rect.size
 	if is_instance_valid(hero_deck_scroll):
 		hero_deck_scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED if desktop else ScrollContainer.SCROLL_MODE_AUTO
 		hero_deck_scroll.vertical_scroll_mode=ScrollContainer.SCROLL_MODE_AUTO if desktop else ScrollContainer.SCROLL_MODE_DISABLED
-		hero_deck.custom_minimum_size=Vector2(248,maxf(622,ult_buttons.size()*184)) if desktop else Vector2(maxf(508,ult_buttons.size()*174-14),176)
+		hero_deck.custom_minimum_size=Vector2(322,maxf(622,ult_buttons.size()*194)) if desktop else Vector2(maxf(508,ult_buttons.size()*390-14),192)
 	for card in ult_buttons:
 		var at:int=card.get_meta("deck_index",0)
-		card.position=Vector2(0,at*184) if desktop else Vector2(at*174,0)
-		card.size=Vector2(232,176) if desktop else Vector2(160,176)
+		card.position=Vector2(0,at*194) if desktop else Vector2(at*390,0)
+		card.size=Vector2(322,186) if desktop else Vector2(376,192)
+		var field_width: float = card.size.x-124
 		for child in card.get_children():
 			if child.has_meta("card_info"):
-				child.position=Vector2(198,8) if desktop else Vector2(125,8)
-				child.size=Vector2(30,30)
+				child.position=Vector2(card.size.x-45,11)
+				child.size=Vector2(40,40)
+				child.add_theme_color_override("font_color",TaleTheme.c("text"))
 			elif child.has_meta("card_items"):
-				var equipment_slot: int = child.get_meta("card_items")
-				child.position=Vector2(10 + equipment_slot * 38,99) if desktop else Vector2(81 + equipment_slot * 38,136)
-				child.size=Vector2(34,34) if desktop else Vector2(32,32)
+				child.position=Vector2(14+int(child.get_meta("card_items"))*44,128)
+				child.size=Vector2(40,40)
 			elif child.has_meta("card_face"):
-				child.position = Vector2(10,12) if desktop else Vector2(10,10)
-				child.size = Vector2(62,74) if desktop else Vector2(40,40)
+				child.position=Vector2(18,28)
+				child.size=Vector2(76,76)
 			elif child.has_meta("card_name"):
-				child.text=child.get_meta("full_name") if desktop else child.get_meta("short_name")
-				child.position = Vector2(86, 10) if desktop else Vector2(58, 6)
-				child.size = Vector2(108, 25) if desktop else Vector2(65, 32)
-				child.add_theme_font_size_override("font_size", 16 if desktop else 13)
+				child.text=child.get_meta("full_name")
+				child.position=Vector2(114,14)
+				child.size=Vector2(field_width-32,34)
+				BattleType.fit_line(child,27,18,child.size)
 			elif child.has_meta("card_ult"):
-				child.position = Vector2(86, 113) if desktop else Vector2(10, 101)
-				child.size = Vector2(132, 26) if desktop else Vector2(144, 21)
+				child.position=Vector2(114,119)
+				child.size=Vector2(field_width,30)
+				child.autowrap_mode=TextServer.AUTOWRAP_OFF
+				child.text_overrun_behavior=TextServer.OVERRUN_TRIM_ELLIPSIS
+				child.clip_text=true
 			elif child.has_meta("card_status"):
-				child.position = Vector2(86, 145) if desktop else Vector2(10, 139)
-				child.size=Vector2(132,20) if desktop else Vector2(65,24)
-			elif child.has_meta("card_hp"):
-				child.position = Vector2(86, 42) if desktop else Vector2(10, 48)
-				child.size.x = 134 if desktop else 144
-			elif child.has_meta("card_mana"):
-				child.position = Vector2(86, 78) if desktop else Vector2(10, 76)
-				child.size.x = 134 if desktop else 144
+				child.position=Vector2(114,148)
+				child.size=Vector2(field_width,26)
+			elif child.has_meta("card_hp") or child.has_meta("card_mana"):
+				child.position=Vector2(114,54 if child.has_meta("card_hp") else 88)
+				child.size=Vector2(field_width,26)
+				if child.has_meta("card_hp") and run.actors[at].shield>0: child.size.x-=70
+				child.add_theme_font_size_override("font_size",19)
 			elif child.has_meta("card_hp_bar") or child.has_meta("card_mana_bar"):
-				var health: bool = child.has_meta("card_hp_bar")
-				child.position = Vector2(86, 69 if health else 104) if desktop else Vector2(10, 69 if health else 94)
-				child.size.x = 134 if desktop else 144
-		for child in card.get_children():
-			if not child.has_meta("card_box"):continue
-			var key: String=child.get_meta("card_box")
-			var field: Control=card.get_children().filter(func(node):return node.has_meta("card_"+key))[0]
-			child.position=field.position-Vector2(3,1)
-			child.size=field.size+Vector2(6,2)
+				child.position=Vector2(114,54 if child.has_meta("card_hp_bar") else 88)
+				child.size=Vector2(field_width,26)
+			elif child.has_meta("card_shield"):
+				child.position=Vector2(card.size.x-62,54)
+				child.size=Vector2(50,26)
+			elif child.has_meta("card_shield_icon"):
+				child.position=Vector2(card.size.x-80,57)
+				child.size=Vector2(16,20)
 	if is_instance_valid(stage_label):BattleType.fit_line(stage_label,20 if desktop else 14,9,stage_label.get_meta("pc_rect" if desktop else "mobile_rect").size)
 	if is_instance_valid(battle_gold):BattleType.fit_line(battle_gold,15)
 	if is_instance_valid(arena) and arena.get_script() == TacticalArena:
@@ -479,9 +506,10 @@ func relayout_battle() -> void:
 		feedback.layout()
 	if is_instance_valid(equipment_panel):equipment_panel.size=Vector2(logical_width,logical_height)
 	if is_instance_valid(overlay):
-		if overlay.has_meta("character_inspector"):
+		if overlay.has_meta("character_inspector") or overlay.has_meta("reward_modal"):
 			overlay.position=Vector2.ZERO
 			overlay.size=Vector2(logical_width,logical_height)
+			if overlay.has_meta("reward_modal"): overlay.layout()
 		else:overlay.position.x = (logical_width - 540) * 0.5
 
 
@@ -500,20 +528,33 @@ func update_hud() -> void:
 		var actor: Dictionary = run.actors[index]
 		ult_meters[index].max_value=4 if run.expedition and actor.id=="alice" else maxf(1,run.tactics.Rules.cost(actor))
 		ult_meters[index].value = actor.get("card_charge",0) if run.expedition and actor.id=="alice" else actor.energy
+		if actor.id=="aladin":
+			ult_meters[index].max_value = 3
+			ult_meters[index].value = run.tactics.Rules.wishes_left(actor)
 		HealthDisplay.update(card_health[index],actor)
 		for child in ult_buttons[index].get_children():
 			if child.has_meta("card_status"):
 				child.text = "Caído" if actor.hp <= 0 else ("ULT na fila" if actor.get("ult_queued", false) else ("ULT em ação" if actor.ult_pending else ("ULT pronta" if run.tactics.ultimate_ready(index) else ("Selada" if actor.get("sealed", false) else "Aguardando"))))
 			elif child.has_meta("card_hp"):
-				child.text = "PV %d / %d%s" % [ceili(actor.hp), ceili(HealthDisplay.capacity(actor)), "  ESC %d" % ceili(actor.shield) if actor.shield > 0 else ""]
-				child.set_meta("theme_semantic_color",HealthDisplay.tint(actor))
-				child.add_theme_color_override("font_color",HealthDisplay.tint(actor))
-				BattleType.fit_line(child,10,8,Vector2(child.size.x,19))
+				child.text = "%d / %d" % [ceili(actor.hp), ceili(actor.max_hp)]
+				child.size.x = ult_buttons[index].size.x-124-(70 if actor.shield>0 else 0)
+				BattleType.fit_line(child,19,14,Vector2(child.size.x,26))
+			elif child.has_meta("card_shield"):
+				child.text = str(ceili(actor.shield))
+				child.visible = actor.shield>0
+				child.tooltip_text = "%d de escudo" % ceili(actor.shield)
+				BattleType.fit_line(child,16,14,Vector2(child.size.x,26))
+			elif child.has_meta("card_shield_icon"):
+				child.visible = actor.shield>0
+				child.modulate = TaleTheme.c("combat_text")
 			elif child.has_meta("card_items"):
 				var equipment_slot: int = child.get_meta("card_items")
 				ItemArt.refresh(child, ItemArt.equipped(actor,equipment_slot))
 			elif child.has_meta("card_mana"):
-				child.text = run.tactics.Rules.resource(actor)
+				child.text = run.tactics.Rules.resource(actor).trim_suffix(" mana")
+				if actor.id not in ["alice","aladin"]:
+					child.text = "%s / %s" % [str(snappedf(actor.energy,.1)).trim_suffix(".0"),str(run.tactics.Rules.cost(actor)).trim_suffix(".0")]
+				BattleType.fit_line(child,19,14,Vector2(child.size.x,26))
 		ult_buttons[index].disabled = paused or state != "battle" or actor.hp <= 0 or not run.tactics.ultimate_ready(index) or actor.ult_pending or actor.get("ult_queued", false) or arena.tracks[index].time >= 0
 		if actor.id=="aladin":
 			ult_buttons[index].disabled=paused or state!="battle" or run.tactics.Rules.wishes_left(actor)<=0

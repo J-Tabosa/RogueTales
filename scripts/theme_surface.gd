@@ -48,6 +48,8 @@ func _draw() -> void:
 	var parent:=get_parent() as Control
 	var rank:=TaleTheme.rarity_of(parent)
 	var readout:bool=parent.get_meta("combat_readout",false)
+	# Native rounded readout plates must not be painted over by a square wash.
+	if readout:return
 	if not frame_only and wash!=null:
 		draw_texture_rect(wash,full,false)
 		if not readout:

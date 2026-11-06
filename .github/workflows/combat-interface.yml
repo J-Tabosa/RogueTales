@@ -39,7 +39,7 @@ jobs:
         run: |
           python3 - <<'PY'
           import os, pathlib, subprocess, sys
-          suites = ['ui_themes', 'arena_equipment_layout', 'combat_readability', 'skills_equipment_102', 'wishes_silk_097']
+          suites = ['ui_themes', 'arena_equipment_layout', 'combat_readability', 'skills_equipment_102', 'wishes_silk_097', 'reward_team_ui', 'bonuses_ui_098']
           if pathlib.Path('tests/manuscript_combat_ui.gd').exists():
               suites.append('manuscript_combat_ui')
           failed = []
@@ -54,13 +54,13 @@ jobs:
           sys.exit(bool(failed))
           PY
       - name: Render interface fixtures
-        if: success() && hashFiles('tests/manuscript_combat_ui.gd') != ''
+        if: success() && hashFiles('tests/reward_team_ui.gd') != ''
         shell: bash
         run: |
           set -euo pipefail
           sudo apt-get update -qq
           sudo apt-get install -y -qq xvfb libgl1-mesa-dri
-          xvfb-run -a -s '-screen 0 1920x1080x24' timeout 240 "$GODOT_RUNNER" --path . --rendering-method gl_compatibility --script res://tests/manuscript_combat_ui.gd -- _artifacts/previews 2>&1 | tee _artifacts/render.log
+          xvfb-run -a -s '-screen 0 1920x1080x24' timeout 240 "$GODOT_RUNNER" --path . --rendering-method gl_compatibility --script res://tests/reward_team_ui.gd -- _artifacts/previews 2>&1 | tee _artifacts/render.log
           if rg 'SCRIPT ERROR|ERROR:|Assertion failed' _artifacts/render.log; then exit 1; fi
       - name: Save validation logs and previews
         if: always()

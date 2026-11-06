@@ -238,6 +238,7 @@ func apply_control(node: Control) -> void:
 	if node is Label or node is Button or node is LineEdit:
 		var title: bool = (node is Label and node.get_theme_font_size("font_size") >= 26 and not node.get_meta("combat_readout",false)) or node.get_meta("theme_heading", false)
 		var face: Font = HEADING if title else STRONG if node is Button or node.get_theme_font_size("font_size")>=19 or node.has_meta("card_name") or node.has_meta("card_hp") else BODY
+		face = node.get_meta("theme_font",face)
 		if node.get_theme_font("font") != face: node.add_theme_font_override("font", face)
 		for key in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_hover_pressed_color"]:
 			color_override(node, key, text_color(node))
@@ -245,6 +246,12 @@ func apply_control(node: Control) -> void:
 		color_override(node, "font_shadow_color", c("shadow", 0))
 		# Damage labels over artwork keep their outline for contrast.
 		color_override(node, "font_outline_color", c("damage_outline") if node.get_theme_constant("outline_size") > 0 else c("shadow", 0))
+	if node.get_meta("bar_number",false):
+		color_override(node,"font_color",c("combat_text"))
+		color_override(node,"font_outline_color",c("damage_outline"))
+		color_override(node,"font_shadow_color",c("damage_outline"))
+		node.add_theme_constant_override("outline_size",3)
+		node.add_theme_constant_override("shadow_offset_y",1)
 	if node is RichTextLabel:
 		# BBCode damage/rarity colors convey game information and remain untouched.
 		color_override(node, "default_color", text_color(node))
@@ -266,7 +273,7 @@ func apply_control(node: Control) -> void:
 		# Preserve layout margins on PanelContainers and intentionally empty art frames.
 		var old := node.get_theme_stylebox("panel")
 		if old == null or old.get_meta("theme_generation", -1) != generation:
-			var style := flat(surface_role(node))
+			var style := flat(surface_role(node),"border",int(node.get_meta("theme_radius",6)))
 			if node.get_meta("combat_readout",false):style.border_color=c("combat_border")
 			if rarity_of(node)>=0:
 				style.bg_color=rarity(rarity_of(node)).darkened(.82)
@@ -284,8 +291,8 @@ func apply_control(node: Control) -> void:
 		color_override(node, "font_selected_color", c("text"))
 	elif node is ProgressBar:
 		var combat:=node.has_meta("health_bar") or node.has_meta("theme_bar_role")
-		style_override(node, "background", flat("combat_track" if combat else "track", "border", 3))
-		if not node.has_meta("health_bar"): style_override(node, "fill", flat(str(node.get_meta("theme_bar_role","progress")), str(node.get_meta("theme_bar_role","progress")), 3))
+		style_override(node, "background", flat("combat_track" if combat else "track", "border", int(node.get_meta("theme_radius",3))))
+		if not node.has_meta("health_bar"): style_override(node, "fill", flat(str(node.get_meta("theme_bar_role","progress")), str(node.get_meta("theme_bar_role","progress")), int(node.get_meta("theme_radius",3))))
 	elif node is ColorRect:
 		if node.name == "ShieldSegment": node.color = c("shield")
 		elif node.size.x >= 300 and node.size.y >= 400:

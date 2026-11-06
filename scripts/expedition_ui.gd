@@ -301,19 +301,22 @@ func show_relics() -> void:
 	paused = true
 	arena.frozen = true
 	if is_instance_valid(feedback): feedback.frozen = true
-	journey_modal("Encontro vencido", "+%d pontos · total %d · escolha uma melhoria." % [run.last_room_score, run.score])
+	if is_instance_valid(reward_return): reward_return.visible = false
+	if is_instance_valid(overlay): overlay.queue_free()
+	var rewards := preload("res://scripts/reward_modal.gd").new()
+	overlay = rewards
+	content.add_child(rewards)
+	rewards.size = Vector2(logical_width,logical_height)
+	rewards.setup(self)
 	for index in run.offers.size():
 		var id: String = run.offers[index]
 		var offer := TaleCatalog.offer_data(id)
-		var card := button(overlay, "", Rect2(32, 390 + index * 126, 476, 116), select_relic.bind(id))
 		var title: String = offer.title
 		var detail: String = run.upgrade_detail(id)
 		var note := "BÔNUS LEGADO · ACÚMULO %d" % (run.upgrade_count(id) + 1)
 		if offer.has("bonus"):
 			note=offer.note
-			bonus_skin(card,id)
 		elif offer.has("item"):
-			card.set_meta("theme_rarity",int(offer.rarity))
 			note="RELÍQUIA MÍTICA · +1 VAGA · LIMITE 5" if offer.get("consumable",false) else Equipment.rarity_name(offer.item).to_upper()+" · EQUIPAMENTO · ESCOLHA O PORTADOR"
 		elif offer.has("owner"): note = "HABILIDADE · " + str(TaleCatalog.HEROES[offer.owner].name)
 		elif offer.has("hero"):
@@ -321,10 +324,18 @@ func show_relics() -> void:
 			title = str(TaleCatalog.HEROES[offer.hero].name) if owned else "Um viajante desconhecido"
 			detail = "%s · junta-se à equipe nesta run." % TaleCatalog.hero_class_name(offer.hero)
 			note = "COMPANHEIRO · 25% POR RECOMPENSA"
-		label(card, note, Rect2(14, 7, 448, 19), 10, GOLD)
-		label(card, title, Rect2(14, 29, 448, 30), 20)
-		label(card, detail, Rect2(14, 65, 448, 44), 14, MUTED)
-	button(overlay, "Salvar e sair", Rect2(32, 798, 476, 48), leave_battle)
+		var card: Button = rewards.add_offer(note,title,detail,select_relic.bind(id))
+		if offer.has("bonus"): bonus_skin(card,id,false)
+		elif offer.has("item"): card.set_meta("theme_rarity",int(offer.rarity))
+	update_hud()
+
+func dismiss_reward() -> void:
+	if state != "choice": return
+	if is_instance_valid(overlay): overlay.queue_free()
+	overlay = null
+	# Keep the pending reward and paused encounter intact until the player chooses.
+	if is_instance_valid(reward_return): reward_return.visible = true
+	update_hud()
 
 func select_relic(id: String, replace_index: int = -1) -> void:
 	if not is_expedition():
