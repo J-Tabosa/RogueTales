@@ -138,8 +138,41 @@ func checks() -> void:
 			for card in sheet.choices.get_children():
 				assert(card.find_children("*","Label",true,false).size()==3,"Each reward keeps its rarity, title and description")
 				check_offer_text(card,card)
-			assert(sheet.find_child("RewardTitle",true,false).get_rect().end.y<=48,"Title never expands over the choices")
+			var heading: Label = sheet.find_child("RewardTitle",true,false)
+			var caption: Label = sheet.find_child("RewardSubtitle",true,false)
+			assert(heading.position.y==12 and heading.get_rect().end.y<=64,"Title has extra top breathing room")
+			assert(heading.get_theme_font("font").base_font==TaleTheme.HEADING and heading.get_theme_font("font").variation_opentype.weight==700,"Title uses the real Cinzel 700 axis")
+			assert(caption.get_theme_font("font").base_font==TaleTheme.HEADING and caption.get_theme_font("font").variation_opentype.weight==400,"Subtitle uses the same family at normal weight")
+			assert(heading.get_theme_font("font").get_rids()[0]!=caption.get_theme_font("font").get_rids()[0],"The engine loads distinct real bold and regular font variations")
+			var minimize: Button = sheet.find_child("BackWithoutReward",true,false)
+			assert(minimize.text=="–" and minimize.tooltip_text=="Minimizar" and minimize.accessibility_name=="Minimizar","Minimize icon and accessible label")
+			assert(minimize.position.x>heading.get_parent().size.x*.5 and absf(minimize.get_rect().get_center().y-heading.get_rect().get_center().y)<2,"Minimize is at the right, aligned with the title")
+			var save: Button = sheet.find_child("SaveRewardAndExit",true,false)
+			var card_width := 656.0 if game.desktop else 464.0
+			assert(save.size==Vector2(card_width,44),"Save button keeps its approved dimensions")
+			for card in sheet.choices.get_children():
+				assert(card.size==Vector2(card_width,110),"Reward cards keep their approved dimensions")
+				var at: Vector2 = sheet.fine_frame.get_global_transform().affine_inverse()*card.get_global_transform().origin
+				assert(absf(at.x-16)<.1 and absf(sheet.fine_frame.size.x-at.x-card.size.x-16)<.1,"Cards keep equal breathing room inside the fine line")
+			assert(sheet.choices.get_theme_constant("separation")==8,"Card-to-card spacing is unchanged")
+			var last: Control = sheet.choices.get_child(2)
+			var footer_gap: float = (save.get_global_transform().origin.y-last.get_global_transform().origin.y)/game.content.scale.y-last.size.y
+			assert(absf(footer_gap-22)<.1,"Save button sits 22 logical units after the last card")
 			await capture("reward-%s-%dx%d"%[mode,dimensions.x,dimensions.y])
+			# Constrain only the available height: the choices scroll without shrinking.
+			sheet.size.y=420
+			sheet.layout()
+			for frame in 6: await process_frame
+			assert(sheet.scroll.get_v_scroll_bar().max_value>sheet.scroll.get_v_scroll_bar().page,"Short modal scrolls the choice list")
+			var heading_at: Vector2 = heading.get_global_transform().origin
+			var save_at: Vector2 = save.get_global_transform().origin
+			sheet.scroll.ensure_control_visible(last)
+			for frame in 3: await process_frame
+			for card in sheet.choices.get_children(): assert(card.size==Vector2(card_width,110),"Scrolling preserves card width and height")
+			assert(heading.get_global_transform().origin==heading_at and save.get_global_transform().origin==save_at,"Only the choice list scrolls")
+			await capture("reward-short-%s-%dx%d"%[mode,dimensions.x,dimensions.y])
+			sheet.size=Vector2(game.logical_width,game.logical_height)
+			for frame in 5: await process_frame
 			var before: Dictionary = game.run.to_checkpoint().duplicate(true)
 			await click(sheet.find_child("BackWithoutReward",true,false))
 			assert(game.overlay==null and game.reward_return.visible,"Back dismisses the sheet and offers a return button")

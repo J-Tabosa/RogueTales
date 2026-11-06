@@ -1,16 +1,19 @@
 extends Control
-## A compact, centered reward sheet; only the choices scroll on short viewports.
+## A centered reward sheet; the frame grows around the unchanged choice cards.
 var game: Control
 var board: PanelContainer
 var column: VBoxContainer
 var choices: VBoxContainer
 var scroll: ScrollContainer
 var shade: ColorRect
+var fine_frame: Panel
+var choices_holder: Control
 
 func setup(owner_ui: Control) -> void:
 	game = owner_ui
 	name = "RewardModal"
 	set_meta("reward_modal", true)
+	set_meta("theme_decoration", true)
 	z_index = 3000
 	shade = ColorRect.new()
 	shade.set_meta("theme_decoration", true)
@@ -23,44 +26,86 @@ func setup(owner_ui: Control) -> void:
 	style.set_content_margin_all(22)
 	board.add_theme_stylebox_override("panel", style)
 	add_child(board)
+	fine_frame = Panel.new()
+	fine_frame.name = "RewardInnerFrame"
+	fine_frame.set_meta("theme_decoration",true)
+	fine_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	board.add_child(fine_frame)
+	var inset := MarginContainer.new()
+	for side in ["left","top","right","bottom"]: inset.add_theme_constant_override("margin_"+side,16)
+	board.add_child(inset)
 	column = VBoxContainer.new()
 	column.add_theme_constant_override("separation", 12)
-	board.add_child(column)
+	inset.add_child(column)
 	var header := Control.new()
-	header.custom_minimum_size.y = 88
+	header.custom_minimum_size.y = 112
 	column.add_child(header)
-	var back: Button = game.button(header,"‹",Rect2(0,0,44,44),game.dismiss_reward)
+	var back: Button = game.button(header,"–",Rect2(0,12,44,44),game.dismiss_reward)
 	back.name = "BackWithoutReward"
-	back.tooltip_text = "Voltar sem escolher · a recompensa continua disponível"
+	back.tooltip_text = "Minimizar"
+	back.accessibility_name = "Minimizar"
 	back.add_theme_font_size_override("font_size",32)
-	var title: Label = game.label(header,"Rodada vencida",Rect2(48,0,360,46),32)
+	var bold := FontVariation.new()
+	bold.base_font = TaleTheme.HEADING
+	bold.variation_opentype = {"weight":700.0}
+	var regular := FontVariation.new()
+	regular.base_font = TaleTheme.HEADING
+	regular.variation_opentype = {"weight":400.0}
+	var title: Label = game.label(header,"Rodada vencida",Rect2(56,12,360,46),32)
 	title.name = "RewardTitle"
+	title.set_meta("theme_font",bold)
+	title.add_theme_font_override("font",bold)
 	title.autowrap_mode = TextServer.AUTOWRAP_OFF
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var subtitle: Label = game.label(header,"Escolha uma melhoria",Rect2(0,48,460,32),21)
+	var subtitle: Label = game.label(header,"Escolha uma melhoria",Rect2(0,64,460,32),21)
 	subtitle.name = "RewardSubtitle"
+	subtitle.set_meta("theme_font",regular)
+	subtitle.add_theme_font_override("font",regular)
 	subtitle.autowrap_mode = TextServer.AUTOWRAP_OFF
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	header.resized.connect(func():
-		title.position = Vector2(48,0)
-		title.size = Vector2(header.size.x-96,46)
+		title.position = Vector2(56,12)
+		title.size = Vector2(header.size.x-112,46)
 		title.add_theme_font_size_override("font_size",28 if header.size.x<500 else 32)
-		subtitle.position = Vector2(0,48)
-		subtitle.size = Vector2(header.size.x,32))
+		subtitle.position = Vector2(0,64)
+		subtitle.size = Vector2(header.size.x,32)
+		back.position = Vector2(header.size.x-52,12))
+	choices_holder = Control.new()
+	choices_holder.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	choices_holder.resized.connect(layout_choices)
+	column.add_child(choices_holder)
 	scroll = ScrollContainer.new()
 	scroll.name = "RewardChoices"
 	scroll.set_script(preload("res://scripts/touch_scroll.gd"))
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	column.add_child(scroll)
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_RESERVE
+	choices_holder.add_child(scroll)
 	choices = VBoxContainer.new()
 	choices.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	choices.add_theme_constant_override("separation",8)
 	scroll.add_child(choices)
-	var leave: Button = game.button(column,"Salvar e sair",Rect2(0,0,300,44),game.leave_battle)
+	var footer := MarginContainer.new()
+	footer.add_theme_constant_override("margin_top",10)
+	column.add_child(footer)
+	var leave: Button = game.button(footer,"Salvar e sair",Rect2(0,0,300,44),game.leave_battle)
 	leave.name = "SaveRewardAndExit"
 	resized.connect(layout)
+	update_theme()
 	layout()
+
+func update_theme() -> void:
+	if not is_instance_valid(fine_frame): return
+	var line := TaleTheme.flat("surface","ornament",8)
+	line.draw_center = false
+	line.set_content_margin_all(0)
+	fine_frame.add_theme_stylebox_override("panel",line)
+	layout.call_deferred()
+
+func layout_choices() -> void:
+	if not is_instance_valid(scroll): return
+	# Reserve the scrollbar inside the new right-hand padding, outside the cards.
+	var gutter := scroll.get_v_scroll_bar().get_combined_minimum_size().x
+	scroll.size = Vector2(choices_holder.size.x+gutter,choices_holder.size.y)
 
 func add_offer(note: String, title: String, detail: String, callback: Callable) -> Button:
 	var card: Button = game.button(choices,"",Rect2(0,0,400,110),callback)
@@ -90,7 +135,10 @@ func layout() -> void:
 	shade.position = -margin
 	shade.size = game.size / game.content.scale
 	shade.color = TaleTheme.c("damage_outline",.72)
-	var height := 44+88+24+44+maxi(0,choices.get_child_count()-1)*8
+	var card_width := minf(700,size.x-32)-44
+	choices.custom_minimum_size.x = card_width
+	var height := 76+112+24+54+maxi(0,choices.get_child_count()-1)*8
 	for card in choices.get_children(): height += int(card.get_combined_minimum_size().y)
-	board.size = Vector2(minf(700,size.x-32),minf(height,size.y*.9))
+	board.size = Vector2(card_width+76,minf(height,size.y*.9))
 	board.position = (size-board.size)*.5
+	layout_choices()
