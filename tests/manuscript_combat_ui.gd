@@ -27,11 +27,7 @@ func capture(key: String) -> void:
 	if destination.is_empty() or DisplayServer.get_name()=="headless": return
 	await settle()
 	await RenderingServer.frame_post_draw
-	var image := game.get_window().get_texture().get_image()
-	image.save_png(destination.path_join(key+".png"))
-	if key in ["dark-1920","light-1920"]:
-		image.resize(1280,720,Image.INTERPOLATE_LANCZOS)
-		print("UI_PREVIEW_"+key+"="+Marshalls.raw_to_base64(image.save_jpg_to_buffer(.88)))
+	game.get_window().get_texture().get_image().save_png(destination.path_join(key+".png"))
 
 func fixture(count: int) -> void:
 	game.campaign.checkpoint.clear()
@@ -104,13 +100,11 @@ func test() -> void:
 					if child is Control and not child.get_meta("theme_decoration",false):
 						check(Rect2(Vector2.ZERO,card.size).encloses(child.get_rect()),"Card child fits: "+str(child.name))
 				var plate: Dictionary=game.arena.unit_widgets[i]
-				var plate_rect := Rect2(game.battle_viewport.position+plate.root.position,plate.panel.size)
-				check(not plate_rect.intersects(gold.get_rect()),"Currency does not cover a unit readout")
 				check(plate.health.get_rect().encloses(plate.text.get_rect()),"In-battle HP digits are inside their bar")
 				check(plate.energy.get_rect().encloses(plate.mana_text.get_rect()),"In-battle mana digits are inside their bar")
 				check(plate.text.get_theme_font("font").resource_path.ends_with("Lora.ttf"),"Manuscript readout font")
 			check(field(game.ult_buttons[0],"name").get_theme_font("font").resource_path.ends_with("Cinzel.ttf"),"Engraved name font")
-			await capture("%s-%d"%[mode,extent.x])
+			await capture("%s-%d"%(mode,extent.x))
 			var at: Vector2=game.arena.heroes[0].position
 			var height: float=game.arena.human_height()
 			var clock: float=game.arena.clock

@@ -326,7 +326,7 @@ func build_battle() -> void:
 		information.name="CharacterInformation"
 		information.text="i"
 		information.custom_minimum_size=Vector2(30,30)
-		information.add_theme_font_size_override("font_size",16)
+		information.add_theme_font_size_override("font_size",20)
 		information.add_theme_color_override("font_color",GOLD)
 		for skin in ["normal","hover","pressed"]:
 			var plate:=box(TaleTheme.c("surface") if skin=="normal" else TaleTheme.c("border"),GOLD,10).duplicate()
@@ -358,7 +358,7 @@ func build_battle() -> void:
 		hp_text.set_meta("theme_text_role","combat_text")
 		hp_text.z_index=3
 		hp_text.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
-		hp_text.add_theme_constant_override("outline_size",1)
+		hp_text.add_theme_constant_override("outline_size",2)
 		hp_text.autowrap_mode=TextServer.AUTOWRAP_OFF
 		var hp := bar(card, Rect2(10, 69, 140, 6), TaleTheme.c("accent"))
 		hp.set_meta("card_hp_bar", true)
@@ -370,13 +370,13 @@ func build_battle() -> void:
 		shield_text.set_meta("theme_text_role","combat_text")
 		shield_text.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
 		shield_text.z_index=3
-		shield_text.add_theme_constant_override("outline_size",1)
+		shield_text.add_theme_constant_override("outline_size",2)
 		var mana_text := label(card, "", Rect2(10, 76, 140, 17), 11, TaleTheme.c("accent"))
 		mana_text.set_meta("card_mana", true)
 		mana_text.set_meta("theme_text_role","combat_text")
 		mana_text.z_index=3
 		mana_text.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
-		mana_text.add_theme_constant_override("outline_size",1)
+		mana_text.add_theme_constant_override("outline_size",2)
 		var meter := bar(card, Rect2(10, 94, 140, 6), TaleTheme.c("accent"))
 		meter.set_meta("card_mana_bar", true)
 		meter.set_meta("theme_bar_role","mana")
@@ -508,7 +508,7 @@ func relayout_battle() -> void:
 	if is_instance_valid(stage_label):BattleType.fit_line(stage_label,20 if desktop else 14,9,stage_label.get_meta("pc_rect" if desktop else "mobile_rect").size)
 	if is_instance_valid(battle_gold):BattleType.fit_line(battle_gold,15)
 	if is_instance_valid(arena) and arena.get_script() == TacticalArena:
-		arena.fit_field(battle_viewport.size,44)
+		arena.fit_field(battle_viewport.size)
 	if is_instance_valid(feedback):
 		feedback.size = battle_viewport.size
 		feedback.layout()
