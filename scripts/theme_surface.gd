@@ -1,6 +1,5 @@
 extends Control
 ## Theme-colored PNG artwork is drawn unchanged; gameplay colors stay independent.
-const Manuscript = preload("res://scripts/manuscript_art.gd")
 var frame_only := false
 var backdrop := false
 var wash: GradientTexture2D
@@ -49,9 +48,6 @@ func _draw() -> void:
 	var parent:=get_parent() as Control
 	var rank:=TaleTheme.rarity_of(parent)
 	var readout:bool=parent.get_meta("combat_readout",false)
-	if parent.has_meta("manuscript_role"):
-		Manuscript.frame(self,size,str(parent.get_meta("manuscript_role")),parent)
-		return
 	if not frame_only and wash!=null:
 		draw_texture_rect(wash,full,false)
 		if not readout:
@@ -65,9 +61,6 @@ func _draw() -> void:
 			var extent:=minf(size.x*.80,size.y*.86)
 			if rosette!=null:draw_texture_rect(rosette,Rect2(size*.5-Vector2.ONE*extent*.5,Vector2.ONE*extent),false,TaleTheme.asset_tint("mandala_watermark",.055 if backdrop else .045))
 	if backdrop:
-		if TaleTheme.is_manuscript(parent):
-			Manuscript.folio(self,size)
-			return
 		if size.x>700:
 			var corner:=TaleTheme.asset("corner_filigrane")
 			if corner!=null:

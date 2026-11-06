@@ -115,7 +115,7 @@ func max_row_size() -> int:
 
 func widget_size() -> Vector2:
 	# Each plate fits inside one formation column, including at nine vs nine.
-	return Vector2(clampf(field_width * 0.115, 54, 104), 30)
+	return Vector2(clampf(field_width * 0.115, 54, 104), 27)
 
 func place_widget(item: Dictionary, at: Vector2) -> void:
 	var extent := widget_size()
@@ -123,17 +123,13 @@ func place_widget(item: Dictionary, at: Vector2) -> void:
 	item.root.z_index=int(at.y)+1
 	item.panel.size = extent
 	item.root.position = Vector2(clampf(at.x - extent.x * .5, 4, field_width - extent.x - 4), minf(at.y + 5, field_height - extent.y - 4))
-	item.health.position = Vector2(3, 3)
-	item.health.size = Vector2(extent.x-6, 12)
-	item.text.position = item.health.position+Vector2(1,0)
-	item.text.size = item.health.size-Vector2(2,0)
-	item.text.add_theme_font_size_override("font_size",8 if extent.x<80 else 9)
-	item.energy.position = Vector2(3, 18)
-	item.energy.size = Vector2(extent.x-6, 9)
-	item.mana_text.position=item.energy.position+Vector2(1,0)
-	item.mana_text.size=item.energy.size-Vector2(2,0)
-	item.mana_text.add_theme_font_size_override("font_size",7)
-
+	item.text.position = Vector2(3, 1)
+	item.text.size = Vector2(extent.x - 6, 13)
+	item.text.add_theme_font_size_override("font_size", 9 if extent.x < 80 else 10)
+	item.health.position = Vector2(5, 16)
+	item.health.size = Vector2(extent.x - 10, 4)
+	item.energy.position = Vector2(5, 22)
+	item.energy.size = Vector2(extent.x - 10, 3)
 
 func hero_bounds(actor: AnimatedSprite2D) -> Rect2:
 	var texture: Texture2D = actor.sprite_frames.get_frame_texture("idle", 0)
@@ -186,7 +182,6 @@ func widget(at: Vector2,title: String,tint: Color,hostile:=false,unit_index:=-1)
 	add_child(group)
 	var panel:=Panel.new()
 	panel.set_meta("combat_readout",true)
-	panel.set_meta("manuscript_role","plate")
 	panel.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	var plate:=StyleBoxFlat.new()
 	plate.bg_color=TaleTheme.c("combat_surface")
@@ -195,11 +190,8 @@ func widget(at: Vector2,title: String,tint: Color,hostile:=false,unit_index:=-1)
 	plate.set_corner_radius_all(4)
 	panel.add_theme_stylebox_override("panel",plate)
 	group.add_child(panel)
-	ArenaSkin.decorate(panel,false,true)
 	var text:=Label.new()
 	text.text=title
-	text.z_index=3
-	text.add_theme_constant_override("outline_size",1)
 	text.clip_text=true
 	text.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
 	text.add_theme_color_override("font_color",TaleTheme.c("combat_text"))
@@ -209,8 +201,6 @@ func widget(at: Vector2,title: String,tint: Color,hostile:=false,unit_index:=-1)
 		var bar:=ProgressBar.new()
 		bar.show_percentage=false
 		if index==1:bar.set_meta("theme_bar_role","mana")
-		bar.set_meta("manuscript_role","bar")
-		if index==0:bar.set_meta("health_bar",true)
 		bar.position=Vector2(8,20 if index==0 else 28)
 		bar.size=Vector2(64,5 if index==0 else 3)
 		var bg:=StyleBoxFlat.new()
@@ -221,16 +211,8 @@ func widget(at: Vector2,title: String,tint: Color,hostile:=false,unit_index:=-1)
 		bar.add_theme_stylebox_override("background",bg)
 		bar.add_theme_stylebox_override("fill",fill)
 		panel.add_child(bar)
-		ArenaSkin.decorate(bar,false,true).z_index=2
 		bars.append(bar)
-	var mana_text:=Label.new()
-	mana_text.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
-	mana_text.set_meta("theme_text_role","combat_text")
-	mana_text.z_index=3
-	mana_text.mouse_filter=Control.MOUSE_FILTER_IGNORE
-	mana_text.add_theme_constant_override("outline_size",1)
-	panel.add_child(mana_text)
-	var item:={"root":group,"panel":panel,"text":text,"mana_text":mana_text,"health":bars[0],"energy":bars[1],"hostile":hostile,"index":unit_index,"badges":{}}
+	var item:={"root":group,"panel":panel,"text":text,"health":bars[0],"energy":bars[1],"hostile":hostile,"index":unit_index,"badges":{}}
 	place_widget(item,at)
 	return item
 
@@ -387,7 +369,6 @@ func sync_health(actors: Array[Dictionary]) -> void:
 		HealthDisplay.update(unit_widgets[index].health,actors[index])
 		unit_widgets[index].energy.max_value = 4 if simulation.expedition and actors[index].id=="alice" else maxf(1,simulation.tactics.Rules.cost(actors[index]))
 		unit_widgets[index].energy.value = actors[index].get("card_charge",0) if simulation.expedition and actors[index].id=="alice" else actors[index].energy
-		unit_widgets[index].mana_text.text="%s/%s" % [compact_hp(unit_widgets[index].energy.value),compact_hp(unit_widgets[index].energy.max_value)]
 		sync_conditions(unit_widgets[index],actors[index],index,false)
 		unit_widgets[index].text.text = ("%s/%s" if unit_widgets[index].panel.size.x<90 else "%s/%s PV") % [compact_hp(actors[index].hp),compact_hp(HealthDisplay.capacity(actors[index]))]
 		if actors[index].id=="alice":unit_widgets[index].text.text=CharacterEffects.SUITS[int(actors[index].get("suit",0))%4]+" "+unit_widgets[index].text.text
@@ -397,7 +378,6 @@ func sync_health(actors: Array[Dictionary]) -> void:
 		foe_widgets[index].root.visible = enemy_visible and data.hp > 0
 		HealthDisplay.update(foe_widgets[index].health,data)
 		foe_widgets[index].energy.visible = false
-		foe_widgets[index].mana_text.visible = false
 		sync_conditions(foe_widgets[index],data,index,true)
 		foe_widgets[index].text.text = ("%s/%s" if foe_widgets[index].panel.size.x<90 else "%s/%s PV") % [compact_hp(data.hp),compact_hp(HealthDisplay.capacity(data))]
 
@@ -914,6 +894,6 @@ func sync_conditions(item: Dictionary, data: Dictionary, index: int, hostile: bo
 			badge.text = " %d" % ceili(visible_conditions[kind][0])
 			badge.add_theme_font_size_override("font_size",8)
 		var badge_width: float = (widget_size().x - 2) * .5
-		badge.position=Vector2((slot%2) * (badge_width + 2), 32+floori(slot/2.0)*19)
+		badge.position=Vector2((slot%2) * (badge_width + 2), 29+floori(slot/2.0)*19)
 		badge.size=Vector2(badge_width, 17)
 		slot+=1

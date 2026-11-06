@@ -5,7 +5,6 @@ extends Node
 const BODY = preload("res://assets/fonts/Nunito-Semibold.ttf")
 const STRONG = preload("res://assets/fonts/Nunito-Extrabold.ttf")
 const HEADING = preload("res://assets/fonts/renaissance/Cinzel.ttf")
-const MANUSCRIPT = preload("res://assets/fonts/renaissance/Lora.ttf")
 ## Gameplay colors are semantic: changing the UI theme must never recolor them.
 const RARITIES = ["858b94", "50b86a", "5097ee", "ac6bef", "ef9c39", "ee5555", "e6cb79"]
 const SEMANTIC = {
@@ -76,24 +75,6 @@ static func asset(key: String) -> Texture2D:
 static func asset_tint(key:String, alpha:=1.0) -> Color:
 	var texture:=asset(key)
 	return Color(1,1,1,alpha) if texture!=null and texture.get_meta("theme_colorized",false) else c("ornament",alpha)
-
-static func is_manuscript(node: Node) -> bool:
-	var current := node
-	while current != null:
-		if current.get_meta("manuscript_battle",false): return true
-		current = current.get_parent()
-	return false
-
-static func manuscript_style(state: String) -> StyleBoxFlat:
-	var key := "manuscript_"+state
-	if styles.has(key): return styles[key]
-	var style := flat("surface","border",0)
-	style.bg_color = Color.TRANSPARENT
-	style.set_border_width_all(1 if state=="focus" else 0)
-	style.border_color = c("accent")
-	style.set_meta("theme_variant",key)
-	styles[key] = style
-	return style
 
 static func rarity_of(node:Node) -> int:
 	return int(node.get_meta("theme_rarity",node.get_meta("bonus_rarity",-1)))
@@ -256,7 +237,7 @@ func apply_control(node: Control) -> void:
 	applying = true
 	if node is Label or node is Button or node is LineEdit:
 		var title: bool = (node is Label and node.get_theme_font_size("font_size") >= 26 and not node.get_meta("combat_readout",false)) or node.get_meta("theme_heading", false)
-		var face: Font = HEADING if title or (is_manuscript(node) and node.has_meta("card_name")) else MANUSCRIPT if is_manuscript(node) else STRONG if node is Button or node.get_theme_font_size("font_size")>=19 or node.has_meta("card_name") or node.has_meta("card_hp") else BODY
+		var face: Font = HEADING if title else STRONG if node is Button or node.get_theme_font_size("font_size")>=19 or node.has_meta("card_name") or node.has_meta("card_hp") else BODY
 		if node.get_theme_font("font") != face: node.add_theme_font_override("font", face)
 		for key in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_hover_pressed_color"]:
 			color_override(node, key, text_color(node))
@@ -276,20 +257,16 @@ func apply_control(node: Control) -> void:
 			readout.content_margin_bottom=1
 			style_override(node,"normal",readout)
 		for key in ["normal_font", "bold_font", "italics_font", "bold_italics_font", "mono_font"]:
-			var body: Font = MANUSCRIPT if is_manuscript(node) else BODY
-			if node.get_theme_font(key) != body: node.add_theme_font_override(key, body)
+			if node.get_theme_font(key) != BODY: node.add_theme_font_override(key, BODY)
 	if node is Button:
 		for state in ["normal", "hover", "pressed", "disabled", "focus"]:
-			style_override(node, state, manuscript_style(state) if node.has_meta("manuscript_role") else button_style(state, node.get_meta("primary", false) or node.get_meta("theme_active", false), node.has_meta("skill_info"),rarity_of(node)))
+			style_override(node, state, button_style(state, node.get_meta("primary", false) or node.get_meta("theme_active", false), node.has_meta("skill_info"),rarity_of(node)))
 		ensure_surface(node, true)
 	elif node is Panel or node is PanelContainer:
 		# Preserve layout margins on PanelContainers and intentionally empty art frames.
 		var old := node.get_theme_stylebox("panel")
 		if old == null or old.get_meta("theme_generation", -1) != generation:
 			var style := flat(surface_role(node))
-			if node.has_meta("manuscript_role"):
-				style.bg_color=Color.TRANSPARENT
-				style.set_border_width_all(0)
 			if node.get_meta("combat_readout",false):style.border_color=c("combat_border")
 			if rarity_of(node)>=0:
 				style.bg_color=rarity(rarity_of(node)).darkened(.82)
@@ -309,14 +286,6 @@ func apply_control(node: Control) -> void:
 		var combat:=node.has_meta("health_bar") or node.has_meta("theme_bar_role")
 		style_override(node, "background", flat("combat_track" if combat else "track", "border", 3))
 		if not node.has_meta("health_bar"): style_override(node, "fill", flat(str(node.get_meta("theme_bar_role","progress")), str(node.get_meta("theme_bar_role","progress")), 3))
-		if node.get_meta("manuscript_role","") == "bar":
-			for key in ["background","fill"]:
-				var style := node.get_theme_stylebox(key) as StyleBoxFlat
-				if style != null and style.corner_radius_top_left != 0:
-					style = style.duplicate()
-					style.set_corner_radius_all(0)
-					node.add_theme_stylebox_override(key,style)
-			ensure_surface(node,true)
 	elif node is ColorRect:
 		if node.name == "ShieldSegment": node.color = c("shield")
 		elif node.size.x >= 300 and node.size.y >= 400:

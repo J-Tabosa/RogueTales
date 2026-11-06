@@ -73,7 +73,3 @@ Em **Configurações → Códigos**, digite `500.001` e toque em **Resgatar** (o
 - `expedition_ui.gd` / `interface.gd` / `character_inspector.gd`: navegação e apresentação.
 
 Arte e áudio mantêm os créditos nas respectivas pastas de `assets/`. Os 65 cenários fornecidos foram preservados byte a byte; os roteiros e hashes de origem estão em `docs/worlds/`. Saves de runs anteriores continuam nas suas 12 etapas originais até o encerramento. Novas runs usam as quatro estações.
-
-## Interface de combate
-
-Barras com valores integrados na arena e no gestor, fontes Lora/Cinzel, molduras uniformes e escudos de fragmentos com runas flutuantes. Ambos os temas preservam suas paletas e as cores de gameplay. Consulte [interface em manuscrito](docs/COMBAT_INTERFACE.md) para comportamento e validação.

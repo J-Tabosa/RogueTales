@@ -1,7 +1,6 @@
 extends RefCounted
 ## Frame animation and travel share the exact targets and impact clock of the rules.
 const Rules = preload("res://scripts/ultimate_rules.gd")
-const ShieldRunes = preload("res://scripts/shield_runes.gd")
 static var atlases: Dictionary = {}
 static func supported(id: String) -> bool:
 	return id in Rules.IDS and id!="puss"
@@ -140,12 +139,13 @@ static func draw(arena,canvas:Node2D) -> void:
 				var angle:float=spirit*TAU/3.0+(0.0 if arena.reduced_motion else arena.clock*1.2)
 				stamp(canvas,"peter",home+Vector2(0,-h*.55)+Vector2.from_angle(angle)*h*.48,Vector2.ONE*h*.43,fposmod(arena.clock*.65+spirit*.23,1))
 		if float(actor.get("shield",0))>0:
-			shield_bubble(canvas,home,float(arena.heroes[index].get_meta("visual_height",h)),arena.clock+index*1.37,arena.reduced_motion)
-		# Persistent protection is represented by runes; no golden roots at the feet.
+			shield_bubble(canvas,home,float(arena.heroes[index].get_meta("visual_height",h)),arena.clock,arena.reduced_motion)
+		if actor.get("hair_guard",false) and actor.shield>0:
+			hair_roots(canvas,home,h,arena.clock,.45,arena.reduced_motion)
 	for at in arena.foe_homes.size():
 		var foe:Dictionary=arena.simulation.tactics.enemies[at]
 		if foe.hp<=0 or not arena.enemy_visible:continue
-		if float(foe.get("shield",0))>0:shield_bubble(canvas,arena.foe_homes[at],h,arena.clock+at*1.37,arena.reduced_motion)
+		if float(foe.get("shield",0))>0:shield_bubble(canvas,arena.foe_homes[at],h,arena.clock,arena.reduced_motion)
 		if int(foe.get("sleep_turns",0))>0:
 			stamp(canvas,"aladin",arena.foe_homes[at]+Vector2(0,-h*.68),Vector2.ONE*h*.7,fposmod(arena.clock*.4,1),.5)
 		if float(foe.get("curse_left",0))>0:
@@ -160,8 +160,12 @@ static func ground_stamp(canvas:Node2D,id:String,feet:Vector2,extent:Vector2,pro
 	var anchor:=Vector2(region.get_center().x,region.end.y)/512.0*extent
 	canvas.draw_texture_rect(texture,Rect2(feet-anchor,extent),false,Color(1,1,1,opacity))
 static func shield_bubble(canvas:Node2D,feet:Vector2,height:float,clock:float,reduced:bool) -> void:
-	var arena = canvas.get("arena")
-	ShieldRunes.draw(canvas,feet,height,clock,reduced,arena.high_quality if is_instance_valid(arena) else true)
+	var pulse:=1.0 if reduced else 1.0+sin(clock*2.2)*.018
+	var radius:=height*.50*pulse
+	canvas.draw_set_transform(feet+Vector2(0,-height*.52),0,Vector2(.72,1))
+	canvas.draw_circle(Vector2.ZERO,radius,Color("8ddbee",.075),true,-1,true)
+	canvas.draw_arc(Vector2.ZERO,radius,0,TAU,48,Color("bceffc",.40),1.5,true)
+	canvas.draw_set_transform(Vector2.ZERO)
 
 static func hair_thread(canvas:Node2D,from:Vector2,to:Vector2,progress:float,phase:float,height:float,opacity:float) -> void:
 	if from.distance_squared_to(to)<1:return
