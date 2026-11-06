@@ -19,54 +19,66 @@ func update_theme() -> void:
 			if child.has_meta("card_info"):
 				child.add_theme_stylebox_override(state,style)
 				child.add_theme_color_override("font_color",TaleTheme.c("text"))
-	for child in get_children():
-		if not child.has_meta("card_hp_bar") and not child.has_meta("card_mana_bar"): continue
-		var edge := child.get_node_or_null("BarOutline") as Panel
-		if edge == null:
-			edge = Panel.new()
-			edge.name = "BarOutline"
-			edge.set_meta("theme_decoration",true)
-			edge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			edge.z_index = 1
-			child.add_child(edge)
-			edge.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		var border := TaleTheme.flat("combat_track","damage_outline",12)
-		border.draw_center = false
-		border.border_color = TaleTheme.c("damage_outline").darkened(1.0)
-		border.set_border_width_all(2)
-		border.set_content_margin_all(0)
-		edge.add_theme_stylebox_override("panel",border)
 	queue_redraw()
 
-func layout_compact() -> void:
+func layout_fields() -> void:
+	var portrait_width := clampf(size.x*.28,64,100)
+	var left := portrait_width+20
+	var width := size.x-left-10
+	var shield_space := 42.0 if get_meta("shield_present",false) else 0.0
+	var item_size := 20.0 if size.x<300 else 30.0
+	var min_font := maxi(13,ceili(13.0/maxf(.1,get_global_transform_with_canvas().get_scale().x)))
+	var text_left := left+item_size*2+12
 	for child in get_children():
 		if child.has_meta("card_face"):
-			child.position = Vector2(18,28)
-			child.size = Vector2(64,64)
+			child.position = Vector2(12,20)
+			child.size = Vector2(portrait_width,size.y-40)
+			var art: TextureRect = child.get_node("CurrentHeroFace")
+			var source: AtlasTexture = preload("res://scripts/hero_art.gd").head(get_meta("hero_id"))
+			var crop := source.region
+			crop.size.y = minf(source.atlas.get_height()-crop.position.y,crop.size.x*child.size.y/child.size.x)
+			if art.get_meta("card_crop",Rect2())!=crop:
+				var portrait := AtlasTexture.new()
+				portrait.atlas = source.atlas
+				portrait.region = crop
+				portrait.filter_clip = true
+				art.texture = portrait
+				art.set_meta("card_crop",crop)
+		elif child.has_meta("card_info"):
+			child.custom_minimum_size = Vector2(26,26)
+			child.position = Vector2(size.x-35,15)
+			child.size = Vector2(26,26)
 		elif child.has_meta("card_name"):
-			child.position = Vector2(96,54)
-			child.size = Vector2(size.x-108,34)
-			preload("res://scripts/battle_typography.gd").fit_line(child,24,14,child.size)
-		elif child.has_meta("card_hp") or child.has_meta("card_hp_bar") or child.has_meta("card_mana") or child.has_meta("card_mana_bar"):
-			child.position = Vector2(12,110 if child.has_meta("card_hp") or child.has_meta("card_hp_bar") else 144)
-			child.size = Vector2(size.x-24,26)
+			child.position = Vector2(left,12)
+			child.size = Vector2(width-30,30)
+			preload("res://scripts/battle_typography.gd").fit_line(child,23,13,child.size)
+		elif child.has_meta("card_hp") or child.has_meta("card_hp_bar"):
+			child.position = Vector2(left,44)
+			child.size = Vector2(width-shield_space,30)
+		elif child.has_meta("card_mana") or child.has_meta("card_mana_bar"):
+			child.position = Vector2(left,80)
+			child.size = Vector2(width,24)
 		elif child.has_meta("card_shield"):
-			child.position = Vector2(size.x-62,110)
+			child.position = Vector2(size.x-38,44)
+			child.size = Vector2(30,30)
 		elif child.has_meta("card_shield_icon"):
-			child.position = Vector2(size.x-80,113)
+			child.position = Vector2(size.x-51,50)
+			child.size = Vector2(13,18)
 		elif child.has_meta("card_items"):
-			child.position = Vector2(14+int(child.get_meta("card_items"))*44,213)
-			child.size = Vector2(36,36)
+			child.position = Vector2(left+int(child.get_meta("card_items"))*(item_size+4),115)
+			child.add_theme_font_size_override("font_size",12 if size.x<300 else 16)
+			child.size = Vector2.ONE*item_size
 		elif child.has_meta("card_ult"):
-			child.position = Vector2(12,178)
-			child.size = Vector2(size.x-24,28)
-			child.autowrap_mode = TextServer.AUTOWRAP_OFF
+			child.position = Vector2(text_left,108)
+			child.size = Vector2(size.x-text_left-10,44)
+			child.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			child.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
-			preload("res://scripts/battle_typography.gd").fit_line(child,14,12,child.size)
+			child.add_theme_font_size_override("font_size",13 if size.x<300 else 16)
 		elif child.has_meta("card_status"):
-			child.position = Vector2(108,220)
-			child.size = Vector2(size.x-120,22)
-			child.add_theme_font_size_override("font_size",14)
+			child.position = Vector2(text_left,154)
+			child.size = Vector2(size.x-text_left-10,24)
+			child.add_theme_font_size_override("font_size",min_font)
+	queue_redraw()
 
 static func outline(rect: Rect2, cut: float) -> PackedVector2Array:
 	var p := rect.position
@@ -84,13 +96,12 @@ func _draw() -> void:
 		draw_polyline(outline(Rect2(inset,10+inset-1,size.x-inset*2,size.y-18-inset*2),9),border,1,true)
 	for y in [0,size.y-10]:
 		draw_texture_rect(RULE,Rect2(10,y,size.x-20,10),false,border)
-	var compact := size.x<300
-	var portrait_size := 76 if compact else 88
+	var portrait_width := clampf(size.x*.28,64,100)
 	for inset in [0,4]:
-		draw_polyline(outline(Rect2(12+inset,22+inset,portrait_size-inset*2,portrait_size-inset*2),9),border,1.5,true)
-	draw_line(Vector2(102 if compact else 106,212 if compact else 123),Vector2(102 if compact else 106,size.y-23),TaleTheme.c("ornament",.7),1,true)
-	# The information button shares this diamond instead of a second box.
-	var center := Vector2(size.x-25,31)
-	draw_polyline(PackedVector2Array([center+Vector2(0,-15),center+Vector2(15,0),center+Vector2(0,15),center+Vector2(-15,0),center+Vector2(0,-15)]),border,1.5,true)
+		draw_polyline(outline(Rect2(8+inset,16+inset,portrait_width+8-inset*2,size.y-32-inset*2),8),border,1.5,true)
+	var divider := portrait_width+20+(20 if size.x<300 else 30)*2+7
+	draw_line(Vector2(divider,111),Vector2(divider,size.y-18),TaleTheme.c("ornament",.7),1,true)
+	var center := Vector2(size.x-22,28)
+	draw_polyline(PackedVector2Array([center+Vector2(0,-12),center+Vector2(12,0),center+Vector2(0,12),center+Vector2(-12,0),center+Vector2(0,-12)]),border,1.5,true)
 	if has_focus():
 		draw_polyline(outline(Rect2(2,11,size.x-4,size.y-22),9),TaleTheme.c("accent"),2,true)

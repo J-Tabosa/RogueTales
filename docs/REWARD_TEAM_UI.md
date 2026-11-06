@@ -5,8 +5,8 @@ Correção incremental sobre a versão anterior às runas (`e1aaf16`).
 - **Recompensa:** “Rodada vencida” centralizado, “Escolha uma melhoria” como subtítulo, sem contagem de pontos. O painel acompanha o centro da tela, limita a altura e rola somente as opções quando necessário.
 - **Voltar:** a seta fecha o modal, mantém a batalha pausada e conserva as ofertas. “Escolher melhoria” reabre a mesma recompensa. Nenhum bônus é aplicado, descartado ou sorteado novamente ao voltar.
 - **HUD:** faixa de quem ataca removida; estágio, fase, mapa e aviso de passiva preservados. Ouro sobreposto no canto superior esquerdo da arena e “Escolher melhoria” no superior direito. Arena ampliada para 984×726 no PC, com gestor mais estreito; passiva posicionada abaixo do ouro.
-- **Gestor:** retrato quadrado à esquerda, moldura dupla chanfrada, divisores com losango, nome em serifa, botão de informação em losango, números dentro de vida/mana e espaço separado para escudo. Os dois espaços de equipamento e o acionamento de ULT/desejos mantêm os mesmos comandos.
-- **Barras:** cantos arredondados, contorno preto de 2 px no gestor e números claros com contorno escuro nos dois temas. As placas sob os personagens usam raio de 6 px. Paletas, cores de raridade, cores por faixa de vida e regras de combate preservadas.
+- **Gestor:** retrato alto à esquerda, moldura dupla chanfrada e informação em losango na linha do nome. À direita ficam vida, recurso e a linha de itens/divisor/habilidade/status. As fontes usam a Lora existente; o status permanece em itálico. Os dois espaços de equipamento e o acionamento de ULT/desejos mantêm os mesmos comandos.
+- **Barras do gestor:** formato hexagonal chanfrado sem arredondamento, contorno preto de 2 px, vida mais alta que mana, números claros com contorno escuro e escudo fora da vida. `character_resource_bar.gd` reaproveita `surface_texture` da interface, recortada dentro do preenchimento. As cinco cores semânticas já existentes são usadas em >75%, >50%, >30%, >15% e ≤15%, com transição de cor de 200 ms. A implementação anterior das barras era sólida; nenhum asset de textura novo foi criado. As placas de campo e as regras de combate não mudam nesta etapa.
 
 ## Código
 
@@ -20,4 +20,4 @@ Foram removidos o painel da vez de atacar, `battle_text_box()` e suas cinco caix
 
 Godot 4.7, temas claro/escuro, 1920×1080, 1366×768, 1280×720 e 390×844. `tests/reward_team_ui.gd` captura batalha e recompensa, verifica limites dos textos/barras e testa cliques reais na informação, na seta e em reabrir, comparando o checkpoint antes/depois.
 
-Testes adicionais: `ui_themes`, `arena_equipment_layout`, `bonuses_ui_098`, `wishes_silk_097`, `rules_095`, `combat_readability` e `skills_equipment_102`. O workflow **Combat interface** publica logs e capturas no artefato de cada execução.
+Testes adicionais: `ui_themes`, `arena_equipment_layout`, `bonuses_ui_098`, `wishes_silk_097`, `rules_095`, `combat_readability` e `skills_equipment_102`. A fixture também mostra o card da Mulan com 196/259 PV, escudo 59 e recurso 10/100. O workflow **Combat interface** publica logs e capturas no artefato de cada execução.

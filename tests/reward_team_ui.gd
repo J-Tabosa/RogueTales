@@ -58,7 +58,7 @@ func checks() -> void:
 			game.run = IdleRun.new()
 			assert(game.run.start_expedition(game.campaign,"rapunzel","blessing:rapunzel:0"))
 			game.run.party_capacity = 5
-			for id in ["aladin","snow_white","alice","matches"]:
+			for id in ["aladin","snow_white","alice","mulan"]:
 				game.run.pending_choice = true
 				game.run.offers.assign(["ally:"+id,"heart","power"])
 				assert(game.run.recruit(game.campaign,id))
@@ -78,6 +78,10 @@ func checks() -> void:
 			game.run.actors[0].energy = 1
 			game.run.actors[2].hp = 0
 			game.run.actors[2].shield = 0
+			game.run.actors[-1].hp = 196
+			game.run.actors[-1].max_hp = 259
+			game.run.actors[-1].shield = 59
+			game.run.actors[-1].energy = 10
 			game.ui_theme.switch_to(mode)
 			game.update_hud()
 			game.feedback.enqueue({"hero":"rapunzel","kind":"passive","title":"Casulo de Seda","detail":"Escudos para a equipe"})
@@ -97,16 +101,16 @@ func checks() -> void:
 				for key in ["hp","mana","info","items","face","name","ult","status"]:
 					assert(Rect2(Vector2.ZERO,card.size).encloses(field(card,key).get_rect()),key+" fits its team card")
 				assert(not field(card,"hp").get_rect().intersects(field(card,"mana").get_rect()))
-				if game.desktop:
-					for key in ["name","ult"]:
-						var text: Label = field(card,key)
-						assert(text.get_theme_font("font").get_string_size(text.text,HORIZONTAL_ALIGNMENT_LEFT,-1,text.get_theme_font_size("font_size")).x<=text.size.x,"Narrow cards keep the complete character and ability names")
+				var name_tag: Label = field(card,"name")
+				assert(name_tag.get_theme_font("font").get_string_size(name_tag.text,HORIZONTAL_ALIGNMENT_LEFT,-1,name_tag.get_theme_font_size("font_size")).x<=name_tag.size.x,"Complete character name")
+				assert(field(card,"ult").get_visible_line_count()>=field(card,"ult").get_line_count(),"Complete ability name")
+				assert(field(card,"status").get_theme_font_size("font_size")>=13,"Readable existing status")
+				assert(field(card,"face").size.y>card.size.y*.7,"Portrait occupies the left side height")
 				for key in ["hp_bar","mana_bar"]:
-					var edge: Panel = field(card,key).get_node("BarOutline")
-					assert(edge.get_theme_stylebox("panel").border_color==Color.BLACK and edge.get_theme_stylebox("panel").border_width_left==2,"Manager bars retain a black 2px border in both themes")
+					assert(field(card,key).get_theme_stylebox("background") is StyleBoxEmpty,"Custom pointed bars are not covered by rounded native styles")
 			var first: Control = game.ult_buttons[0]
 			assert(field(first,"hp").text=="463 / 580","Shields do not inflate the maximum HP label")
-			assert(not field(first,"hp").get_rect().intersects(field(first,"shield").get_rect()),"Shield count has its own space")
+			assert(not field(first,"hp_bar").get_rect().intersects(field(first,"shield_icon").get_rect()),"Shield count has its own space")
 			assert(field(first,"hp").get_theme_font_size("font_size")>=14)
 			await capture("battle-%s-%dx%d"%[mode,dimensions.x,dimensions.y])
 			await click(field(first,"info"))
@@ -137,6 +141,13 @@ func checks() -> void:
 			await click(game.reward_return)
 			assert(game.overlay!=null and game.run.to_checkpoint()==before,"Reopen preserves the same offers")
 			game.dismiss_reward()
+			game.hero_deck_scroll.ensure_control_visible(game.ult_buttons[-1])
+			for frame in 3: await process_frame
+			await capture("manager-mulan-%s-%dx%d"%[mode,dimensions.x,dimensions.y])
+			var colors: Array = ["health_full","health_high","health_half","health_low","health_critical"]
+			var ratios: Array = [.8,.65,.4,.2,.1]
+			for index in ratios.size():
+				assert(preload("res://scripts/character_resource_bar.gd").health_color(ratios[index])==TaleTheme.c(colors[index]),"Five existing HP palette bands")
 			await process_frame
 	game.queue_free()
 	await process_frame

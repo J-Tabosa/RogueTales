@@ -250,7 +250,7 @@ func apply_control(node: Control) -> void:
 		color_override(node,"font_color",c("combat_text"))
 		color_override(node,"font_outline_color",c("damage_outline"))
 		color_override(node,"font_shadow_color",c("damage_outline"))
-		node.add_theme_constant_override("outline_size",3)
+		node.add_theme_constant_override("outline_size",int(node.get_meta("bar_outline_size",3)))
 		node.add_theme_constant_override("shadow_offset_y",1)
 	if node is RichTextLabel:
 		# BBCode damage/rarity colors convey game information and remain untouched.
@@ -267,7 +267,7 @@ func apply_control(node: Control) -> void:
 			if node.get_theme_font(key) != BODY: node.add_theme_font_override(key, BODY)
 	if node is Button:
 		for state in ["normal", "hover", "pressed", "disabled", "focus"]:
-			style_override(node, state, button_style(state, node.get_meta("primary", false) or node.get_meta("theme_active", false), node.has_meta("skill_info"),rarity_of(node)))
+			style_override(node, state, button_style(state, node.get_meta("primary", false) or node.get_meta("theme_active", false), node.has_meta("skill_info") or node.get_meta("theme_square",false),rarity_of(node)))
 		ensure_surface(node, true)
 	elif node is Panel or node is PanelContainer:
 		# Preserve layout margins on PanelContainers and intentionally empty art frames.
