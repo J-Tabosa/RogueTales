@@ -8,6 +8,9 @@ var scroll: ScrollContainer
 var shade: ColorRect
 var fine_frame: Panel
 var choices_holder: Control
+var background: Control
+var ornament_frame: Control
+var corner_details: Control
 
 func setup(owner_ui: Control) -> void:
 	game = owner_ui
@@ -19,10 +22,19 @@ func setup(owner_ui: Control) -> void:
 	shade.set_meta("theme_decoration", true)
 	shade.color = TaleTheme.c("damage_outline", .72)
 	add_child(shade)
+	background = preload("res://scripts/theme_surface.gd").new()
+	background.name = "RewardSurface"
+	background.surface_inset = 22
+	background.artwork_frame = false
+	background.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+	add_child(background)
+	ornament_frame = preload("res://scripts/reward_frame.gd").new()
+	ornament_frame.name = "RewardOrnamentalFrame"
+	add_child(ornament_frame)
 	board = PanelContainer.new()
 	board.name = "RewardBoard"
-	board.set_meta("theme_radius", 16)
-	var style := TaleTheme.flat("surface", "ornament", 16)
+	board.set_meta("theme_decoration",true)
+	var style := StyleBoxEmpty.new()
 	style.set_content_margin_all(22)
 	board.add_theme_stylebox_override("panel", style)
 	add_child(board)
@@ -89,6 +101,10 @@ func setup(owner_ui: Control) -> void:
 	column.add_child(footer)
 	var leave: Button = game.button(footer,"Salvar e sair",Rect2(0,0,300,44),game.leave_battle)
 	leave.name = "SaveRewardAndExit"
+	corner_details = preload("res://scripts/reward_frame.gd").new()
+	corner_details.name = "RewardCornerDetails"
+	corner_details.inner_corners_only = true
+	add_child(corner_details)
 	resized.connect(layout)
 	update_theme()
 	layout()
@@ -141,4 +157,9 @@ func layout() -> void:
 	for card in choices.get_children(): height += int(card.get_combined_minimum_size().y)
 	board.size = Vector2(card_width+76,minf(height,size.y*.9))
 	board.position = (size-board.size)*.5
+	for decoration in [background,ornament_frame,corner_details]:
+		decoration.position = board.position
+		decoration.size = board.size
+		decoration.queue_redraw()
+	ornament_frame.available_space = Vector4(board.position.x,board.position.y,size.x-board.get_rect().end.x,size.y-board.get_rect().end.y)
 	layout_choices()

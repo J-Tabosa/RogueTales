@@ -132,6 +132,11 @@ func checks() -> void:
 			var sheet: Control = game.overlay
 			assert((sheet.board.position+sheet.board.size*.5-sheet.size*.5).length()<1,"Reward is centered")
 			assert(Rect2(Vector2.ZERO,sheet.size).encloses(sheet.board.get_rect()),"Reward stays within the screen")
+			var frame_bounds: Rect2 = sheet.ornament_frame.paint_bounds()
+			frame_bounds.position += sheet.ornament_frame.position
+			assert(Rect2(Vector2.ZERO,sheet.size).encloses(frame_bounds),"All four projecting ornaments stay inside the viewport")
+			for decoration in [sheet.background,sheet.ornament_frame,sheet.corner_details]:
+				assert(decoration.mouse_filter==Control.MOUSE_FILTER_IGNORE and not decoration.clip_contents,"Ornaments never intercept clicks or crop their tips")
 			assert(sheet.find_child("RewardTitle",true,false).horizontal_alignment==HORIZONTAL_ALIGNMENT_CENTER)
 			assert(sheet.find_child("RewardSubtitle",true,false).text=="Escolha uma melhoria")
 			assert(sheet.choices.get_child_count()==3)

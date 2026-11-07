@@ -3,6 +3,8 @@ extends Control
 var frame_only := false
 var backdrop := false
 var wash: GradientTexture2D
+var surface_inset := 0.0
+var artwork_frame := true
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -51,17 +53,24 @@ func _draw() -> void:
 	# Native rounded readout plates must not be painted over by a square wash.
 	if readout:return
 	if not frame_only and wash!=null:
-		draw_texture_rect(wash,full,false)
+		var fill := full.grow(-surface_inset)
+		if surface_inset>0:
+			draw_texture_rect_region(wash,fill,Rect2(fill.position/size*wash.get_size(),fill.size/size*wash.get_size()))
+		else: draw_texture_rect(wash,full,false)
 		if not readout:
 			var grain:=TaleTheme.asset("surface_texture")
 			if grain!=null:
 				draw_set_transform(Vector2.ZERO,0,Vector2.ONE*.38)
-				draw_texture_rect(grain,Rect2(Vector2.ZERO,size/.38),true,TaleTheme.asset_tint("surface_texture",.13 if backdrop else .09))
+				if surface_inset>0:
+					var sample := Rect2(fill.position/.38,fill.size/.38)
+					draw_texture_rect_region(grain,sample,sample,TaleTheme.asset_tint("surface_texture",.09),false,false)
+				else: draw_texture_rect(grain,Rect2(Vector2.ZERO,size/.38),true,TaleTheme.asset_tint("surface_texture",.13 if backdrop else .09))
 				draw_set_transform(Vector2.ZERO)
 		if size.y>=180 and size.x>=200 and rank<0 and not readout:
 			var rosette:=TaleTheme.asset("mandala_watermark")
 			var extent:=minf(size.x*.80,size.y*.86)
 			if rosette!=null:draw_texture_rect(rosette,Rect2(size*.5-Vector2.ONE*extent*.5,Vector2.ONE*extent),false,TaleTheme.asset_tint("mandala_watermark",.055 if backdrop else .045))
+	if not artwork_frame: return
 	if backdrop:
 		if size.x>700:
 			var corner:=TaleTheme.asset("corner_filigrane")
