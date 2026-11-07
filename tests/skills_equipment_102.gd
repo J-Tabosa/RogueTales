@@ -1,6 +1,7 @@
 extends SceneTree
 const Gear=preload("res://scripts/equipment.gd")
 const Art=preload("res://scripts/skill_art.gd")
+const ItemArt=preload("res://scripts/item_art.gd")
 var game:Control
 var destination:=""
 func _initialize() -> void:call_deferred("checks")
@@ -67,7 +68,7 @@ func checks() -> void:
 	game.campaign.window_mode_selected=true
 	game.apply_window_mode()
 	await process_frame
-	for extent in [Vector2i(1280,800),Vector2i(540,960),Vector2i(360,640)]:
+	for extent in [Vector2i(1280,800),Vector2i(540,960),Vector2i(390,844),Vector2i(360,640)]:
 		game.get_window().size=extent
 		game.get_window().content_scale_size=extent
 		await process_frame
@@ -118,14 +119,33 @@ func checks() -> void:
 		await capture("sheet-"+str(extent.x))
 		game.close_character_information()
 		game.run.interlude="route"
-		for id in ["stone_heart","blue_hourglass"]:assert(game.run.grant_item(id))
-		assert(game.run.equip_item(0,"stone_heart",0))
-		assert(game.run.equip_item(1,"blue_hourglass",1))
+		for id in ["fate_scissors","fate_scissors","blue_hourglass","stone_heart"]:assert(game.run.grant_item(id))
+		assert(game.run.equip_item(0,"fate_scissors",0))
 		game.show_equipment(1,1)
 		var panel=game.equipment_panel
+		for frame in 3:await process_frame
+		var scissors:Button=descendants(panel).filter(func(node):return node.get_meta("inventory_item","")=="fate_scissors")[0]
+		await click(scissors)
+		var description:Control=panel.find_child("DescriptionPane",true,false)
+		var bag:Control=panel.find_child("AppearancePane",true,false)
+		var picture:TextureRect=description.find_child("SelectedItemPicture",true,false)
+		assert(bag.is_visible_in_tree() and description.is_visible_in_tree() and bag.get_rect().end.x<description.position.x,"Clicking an item keeps the illustrated bag beside its description")
+		assert(picture.is_visible_in_tree() and picture.texture==ItemArt.texture("fate_scissors") and picture.texture!=null,"The description displays the selected item's picture")
+		assert(descendants(description).any(func(node):return node is Label and node.text==Gear.data("fate_scissors").detail))
+		await capture("scissors-detail-"+str(extent.x))
+		await click(panel.find_child("EquipSelectedItem",true,false))
+		assert(panel.transfer_prompt==null and Gear.item_at(game.run.actors[0],0)=="fate_scissors","A free copy never prompts a transfer or takes the equipped copy")
+		assert(Gear.item_at(game.run.actors[1],0)=="fate_scissors" and game.run.equipped_count("fate_scissors")==2,"Two copies can be equipped by two different heroes")
+		assert(game.run.inventory.count("fate_scissors")==2 and panel.selected_slot==0,"Equip selects the first free slot and preserves ownership counts")
+		var hourglass:Button=descendants(panel).filter(func(node):return node.get_meta("inventory_item","")=="blue_hourglass")[0]
+		await click(hourglass)
+		await click(panel.find_child("EquipSelectedItem",true,false))
+		assert(Gear.item_at(game.run.actors[1],0)=="fate_scissors" and Gear.item_at(game.run.actors[1],1)=="blue_hourglass" and panel.selected_slot==1,"The next Equip fills slot two without a slot click")
+		assert(game.campaign.checkpoint.equipment_state.alice.items==["fate_scissors","blue_hourglass"],"Both equipped items are saved in their actual slots")
+		assert(game.run.equip_item(0,"stone_heart",0))
 		panel.select_item("stone_heart")
 		var action:Button=panel.find_child("EquipSelectedItem",true,false)
-		assert(not action.disabled,"Used items stay actionable through confirmation")
+		assert(not action.disabled and action.text.begins_with("Trocar"),"With both slots full, the selected slot is explicitly offered for replacement")
 		var before:Dictionary=game.run.equipment_snapshot().duplicate(true)
 		var inventory:Array=game.run.inventory.duplicate()
 		panel.request_equip()
@@ -168,5 +188,5 @@ func checks() -> void:
 		game.close_equipment()
 	game.queue_free()
 	await process_frame
-	print("SKILLS EQUIPMENT 102 PASS: 36 images, info buttons, large left portrait, confirmation/cancel/transfer/remove, checkpoint, stale source and combat lock at PC/mobile sizes")
+	print("SKILLS EQUIPMENT 102 PASS: portraits, side-by-side item details, two copies, automatic slots, transfer/cancel/remove, checkpoint, stale source and combat lock at PC/mobile sizes")
 	quit()

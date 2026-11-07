@@ -6,7 +6,6 @@ var hero_index := 0
 var selected_slot := 0
 var selected_item := ""
 var category := "all"
-var mobile_tab := "appearance"
 var inventory_offset := 0
 var transfer_prompt:Control
 var pending_transfer:Dictionary={}
@@ -17,7 +16,6 @@ func setup(owner_ui: Control, index: int, slot_index := 0) -> void:
 	hero_index = clampi(index, 0, ui.run.actors.size() - 1)
 	selected_slot = clampi(slot_index, 0, Gear.SLOTS - 1)
 	selected_item = str(Gear.item_at(ui.run.actors[hero_index], selected_slot))
-	mobile_tab = "description" if not selected_item.is_empty() else "appearance"
 	name = "EquipmentPanel"
 	z_index = 4000
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -30,20 +28,15 @@ func select_hero(index: int) -> void:
 func select_slot(index: int) -> void:
 	selected_slot = index
 	selected_item = str(Gear.item_at(ui.run.actors[hero_index], selected_slot))
-	mobile_tab = "description" if not selected_item.is_empty() else "appearance"
 	rebuild()
 func select_item(id: String) -> void:
 	selected_item = id
-	mobile_tab = "description"
 	rebuild()
 func select_category(value: String) -> void:
 	category = value
 	var previous:=find_child("InventoryScroll",true,false)
 	if previous!=null:previous.scroll_vertical=0
 	inventory_offset = 0
-	rebuild()
-func select_tab(value: String) -> void:
-	mobile_tab = value
 	rebuild()
 func plain_panel(parent: Node, rect: Rect2, color: Color) -> Panel:
 	var node := Panel.new()
@@ -61,6 +54,10 @@ func text(parent: Node, value: String, rect: Rect2, font_size := 16, tint := Tal
 	return node
 func editable() -> bool:
 	return ui.run.interlude in ["route", "shop", "reward", "secret_reward"]
+func equip_slot(actor: Dictionary) -> int:
+	for index in Gear.SLOTS:
+		if Gear.item_at(actor,index).is_empty(): return index
+	return selected_slot
 func rebuild() -> void:
 	if ui == null or size.x < 1: return
 	cancel_transfer()
@@ -92,36 +89,36 @@ func rebuild() -> void:
 	ui.button(board, "›", Rect2(width - 63, 88, 42, 44), select_hero.bind(hero_index + 1)).tooltip_text = "Próximo personagem"
 	var body_y := 164.0
 	if not wide:
-		var tab_width := (width - 54) * .5
-		ui.button(board, "Aparência", Rect2(22, 163, tab_width, 44), select_tab.bind("appearance"), mobile_tab == "appearance")
-		ui.button(board, "Descrição", Rect2(32 + tab_width, 163, tab_width, 44), select_tab.bind("description"), mobile_tab == "description")
+		build_filters(board,Rect2(22,163,width-44,44))
 		body_y = 222
-	var left_width := floorf((width - 54) * .55) if wide else width - 44
+	var left_width := floorf((width - 54) * .55) if wide else 116.0
 	var body_height := height - body_y - 24
-	if wide or mobile_tab == "appearance": build_inventory(board, Rect2(22, body_y, left_width, body_height))
-	if wide or mobile_tab == "description":
-		var details_x := 32 + left_width if wide else 22.0
-		build_description(board, Rect2(details_x, body_y, width - details_x - 22, body_height))
-func build_inventory(parent: Node, rect: Rect2) -> void:
+	build_inventory(board,Rect2(22,body_y,left_width,body_height),not wide)
+	var details_x := 32 + left_width
+	build_description(board,Rect2(details_x,body_y,width-details_x-22,body_height))
+func build_filters(parent: Node, rect: Rect2) -> void:
+	var filters := [["all", "Todos"], ["gear", "Itens"], ["trophy", "Especiais"]]
+	var filter_width := (rect.size.x - 16) / 3.0
+	for index in filters.size():
+		var control: Button = ui.button(parent,filters[index][1],Rect2(rect.position.x+index*(filter_width+8),rect.position.y,filter_width,rect.size.y),select_category.bind(filters[index][0]),category==filters[index][0])
+		control.add_theme_font_size_override("font_size", 14)
+		control.set_meta("item_filter", filters[index][0])
+func build_inventory(parent: Node, rect: Rect2, compact: bool) -> void:
 	var pane := plain_panel(parent, rect, TaleTheme.c("surface"))
 	pane.name = "AppearancePane"
 	var width := rect.size.x
-	text(pane, "APARÊNCIA", Rect2(14, 10, width - 28, 23), 12, ui.GOLD)
-	var filters := [["all", "Todos"], ["gear", "Itens"], ["trophy", "Especiais"]]
-	var filter_width := (width - 36) / 3.0
-	for index in filters.size():
-		var control: Button = ui.button(pane, filters[index][1], Rect2(10 + index * (filter_width + 8), 40, filter_width, 44), select_category.bind(filters[index][0]), category == filters[index][0])
-		control.add_theme_font_size_override("font_size", 14)
-		control.set_meta("item_filter", filters[index][0])
+	text(pane,"BOLSA" if compact else "APARÊNCIA",Rect2(14,10,width-28,23),12,ui.GOLD)
+	if not compact: build_filters(pane,Rect2(10,40,width-20,44))
+	var list_top := 40.0 if compact else 98.0
 	var scroll := ScrollContainer.new()
 	scroll.name = "InventoryScroll"
 	scroll.set_script(preload("res://scripts/touch_scroll.gd"))
-	scroll.position = Vector2(10, 98)
-	scroll.size = Vector2(width - 20, rect.size.y - 112)
+	scroll.position = Vector2(10,list_top)
+	scroll.size = Vector2(width-20,rect.size.y-list_top-14)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	pane.add_child(scroll)
 	var grid := GridContainer.new()
-	grid.columns = maxi(2, floori((width - 30) / 100))
+	grid.columns = 1 if compact else maxi(2,floori((width-30)/100))
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.add_theme_constant_override("h_separation", 8)
 	grid.add_theme_constant_override("v_separation", 10)
@@ -132,8 +129,9 @@ func build_inventory(parent: Node, rect: Rect2) -> void:
 	for id in unique:
 		var data := Gear.data(id)
 		var width_per_tile := floorf((width - 30 - (grid.columns - 1) * 8) / grid.columns)
-		var tile := Art.slot(grid, id, Rect2(0, 0, width_per_tile, 120), select_item.bind(id), id == selected_item)
-		tile.custom_minimum_size = Vector2(width_per_tile, 120)
+		var tile_height := 132 if compact else 120
+		var tile := Art.slot(grid,id,Rect2(0,0,width_per_tile,tile_height),select_item.bind(id),id==selected_item)
+		tile.custom_minimum_size = Vector2(width_per_tile,tile_height)
 		tile.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		tile.set_meta("inventory_item", id)
 		var art: TextureRect = tile.get_meta("item_picture")
@@ -142,11 +140,16 @@ func build_inventory(parent: Node, rect: Rect2) -> void:
 		art.offset_top = 5
 		art.offset_right = -7
 		art.offset_bottom = 86
-		text(tile, data.title, Rect2(6, 86, width_per_tile - 12, 30), 11)
+		var title := text(tile,data.title,Rect2(6,86,width_per_tile-12,36 if compact else 30),13 if compact else 11)
+		if compact:
+			title.max_lines_visible = 2
+			title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		var quantity := text(tile, "×%d" % ui.run.inventory.count(id), Rect2(width_per_tile - 35, 5, 29, 18), 11, ui.GOLD)
 		quantity.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		if ui.run.actors[hero_index].equipment.has(id): text(tile, "✓", Rect2(6, 5, 22, 20), 16, ui.GOLD)
-	if unique.is_empty(): text(pane, "Nenhum item nesta categoria.\nEncontre equipamentos nas recompensas,\nno mercador e em duelos secretos.", Rect2(18, 114, width - 36, 150), 16, ui.MUTED)
+	if unique.is_empty():
+		if compact: text(pane,"Nenhum item nesta categoria.",Rect2(14,list_top,width-28,100),14,ui.MUTED)
+		else: text(pane,"Nenhum item nesta categoria.\nEncontre equipamentos nas recompensas,\nno mercador e em duelos secretos.",Rect2(18,114,width-36,150),16,ui.MUTED)
 	scroll.set_deferred("scroll_vertical", inventory_offset)
 func build_description(parent: Node, rect: Rect2) -> void:
 	var pane := plain_panel(parent, rect, TaleTheme.c("surface"))
@@ -157,11 +160,11 @@ func build_description(parent: Node, rect: Rect2) -> void:
 	text(pane, "DESCRIÇÃO", Rect2(16, 10, width - 32, 23), 12, ui.GOLD)
 	if selected_item.is_empty():
 		text(pane, "Escolha um equipamento", Rect2(22, 90, width - 44, 68), 25, ui.GOLD)
-		text(pane, "Selecione uma arte na bolsa para ver seus efeitos e equipar neste espaço.", Rect2(22, 175, width - 44, 110), 18, ui.MUTED)
+		text(pane,"Selecione um item da bolsa para ver seus efeitos e equipá-lo.",Rect2(22,175,width-44,110),18,ui.MUTED)
 		return
 	var data := Gear.data(selected_item)
 	var art_height := minf(170, height * .30)
-	Art.picture(pane, selected_item, Rect2(24, 35, width - 48, art_height))
+	Art.picture(pane,selected_item,Rect2(24,35,width-48,art_height)).name = "SelectedItemPicture"
 	var scroll := ScrollContainer.new()
 	scroll.position = Vector2(18, 43 + art_height)
 	scroll.size = Vector2(width - 36, height - art_height - 184)
@@ -187,9 +190,9 @@ func build_description(parent: Node, rect: Rect2) -> void:
 	var owners: Array[String] = []
 	for actor in ui.run.actors:
 		if actor.equipment.has(selected_item): owners.append(TaleCatalog.HEROES[actor.id].name)
-	var free: int = ui.run.inventory.count(selected_item) - ui.run.equipped_count(selected_item)
+	var free: int = ui.run.available_item_count(selected_item)
 	var status := Label.new()
-	status.text = "%d cópia(s) disponível(is)" % free
+	status.text = "1 cópia disponível" if free==1 else "%d cópias disponíveis" % free
 	if not owners.is_empty(): status.text += "\nEquipado: " + ", ".join(owners)
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	status.add_theme_font_size_override("font_size", 13)
@@ -204,10 +207,12 @@ func build_description(parent: Node, rect: Rect2) -> void:
 			activate.pressed.connect(use_time_sands.bind(at))
 			stack.add_child(activate)
 	var actor: Dictionary = ui.run.actors[hero_index]
-	var has_owner:=not equipped_owner(selected_item).is_empty()
-	var action:Button=ui.button(pane,"Equipado neste personagem" if actor.equipment.has(selected_item) else "Equipar · espaço %d"%(selected_slot+1),Rect2(14,height-120,width-28,48),request_equip,true)
+	var target_slot := equip_slot(actor)
+	var action_text := "%s · espaço %d" % ["Equipar" if Gear.item_at(actor,target_slot).is_empty() else "Trocar",target_slot+1]
+	if actor.equipment.has(selected_item): action_text = "Equipado neste personagem"
+	var action:Button=ui.button(pane,action_text,Rect2(14,height-120,width-28,48),request_equip,true)
 	action.name="EquipSelectedItem"
-	action.disabled=not editable() or (free<=0 and not has_owner) or actor.equipment.has(selected_item)
+	action.disabled=not editable() or (free==0 and owners.is_empty()) or actor.equipment.has(selected_item)
 	var remove:Button=ui.button(pane,"Remover equipamento · espaço %d"%(selected_slot+1),Rect2(14,height-62,width-28,48),ui.equip_from_panel.bind(hero_index,"",selected_slot))
 	remove.name="RemoveEquipment"
 	remove.add_theme_font_size_override("font_size",15)
@@ -233,13 +238,21 @@ func cancel_transfer() -> void:
 	pending_transfer={}
 
 func request_equip() -> void:
-	if not editable() or selected_item.is_empty() or ui.run.actors[hero_index].equipment.has(selected_item):return
-	var owner:=equipped_owner(selected_item)
-	if owner.is_empty():
-		ui.equip_from_panel(hero_index,selected_item,selected_slot)
+	var actor: Dictionary = ui.run.actors[hero_index]
+	if not editable() or selected_item.is_empty() or actor.equipment.has(selected_item):return
+	var target_slot := equip_slot(actor)
+	if ui.run.available_item_count(selected_item)>0:
+		ui.equip_from_panel(hero_index,selected_item,target_slot)
 		return
+	var owner:=equipped_owner(selected_item)
+	if owner.is_empty():return
 	cancel_transfer()
-	pending_transfer={"source":owner.index,"source_slot":owner.slot,"target":hero_index,"target_slot":selected_slot,"item":selected_item,"expected_target":str(Gear.item_at(ui.run.actors[hero_index],selected_slot)),"source_id":ui.run.actors[owner.index].id,"target_id":ui.run.actors[hero_index].id}
+	pending_transfer = {
+		"source": owner.index, "source_slot": owner.slot,
+		"target": hero_index, "target_slot": target_slot,
+		"item": selected_item, "expected_target": Gear.item_at(actor,target_slot),
+		"source_id": ui.run.actors[owner.index].id, "target_id": actor.id,
+	}
 	transfer_prompt=Control.new()
 	transfer_prompt.name="EquipmentTransferConfirmation"
 	transfer_prompt.size=size
@@ -253,7 +266,7 @@ func request_equip() -> void:
 	var extent:=Vector2(minf(size.x-32,560),minf(size.y-32,370))
 	var board:=plain_panel(transfer_prompt,Rect2((size-extent)*.5,extent),TaleTheme.c("surface"))
 	text(board,"Trocar equipamento?",Rect2(22,18,extent.x-44,42),24,ui.GOLD)
-	var explanation:="%s já está sendo usado por %s (espaço %d).\n\nDeseja transferi-lo para %s (espaço %d)?"%[Gear.data(selected_item).title,TaleCatalog.HEROES[ui.run.actors[owner.index].id].name,owner.slot+1,TaleCatalog.HEROES[ui.run.actors[hero_index].id].name,selected_slot+1]
+	var explanation:="%s já está sendo usado por %s (espaço %d).\n\nDeseja transferi-lo para %s (espaço %d)?"%[Gear.data(selected_item).title,TaleCatalog.HEROES[ui.run.actors[owner.index].id].name,owner.slot+1,TaleCatalog.HEROES[actor.id].name,target_slot+1]
 	if not str(pending_transfer.expected_target).is_empty():explanation+="\n\n%s voltará para a bolsa."%Gear.data(pending_transfer.expected_target).title
 	var message:=text(board,explanation,Rect2(22,76,extent.x-44,extent.y-165),17)
 	message.clip_text=false
@@ -277,6 +290,7 @@ func confirm_transfer() -> void:
 	cancel_transfer()
 	equipment_notice="Equipamento transferido." if changed else "A troca foi cancelada: o equipamento ou a etapa mudou."
 	if changed:
+		selected_slot = choice.target_slot
 		if ui.has_method("persist_run"):ui.call("persist_run")
 		ui.update_hud()
 	rebuild()

@@ -137,7 +137,6 @@ func checks() -> void:
 		equip.pressed.emit()
 		assert(game.run.actors[0].equipment[1] == "enchanted_needle")
 		await capture("item_description_%dx%d" % [dimensions.x,dimensions.y])
-		game.equipment_panel.select_tab("appearance")
 		game.equipment_panel.select_category("trophy")
 		await capture("item_trophies_%dx%d" % [dimensions.x,dimensions.y])
 		game.close_equipment()

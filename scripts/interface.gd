@@ -1000,5 +1000,6 @@ func close_equipment() -> void:
 func equip_from_panel(index: int,id: String,slot: int) -> void:
 	if run.equip_item(index,id,slot):
 		if has_method("persist_run"):call("persist_run")
+		equipment_panel.selected_slot = slot
 		equipment_panel.rebuild()
 		update_hud()

@@ -818,12 +818,15 @@ func equipped_count(id: String) -> int:
 	for a in actors:count+=a.get("equipment",[]).count(id)
 	return count
 
+func available_item_count(id: String) -> int:
+	return maxi(0,inventory.count(id)-equipped_count(id))
+
 func equip_item(index: int,id: String,slot: int) -> bool:
 	if not expedition or interlude not in ["route","shop","reward","secret_reward"] or index<0 or index>=actors.size() or slot<0 or slot>=Equipment.SLOTS:return false
 	var a:Dictionary=actors[index]
 	var items:Array=a.get("equipment",[]).duplicate()
 	while items.size()<Equipment.SLOTS:items.append("")
-	if not id.is_empty() and (Equipment.data(id).is_empty() or items.has(id) or equipped_count(id)>=inventory.count(id)):return false
+	if not id.is_empty() and (Equipment.data(id).is_empty() or items.has(id) or available_item_count(id)==0):return false
 	var hp:float=a.hp
 	Equipment.detach(a)
 	items[slot]=id

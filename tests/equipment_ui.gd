@@ -49,7 +49,6 @@ func checks() -> void:
 		game.equip_from_panel(4, "stone_heart", 0)
 		assert(game.run.actors[4].equipment[0] == "stone_heart")
 		assert(game.campaign.checkpoint.equipment_state.alice.items[0] == "stone_heart")
-		game.equipment_panel.select_tab("appearance")
 		var scroll: ScrollContainer = game.equipment_panel.find_child("InventoryScroll", true, false)
 		assert(scroll != null)
 		await process_frame
