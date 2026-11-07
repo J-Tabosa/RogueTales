@@ -111,6 +111,8 @@ func setup(owner_ui: Control) -> void:
 
 func update_theme() -> void:
 	if not is_instance_valid(fine_frame): return
+	# Refresh the tinted frame even when the general adapter skips shader nodes.
+	ornament_frame.update_theme()
 	var line := TaleTheme.flat("surface","ornament",8)
 	line.draw_center = false
 	line.set_content_margin_all(0)

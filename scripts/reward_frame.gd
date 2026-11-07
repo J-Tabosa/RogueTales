@@ -1,5 +1,5 @@
 extends Control
-## Generated beige artwork, reused by rotation; this layer never receives input.
+## Rotated frame artwork with a palette applied only in the dark theme.
 const BAND := 22.0
 const CORNER := 64.0
 const CREST := Vector2(90,35)
@@ -7,6 +7,7 @@ const FOOT := 18.0
 const TILE = preload("res://assets/ui/themes/shared/reward_frame/reward_frame_tile.png")
 const ELBOW = preload("res://assets/ui/themes/shared/reward_frame/reward_frame_corner.png")
 const CARDINAL = preload("res://assets/ui/themes/shared/reward_frame/reward_frame_cardinal.png")
+const PALETTE_SHADER = preload("res://assets/ui/themes/shared/reward_frame/palette.gdshader")
 var inner_corners_only := false
 var available_space := Vector4.ZERO # Left, top, right, bottom, in logical units.
 
@@ -15,8 +16,21 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	resized.connect(queue_redraw)
+	update_theme()
 
-func update_theme() -> void: queue_redraw()
+func update_theme() -> void:
+	if not inner_corners_only:
+		if TaleTheme.mode == "dark":
+			if material == null:
+				var palette := ShaderMaterial.new()
+				palette.shader = PALETTE_SHADER
+				palette.set_shader_parameter("frame_shadow", TaleTheme.c("background"))
+				palette.set_shader_parameter("frame_midtone", TaleTheme.c("secondary"))
+				palette.set_shader_parameter("frame_highlight", TaleTheme.c("ornament"))
+				material = palette
+		else:
+			material = null
+	queue_redraw()
 
 func paint_bounds() -> Rect2:
 	if inner_corners_only: return Rect2(Vector2.ZERO,size)
