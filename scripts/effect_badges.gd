@@ -1,7 +1,9 @@
 extends RefCounted
 ## Concise effect labels share the game's vector icon system, without emoji fonts.
 static func symbol(key: String) -> String:
-	return {"capacity":"heroes","potion":"potion","power":"sword","heart":"heart","haste":"clock","critical":"target","leech":"heart","armor":"shield"}.get(key,"magic")
+	if ExpeditionContent.SHOP_SUPPLIES.has(key):
+		return "heart" if key == ExpeditionContent.REVIVE_SUPPLY else "potion"
+	return {"capacity":"heroes","power":"sword","heart":"heart","haste":"clock","critical":"target","leech":"heart","armor":"shield"}.get(key,"magic")
 
 static func for_supply(key: String, capacity: int) -> Array:
 	if key.begins_with("bonus:"):
@@ -11,9 +13,13 @@ static func for_supply(key: String, capacity: int) -> Array:
 		var id:=key.trim_prefix("item:")
 		var gear=preload("res://scripts/equipment.gd")
 		return [{"glyph":"magic","text":gear.rarity_name(id),"color":gear.tint(id).to_html(false)}]
+	if ExpeditionContent.SHOP_SUPPLIES.has(key):
+		var percent := roundi(ExpeditionContent.SHOP_SUPPLIES[key].fraction * 100)
+		if key == ExpeditionContent.REVIVE_SUPPLY:
+			return [{"glyph":"heart","text":"1 aliado com %d%% PV" % percent}]
+		return [{"glyph":"heart","text":"Cura %d%%" % percent},{"glyph":"heroes","text":"Aliados vivos"}]
 	match key:
 		"capacity":return [{"glyph":"heroes","text":"%d → %d vagas"%[capacity,mini(5,capacity+1)]}]
-		"potion":return [{"glyph":"heart","text":"Cura 35%"},{"glyph":"potion","text":"Revive 1 aliado"}]
 		"power":return [{"glyph":"sword","text":"Dano +20%"}]
 		"heart":return [{"glyph":"heart","text":"+25 PV"},{"glyph":"potion","text":"Cura 40 PV"}]
 		"haste":return [{"glyph":"clock","text":"Iniciativa +10"}]

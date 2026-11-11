@@ -3,7 +3,7 @@ const Visuals=preload("res://scripts/character_visuals.gd")
 var game
 var destination: String
 func _initialize() -> void: call_deferred("checks")
-func prepare(ids: Array, world: int) -> void:
+func prepare(ids: Array, world: int, at_meeting := false) -> void:
 	game.campaign.checkpoint.clear()
 	game.run=IdleRun.new()
 	assert(game.run.start_expedition(game.campaign,ids[0],"vigor"))
@@ -12,6 +12,7 @@ func prepare(ids: Array, world: int) -> void:
 		game.run.offers.assign(["ally:"+id,"heart","power"])
 		assert(game.run.recruit(game.campaign,id))
 	game.run.stage=world
+	if at_meeting: assert(preload("res://tests/test_routes.gd").place_at_meeting(game.run,ids[0]))
 	game.run.phase=2
 	game.enter_encounter()
 	game.spawn_enemy()
@@ -148,8 +149,7 @@ func checks() -> void:
 	game.center_content()
 	var secrets=preload("res://scripts/secret_encounters.gd")
 	for id in secrets.DATA:
-		var world: int=preload("res://scripts/biomes.gd").STAGE_BIOMES.find(secrets.DATA[id].biomes[0])
-		prepare([id],world)
+		prepare([id],0,true)
 		game.run.active_secret=id
 		game.run.tactics.spawn()
 		game.arena.sync_enemies()
@@ -161,7 +161,7 @@ func checks() -> void:
 		game.run.active_secret=""
 		game.show_team_event()
 		await capture("dialogue_"+id)
-	prepare(["scarlet"],0)
+	prepare(["scarlet"],0,true)
 	game.run.pending_event="secret_scarlet"
 	game.run.interlude="event"
 	game.show_team_event()

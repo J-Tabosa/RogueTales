@@ -445,7 +445,7 @@ func show_run_shop() -> void:
 		var card:=button(inner,"",Rect2(0,index*150,476,140),buy_run_supply.bind(key))
 		card.set_meta("shop_item",key)
 		var capped:bool=key=="item:travelers_page" and run.party_capacity>=Content.MAX_PARTY
-		card.disabled=bought or cost<0 or run.run_gold<cost or capped
+		card.disabled=not run.can_buy_supply(key)
 		for child in card.get_children():child.queue_free()
 		for skin in ["normal","disabled"]:card.add_theme_stylebox_override(skin,box(TaleTheme.c("surface"),TaleTheme.c("border"),12))
 		if key.begins_with("item:"):
@@ -459,7 +459,12 @@ func show_run_shop() -> void:
 		var title:=label(card,data.title,Rect2(108,12,306,42),19,GOLD)
 		title.set_meta("shop_title",true)
 		effect_badges(card,EffectBadges.for_supply(key,run.party_capacity),Vector2(108,80 if key.begins_with("bonus:") else 61),340)
-		label(card,"EQUIPE COMPLETA" if cost<0 or capped else "COMPRADO" if bought else "%d OURO"%cost,Rect2(108,110,296,21),12,TaleTheme.c("muted") if bought else GOLD)
+		var price := "%d OURO" % cost
+		if bought: price = "COMPRADO"
+		elif cost < 0 or capped: price = "EQUIPE COMPLETA"
+		elif not run.supply_needed(key):
+			price += " · SEM CAÍDOS" if key == Content.REVIVE_SUPPLY else " · SEM FERIDOS"
+		label(card,price,Rect2(108,110,296,21),12,TaleTheme.c("muted") if card.disabled else GOLD)
 		var info:=button(card,"i",Rect2(422,90,42,40),show_supply_details.bind(key))
 		info.tooltip_text="Ver todos os efeitos"
 	var inventory:=button(page,"Equipar itens · %d na bolsa"%run.inventory.size(),Rect2(24,752,492,48),show_equipment.bind(0))
@@ -471,7 +476,12 @@ func show_run_shop() -> void:
 
 func supply_data(key: String) -> Dictionary:
 	if key=="capacity":return {"title":"Expandir equipe","detail":"Capacidade %d → %d. Até 5 no total, com no máximo 3 personagens por posição."%[run.party_capacity,mini(Content.MAX_PARTY,run.party_capacity+1)]}
-	if key=="potion":return {"title":"Frasco de recomeço","detail":"Cura 35% dos PV de todos os aliados e levanta um aliado com 20% dos PV."}
+	if Content.SHOP_SUPPLIES.has(key):
+		var data: Dictionary = Content.SHOP_SUPPLIES[key]
+		var percent := roundi(data.fraction * 100)
+		var detail := "Restaura %d%% dos PV máximos de cada aliado vivo." % percent
+		if key == Content.REVIVE_SUPPLY: detail = "Escolha um aliado caído para voltar com %d%% dos PV máximos." % percent
+		return {"title": data.title, "detail": detail}
 	return TaleCatalog.offer_data(key)
 
 func effect_badges(parent: Node, entries: Array, at: Vector2, available: float) -> void:
@@ -495,19 +505,37 @@ func show_supply_details(key: String) -> void:
 	if key.begins_with("bonus:"):
 		show_bonus_selection(key,"shop")
 		return
-	modal(data.title,"SUPRIMENTO" if key in ["capacity","potion"] else "EQUIPAMENTO" if key.begins_with("item:") else "BÔNUS LEGADO")
+	modal(data.title,"SUPRIMENTO" if key == "capacity" or Content.SHOP_SUPPLIES.has(key) else "EQUIPAMENTO" if key.begins_with("item:") else "BÔNUS LEGADO")
 	if key.begins_with("item:"):ItemArt.picture(overlay,key.trim_prefix("item:"),Rect2(180,388,180,160))
 	else:icon(overlay,EffectBadges.symbol(key),Rect2(230,410,80,80))
 	label(overlay,data.detail,Rect2(40,564,460,120),18)
 	button(overlay,"Voltar ao mercador",Rect2(32,740,476,56),show_run_shop,true)
 
-func buy_run_supply(id: String) -> void:
-	if state=="shop" and id.begins_with("bonus:"):
+func buy_run_supply(id: String, target_index := -1) -> void:
+	if state != "shop" or not run.can_buy_supply(id): return
+	if id.begins_with("bonus:"):
 		show_bonus_selection(id,"shop")
 		return
-	if state == "shop" and run.buy_supply(id):
+	if id == Content.REVIVE_SUPPLY and target_index == -1:
+		show_revive_selection()
+		return
+	if run.buy_supply(id, target_index):
 		persist_run()
 		show_run_shop()
+
+func show_revive_selection() -> void:
+	var id := Content.REVIVE_SUPPLY
+	var data := supply_data(id)
+	modal(data.title, data.detail)
+	var y := 390.0
+	for index in run.actors.size():
+		var actor: Dictionary = run.actors[index]
+		if actor.hp > 0: continue
+		var name: String = TaleCatalog.HEROES[actor.id].name
+		var choice := button(overlay, "%s · %d ouro" % [name, run.supply_cost(id)], Rect2(32,y,476,62), buy_run_supply.bind(id,index))
+		choice.set_meta("revive_target", actor.id)
+		y += 74
+	button(overlay, "Voltar ao mercador", Rect2(32,778,476,52), show_run_shop)
 
 func leave_run_shop() -> void:
 	if state != "shop": return
@@ -516,7 +544,7 @@ func leave_run_shop() -> void:
 	enter_encounter()
 
 func show_team_event() -> void:
-	if not TeamEvents.has_event(run.pending_event): return
+	if not TeamEvents.can_occur(run, run.pending_event): return
 	state = "team_event"
 	clear_page()
 	var event: Dictionary = TeamEvents.event(run.pending_event)
@@ -1199,7 +1227,10 @@ func show_map_choices() -> void:
 		picture.mouse_filter=Control.MOUSE_FILTER_IGNORE;card.add_child(picture)
 		label(card,data.name,Rect2(148,10,314,46),20,GOLD)
 		var note:String="Mapa %d de 8 · %s"%[run.stage+1,run.Worlds.LABELS[run.journey.season]]
-		if not str(data.meeting).is_empty():note+="\nEncontro: "+str(TaleCatalog.HEROES[data.meeting].name)
+		var meeting_names := PackedStringArray()
+		for hero in run.Worlds.meeting_heroes(data):
+			meeting_names.append(TaleCatalog.HEROES[hero].name)
+		if not meeting_names.is_empty():note+="\nEncontro: "+", ".join(meeting_names)
 		label(card,note,Rect2(148,60,314,48),13,MUTED)
 
 func show_goals(tab:="daily") -> void:

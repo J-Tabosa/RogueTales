@@ -2,7 +2,7 @@ extends SceneTree
 const Secrets=preload("res://scripts/secret_encounters.gd")
 const Events=preload("res://scripts/team_events.gd")
 const Details=preload("res://scripts/combat_details.gd")
-const Biomes=preload("res://scripts/biomes.gd")
+const Routes=preload("res://tests/test_routes.gd")
 func _initialize() -> void: call_deferred("checks")
 func checks() -> void:
 	var account:=TaleCampaign.new()
@@ -10,8 +10,7 @@ func checks() -> void:
 	for id in Secrets.DATA:
 		var run:=IdleRun.new()
 		assert(run.start_expedition(account,id,"vigor"))
-		var biome: int=Secrets.DATA[id].biomes[0]
-		run.stage=Biomes.STAGE_BIOMES.find(biome)
+		assert(Routes.place_at_meeting(run,id))
 		run.phase=2
 		assert(Events.available(run).has("secret_"+id))
 		assert(Events.dialogue(run,"secret_"+id).size()==2)
@@ -78,5 +77,5 @@ func checks() -> void:
 		assert(account.save_to("user://revision_speed_test.json"))
 		var loaded:=TaleCampaign.new()
 		assert(loaded.load_from("user://revision_speed_test.json") and loaded.speed==speed)
-	print("CHARACTER REVISION PASS: 12 solo trials, biome/alive gates, no phase skipping, save/resume, rewards once, live numerical kits, poison, 1/2/3x persistence")
+	print("CHARACTER REVISION PASS: 12 solo trials, exact map/alive gates, no phase skipping, save/resume, rewards once, live numerical kits, poison, 1/2/3x persistence")
 	quit()

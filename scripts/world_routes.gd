@@ -548,6 +548,7 @@ const NODES={
 			0.98
 		],
 		"meeting": "",
+		"shared_meetings": ["joao", "maria"],
 		"texture": "res://assets/worlds/CasaDeDoces.png"
 	},
 	"CriptaEsquecida": {
@@ -1060,6 +1061,13 @@ static func select(data:Dictionary,id:String) -> bool:
 static func current(data:Dictionary,stage:int) -> Dictionary:
 	if not valid(data) or stage<0 or stage>=data.path.size():return {}
 	return NODES[str(data.path[stage])]
+static func meeting_heroes(map: Dictionary) -> Array[String]:
+	var ids: Array[String] = []
+	var hero := str(map.get("meeting", ""))
+	if not hero.is_empty(): ids.append(hero)
+	ids.append_array(map.get("shared_meetings", []))
+	return ids
+
 static func texture(id:String) -> Texture2D:
 	if not NODES.has(id):return null
 	if not textures.has(id):

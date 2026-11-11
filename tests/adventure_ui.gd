@@ -106,6 +106,7 @@ func checks() -> void:
 	await capture("endless_13_mobile")
 	# An actual event choice resumes the run; reloading before selection preserves it.
 	prepare(["scarlet", "matches"], 1, 1, true)
+	assert(preload("res://tests/test_routes.gd").place_at_meeting(game.run, "matches"))
 	game.run.interlude = "event"
 	game.run.pending_event = "powder_shop"
 	game.persist_run()

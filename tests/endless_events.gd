@@ -10,7 +10,8 @@ func checks() -> void:
 		var account := preload("res://tests/test_accounts.gd").legacy()
 		account.unlocked.assign(TaleCatalog.HEROES.keys())
 		var run := IdleRun.new()
-		run.start_expedition(account, data.pair[0], "vigor")
+		assert(run.start_expedition(account, data.pair[0], "vigor"))
+		assert(preload("res://tests/test_routes.gd").place_at_meeting(run, data.pair[0]))
 		assert(Events.available(run).has(key))
 		assert(Events.dialogue(run, key).size() == 2)
 		run.interlude = "event"

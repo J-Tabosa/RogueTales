@@ -27,13 +27,15 @@ Retratos HD separados das células de animação de combate. Idles executam um g
 
 A equipe tem até cinco personagens e até três por posição: vanguarda, meio e retaguarda. A linha horizontal do Cortejo das Cartas atravessa essas posições. A abertura é fixa: 1-1 tem um inimigo, 1-2 dois e 1-3 três. Os limites dos encontros comuns são três nos estágios 1–2, seis nos estágios 3–6 e nove a partir do estágio 7. Chefes mantêm dois acompanhantes; desafios secretos são individuais. Todos os inimigos atuais têm esquiva zero.
 
-Em cada estágio, X-1 a X-4 são combates com recompensas, X-5 oferece Mercador ou Negociante e X-6 é o chefe. Eventos aleatórios opcionais podem aparecer antes dos combates. Cada run começa em uma das quatro florestas, sorteada com chances iguais. As bifurcações seguem exatamente os percursos do pacote: oito mapas até o Castelo do Autor, com 40 combates e oito mercados. Mapas determinam cenário, clima e conjunto de inimigos. Os encontros de personagens do catálogo aparecem como convites opcionais após o chefe local.
+Em cada estágio, X-1 a X-4 são combates com recompensas, X-5 oferece Mercador ou Negociante e X-6 é o chefe. Eventos aleatórios opcionais podem aparecer antes dos combates. Cada run começa em uma das quatro florestas, sorteada com chances iguais. As bifurcações seguem exatamente os percursos do pacote: oito mapas até o Castelo do Autor, com 40 combates e oito mercados. Mapas determinam cenário, clima e conjunto de inimigos. Os encontros de personagens do catálogo aparecem como convites opcionais após o chefe local. Eventos pessoais e chefes secretos só aparecem no mapa marcado para um personagem vivo da equipe (a Bruxa do Mar, por exemplo, só aparece no Oceano). Os desafios de João e Maria ficam no interior da Casa de Doces.
 
 Cada personagem custa 5.000 memórias para desbloqueio permanente. Contas novas começam com todos bloqueados e 5.000 memórias para comprar o primeiro. Coleções e saldos de saves anteriores são preservados. Convites de aliados continuam temporários durante a run; feitos liberam bênçãos, sem substituir a compra do personagem.
 
 Após um chefe, se ninguém tiver sido recrutado nesta run, uma das três ofertas é garantidamente um personagem. O jogador pode escolher outra recompensa. Depois do primeiro recrutamento, convites voltam à chance comum de 25%.
 
 A capacidade começa em três e aumenta pela **Página dos Viajantes**, item mítico consumido ao receber: +1 vaga nesta run, até cinco. A compra direta de vagas foi removida. A página não ocupa equipamento e deixa de ser sorteada ao atingir o teto. Cada personagem equipa dois itens. A bolsa exibe aparência e descrição; trocas são feitas entre encontros. Ouro, desejos, recursos e equipamentos pertencem à run; coleção e feitos persistem.
+
+O Mercador e o Negociante vendem poções de 33%, 66% e 100% dos PV máximos para os aliados vivos (22, 40 e 60 ouro). Por 32 ouro, é possível escolher um aliado caído para reviver com 20% dos PV máximos.
 
 ## Executar e validar
 
@@ -53,7 +55,7 @@ python3 tools/check_095.py --godot /caminho/para/godot
 
 No PC, **Configurações → Ferramentas DEBUG** ou **Ctrl+B** permite liberar os 12 personagens e as 48 bênçãos, montar uma equipe de até cinco e iniciar uma run de teste com os 39 itens na bolsa. O teste usa uma campanha temporária; sair do debug restaura o progresso normal e a tentativa pendente. Essas ferramentas não aparecem no Android.
 
-O preset **Android Teste** exporta APK arm64, código 22, versão 1.0.1-teste, pacote `com.jtabosa.roguetales.preview.v07`. Use a mesma chave das versões anteriores para instalar como atualização. Chaves e SDKs não são versionados.
+O preset **Android Teste** exporta APK arm64, código 24, versão 1.0.1-loja, pacote `com.jtabosa.roguetales.preview.v07`. Use a mesma chave das versões anteriores para instalar como atualização. Chaves e SDKs não são versionados.
 
 ## Códigos de resgate
 

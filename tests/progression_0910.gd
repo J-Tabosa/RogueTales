@@ -112,6 +112,7 @@ func test() -> void:
 	check(again.inactive_companions.size()==4 and again.actors.size()==5,"Migration idempotent")
 	# Random events remain optional without consuming/replacing the combat phase.
 	run=make(["scarlet"]);run.phase=1;run.interlude="route"
+	check(preload("res://tests/test_routes.gd").place(run,"Pomar"),"An authored meeting map enables the route event")
 	var offered:=false
 	for i in 100:
 		run.roll_routes()

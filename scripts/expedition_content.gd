@@ -9,6 +9,13 @@ const ROUTE_FORMAT := 3
 const MAX_PARTY := 5
 const EVENT_CHANCE := 0.25
 const RECRUIT_CHANCE := 0.25
+const REVIVE_SUPPLY := "revive"
+const SHOP_SUPPLIES := {
+	"potion": {"title": "Poção de cura · 33%", "fraction": 0.33, "cost": 22},
+	"potion_medium": {"title": "Poção de cura · 66%", "fraction": 0.66, "cost": 40},
+	"potion_full": {"title": "Poção de cura · 100%", "fraction": 1.0, "cost": 60},
+	REVIVE_SUPPLY: {"title": "Reviver um aliado", "fraction": 0.20, "cost": 32}
+}
 const BOSSES := [3, 7, 11]
 const BLESSINGS := {
 	"vigor": {"name": "Coração indomável", "detail": "+25% de PV nesta run.", "cost": 0},

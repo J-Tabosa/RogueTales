@@ -1,6 +1,6 @@
 extends RefCounted
 ## Optional one-enemy trials. Keys and rewards survive saves, once per hero/run.
-const Biomes=preload("res://scripts/biomes.gd")
+const Worlds=preload("res://scripts/world_routes.gd")
 const DATA := {
  "scarlet":{"name":"Lobo Mau","biomes":[0],"group":"a","row":0,"class":"assassin","effect":"heavy","line":"Esse uivo eu reconheço. Hoje a floresta vai ouvir a minha resposta.","body":"Pegadas enormes desviam da trilha. O Lobo Mau espera sozinho sob uma capa rasgada.","reward":"Scarlet: +25% de dano e +10 pontos percentuais de crítico."},
  "snow_white":{"name":"Rainha Má","biomes":[0,6],"group":"a","row":1,"class":"mage","effect":"poison","line":"Ela ainda usa aquela fórmula velha? Vou precisar de uma amostra.","body":"Um pomar de maçãs negras cresce ao redor de um laboratório abandonado. A rainha guarda a última fórmula.","reward":"Branca: +25% de dano e +4 mana por acerto."},
@@ -17,7 +17,7 @@ const DATA := {
 }
 static func eligible(owner, id: String) -> bool:
 	if not owner.expedition or not DATA.has(id) or owner.secret_defeated.has(id) or not owner.active_secret.is_empty(): return false
-	if not DATA[id].biomes.has(owner.current_biome()): return false
+	if not Worlds.meeting_heroes(owner.current_map()).has(id): return false
 	for actor in owner.actors:
 		if actor.id==id and actor.hp>0: return true
 	return false
