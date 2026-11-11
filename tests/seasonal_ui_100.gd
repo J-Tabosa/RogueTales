@@ -52,10 +52,10 @@ func test() -> void:
 		game.run.interlude="shop";game.run.shop_stock.assign(["item:travelers_page"]);game.run.shop_bought.clear();game.run.party_capacity=4;game.run.run_gold=1000
 		game.show_run_shop();await process_frame
 		var item:Button=descendants(game.page).filter(func(n):return n is Button and n.get_meta("shop_item","")=="item:travelers_page")[0]
-		await capture("mythic-page-%d"%extent.x)
+		await capture("legendary-page-%d"%extent.x)
 		await click(item,Vector2(230,45),extent.x==540)
-		check(game.run.party_capacity==5 and game.run.run_gold==450,"Actual mythic purchase adds exactly one slot")
-		check(not game.run.inventory.has("travelers_page"),"Mythic consumes itself and never occupies gear slot")
+		check(game.run.party_capacity==5 and game.run.run_gold==411,"Actual legendary purchase adds exactly one slot")
+		check(not game.run.inventory.has("travelers_page"),"Page consumes itself and never occupies gear slot")
 	print("SEASONAL UI100 ","PASS" if failures==0 else "FAIL"," · ",checks," checks · ",scenes," full14-unit scenes")
 	game.queue_free()
 	quit(1 if failures else 0)

@@ -66,18 +66,22 @@ func test() -> void:
 					check(loaded.journey==run.journey and loaded.route_offers==run.route_offers and loaded.rng.state==run.rng.state,"Save preserves season, prefix, choices and RNG")
 			routes+=1
 	check(routes==17 and combats==680 and markets==136,"All17exactroutes40fights8shops")
-	# Mythic capacity item is consumed once, never a reversible equipment stat.
+	# Legendary capacity item is consumed once, never a reversible equipment stat.
 	var c:=preload("res://tests/test_accounts.gd").legacy();var run:=IdleRun.new();run.start_expedition(c,"scarlet","blessing:scarlet:0")
-	check(E.data("travelers_page").rarity==5,"Expansion is mythic")
-	check(run.party_capacity==3 and run.grant_item("travelers_page") and run.party_capacity==4,"Mythic+1 first slot")
+	check(E.data("travelers_page").rarity==4,"Expansion is legendary")
+	check(run.party_capacity==3 and run.grant_item("travelers_page") and run.party_capacity==4,"Legendary +1 first slot")
 	run.interlude="shop";run.run_gold=5000;run.shop_stock.assign(["item:travelers_page"])
-	check(run.buy_supply("item:travelers_page") and run.party_capacity==5 and run.run_gold==4450,"Shop acquisition consumes one mythic for+1")
+	check(run.buy_supply("item:travelers_page") and run.party_capacity==5 and run.run_gold==4620,"Shop acquisition consumes one legendary for +1")
+	check(not run.merchant_stock().has("item:travelers_page"),"The page vanishes from existing stock at the cap")
 	check(not run.buy_supply("item:travelers_page") and not run.grant_item("travelers_page") and run.party_capacity==5,"No double-use or sixth slot")
 	check(not run.inventory.has("travelers_page") and not run.buy_supply("capacity") and run.capacity_cost()==-1,"Consumable never equips; old slot purchase removed")
 	var loaded:=IdleRun.new();loaded.restore(c,JSON.parse_string(JSON.stringify(run.to_checkpoint())))
 	check(loaded.party_capacity==5 and loaded.capacity_relics==2,"Capacity saves without replay")
+	check(not loaded.merchant_stock().has("item:travelers_page"),"Capped expansion stays hidden after reload")
+	loaded.reward_boss=true
 	for i in 500:
-		loaded.roll_shop();check(not loaded.shop_stock.has("item:travelers_page"),"No useless mythic offered at cap")
+		loaded.roll_shop();check(not loaded.shop_stock.has("item:travelers_page"),"No expansion stocked at cap")
+		loaded.roll_run_offers();check(not loaded.offers.has("item:travelers_page"),"No expansion rewarded at cap")
 	# Old12-stage saves complete under their original route, without loss.
 	run.journey.clear();run.stage=11;run.phase=5;run.rooms_cleared=71;run.interlude=""
 	loaded=IdleRun.new();loaded.restore(c,run.to_checkpoint())

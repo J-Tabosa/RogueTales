@@ -9,6 +9,12 @@ const ROUTE_FORMAT := 3
 const MAX_PARTY := 5
 const EVENT_CHANCE := 0.25
 const RECRUIT_CHANCE := 0.25
+const SHOP_FORMAT := 2
+const ITEM_MERCHANT := "shop"
+const BUFF_MERCHANT := "trader"
+const SHOP_PRICE_FACTORS := [1.0, 1.55, 2.0, 2.25, 2.50, 2.65, 3.10, 3.35]
+const SUPPLY_PRICE_FACTORS := [1.0, 1.10, 1.20, 1.30, 1.45, 1.60, 1.80, 2.0]
+const SHOP_POTIONS := ["potion", "potion_medium", "potion_full"]
 const REVIVE_SUPPLY := "revive"
 const SHOP_SUPPLIES := {
 	"potion": {"title": "Poção de cura · 33%", "fraction": 0.33, "cost": 22},
@@ -118,8 +124,8 @@ const ROUTES := {
 	"battle": {"title": "Pela trilha", "detail": "Combate comum. Preserve suas forças e avance."},
 	"elite": {"title": "Caçadores de tinta", "detail": "Inimigos +35% PV e +15% dano. Vitória: +25 ouro e +10% dano ao grupo."},
 	"camp": {"title": "Fogueira nas margens", "detail": "Pague 18 ouro: cure 30% dos PV e levante um aliado com 20%. Depois, avance."},
-	"trader": {"title":"Negociante de contos","detail":"Outra banca de equipamentos, bônus e suprimentos. Depois, enfrente o chefe."},
-	"shop": {"title": "Mercador de histórias", "detail": "Gaste o ouro desta run em bônus, equipamentos e suprimentos antes de avançar."},
+	BUFF_MERCHANT: {"title": "Loja de Buffs", "detail": "Negociante de contos · melhorias para a equipe nesta run."},
+	ITEM_MERCHANT: {"title": "Loja de Itens", "detail": "Mercador de histórias · equipamentos, poções e ressurreição."},
 	"spring": {"title": "Fonte esquecida", "detail": "Cure 20% dos PV do grupo; perca 12 de ouro da run. Depois, avance."},
 	"curse": {"title": "A página proibida", "detail": "+18% de dano, mas −10% de PV máximos nesta run. Depois, avance."},
 	"cache": {"title": "Um baú, uma emboscada", "detail": "Ganhe 35 ouro agora; o próximo combate será uma elite."}

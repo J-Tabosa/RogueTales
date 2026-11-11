@@ -9,9 +9,9 @@ const LEGACY := {"ember_pearl":"star_powder","winter_match":"blue_hourglass","ve
 const ITEMS := {
   "travelers_page": {
     "title": "Página dos Viajantes",
-    "rarity": 5,
-    "cost": 550,
-    "detail": "Aumenta permanentemente a capacidade desta run em +1 aliado, até o limite de 5. Consumida ao receber; não ocupa espaço de equipamento.",
+    "rarity": 4,
+    "cost": 380,
+    "detail": "Aumenta a capacidade desta run em +1 aliado. Até duas páginas por run, para um total de 5 vagas. Consumida ao receber.",
     "consumable": true,
     "stats": {},
     "effects": {"party_capacity": 1}

@@ -302,7 +302,7 @@ func to_checkpoint() -> Dictionary:
 		"run_gold": run_gold, "blessing": blessing, "leader": leader,
 		"interlude": interlude, "route_offers": route_offers.duplicate(),
 		"room_kind": room_kind, "rooms_cleared": rooms_cleared,
-		"shop_stock": shop_stock.duplicate(), "shop_bought": shop_bought.duplicate(),
+		"shop_format": ExpeditionContent.SHOP_FORMAT, "shop_stock": shop_stock.duplicate(), "shop_bought": shop_bought.duplicate(),
 		"mercy_used": mercy_used, "curse_count": curse_count, "elite_bonuses": elite_bonuses,
 		"build_history": build_history.duplicate(),
 		"synergies_seen": synergies_seen.duplicate(), "synergy_activations": synergy_activations,
@@ -351,7 +351,7 @@ func restore(campaign: TaleCampaign, data: Dictionary) -> void:
 		if not TaleCatalog.HEROES.has(leader):leader="scarlet"
 		if not Blessings.data(blessing).is_empty() and Blessings.data(blessing).hero!=leader:blessing=Blessings.id_for(leader,0)
 		party_capacity=clampi(int(data.get("party_capacity",3)),3,ExpeditionContent.MAX_PARTY)
-		merchant_kind="trader" if data.get("merchant_kind","")=="trader" else "shop"
+		merchant_kind = ExpeditionContent.BUFF_MERCHANT if data.get("merchant_kind", "") == ExpeditionContent.BUFF_MERCHANT else ExpeditionContent.ITEM_MERCHANT
 		for retired in data.get("inactive_companions",[]):
 			if retired is Dictionary and TaleCatalog.HEROES.has(str(retired.get("id",""))):inactive_companions.append(retired.duplicate(true))
 		inventory.clear()
@@ -403,14 +403,12 @@ func restore(campaign: TaleCampaign, data: Dictionary) -> void:
 			var current:String="item:"+Equipment.migrate(str(key).trim_prefix("item:")) if str(key).begins_with("item:") else str(key)
 			if not shop_stock.has(current) and (ExpeditionContent.SHOP_SUPPLIES.has(current) or not TaleCatalog.offer_data(current).is_empty()):
 				shop_stock.append(current)
-		# Upgrade older market stock while keeping the original potion purchase and rolled offers.
-		if shop_stock.has("potion"):
-			for id in ExpeditionContent.SHOP_SUPPLIES:
-				if not shop_stock.has(id): shop_stock.insert(ExpeditionContent.SHOP_SUPPLIES.keys().find(id), id)
 		shop_bought.clear()
 		for key in data.get("shop_bought", []):
 			var current:String="item:"+Equipment.migrate(str(key).trim_prefix("item:")) if str(key).begins_with("item:") else str(key)
 			if shop_stock.has(current) and not shop_bought.has(current): shop_bought.append(current)
+		if int(data.get("shop_format", 0)) < ExpeditionContent.SHOP_FORMAT and not shop_stock.is_empty():
+			migrate_shop_supplies(int(data.get("run_id", 0)))
 	run_id = int(data.get("run_id", 0))
 	if run_id <= 0:
 		run_id = campaign.new_run_id()
@@ -722,21 +720,63 @@ func roll_routes() -> void:
 	route_offers.assign(["battle"])
 	if ExpeditionContent.is_boss(stage,phase):return
 	if ExpeditionContent.is_market(phase):
-		route_offers.assign(["shop","trader"])
+		route_offers.assign([ExpeditionContent.ITEM_MERCHANT, ExpeditionContent.BUFF_MERCHANT])
 		roll_shop()
 		return
 	if rng.randf()<ExpeditionContent.EVENT_CHANCE and not TeamEvents.available(self).is_empty():route_offers.append("team_event")
 
+func shop_potions(random: RandomNumberGenerator, kept: Array[String] = []) -> Array[String]:
+	var result := kept.slice(0, 2)
+	var pool: Array[String] = []
+	for id in ExpeditionContent.SHOP_POTIONS:
+		if not result.has(id): pool.append(id)
+	while result.size() < 2:
+		var index := random.randi_range(0, pool.size() - 1)
+		result.append(pool.pop_at(index))
+	result.sort_custom(func(a, b): return ExpeditionContent.SHOP_POTIONS.find(a) < ExpeditionContent.SHOP_POTIONS.find(b))
+	return result
+
+func migrate_shop_supplies(saved_run_id: int) -> void:
+	# Keep purchased offers when possible and preserve the run's random stream.
+	var kept: Array[String] = []
+	for id in ExpeditionContent.SHOP_POTIONS:
+		if shop_bought.has(id): kept.append(id)
+	var local_random := RandomNumberGenerator.new()
+	local_random.seed = hash([saved_run_id, stage])
+	var other_offers := shop_stock.filter(func(id): return not ExpeditionContent.SHOP_SUPPLIES.has(id))
+	shop_stock.assign(other_offers)
+	shop_stock.append_array(shop_potions(local_random, kept))
+	shop_stock.append(ExpeditionContent.REVIVE_SUPPLY)
+	shop_bought = shop_bought.filter(func(id): return shop_stock.has(id))
+
 func roll_shop() -> void:
-	shop_stock.assign(ExpeditionContent.SHOP_SUPPLIES.keys())
+	shop_stock.clear()
 	shop_bought.clear()
-	var stock:Array=unavailable_items()
+	var stock := unavailable_items()
 	for index in 3:
-		var item:=Equipment.roll(rng,stock)
-		shop_stock.append("item:"+item)
+		var item := Equipment.roll(rng, stock)
+		if item.is_empty(): break
+		shop_stock.append("item:" + item)
 		stock.append(item)
-	var bonus_id:=Bonuses.roll(self)
-	if not bonus_id.is_empty():shop_stock.append(bonus_id)
+	shop_stock.append_array(shop_potions(rng))
+	shop_stock.append(ExpeditionContent.REVIVE_SUPPLY)
+	for index in 3:
+		var bonus_id := Bonuses.roll(self)
+		if not bonus_id.is_empty(): shop_stock.append(bonus_id)
+
+func merchant_for_supply(id: String) -> String:
+	if id.begins_with("item:") or ExpeditionContent.SHOP_SUPPLIES.has(id):
+		return ExpeditionContent.ITEM_MERCHANT
+	return ExpeditionContent.BUFF_MERCHANT
+
+func merchant_stock() -> Array[String]:
+	return shop_stock.filter(func(id): return merchant_for_supply(id) == merchant_kind and (id != "item:travelers_page" or can_expand_party()))
+
+func switch_merchant(kind: String) -> bool:
+	if interlude != "shop" or kind == merchant_kind or kind not in [ExpeditionContent.ITEM_MERCHANT, ExpeditionContent.BUFF_MERCHANT]:
+		return false
+	merchant_kind = kind
+	return true
 
 
 func choose_route(id: String) -> bool:
@@ -754,7 +794,7 @@ func choose_route(id: String) -> bool:
 		pending_event = pool[rng.randi_range(0, pool.size() - 1)]
 		interlude = "event"
 		return true
-	if id in ["shop","trader"]:
+	if id in [ExpeditionContent.ITEM_MERCHANT, ExpeditionContent.BUFF_MERCHANT]:
 		merchant_kind=id
 		interlude = "shop"
 		return true
@@ -785,10 +825,14 @@ func restore_party(fraction: float, revive := false) -> void:
 
 
 func supply_cost(id: String) -> int:
-	if id=="capacity":return capacity_cost()
-	if ExpeditionContent.SHOP_SUPPLIES.has(id):return int(ExpeditionContent.SHOP_SUPPLIES[id].cost)
-	if id.begins_with("item:"):return int(Equipment.data(id.trim_prefix("item:")).get("cost",0))
-	return 32
+	if id == "capacity": return capacity_cost()
+	var index := clampi(stage, 0, ExpeditionContent.WORLD_COUNT - 1)
+	if ExpeditionContent.SHOP_SUPPLIES.has(id):
+		return roundi(ExpeditionContent.SHOP_SUPPLIES[id].cost * ExpeditionContent.SUPPLY_PRICE_FACTORS[index])
+	var base := 32
+	if id.begins_with("item:"):
+		base = int(Equipment.data(id.trim_prefix("item:")).get("cost", 0))
+	return roundi(base * ExpeditionContent.SHOP_PRICE_FACTORS[index])
 
 func supply_needed(id: String) -> bool:
 	if not ExpeditionContent.SHOP_SUPPLIES.has(id): return true
@@ -801,9 +845,9 @@ func supply_needed(id: String) -> bool:
 
 func can_buy_supply(id: String) -> bool:
 	var cost := supply_cost(id)
-	if interlude != "shop" or not shop_stock.has(id) or shop_bought.has(id) or cost < 0 or run_gold < cost:
+	if interlude != "shop" or merchant_for_supply(id) != merchant_kind or not shop_stock.has(id) or shop_bought.has(id) or cost < 0 or run_gold < cost:
 		return false
-	if id == "item:travelers_page" and party_capacity >= ExpeditionContent.MAX_PARTY: return false
+	if id == "item:travelers_page" and not can_expand_party(): return false
 	return supply_needed(id)
 
 func buy_supply(id: String, target_index := -1) -> bool:
@@ -838,7 +882,7 @@ func can_recruit(id: String,replace_index: int=-1) -> bool:
 func grant_item(id: String) -> bool:
 	if Equipment.data(id).is_empty() or inventory.size()>=144:return false
 	if id=="travelers_page":
-		if party_capacity>=ExpeditionContent.MAX_PARTY:return false
+		if not can_expand_party():return false
 		party_capacity+=1
 		capacity_relics+=1
 		return true
@@ -997,7 +1041,7 @@ func confirm_bonus(id:String,target:String,sign:int,source:="reward") -> bool:
 	if source=="reward":
 		if not pending_choice or interlude!="reward" or not offers.has(id):return false
 	elif source=="shop":
-		if interlude!="shop" or not shop_stock.has(id) or shop_bought.has(id) or run_gold<supply_cost(id):return false
+		if not id.begins_with("bonus:") or not can_buy_supply(id):return false
 	else:return false
 	if not Bonuses.acquire(self,id,target,sign):return false
 	if source=="reward":
@@ -1052,5 +1096,8 @@ func boss_name() -> String:
 	if not season.is_empty():return str(preload("res://scripts/phase1_enemies.gd").DATA[preload("res://scripts/phase1_enemies.gd").boss_for(season)][0])
 	return str(STAGES[current_boss_rule()].boss)
 
+func can_expand_party() -> bool:
+	return party_capacity < ExpeditionContent.MAX_PARTY and capacity_relics < 2
+
 func unavailable_items() -> Array:
-	return ["travelers_page"] if party_capacity>=ExpeditionContent.MAX_PARTY else []
+	return [] if can_expand_party() else ["travelers_page"]

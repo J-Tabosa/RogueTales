@@ -170,6 +170,7 @@ func test() -> void:
 	run=make(["scarlet"]);run.interlude="shop";run.run_gold=100
 	var shop_id:="bonus:60:max_hp:unique:0"
 	run.shop_stock.assign([shop_id])
+	assert(run.switch_merchant("trader"))
 	check(not run.buy_supply(shop_id) and run.run_gold==100,"Shop requires same explicit confirmation")
 	check(run.confirm_bonus(shop_id,"scarlet",1,"shop") and run.run_gold==68,"Atomic charge and application")
 	check(not run.confirm_bonus(shop_id,"scarlet",1,"shop") and run.run_gold==68 and run.actors[0].max_hp==220,"No doublebuy")

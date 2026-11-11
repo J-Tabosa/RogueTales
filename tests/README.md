@@ -6,9 +6,9 @@ Execute `python3 tools/check_095.py --godot /caminho/para/godot`. O runner consi
 
 - `enemy_balance`: leitura do Excel entregue e de PCK, preservação dos atributos-base e da progressão, alterações de vida/dano/defesas/esquiva, iniciativa e três ataques reais na própria vez, texto compartilhado/inline, rejeição de dados inválidos e recuperação.
 
-- `shop_map_encounters`: cura e ressurreição nos dois comerciantes, escolha de quem reviver na interface, migração do estoque e bloqueio de encontros salvos no mapa errado.
-- `seasonal_routes_100`: 6.025 verificações, todas as 17 rotas, 680 combates e 136 mercados, chances das quatro estações, cenários HD, inimigos por bioma, encontros definidos, prefixos/checkpoints/RNG, relíquia de vaga, teto cinco e migração de runs antigas.
-- `seasonal_ui_100`: 2.220 verificações e 130 arenas (65 mapas × PC/mobile), cada uma com 5 aliados e 9 inimigos. Escolhas por toque/clique e aquisição real do item mítico.
+- `shop_map_encounters`: curva de preços por estágio, estoques separados, sorteio das duas poções, escolha de quem reviver na interface, migração do estoque e bloqueio de encontros salvos no mapa errado.
+- `seasonal_routes_100`: 6.025 verificações, todas as 17 rotas, 680 combates e 136 mercados, chances das quatro estações, cenários HD, inimigos por bioma, encontros definidos, prefixos/checkpoints/RNG, relíquia lendária de vaga, teto cinco e migração de runs antigas.
+- `seasonal_ui_100`: 2.220 verificações e 130 arenas (65 mapas × PC/mobile), cada uma com 5 aliados e 9 inimigos. Escolhas por toque/clique e aquisição real do item lendário.
 - `weather_100`: 58 verificações de neve/chuva/sol/brasas/interiores, pausa, movimento reduzido, qualidade baixa e efeito de fogo acionado por uma ULT real da Lume.
 - `progression_0910`: compra por 5.000 memórias, migração de coleção, Iniciativa 50 da Umi sem reaplicar a correção, 1.728 posições geradas, limites 3/6/9, inimigos sem esquiva, uma campanha de 60 combates e 12 mercados, equipe máxima de cinco e migração de equipes antigas.
 - `release_ui_0910`: compra por toque/clique, combate real da Alice com itens negativos, origem segura nos retratos e log, 48 bênçãos no sandbox, montagem da equipe, Negociante e preservação integral do save normal. Com renderização nativa, aceita um diretório de capturas após `--` e verifica 540×960 e 1280×800.

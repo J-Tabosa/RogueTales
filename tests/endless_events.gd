@@ -68,6 +68,7 @@ func checks() -> void:
 	run.interlude = "route"
 	run.route_offers.assign(["battle", "shop"])
 	assert(run.choose_route("shop"))
+	assert(run.switch_merchant("trader"))
 	run.shop_stock.assign(["potion", "power", "armor"])
 	assert(run.buy_supply("power"))
 	account.checkpoint = run.to_checkpoint()

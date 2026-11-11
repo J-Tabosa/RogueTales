@@ -120,6 +120,7 @@ func test() -> void:
 			check(card.get_theme_stylebox("normal").get_meta("theme_generation",-1)==TaleTheme.generation,"Reward uses the current themed surface")
 			if extent.x==540:await capture("rarity-%d"%rarity)
 		game.run.interlude="shop";game.run.run_gold=100;game.run.shop_stock.assign(["bonus:900:max_hp:unique:0"])
+		assert(game.run.switch_merchant("trader"))
 		game.show_run_shop();await process_frame
 		game.buy_run_supply("bonus:900:max_hp:unique:0");await process_frame
 		check(game.run.run_gold==100 and game.state=="bonus_choice","Shop preview does not charge")

@@ -83,8 +83,8 @@ func checks() -> void:
 	assert(run.equip_item(0, "stone_heart", 0))
 	run.shop_stock.assign(["item:echo_bell"])
 	run.shop_bought.clear()
-	run.run_gold = 500
-	assert(run.buy_supply("item:echo_bell") and run.run_gold == 330)
+	run.run_gold = 800
+	assert(run.buy_supply("item:echo_bell") and run.run_gold == 230)
 	assert(not run.buy_supply("item:echo_bell"))
 	# Full JSON/disk round trip preserves nine heroes, equipped stats and stock.
 	account.checkpoint = run.to_checkpoint()

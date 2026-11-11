@@ -787,7 +787,7 @@ func gradient(parent: Node, rect: Rect2, top: Color, bottom: Color) -> void:
 	UISkin.picture(parent, texture, rect).stretch_mode = TextureRect.STRETCH_SCALE
 
 
-func face_portrait(parent: Node,id: String,rect: Rect2) -> Control:
+func portrait_slot(parent: Node, rect: Rect2) -> Control:
 	var slot:=Panel.new()
 	slot.position=rect.position
 	slot.size=rect.size
@@ -796,6 +796,10 @@ func face_portrait(parent: Node,id: String,rect: Rect2) -> Control:
 	slot.add_theme_stylebox_override("panel",box(TaleTheme.c("surface"),TaleTheme.c("border", .65),9))
 	parent.add_child(slot)
 	register_layout(slot)
+	return slot
+
+func face_portrait(parent: Node,id: String,rect: Rect2) -> Control:
+	var slot := portrait_slot(parent, rect)
 	preload("res://scripts/hero_art.gd").place_head(slot,id)
 	return slot
 
