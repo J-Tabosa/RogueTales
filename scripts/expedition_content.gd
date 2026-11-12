@@ -8,6 +8,8 @@ const WORLD_FORMAT := 2
 const ROUTE_FORMAT := 3
 const MAX_PARTY := 5
 const EVENT_CHANCE := 0.25
+const ROAD_EVENT_CHANCE := 0.35
+const RANDOM_ITEM_OFFER := "item:random"
 const RECRUIT_CHANCE := 0.25
 const SHOP_FORMAT := 2
 const ITEM_MERCHANT := "shop"
@@ -120,6 +122,7 @@ const MUTATIONS = {
 	"puss": []
 }
 const ROUTES := {
+	"road_event": {"title": "Um desvio na trilha", "detail": "Veja o que há no caminho. Você pode recusar qualquer proposta e seguir viagem."},
 	"team_event": {"title": "Um encontro nas margens", "detail": "Sua equipe encontra uma página especial. Quem está no grupo muda o diálogo e as opções."},
 	"battle": {"title": "Pela trilha", "detail": "Combate comum. Preserve suas forças e avance."},
 	"elite": {"title": "Caçadores de tinta", "detail": "Inimigos +35% PV e +15% dano. Vitória: +25 ouro e +10% dano ao grupo."},

@@ -662,6 +662,12 @@ static func hero_stats(
 
 
 static func offer_data(id: String) -> Dictionary:
+	if id == ExpeditionContent.RANDOM_ITEM_OFFER:
+		var gear := preload("res://scripts/equipment.gd")
+		var odds := PackedStringArray()
+		for rank in gear.WEIGHTS.size():
+			odds.append("%s %d%%" % [gear.RARITIES[rank], gear.WEIGHTS[rank]])
+		return {"id":id, "random_item":true, "title":"Item aleatório", "detail":"Gire a roleta e receba um item. " + " · ".join(odds) + "."}
 	if id.begins_with("bonus:"):return preload("res://scripts/run_bonuses.gd").describe(id)
 	if id.begins_with("item:"):return preload("res://scripts/equipment.gd").offer(id)
 	if id.begins_with("skill:"):

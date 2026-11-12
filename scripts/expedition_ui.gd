@@ -4,6 +4,7 @@ const Bonuses=preload("res://scripts/run_bonuses.gd")
 const Content = preload("res://scripts/expedition_content.gd")
 const Synergies = preload("res://scripts/team_synergies.gd")
 const TeamEvents = preload("res://scripts/team_events.gd")
+const RoadEvents = preload("res://scripts/road_events.gd")
 const BossRules = preload("res://scripts/boss_rules.gd")
 const Blessings = preload("res://scripts/hero_blessings.gd")
 const Equipment = preload("res://scripts/equipment.gd")
@@ -250,7 +251,9 @@ func restore_checkpoint_now() -> void:
 		return
 	match run.interlude:
 		"reward": show_relics()
-		"route": show_routes()
+		"route":
+			if run.pending_item_reveal.is_empty(): show_routes()
+			else: show_item_reveal()
 		"shop": show_run_shop()
 		"event": show_team_event()
 		"secret_reward": show_secret_reward()
@@ -316,6 +319,8 @@ func show_relics() -> void:
 		var note := "BÔNUS LEGADO · ACÚMULO %d" % (run.upgrade_count(id) + 1)
 		if offer.has("bonus"):
 			note=offer.note
+		elif offer.get("random_item", false):
+			note = "ROLETA DE EQUIPAMENTOS"
 		elif offer.has("item"):
 			note="RELÍQUIA %s · +1 VAGA · LIMITE 5"%Equipment.rarity_name(offer.item).to_upper() if offer.get("consumable",false) else Equipment.rarity_name(offer.item).to_upper()+" · EQUIPAMENTO · ESCOLHA O PORTADOR"
 		elif offer.has("owner"): note = "HABILIDADE · " + str(TaleCatalog.HEROES[offer.owner].name)
@@ -352,6 +357,65 @@ func select_relic(id: String, replace_index: int = -1) -> void:
 		return
 	var applied: bool = run.recruit(campaign, offer.hero, replace_index) if offer.has("hero") else run.apply_relic(id)
 	if not applied: return
+	persist_run()
+	if id == Content.RANDOM_ITEM_OFFER:
+		show_item_reveal(true)
+	else:
+		walk_to_routes()
+
+func show_item_reveal(spin := false) -> void:
+	if run.pending_item_reveal.is_empty(): return
+	state = "item_reveal"
+	paused = true
+	clear_page()
+	var item_id: String = run.pending_item_reveal
+	if spin and not campaign.reduced_motion:
+		header("Roleta de equipamentos", "O item sorteado já está guardado nesta run.")
+		var track := panel(page, Rect2(24, 312, 492, 142))
+		track.clip_contents = true
+		var reel := Control.new()
+		reel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		track.add_child(reel)
+		var pool := Equipment.ITEMS.keys().filter(func(id): return id != item_id and not run.unavailable_items().has(id))
+		# Decorative tiles must not consume the run's random stream.
+		var offset := posmod(hash(item_id), pool.size())
+		const TILE := 122.0
+		for index in 13:
+			var id: String = item_id if index == 10 else pool[(index + offset) % pool.size()]
+			var tile := Panel.new()
+			tile.position = Vector2(index * TILE, 16)
+			tile.size = Vector2(116, 108)
+			tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			tile.add_theme_stylebox_override("panel", ItemArt.item_plate(id))
+			reel.add_child(tile)
+			ItemArt.picture(tile, id, Rect2(8, 5, 100, 98))
+		const CENTER := 188.0
+		reel.position.x = CENTER - TILE
+		var marker := panel(page, Rect2(265, 297, 10, 14), GOLD)
+		marker.set_meta("roulette_marker", true)
+		var tween := reel.create_tween().set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
+		tween.tween_property(reel, "position:x", CENTER - 10 * TILE, 1.65)
+		tween.tween_interval(0.2)
+		tween.tween_callback(show_item_reveal)
+		button(page, "Revelar agora", Rect2(32, 546, 476, 56), show_item_reveal, true)
+	else:
+		var item := Equipment.data(item_id)
+		header("Item recebido", Equipment.rarity_name(item_id))
+		var frame := Panel.new()
+		frame.position = Vector2(188, 238)
+		frame.size = Vector2(164, 164)
+		frame.add_theme_stylebox_override("panel", ItemArt.item_plate(item_id, true))
+		page.add_child(frame)
+		register_layout(frame)
+		ItemArt.picture(frame, item_id, Rect2(10, 10, 144, 144))
+		label(page, item.title, Rect2(32, 422, 476, 62), 23, Equipment.tint(item_id))
+		label(page, item.detail, Rect2(32, 494, 476, 151), 16)
+		button(page, "Seguir viagem →", Rect2(32, 674, 476, 56), continue_after_item_reveal, true)
+	button(page, "Salvar e sair", Rect2(32, 778, 476, 48), leave_battle)
+
+func continue_after_item_reveal() -> void:
+	if state != "item_reveal": return
+	run.pending_item_reveal = ""
 	persist_run()
 	walk_to_routes()
 
@@ -560,6 +624,9 @@ func leave_run_shop() -> void:
 	enter_encounter()
 
 func show_team_event() -> void:
+	if RoadEvents.EVENTS.has(run.pending_event):
+		show_road_event()
+		return
 	if not TeamEvents.can_occur(run, run.pending_event): return
 	state = "team_event"
 	clear_page()
@@ -591,6 +658,33 @@ func show_team_event() -> void:
 
 func select_team_event(choice: String) -> void:
 	if state != "team_event" or not TeamEvents.resolve(run, choice): return
+	persist_run()
+	enter_encounter()
+
+func show_road_event() -> void:
+	if not RoadEvents.can_occur(run, run.pending_event): return
+	state = "road_event"
+	clear_page()
+	var event: Dictionary = RoadEvents.EVENTS[run.pending_event]
+	header(event.title, "%s · Evento de rota" % run.phase_label())
+	panel(page, Rect2(24, 180, 492, 120))
+	icon(page, event.icon, Rect2(41, 218, 38, 38), GOLD)
+	label(page, event.body, Rect2(94, 192, 402, 96), 16)
+	for index in event.options.size():
+		var option: Dictionary = event.options[index]
+		var requirement := RoadEvents.requirement(run, option)
+		var card := button(page, "", Rect2(24, 316 + index * 142, 492, 132), select_road_event.bind(option.id))
+		card.set_meta("road_choice", option.id)
+		card.disabled = not requirement.allowed
+		label(card, option.title, Rect2(14, 5, 464, 33), 18, GOLD)
+		label(card, option.detail, Rect2(14, 40, 464, 51), 15)
+		if not requirement.text.is_empty():
+			label(card, requirement.text, Rect2(14, 91, 464, 36), 13, MUTED)
+	button(page, "Seguir sem aceitar", Rect2(24, 632, 492, 54), select_road_event.bind("leave"))
+	button(page, "Salvar e sair", Rect2(24, 778, 492, 48), leave_battle)
+
+func select_road_event(choice: String) -> void:
+	if state != "road_event" or not RoadEvents.resolve(run, choice): return
 	persist_run()
 	enter_encounter()
 

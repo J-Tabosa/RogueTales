@@ -88,7 +88,7 @@ func test() -> void:
 			if stage==11 and phase==5:check(finished,"Final boss completes the run");continue
 			check(not finished and run.pending_choice and run.offers.size()==3,"Each combat preserves three rewards")
 			choose_reward(run)
-			if run.phase!=4:check(run.route_offers.has("battle") and run.route_offers.all(func(route):return route in ["battle","team_event"]),"No random merchant/elite route replaces required combats")
+			if run.phase!=4:check(run.route_offers.has("battle") and run.route_offers.all(func(route):return route in ["battle","team_event","road_event"]),"No random merchant/elite route replaces required combats")
 	check(combats==60 and markets==12 and run.rooms_cleared==72,"Exact60combats12shops72phases")
 	# Team capacity purchases stop at five; replacement still works.
 	run=make(["scarlet"]);run.interlude="shop";run.run_gold=10000

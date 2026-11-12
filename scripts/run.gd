@@ -11,6 +11,7 @@ var tactics
 const STAGES = TaleCatalog.STAGES
 const Worlds=preload("res://scripts/world_routes.gd")
 const TeamEvents=preload("res://scripts/team_events.gd")
+const RoadEvents=preload("res://scripts/road_events.gd")
 const RELICS = TaleCatalog.RELICS
 var stage := 0
 var phase := 0
@@ -54,6 +55,8 @@ var build_history: Array[String] = []
 var synergies_seen: Array[String] = []
 var synergy_activations := 0
 var pending_event := ""
+var seen_road_events: Array[String] = []
+var pending_item_reveal := ""
 var seen_events: Array[String] = []
 var events_discovered: Array[String] = []
 var endless := false
@@ -307,6 +310,7 @@ func to_checkpoint() -> Dictionary:
 		"build_history": build_history.duplicate(),
 		"synergies_seen": synergies_seen.duplicate(), "synergy_activations": synergy_activations,
 		"pending_event": pending_event, "seen_events": seen_events.duplicate(), "events_discovered": events_discovered.duplicate(),
+		"seen_road_events": seen_road_events.duplicate(), "pending_item_reveal": pending_item_reveal,
 		"score": score, "last_room_score": last_room_score,
 		"endless": endless, "continuation_from": continuation_from, "endless_build": Endless.snapshot(self) if endless else {}, "run_build": Endless.snapshot(self) if expedition else {},
 		"ability_state": ability_snapshot(),
@@ -375,7 +379,12 @@ func restore(campaign: TaleCampaign, data: Dictionary) -> void:
 			if secrets.DATA.has(key) and not secret_defeated.has(key): secret_defeated.append(key)
 		if secret_defeated.has(active_secret): active_secret=""
 		pending_event = str(data.get("pending_event", ""))
-		if not TeamEvents.has_event(pending_event): pending_event = ""
+		if not TeamEvents.has_event(pending_event) and not RoadEvents.EVENTS.has(pending_event): pending_event = ""
+		seen_road_events.clear()
+		for key in data.get("seen_road_events", []):
+			if RoadEvents.EVENTS.has(key) and not seen_road_events.has(key): seen_road_events.append(key)
+		pending_item_reveal = str(data.get("pending_item_reveal", ""))
+		if interlude != "route" or not Equipment.ITEMS.has(pending_item_reveal): pending_item_reveal = ""
 		seen_events.clear()
 		events_discovered.clear()
 		for key in data.get("seen_events", []):
@@ -401,7 +410,7 @@ func restore(campaign: TaleCampaign, data: Dictionary) -> void:
 		shop_stock.clear()
 		for key in data.get("shop_stock", []):
 			var current:String="item:"+Equipment.migrate(str(key).trim_prefix("item:")) if str(key).begins_with("item:") else str(key)
-			if not shop_stock.has(current) and (ExpeditionContent.SHOP_SUPPLIES.has(current) or not TaleCatalog.offer_data(current).is_empty()):
+			if current != ExpeditionContent.RANDOM_ITEM_OFFER and not shop_stock.has(current) and (ExpeditionContent.SHOP_SUPPLIES.has(current) or not TaleCatalog.offer_data(current).is_empty()):
 				shop_stock.append(current)
 		shop_bought.clear()
 		for key in data.get("shop_bought", []):
@@ -491,13 +500,15 @@ func restore(campaign: TaleCampaign, data: Dictionary) -> void:
 		limit_party()
 		if not active_secret.is_empty() and not Worlds.meeting_heroes(current_map()).has(active_secret):
 			active_secret = ""
-		if interlude == "event" and not TeamEvents.can_occur(self, pending_event):
+		if interlude == "event" and not (TeamEvents.can_occur(self, pending_event) or RoadEvents.can_occur(self, pending_event)):
 			pending_event = ""
 			interlude = "route"
 			route_offers.erase("team_event")
+			route_offers.erase("road_event")
 			if route_offers.is_empty() or ExpeditionContent.is_market(phase): roll_routes()
 		if route_offers.has("team_event") and TeamEvents.available(self).is_empty():
 			route_offers.erase("team_event")
+		if not RoadEvents.can_offer(self): route_offers.erase("road_event")
 		if needs_map():
 			roll_routes()
 			if not pending_choice:interlude="route"
@@ -582,6 +593,8 @@ func start_expedition(campaign: TaleCampaign, id: String, gift: String, infinite
 	synergies_seen.clear()
 	synergy_activations = 0
 	pending_event = ""
+	pending_item_reveal = ""
+	seen_road_events.clear()
 	seen_events.clear()
 	events_discovered.clear()
 	actors.clear()
@@ -631,7 +644,12 @@ func ability_snapshot() -> Dictionary:
 
 func apply_run_upgrade(id: String) -> bool:
 	if id.begins_with("bonus:"):return false # Explicit target/direction confirmation required.
-	if id.begins_with("item:"):
+	if id == ExpeditionContent.RANDOM_ITEM_OFFER:
+		if not pending_choice or interlude != "reward" or not offers.has(id) or inventory.size() >= 144: return false
+		var item := Equipment.roll(rng, unavailable_items())
+		if not grant_item(item): return false
+		pending_item_reveal = item
+	elif id.begins_with("item:"):
 		if not grant_item(id.trim_prefix("item:")):return false
 	elif not add_upgrade(id): return false
 	pending_choice = false
@@ -651,8 +669,8 @@ func roll_run_offers() -> void:
 		offers.append("ally:"+map_guest)
 	elif not guests.is_empty() and (guaranteed_recruit or rng.randf() < ExpeditionContent.RECRUIT_CHANCE):
 		offers.append("ally:" + guests[rng.randi_range(0, guests.size() - 1)])
-	if reward_boss or rng.randf()<0.40:
-		offers.append("item:"+Equipment.roll(rng,unavailable_items()))
+	if (reward_boss or rng.randf() < 0.40) and inventory.size() < 144:
+		offers.append(ExpeditionContent.RANDOM_ITEM_OFFER)
 	# Recruitment/item decisions above keep their existing frequency and three slots.
 	while offers.size()<3:
 		var bonus_id:=Bonuses.roll(self)
@@ -723,7 +741,11 @@ func roll_routes() -> void:
 		route_offers.assign([ExpeditionContent.ITEM_MERCHANT, ExpeditionContent.BUFF_MERCHANT])
 		roll_shop()
 		return
-	if rng.randf()<ExpeditionContent.EVENT_CHANCE and not TeamEvents.available(self).is_empty():route_offers.append("team_event")
+	var chance := rng.randf()
+	if chance < ExpeditionContent.EVENT_CHANCE and not TeamEvents.available(self).is_empty():
+		route_offers.append("team_event")
+	elif chance < ExpeditionContent.ROAD_EVENT_CHANCE and RoadEvents.can_offer(self):
+		route_offers.append("road_event")
 
 func shop_potions(random: RandomNumberGenerator, kept: Array[String] = []) -> Array[String]:
 	var result := kept.slice(0, 2)
@@ -781,8 +803,16 @@ func switch_merchant(kind: String) -> bool:
 
 func choose_route(id: String) -> bool:
 	if interlude != "route" or not route_offers.has(id): return false
+	if id == "road_event":
+		var event := RoadEvents.roll(self)
+		if event.is_empty(): return false
+		pending_item_reveal = ""
+		pending_event = event
+		interlude = "event"
+		return true
 	if id.begins_with("map:"):
 		if not needs_map() or not Worlds.select(journey,id.trim_prefix("map:")):return false
+		pending_item_reveal = ""
 		roll_routes()
 		return true
 	if id == "camp" and run_gold < 18: return false
@@ -791,10 +821,12 @@ func choose_route(id: String) -> bool:
 		if events.is_empty(): return false
 		var secrets: Array=events.filter(func(key):return str(key).begins_with("secret_"))
 		var pool: Array=secrets if not secrets.is_empty() and rng.randf()<.5 else events
+		pending_item_reveal = ""
 		pending_event = pool[rng.randi_range(0, pool.size() - 1)]
 		interlude = "event"
 		return true
 	if id in [ExpeditionContent.ITEM_MERCHANT, ExpeditionContent.BUFF_MERCHANT]:
+		pending_item_reveal = ""
 		merchant_kind=id
 		interlude = "shop"
 		return true
@@ -809,6 +841,7 @@ func choose_route(id: String) -> bool:
 	elif id == "curse":
 		curse_count += 1
 		build_event("curse")
+	pending_item_reveal = ""
 	route_offers.clear()
 	interlude = ""
 	return true
