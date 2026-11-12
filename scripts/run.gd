@@ -1125,6 +1125,9 @@ func current_boss_rule() -> int:
 	return [3,7,3,7,3,11,11,7][current_biome()]
 
 func boss_name() -> String:
+	if tactics != null and tactics.Sunflowers.matches(self):
+		var queen: String = tactics.Sunflowers.QUEEN
+		return str(tactics.EnemyBalance.profiles.get(queen, {}).get("nome", tactics.Sunflowers.DATA[queen][0]))
 	var season:String=preload("res://scripts/phase1_enemies.gd").season_for(self)
 	if not season.is_empty():return str(preload("res://scripts/phase1_enemies.gd").DATA[preload("res://scripts/phase1_enemies.gd").boss_for(season)][0])
 	return str(STAGES[current_boss_rule()].boss)

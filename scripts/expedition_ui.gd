@@ -424,7 +424,7 @@ func show_routes() -> void:
 		show_map_choices()
 	elif Content.is_boss(run.stage, run.phase):
 		label(overlay, run.boss_name(), Rect2(32, 390, 476, 75), 28, GOLD)
-		label(overlay, BossRules.DESCRIPTIONS[run.current_boss_rule()], Rect2(32, 482, 476, 132), 18, MUTED)
+		label(overlay, BossRules.Sunflowers.DESCRIPTION if BossRules.Sunflowers.matches(run) else BossRules.DESCRIPTIONS[run.current_boss_rule()], Rect2(32, 482, 476, 132), 18, MUTED)
 		button(overlay, "Enfrentar o chefe  →", Rect2(32, 624, 476, 50), select_route.bind("battle"), true)
 	else:
 		for index in run.route_offers.size():

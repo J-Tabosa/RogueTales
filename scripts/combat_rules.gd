@@ -334,15 +334,18 @@ static func start_combat(tactics) -> void:
 		var e:=Gear.effects(a)
 		if float(e.get("shield_start",0))>0:shield(a,a.max_hp*float(e.shield_start),a)
 		status_fields(a)
-	for foe in tactics.enemies:
-		foe["initiative"]=float(foe.get("initiative",50.0))
-		foe["attacks"]=int(foe.get("attacks",1))
-		foe["magic_defense"]=float(foe.get("magic_defense",float(foe.get("armor",0)) if foe.get("class","")=="vanguard" else 0.0))
-		foe["statuses"]=[]
-		foe["shield_parts"]=[]
-		foe["own_turn"]=0
-		foe["category"]=category(foe)
+	for foe in tactics.enemies: initialize_enemy(foe)
 	Items.start_combat(tactics)
+
+static func initialize_enemy(foe: Dictionary) -> void:
+	foe["initiative"]=float(foe.get("initiative",50.0))
+	foe["attacks"]=int(foe.get("attacks",1))
+	foe["magic_defense"]=float(foe.get("magic_defense",float(foe.get("armor",0)) if foe.get("class","")=="vanguard" else 0.0))
+	foe["statuses"]=[]
+	foe["shield_parts"]=[]
+	foe["own_turn"]=0
+	foe["category"]=category(foe)
+	status_fields(foe)
 
 static func category(foe:Dictionary) -> String:
 	if foe.has("category"):return str(foe.category)
@@ -380,6 +383,8 @@ static func start_turn(tactics,a:Dictionary) -> Dictionary:
 		attacks+=int(a.get("next_attacks",0))
 		a.next_attacks=0
 	var skip:=false
+	var dot_damage := false
+	var poisoned := has_status(a, "poison")
 	for s in a.get("statuses",[]):
 		if s.kind=="curse" and tactics.run().rng.randf()<.25:
 			s.turns=0
@@ -397,8 +402,10 @@ static func start_turn(tactics,a:Dictionary) -> Dictionary:
 				if s.kind=="burn":a["died_burning"]=true
 			if hit.damage>0:
 				tactics.notify(str(source.id),{"burn":"Queimadura","poison":"Veneno","bleed":"Sangramento"}[s.kind],"%.1f dano no início da vez"%hit.damage,"status")
-				var at:int=tactics.enemies.find(a)
-				if at>=0:tactics.last_dot_targets.append(at)
+				dot_damage = true
+	if dot_damage:
+		var at: int = tactics.enemies.find(a)
+		tactics.dot_hits.append({"hostile": at >= 0, "index": at if at >= 0 else tactics.run().actors.find(a), "poisoned": poisoned})
 	a.statuses=a.get("statuses",[]).filter(func(s):return int(s.turns)!=0)
 	status_fields(a)
 	deaths(tactics)

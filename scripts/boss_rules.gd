@@ -1,6 +1,7 @@
 extends RefCounted
 ## Boss rules and deterministic enemy plans. No rendering and no random target rerolls.
 const Abilities = preload("res://scripts/hero_abilities.gd")
+const Sunflowers = preload("res://scripts/sunflower_enemies.gd")
 const DESCRIPTIONS := {
 	3: "Estandarte de ferro: reduz em 40% o dano recebido pelo General. Destrua o estandarte para interromper a próxima ação dele. O General alterna preparação e golpe na vanguarda.",
 	7: "A Guardiã do Índice reimprime a última ULT usada pela equipe, com o poder dela. ULTs de cura e escudo também podem ser copiadas. Sem uma ULT registrada, prepara uma rajada mágica.",
@@ -23,7 +24,7 @@ static func setup(tactics) -> void:
 		foe["action_count"] = 0
 		foe["intent"] = {}
 	if owner.expedition and not owner.active_secret.is_empty(): return
-	if not preload("res://scripts/phase1_enemies.gd").season_for(owner).is_empty():return
+	if not preload("res://scripts/phase1_enemies.gd").season_for(owner).is_empty() or Sunflowers.matches(owner):return
 	if not (ExpeditionContent.is_boss(owner.stage, owner.phase) if owner.expedition else ExpeditionContent.is_boss(owner.stage)) or tactics.enemies.is_empty(): return
 	var boss: Dictionary = tactics.enemies[0]
 	boss["mechanic"] = owner.current_boss_rule() if owner.expedition else owner.stage
@@ -83,6 +84,9 @@ static func plan(tactics, index: int) -> Dictionary:
 	var owner = tactics.run()
 	var target: int = tactics.choose_target(foe, owner.actors)
 	var result := {"key": "attack", "title": "Ataque", "glyph": "sword", "target": target, "targets": [target] if target >= 0 else [], "power": 1.0, "magical": foe["class"] == "mage", "locked": false}
+	if foe.has("sunflower_id"):
+		foe.intent = Sunflowers.plan(foe, target)
+		return foe.intent
 	if foe.has("species_id"):
 		foe.intent=result
 		return result
@@ -143,6 +147,7 @@ static func execute(tactics, index: int) -> Dictionary:
 		return {"target":-1,"targets":[],"target_damage":{},"damage":0.0,"evaded":false,"enemy":index,"message":"Sono · turno perdido","non_attack":true,"sleep_skipped":true}
 	foe.action_count = int(foe.get("action_count", 0)) + 1
 	foe.intent = {}
+	if foe.has("sunflower_id"): return Sunflowers.execute(tactics, index, intent)
 	if intent.key == "attack": return Abilities.incoming(tactics, index, int(intent.target))
 	var targets: Array[int] = []
 	for at in intent.targets:

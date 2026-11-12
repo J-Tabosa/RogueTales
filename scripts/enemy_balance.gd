@@ -4,6 +4,7 @@ const Table = preload("res://scripts/xlsx_table.gd")
 const Biomes = preload("res://scripts/biomes.gd")
 const Secrets = preload("res://scripts/secret_encounters.gd")
 const Phase1 = preload("res://scripts/phase1_enemies.gd")
+const Sunflowers = preload("res://scripts/sunflower_enemies.gd")
 const PATH := "res://data/inimigos.xlsx"
 const NUMBERS := ["vida_base", "ataque_base", "def_fisica_base", "def_magica_base", "iniciativa", "qtd_ataques", "esquiva", "intervalo_visual"]
 static var profiles: Dictionary = {}
@@ -30,6 +31,7 @@ static func defaults() -> Dictionary:
 		var id := "secret_" + str(hero)
 		result[id] = profile(id, "Secreto", ", ".join(Secrets.DATA[hero].biomes.map(func(b): return Biomes.NAMES[b])), Secrets.DATA[hero].name, Secrets.DATA[hero]["class"], 86.0 * 1.5, 13.0 * 1.32, 2.0, 2.9)
 	result.merge(Phase1.profiles())
+	result.merge(Sunflowers.profiles())
 	original_profiles = result
 	return original_profiles
 
@@ -70,6 +72,9 @@ static func validate(table: Dictionary) -> Dictionary:
 			if key == "qtd_ataques" and (number != floorf(number) or number < 1 or number > 20): return {"error": "Quantidade de ataques deve ser inteira de 1 a 20: " + id}
 			data[key] = int(number) if key == "qtd_ataques" else number
 		result[id] = data
+	# Existing external workbooks predate this map. Preserve their edited values.
+	if not Sunflowers.DATA.keys().any(func(id): return result.has(id)):
+		result.merge(Sunflowers.profiles())
 	if result.size() != original.size(): return {"error": "Mantenha todas as %d linhas cadastradas." % original.size()}
 	return {"profiles": result}
 

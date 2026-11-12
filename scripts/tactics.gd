@@ -8,12 +8,13 @@ const EnemyBalance = preload("res://scripts/enemy_balance.gd")
 const BossRules = preload("res://scripts/boss_rules.gd")
 const UltRules = preload("res://scripts/ultimate_rules.gd")
 const Phase1 = preload("res://scripts/phase1_enemies.gd")
+const Sunflowers = preload("res://scripts/sunflower_enemies.gd")
 ## Formation rules and all combat results; contains no nodes or rendering logic.
 ## The weak owner avoids a Run -> Tactics -> Run reference cycle.
 var owner_ref: WeakRef
 var enemies: Array[Dictionary] = []
 var slow_left := 0.0
-var last_dot_targets: Array[int] = []
+var dot_hits: Array[Dictionary] = []
 var elapsed := 0.0
 var synergy_used: Dictionary = {}
 var last_ultimate: Dictionary = {}
@@ -83,6 +84,7 @@ func spawn() -> void:
 	EnemyBalance.reload_if_changed()
 	enemies.clear()
 	feedback_events.clear()
+	dot_hits.clear()
 	synergy_used.clear()
 	slow_left = 0
 	elapsed = 0
@@ -90,8 +92,9 @@ func spawn() -> void:
 	if owner.expedition and owner.active_secret.is_empty() and ExpeditionContent.is_market(owner.phase):
 		sync_totals()
 		return
-	if not Phase1.season_for(owner).is_empty():
-		enemies=Phase1.spawn(owner,EnemyBalance.profiles)
+	var first_forest := not Phase1.season_for(owner).is_empty()
+	if first_forest or Sunflowers.matches(owner):
+		enemies = Phase1.spawn(owner, EnemyBalance.profiles) if first_forest else Sunflowers.spawn(owner, EnemyBalance.profiles)
 		Rules.start_combat(self)
 		for at in enemies.size():enemies[at]["slot"]=at
 		BossRules.setup(self)

@@ -15,6 +15,7 @@ const SCENES = [
 @export var boss_height := 255.0
 var idle_clock := 0.0
 var hurt_left := 0.0
+var hurt_poisoned := false
 var dot_cooldown := 0.0
 var strike_left := 0.0
 var illustrated := false
@@ -24,6 +25,7 @@ var body_height := 210.0
 var secret_id := ""
 var species_id := ""
 var species_anchor := Vector2.ZERO
+var custom_frames := false
 
 
 static func warm(chapter: int) -> PackedScene:
@@ -42,12 +44,13 @@ func _ready() -> void:
 	position = Vector2(402, 296)
 
 
-func hurt(continuous := false) -> void:
+func hurt(continuous := false, poisoned := false) -> void:
 	if continuous and dot_cooldown > 0:
 		return
 	hurt_left = 0.24
 	dot_cooldown = 0.6
-	modulate = Color("ff4545")
+	hurt_poisoned = poisoned
+	modulate = hurt_color(hurt_left, hurt_poisoned)
 
 
 func reset_damage() -> void:
@@ -61,7 +64,12 @@ func advance(dt: float, is_boss: bool, windup: float, interval: float) -> void:
 	idle_clock += dt
 	hurt_left = maxf(0, hurt_left - dt)
 	dot_cooldown = maxf(0, dot_cooldown - dt)
-	modulate = hurt_color(hurt_left)
+	modulate = hurt_color(hurt_left, hurt_poisoned)
+	if custom_frames:
+		seek("boss_idle" if is_boss else "idle", idle_clock)
+		offset = -species_anchor
+		scale = Vector2.ONE * ((boss_height if is_boss else regular_height) / body_height)
+		return
 	if not species_id.is_empty():
 		var id:String=("boss_" if is_boss else "")+"idle"
 		if strike_left>0:
@@ -108,8 +116,8 @@ func begin_strike(is_boss: bool) -> void:
 	seek(id, anticipation)
 
 
-static func hurt_color(left: float) -> Color:
-	return Color("ff4545") if left > 0 and fmod(0.24 - left, 0.12) < 0.085 else Color.WHITE
+static func hurt_color(left: float, poisoned := false) -> Color:
+	return Color("70ef62" if poisoned else "ff4545") if left > 0 and fmod(0.24 - left, 0.12) < 0.085 else Color.WHITE
 
 
 func animation_duration(id: String) -> float:
@@ -121,7 +129,7 @@ func animation_duration(id: String) -> float:
 
 func seek(id: String, seconds: float) -> void:
 	var fps := maxf(0.1, sprite_frames.get_animation_speed(id))
-	var remaining := (clampf(seconds,0,maxf(0,animation_duration(id)-.00001)) if not species_id.is_empty() and not sprite_frames.get_animation_loop(id) else fposmod(seconds, animation_duration(id))) * fps
+	var remaining := (clampf(seconds,0,maxf(0,animation_duration(id)-.00001)) if (custom_frames or not species_id.is_empty()) and not sprite_frames.get_animation_loop(id) else fposmod(seconds, animation_duration(id))) * fps
 	animation = id
 	for index in sprite_frames.get_frame_count(id):
 		var duration := sprite_frames.get_frame_duration(id, index)

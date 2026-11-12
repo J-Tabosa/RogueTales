@@ -58,8 +58,19 @@ func matches_defaults() -> bool:
 func test() -> void:
 	Balance.reload_if_changed()
 	check(Balance.last_error.is_empty(), "Real delivered workbook must parse")
-	check(Balance.profiles.size() == 79, "Original 63 profiles plus 16 starting-forest profiles load")
+	check(Balance.profiles.size() == 83, "Original 79 profiles plus four sunflower profiles load")
 	check(matches_defaults(), "Workbook preserves every original base value")
+	var old_reader := ZIPReader.new()
+	assert(old_reader.open(Balance.PATH) == OK)
+	var old_sheet := Table.worksheet(old_reader, "Inimigos")
+	var old_xml := old_reader.read_file(old_sheet).get_string_from_utf8()
+	old_reader.close()
+	var new_rows := RegEx.new()
+	new_rows.compile('<x:row r="8[1-4]">.*?</x:row>')
+	var previous_path := "user://enemy_balance_before_sunflowers.xlsx"
+	fixture(previous_path, {}, {old_sheet: new_rows.sub(old_xml, "", true)})
+	var previous := Balance.validate(Table.read_table(previous_path))
+	check(not previous.has("error") and previous.get("profiles", {}) == Balance.profiles, "Older workbooks retain all editable values and get default sunflower profiles")
 	var pack_path := "user://enemy_balance.pck"
 	var pack := PCKPacker.new()
 	check(pack.pck_start(pack_path) == OK and pack.add_file("res://balance_pack/inimigos.xlsx", Balance.PATH) == OK and pack.flush() == OK, "Workbook must pack successfully")

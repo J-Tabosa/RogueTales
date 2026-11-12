@@ -924,6 +924,7 @@ func record_result(hit: Dictionary, hostile: bool, index: int, before: Array) ->
 	var name: String = str(run.tactics.enemies[index].name) if hostile else str(TaleCatalog.HEROES[run.actors[index].id].name)
 	var skill: String = str(hit.get("message", "Ataque"))
 	if hostile and skill.is_empty(): skill = "Ataque"
+	if hit.has("summoned"): skill += " · %d operárias invocadas" % int(hit.summoned)
 	var parts: Array[String] = []
 	for target in hit.get("targets", [hit.get("target", -1)]):
 		if target < 0: continue

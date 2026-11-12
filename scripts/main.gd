@@ -2338,8 +2338,6 @@ func process_tactical_combat(dt: float) -> void:
 		return
 	run.tick_status(dt)
 	consume_feedback()
-	for target in run.tactics.last_dot_targets:
-		arena.hurt_enemy(target, true)
 	if run.enemy_hp <= 0:
 		if not arena.is_action_busy(): resolve_enemy()
 		return
@@ -2357,7 +2355,13 @@ func process_tactical_combat(dt: float) -> void:
 		return
 	combat_flow.auto_ult=campaign.auto_ult
 	var entry: Dictionary = combat_flow.next_action()
-	if entry.is_empty():
+	for dot in run.tactics.dot_hits:
+		if dot.hostile: arena.hurt_enemy(dot.index, true, dot.poisoned)
+		else: arena.hurt(dot.index, dot.poisoned)
+	if not run.tactics.dot_hits.is_empty():
+		run.tactics.dot_hits.clear()
+		run.tactics.sync_totals()
+	if entry.is_empty() or run.enemy_hp <= 0 or not run.alive():
 		return
 	var index: int = entry.index
 	if entry.side == "ally":
@@ -2381,8 +2385,8 @@ func process_tactical_combat(dt: float) -> void:
 			update_hud()
 			return
 		var target: int = int(intent.target) if not intent.is_empty() else run.tactics.choose_target(run.tactics.enemies[index], run.actors)
-		if arena.begin_enemy_attack(index, target):
-			arena.enemy_track["support"] = str(intent.get("key", "")) in ["prepare", "banner", "stagger", "pull"] or (intent.get("key") == "copy" and intent.get("copy") == "rapunzel")
+		if arena.begin_enemy_attack(index, target, str(intent.get("key", ""))):
+			arena.enemy_track["support"] = arena.enemy_track.get("support", false) or str(intent.get("key", "")) in ["prepare", "banner", "stagger", "pull"] or (intent.get("key") == "copy" and intent.get("copy") == "rapunzel")
 			combat_flow.begin(entry)
 			current_action(str(run.tactics.enemies[index].name))
 	update_hud()
@@ -2395,6 +2399,8 @@ func on_enemy_attack_hit(index: int) -> void:
 	var hit: Dictionary = run.tactics.phase1_impact(index,int(arena.enemy_track.get("impact_part",0)),arena.enemy_track.impacts.size()) if arena.enemy_track.has("impacts") else run.hit_party(index)
 	if hit.is_empty():
 		return
+	if hit.has("summoned"):
+		arena.sync_summoned_enemies()
 	if not hit.get("non_attack", false):
 		arena.enemy_strike(index, hit.target)
 		if hit.damage > 0:

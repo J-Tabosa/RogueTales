@@ -15,6 +15,8 @@ const UltimateArt = preload("res://scripts/ultimate_art.gd")
 const EnemyArt = preload("res://scripts/enemy_art.gd")
 const Enemy = preload("res://scripts/enemy.gd")
 const Phase1 = preload("res://scripts/phase1_enemies.gd")
+const SunflowerArt = preload("res://scripts/sunflower_art.gd")
+const Sunflowers = preload("res://scripts/sunflower_enemies.gd")
 var party_scenes: Array = []
 var simulation
 var heroes: Array[AnimatedSprite2D] = []
@@ -225,66 +227,7 @@ func sync_enemies() -> void:
 	foes.clear()
 	foe_homes.clear()
 	foe_widgets.clear()
-	for index in simulation.tactics.enemies.size():
-		var data: Dictionary = simulation.tactics.enemies[index]
-		var model: AnimatedSprite2D
-		if data.has("secret_id"):
-			model=AnimatedSprite2D.new()
-			model.set_script(Enemy)
-			model.secret_id=data.secret_id
-			model.sprite_frames=preload("res://scripts/secret_enemy_art.gd").frames(data.secret_id)
-			model.body_height=400
-			model.illustrated=true
-		elif data.has("species_id"):
-			model=AnimatedSprite2D.new()
-			model.set_script(Enemy)
-			model.species_id=data.species_id
-			model.sprite_frames=Phase1.frames(data.species_id)
-			var meta:=Phase1.metadata(data.species_id)
-			model.species_anchor=Vector2(meta.anchor[0],meta.anchor[1])
-			model.body_height=Phase1.visual_span(data.species_id)
-			model.flip_h=false
-			# The selection area inherits the same 1.25× boss transform.
-			var area:=Area2D.new()
-			area.name="Hitbox"
-			area.collision_layer=1
-			area.collision_mask=0
-			var shape:=CollisionShape2D.new()
-			var rectangle:=RectangleShape2D.new()
-			var bounds:=Rect2(Phase1.visual_bounds(model.sprite_frames.get_frame_texture("idle",0).get_image()))
-			rectangle.size=bounds.size
-			shape.shape=rectangle
-			shape.position=bounds.get_center()-model.species_anchor
-			area.add_child(shape)
-			area.input_event.connect(func(_viewport,event,_shape):
-				if event is InputEventMouseButton and event.pressed and event.button_index==MOUSE_BUTTON_LEFT:status_requested.emit(index,true)
-			)
-			model.add_child(area)
-		elif simulation.expedition:
-			model = AnimatedSprite2D.new()
-			model.set_script(Enemy)
-			model.sprite_frames = Biomes.frames(int(data.biome), int(data.variant))
-			model.body_height = model.sprite_frames.get_frame_texture("idle", 0).get_image().get_used_rect().size.y
-			model.illustrated = true
-			model.biome_id = int(data.biome)
-			model.variant_id = int(data.variant)
-			model.flip_h = false
-		else: model = Enemy.warm(stage).instantiate()
-		model.regular_height = human_height() * (Biomes.height_factor(int(data.biome), int(data.variant))*(0.72 if ExpeditionContent.is_boss(simulation.stage,simulation.phase) and not data.boss else 1.0) if simulation.expedition else 1.0)
-		model.boss_height = human_height() * (1.25 if data.has("secret_id") else 1.40 if simulation.expedition else 1.22)
-		if data.has("species_id"):
-			model.regular_height=human_height()
-			model.boss_height=model.regular_height*1.25
-		add_child(model)
-		var home := home_for(str(data.row), index, true)
-		model.advance(0, data.boss, 0, data.interval)
-		model.position = home
-		model.z_index = int(home.y)
-		foes.append(model)
-		foe_homes.append(home)
-		foe_widgets.append(widget(home, ("★ " if data.boss else "") + str(TaleCatalog.CLASSES[data["class"]].name), Color("dd9691"),true,index))
-		data["death_left"] = 0.0
-		data["was_alive"] = true
+	for index in simulation.tactics.enemies.size(): add_enemy(index)
 	if not foes.is_empty():
 		enemy = foes[0]
 	fit_field(Vector2(field_width,field_height))
@@ -293,6 +236,81 @@ func sync_enemies() -> void:
 	attack_warmup=preload("res://scripts/combat_warmup.gd").new()
 	add_child(attack_warmup)
 	attack_warmup.start(heroes+foes,simulation.actors.map(func(a):return a.id))
+
+func sync_summoned_enemies() -> void:
+	for index in range(foes.size(), simulation.tactics.enemies.size()): add_enemy(index)
+	fit_field(Vector2(field_width, field_height))
+	sync_health(simulation.actors)
+
+func add_enemy(index: int) -> void:
+	var data: Dictionary = simulation.tactics.enemies[index]
+	var model: AnimatedSprite2D
+	if data.has("secret_id"):
+		model=AnimatedSprite2D.new()
+		model.set_script(Enemy)
+		model.secret_id=data.secret_id
+		model.sprite_frames=preload("res://scripts/secret_enemy_art.gd").frames(data.secret_id)
+		model.body_height=400
+		model.illustrated=true
+	elif data.has("sunflower_id"):
+		model = AnimatedSprite2D.new()
+		model.set_script(Enemy)
+		model.custom_frames = true
+		model.sprite_frames = SunflowerArt.frames(data.sunflower_id)
+		model.species_anchor = SunflowerArt.ANCHOR
+		model.body_height = SunflowerArt.SPAN
+		add_enemy_hitbox(model, index, SunflowerArt.idle_bounds(data.sunflower_id, data.boss))
+	elif data.has("species_id"):
+		model=AnimatedSprite2D.new()
+		model.set_script(Enemy)
+		model.species_id=data.species_id
+		model.sprite_frames=Phase1.frames(data.species_id)
+		var meta:=Phase1.metadata(data.species_id)
+		model.species_anchor=Vector2(meta.anchor[0],meta.anchor[1])
+		model.body_height=Phase1.visual_span(data.species_id)
+		model.flip_h=false
+		var bounds := Rect2(Phase1.visual_bounds(model.sprite_frames.get_frame_texture("idle", 0).get_image()))
+		add_enemy_hitbox(model, index, bounds)
+	elif simulation.expedition:
+		model = AnimatedSprite2D.new()
+		model.set_script(Enemy)
+		model.sprite_frames = Biomes.frames(int(data.biome), int(data.variant))
+		model.body_height = model.sprite_frames.get_frame_texture("idle", 0).get_image().get_used_rect().size.y
+		model.illustrated = true
+		model.biome_id = int(data.biome)
+		model.variant_id = int(data.variant)
+		model.flip_h = false
+	else: model = Enemy.warm(stage).instantiate()
+	size_enemy(model, data)
+	add_child(model)
+	var home := home_for(str(data.row), index, true)
+	model.advance(0, data.boss, 0, data.interval)
+	model.position = home
+	model.z_index = int(home.y)
+	foes.append(model)
+	foe_homes.append(home)
+	foe_widgets.append(widget(home, ("★ " if data.boss else "") + str(TaleCatalog.CLASSES[data["class"]].name), Color("dd9691"),true,index))
+	data["death_left"] = 0.0
+	data["was_alive"] = true
+	if data.get("summoned", false): data["arrival_left"] = .34
+
+func add_enemy_hitbox(model: AnimatedSprite2D, index: int, bounds: Rect2) -> void:
+	var area := Area2D.new()
+	area.name = "Hitbox"
+	area.collision_layer = 1
+	area.collision_mask = 0
+	var shape := CollisionShape2D.new()
+	var rectangle := RectangleShape2D.new()
+	rectangle.size = bounds.size
+	shape.shape = rectangle
+	shape.position = bounds.get_center() - model.species_anchor
+	area.add_child(shape)
+	area.input_event.connect(func(_viewport, event, _shape):
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			status_requested.emit(index, true)
+	)
+	model.add_child(area)
+
 
 func warming_attacks() -> bool:
 	return is_instance_valid(attack_warmup) and attack_warmup.busy
@@ -378,26 +396,32 @@ func sync_health(actors: Array[Dictionary]) -> void:
 		foes[index].visible = enemy_visible and (data.hp > 0 or data.get("death_left", 0) > 0)
 		foe_widgets[index].root.visible = enemy_visible and data.hp > 0
 		HealthDisplay.update(foe_widgets[index].health,data)
-		foe_widgets[index].energy.visible = false
+		foe_widgets[index].energy.visible = data.has("max_mana")
+		if data.has("max_mana"):
+			foe_widgets[index].energy.max_value = data.max_mana
+			foe_widgets[index].energy.value = data.mana
 		sync_conditions(foe_widgets[index],data,index,true)
 		foe_widgets[index].text.text = ("%s/%s" if foe_widgets[index].panel.size.x<90 else "%s/%s PV") % [compact_hp(data.hp),compact_hp(HealthDisplay.capacity(data))]
 
 
 
-func hurt(index: int) -> void:
+func hurt(index: int, poisoned: Variant = null) -> void:
 	if index >= 0 and index < tracks.size():
 		tracks[index].hurt = 0.24
-		heroes[index].modulate = Enemy.hurt_color(0.24)
+		tracks[index]["hurt_poisoned"] = bool(poisoned) if poisoned != null else simulation.tactics.Rules.has_status(simulation.actors[index], "poison")
+		heroes[index].modulate = Enemy.hurt_color(0.24, tracks[index].hurt_poisoned)
 
 
-func hurt_enemy(index: int, continuous := false) -> void:
+func hurt_enemy(index: int, continuous := false, poisoned: Variant = null) -> void:
 	if index >= 0 and index < foes.size():
-		foes[index].hurt(continuous)
+		var green: bool = bool(poisoned) if poisoned != null else simulation.tactics.Rules.has_status(simulation.tactics.enemies[index], "poison")
+		foes[index].hurt(continuous, green)
 
 
 func enemy_strike(index: int, target: int) -> void:
 	if index < 0 or index >= foes.size() or target < 0 or target >= heroes.size():
 		return
+	if simulation.tactics.enemies[index].has("sunflower_id"): return
 	if not simulation.tactics.enemies[index].has("species_id"):foes[index].begin_strike(simulation.tactics.enemies[index].boss)
 	effects.append({"from": foe_homes[index] + Vector2(0, -60), "to": tracks[target].home + Vector2(0, -60), "time": 0.18, "duration": 0.18, "color": Color("d49096")})
 
@@ -417,6 +441,8 @@ func _process(delta: float) -> void:
 	if not frozen:
 		hit_stop = maxf(0, hit_stop - delta * speed)
 	clock += dt
+	for impact in enemy_impacts: impact.left -= dt
+	enemy_impacts = enemy_impacts.filter(func(impact): return impact.left > 0)
 	for index in heroes.size():
 		var actor: AnimatedSprite2D = heroes[index]
 		actor.z_index = int(actor.position.y)
@@ -428,7 +454,7 @@ func _process(delta: float) -> void:
 		actor.speed_scale = 0.0 if frozen or hit_stop > 0 or intro_left > 0 or not track.alive else speed
 		track.hurt = maxf(0, track.hurt - dt)
 		if track.alive:
-			actor.modulate = Enemy.hurt_color(track.hurt)
+			actor.modulate = Enemy.hurt_color(track.hurt, track.get("hurt_poisoned", false))
 		if walking and track.alive:
 			actor.position = track.home + Vector2(-90 * (1.0 - travel_progress), 0)
 			if simulation.actors[index].id in ["ariel","aladin","peter"]:actor.position.y-=human_height()*0.1
@@ -484,7 +510,7 @@ func _process(delta: float) -> void:
 				enemy_track.impact_cursor+=1
 				enemy_track.hit=true
 				enemy_attack_hit.emit(index)
-		elif not enemy_track.hit and enemy_track.time >= enemy_track.duration * 0.55:
+		elif not enemy_track.hit and enemy_track.time >= enemy_track.duration * float(enemy_track.get("contact", .55)):
 			enemy_track.hit = true
 			enemy_attack_hit.emit(index)
 		if enemy_track.time >= enemy_track.duration:
@@ -495,6 +521,14 @@ func _process(delta: float) -> void:
 		foes[index].advance(dt, data.boss, 0, simulation.tactics.interval_for(index))
 		foes[index].position = foe_homes[index] + Vector2(100 * entrance_left, 0)
 		if data.get("flying",false):foes[index].position.y-=human_height()*.55
+		if float(data.get("arrival_left", 0)) > 0:
+			var remaining := maxf(0.0, float(data.arrival_left) - dt)
+			data.arrival_left = remaining
+			var progress := 1.0 - remaining / .34
+			if not reduced_motion:
+				var origin := foe_homes[0] + Vector2(human_height() * .35, -human_height() * .65)
+				foes[index].position = origin.lerp(foes[index].position, smoothstep(0, 1, progress))
+				foes[index].modulate.a = smoothstep(0, .55, progress)
 		if data.hp <= 0:
 			if data.get("was_alive", true): data.death_left = 0.75
 			data.was_alive = false
@@ -502,24 +536,28 @@ func _process(delta: float) -> void:
 			foes[index].modulate.a = float(data.death_left) / 0.75
 		if enemy_track.time >= 0 and enemy_track.index == index:
 			var phase: float = clampf(enemy_track.time / enemy_track.duration, 0, 0.999)
-			var anim := "idle" if enemy_track.get("support", false) else ("boss_attack" if data.boss else "attack")
+			var anim: String = enemy_track.get("animation", "idle" if enemy_track.get("support", false) else ("boss_attack" if data.boss else "attack"))
 			var visual_time:float=phase*foes[index].animation_duration(anim)
 			if enemy_track.has("coil_start"):
 				visual_time=float(enemy_track.time)-clampf(float(enemy_track.time)-float(enemy_track.coil_start),0,float(enemy_track.coil_hold))
 			foes[index].seek(anim,visual_time)
-			if not enemy_track.get("support", false) and data["class"] in ["vanguard", "assassin"] and enemy_track.target >= 0:
+			if not enemy_track.get("support", false) and (data.has("sunflower_id") or data["class"] in ["vanguard", "assassin"]) and enemy_track.target >= 0:
 				var contact:float=float(enemy_track.get("contact",.55))
 				var recovery:float=float(enemy_track.get("recovery",contact))
-				var dash := smoothstep(0,maxf(.01,contact-.02),phase) if phase<contact else (1.0-smoothstep(recovery,1,phase))
+				var arrival: float = enemy_track.get("release", -1.0)
+				if arrival < 0: arrival = maxf(.01, contact - .02)
+				var dash := smoothstep(0, arrival, phase) if phase < contact else (1.0 - smoothstep(recovery, 1, phase))
 				var to: Vector2 = tracks[enemy_track.target].home + Vector2(60, 0)
 				if enemy_track.has("coil_start"):to=tracks[enemy_track.target].home
-				foes[index].position = foe_homes[index].lerp(to, dash)
-				if data.get("flying",false):foes[index].position.y-=human_height()*.55
-				if data.has("species_id"):foes[index].flip_h=phase>recovery and not is_equal_approx(phase,1)
+				foes[index].position = foe_homes[index].lerp(to, dash * float(enemy_track.get("approach", 1.0)))
+				if data.get("flying", false):
+					var lift := .55 - .36 * dash if data.has("sunflower_id") else .55
+					foes[index].position.y -= human_height() * lift
+				if data.has("species_id") or data.has("sunflower_id"):foes[index].flip_h=phase>recovery and not is_equal_approx(phase,1)
 			foes[index].z_index = int(foes[index].position.y)
 		else:
 			foes[index].z_index = int(foe_homes[index].y)
-			if data.has("species_id"):foes[index].flip_h=false
+			if data.has("species_id") or data.has("sunflower_id"):foes[index].flip_h=false
 	for area in enemy_areas: area.left -= dt
 	enemy_areas = enemy_areas.filter(func(area): return area.left > 0)
 	for burst in bursts: burst.left -= dt
@@ -538,8 +576,6 @@ func _process(delta: float) -> void:
 	if health_tick <= 0:
 		health_tick = 0.08
 		sync_health(simulation.actors)
-	for impact in enemy_impacts: impact.left -= dt
-	enemy_impacts = enemy_impacts.filter(func(impact): return impact.left > 0)
 	if dt > 0:
 		queue_redraw()
 		vfx.queue_redraw()
@@ -613,7 +649,9 @@ func draw_combat_effects(canvas: Node2D) -> void:
 		var phase: float = enemy_track.time / enemy_track.duration
 		var release:float=float(enemy_track.get("contact",.2)) if enemy_track.has("impacts") else .2
 		var arrive:float=minf(.98,release+.18) if enemy_track.has("impacts") else .55
-		if phase >= release and phase < arrive and simulation.tactics.enemies[index]["class"] in ["mage", "ranger"]:
+		if simulation.tactics.enemies[index].has("sunflower_id"):
+			draw_sunflower_attack(canvas, index, phase)
+		elif phase >= release and phase < arrive and simulation.tactics.enemies[index]["class"] in ["mage", "ranger"]:
 			var from := foe_homes[index] + Vector2(0, -75)
 			var to: Vector2 = tracks[enemy_track.target].home + Vector2(0, -65)
 			var t := clampf((phase-release)/maxf(.001,arrive-release),0,1)
@@ -659,6 +697,10 @@ func draw_combat_effects(canvas: Node2D) -> void:
 				canvas.draw_line(foe_homes[index] + Vector2(0, -80), tracks[at].home + Vector2(0, -70), Color("c885b8", 0.55), 2, true)
 
 	for impact in enemy_impacts:
+		if impact.get("sunflower", false):
+			var life := clampf(float(impact.left) / .28, 0.0, 1.0)
+			SunflowerArt.stamp(canvas, SunflowerArt.IMPACT, impact.at, human_height() * lerpf(.66, .38, life), 0.0, life)
+			continue
 		var progress: float = 1.0 - impact.left / 0.85
 		var species:String=impact.get("species","")
 		if not species.is_empty():
@@ -681,6 +723,20 @@ func draw_combat_effects(canvas: Node2D) -> void:
 			var texture := EnemyArt.frame(int(impact.biome), progress)
 			var extent := Vector2.ONE * human_height() * 1.15
 			canvas.draw_texture_rect(texture, Rect2(impact.at - extent * 0.5, extent), false, Color(1, 1, 1, minf(1, impact.left * 4)))
+
+
+func draw_sunflower_attack(canvas: Node2D, index: int, phase: float) -> void:
+	var height := human_height()
+	var from := foes[index].position + Vector2(0, -height * .34)
+	var target: Vector2 = tracks[enemy_track.target].home + Vector2(0, -height * .45)
+	var release: float = enemy_track.release
+	var contact: float = enemy_track.contact
+	var direction := (target - from).angle() - PI
+	if not reduced_motion and phase > .08 and phase < contact:
+		SunflowerArt.stamp(canvas, SunflowerArt.WIND, from + Vector2(height * .37, 0), height * .85, direction, .65)
+	if release >= 0 and phase >= release and phase < contact:
+		var progress := inverse_lerp(release, contact, phase)
+		SunflowerArt.stamp(canvas, SunflowerArt.STINGER, from.lerp(target, progress), height * .38, direction)
 
 
 func set_home(index: int, at: Vector2) -> void:
@@ -707,15 +763,24 @@ func fit_field(dimensions: Vector2) -> void:
 			heroes[index].position = tracks[index].home
 		place_widget(unit_widgets[index],tracks[index].home)
 	for index in foes.size():
-		foes[index].regular_height = human_height() * (Biomes.height_factor(int(simulation.tactics.enemies[index].biome), int(simulation.tactics.enemies[index].variant))*(0.72 if ExpeditionContent.is_boss(simulation.stage,simulation.phase) and not simulation.tactics.enemies[index].boss else 1.0) if simulation.expedition else 1.0)
-		foes[index].boss_height = human_height() * (1.25 if simulation.tactics.enemies[index].has("secret_id") else 1.40 if simulation.expedition else 1.22)
-		if simulation.tactics.enemies[index].has("species_id"):
-			foes[index].regular_height=human_height()
-			foes[index].boss_height=human_height()*1.25
+		size_enemy(foes[index], simulation.tactics.enemies[index])
 		foe_homes[index] = home_for(simulation.tactics.enemies[index].row, index, true)
 		foes[index].position = foe_homes[index]
 		place_widget(foe_widgets[index],foe_homes[index])
 	queue_redraw()
+
+
+func size_enemy(model: AnimatedSprite2D, data: Dictionary) -> void:
+	if data.has("sunflower_id"):
+		var factor: float = {"sunflower_drone": .94, "sunflower_wasp": .74}.get(data.sunflower_id, .82)
+		model.regular_height = human_height() * (.62 if data.get("summoned", false) else factor)
+		model.boss_height = human_height() * 1.22
+	elif data.has("species_id"):
+		model.regular_height = human_height()
+		model.boss_height = model.regular_height * 1.25
+	else:
+		model.regular_height = human_height() * (Biomes.height_factor(int(data.biome), int(data.variant)) * (.72 if ExpeditionContent.is_boss(simulation.stage, simulation.phase) and not data.boss else 1.0) if simulation.expedition else 1.0)
+		model.boss_height = human_height() * (1.25 if data.has("secret_id") else 1.40 if simulation.expedition else 1.22)
 
 
 func is_action_busy() -> bool:
@@ -728,12 +793,18 @@ func is_action_busy() -> bool:
 	return false
 
 
-func begin_enemy_attack(index: int, target: int) -> bool:
-	if is_action_busy() or index < 0 or index >= foes.size() or target < 0 or target >= heroes.size():
+func begin_enemy_attack(index: int, target: int, intent := "") -> bool:
+	var summoning := intent == Sunflowers.SUMMON
+	if is_action_busy() or index < 0 or index >= foes.size() or (not summoning and (target < 0 or target >= heroes.size())):
 		return false
 	enemy_track = {"time": 0.0, "duration": 1.3, "index": index, "target": target, "hit": false}
 	var data:Dictionary=simulation.tactics.enemies[index]
-	if data.has("species_id"):
+	if data.has("sunflower_id"):
+		enemy_track.merge(SunflowerArt.timing(data.sunflower_id, summoning), true)
+		enemy_track.duration = foes[index].animation_duration(enemy_track.animation)
+		enemy_track.support = summoning
+		foes[index].seek(enemy_track.animation, 0)
+	elif data.has("species_id"):
 		var anim:String="boss_attack" if data.boss else "attack"
 		enemy_track.duration=foes[index].animation_duration(anim)
 		enemy_track["impacts"]=Phase1.impact_times(data.species_id)
@@ -775,17 +846,18 @@ func present_result(result: Dictionary, hostile: bool, attacker: int) -> void:
 		var guarded:int=result.get("blocked_target",result.get("target",-1))
 		if guarded>=0:
 			bursts.append({"id":"peter","spirit_return":true,"from":tracks[guarded].home+Vector2(0,-human_height()*.5),"at":foe_homes[attacker]+Vector2(0,-human_height()*.5),"left":.65,"duration":.65})
+	var sunflower: bool = hostile and simulation.tactics.enemies[attacker].has("sunflower_id")
 	if hostile and not result.get("non_attack", false) and not result.get("blocked_spirit",false):
 		for target in result.get("targets", [result.get("target", -1)]):
-			if target >= 0 and target < tracks.size():
-				enemy_impacts.append({"at": tracks[target].home + Vector2(0, -human_height() * 0.45), "species":str(simulation.tactics.enemies[attacker].get("species_id","")), "biome": simulation.current_biome() if simulation.expedition else Biomes.biome(stage), "left": 0.85})
-	if hostile and simulation.tactics.enemies[attacker]["class"] == "mage" and not result.get("non_attack", false):
+			if target >= 0 and target < tracks.size() and (not sunflower or not result.evaded):
+				enemy_impacts.append({"at": tracks[target].home + Vector2(0, -human_height() * 0.45), "species":str(simulation.tactics.enemies[attacker].get("species_id","")), "biome": simulation.current_biome() if simulation.expedition else Biomes.biome(stage), "left": .28 if sunflower else .85, "sunflower": sunflower})
+	if hostile and not sunflower and simulation.tactics.enemies[attacker]["class"] == "mage" and not result.get("non_attack", false):
 		for target in result.get("targets", [result.get("target", -1)]):
 			if target >= 0 and target<tracks.size(): enemy_areas.append({"at": tracks[target].home, "left": 1.0})
 	if result.get("ultimate", false) and not hostile:
 		ultimate_effect(attacker, result)
 	if result.get("non_attack", false):
-		damage_number("SUPORTE", foe_homes[attacker] if hostile else tracks[attacker].home, Color("b1c5f6"))
+		damage_number(str(result.message) if result.has("summoned") else "SUPORTE", foe_homes[attacker] if hostile else tracks[attacker].home, Color("b1c5f6"))
 		return
 	var targets: Array = result.get("targets", [result.target])
 	for target in targets:

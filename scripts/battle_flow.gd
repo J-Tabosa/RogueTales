@@ -23,6 +23,10 @@ func unit(entry:Dictionary) -> Dictionary:
 	return owner.actors[entry.index] if entry.side=="ally" else owner.tactics.enemies[entry.index]
 
 func less(a:Dictionary,b:Dictionary) -> bool:
+	if round_number == 1:
+		var a_opens: bool = unit(a).get("opens_combat", false)
+		var b_opens: bool = unit(b).get("opens_combat", false)
+		if a_opens != b_opens: return a_opens
 	var ad:bool=int(unit(a).get("gear_delayed_round",-1))==round_number
 	var bd:bool=int(unit(b).get("gear_delayed_round",-1))==round_number
 	if ad!=bd:return not ad
