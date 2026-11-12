@@ -37,7 +37,7 @@ A capacidade começa em três e aumenta pela **Página dos Viajantes**, item len
 
 A **Loja de Itens** vende equipamentos, dois dos três tipos de poção de cura (33%, 66% e 100%, sorteados por visita) e a opção de reviver um aliado com 20% dos PV. A **Loja de Buffs** vende melhorias de atributos. É possível visitar as duas na mesma fase, com o mesmo ouro e sem renovar o estoque ao trocar de vendedor ou carregar o save.
 
-Nas recompensas de combate, a opção **Item aleatório** gira uma roleta com as chances de raridade do catálogo. O sorteio acontece uma vez, antes da animação, e fica no save. Com movimento reduzido, o resultado aparece direto.
+Nas recompensas de combate, a opção **Item aleatório** gira uma roleta com as chances de raridade do catálogo. Os quadrados mostram as cores de raridade dos itens. O giro dura cerca de cinco segundos, começa rápido e desacelera até o resultado; é possível pular. O sorteio acontece uma vez, antes da animação, e fica no save. Com movimento reduzido, o resultado aparece direto.
 
 Os preços de equipamentos e buffs sobem de **1× para 3,35×** entre os estágios 1 e 8. As poções e o reviver seguem uma curva mais leve, de **1× a 2×**.
 
@@ -59,7 +59,7 @@ python3 tools/check_095.py --godot /caminho/para/godot
 
 No PC, **Configurações → Ferramentas DEBUG** ou **Ctrl+B** permite liberar os 12 personagens e as 48 bênçãos, montar uma equipe de até cinco e iniciar uma run de teste com os 39 itens na bolsa. O teste usa uma campanha temporária; sair do debug restaura o progresso normal e a tentativa pendente. Essas ferramentas não aparecem no Android.
 
-O preset **Android Teste** exporta APK arm64, código 26, versão 1.0.1-eventos, pacote `com.jtabosa.roguetales.preview.v07`. Use a mesma chave das versões anteriores para instalar como atualização. Chaves e SDKs não são versionados.
+O preset **Android Teste** exporta APK arm64, código 27, versão 1.0.1-roleta, pacote `com.jtabosa.roguetales.preview.v07`. Use a mesma chave das versões anteriores para instalar como atualização. Chaves e SDKs não são versionados.
 
 ## Códigos de resgate
 

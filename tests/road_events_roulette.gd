@@ -133,8 +133,40 @@ func check_ui(account: TaleCampaign) -> void:
 	assert(game.campaign.checkpoint.pending_item_reveal == game.run.pending_item_reveal)
 	var spin: Array = game.page.get_children().filter(func(n): return n.has_meta("roulette_marker"))
 	assert(spin.size() == 1)
-	await create_timer(2.15).timeout
+	var reel = game.page.find_child("ItemRouletteReel", true, false)
+	var animation: Tween = reel.animation
+	animation.pause()
+	var result_id: String = game.run.pending_item_reveal
+	var random_state: int = game.run.rng.state
+	animation.custom_step(0.6)
+	var fast: float = reel.cursor
+	assert(fast > 12.0)
+	animation.custom_step(1.55)
+	assert(reel.cursor > fast and reel.cursor < reel.STOP_STEP and game.page.find_child("ItemRouletteReel", true, false) == reel)
+	animation.custom_step(1.7)
+	var before_stop: float = reel.cursor
+	animation.custom_step(0.9)
+	assert(reel.cursor - before_stop < fast and is_equal_approx(reel.cursor, reel.STOP_STEP))
+	var center: Panel = reel.tiles[2]
+	assert(center.size.x == center.size.y)
+	assert(is_equal_approx(center.get_rect().get_center().x, reel.size.x * 0.5))
+	assert(center.get_meta("roulette_item") == result_id)
+	for tile in reel.tiles:
+		var color := Gear.tint(tile.get_meta("roulette_item"))
+		var plate: StyleBoxFlat = tile.get_theme_stylebox("panel")
+		assert(plate.bg_color == color.darkened(.32) and plate.border_color == color)
+	animation.custom_step(0.35)
 	assert(game.page.get_children().any(func(n): return n is Label and n.text == "Item recebido"))
+	var result: Panel = game.page.get_children().filter(func(n): return n.has_meta("roulette_result"))[0]
+	assert(result.get_meta("roulette_result") == result_id)
+	assert(result.get_theme_stylebox("panel").bg_color == Gear.tint(result_id).darkened(.32))
+	game.show_item_reveal(true)
+	await process_frame
+	var skip: Button = game.page.get_children().filter(func(n): return n is Button and n.text == "Revelar agora")[0]
+	skip.pressed.emit()
+	await process_frame
+	assert(game.page.find_child("ItemRouletteReel", true, false) == null)
+	assert(game.run.rng.state == random_state and game.run.pending_item_reveal == result_id)
 	game.restore_checkpoint_now()
 	await process_frame
 	assert(game.state == "item_reveal" and game.page.get_children().any(func(n): return n is Label and n.text == "Item recebido"))
@@ -149,5 +181,5 @@ func checks() -> void:
 	check_events(account)
 	check_roulette(account)
 	await check_ui(account)
-	print("ROAD EVENTS AND ROULETTE PASS: route odds, checks, contracts, eligibility, one draw and resumed reward")
+	print("ROAD EVENTS AND ROULETTE PASS: route odds, checks, contracts, eligibility, one draw, rarity tiles, deceleration, skip and resumed reward")
 	quit()

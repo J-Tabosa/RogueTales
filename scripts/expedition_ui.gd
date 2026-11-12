@@ -373,39 +373,28 @@ func show_item_reveal(spin := false) -> void:
 		header("Roleta de equipamentos", "O item sorteado já está guardado nesta run.")
 		var track := panel(page, Rect2(24, 312, 492, 142))
 		track.clip_contents = true
-		var reel := Control.new()
-		reel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var reel := preload("res://scripts/item_roulette_reel.gd").new()
 		track.add_child(reel)
-		var pool := Equipment.ITEMS.keys().filter(func(id): return id != item_id and not run.unavailable_items().has(id))
-		# Decorative tiles must not consume the run's random stream.
-		var offset := posmod(hash(item_id), pool.size())
-		const TILE := 122.0
-		for index in 13:
-			var id: String = item_id if index == 10 else pool[(index + offset) % pool.size()]
-			var tile := Panel.new()
-			tile.position = Vector2(index * TILE, 16)
-			tile.size = Vector2(116, 108)
-			tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			tile.add_theme_stylebox_override("panel", ItemArt.item_plate(id))
-			reel.add_child(tile)
-			ItemArt.picture(tile, id, Rect2(8, 5, 100, 98))
-		const CENTER := 188.0
-		reel.position.x = CENTER - TILE
+		reel.setup(item_id, run.unavailable_items())
 		var marker := panel(page, Rect2(265, 297, 10, 14), GOLD)
 		marker.set_meta("roulette_marker", true)
-		var tween := reel.create_tween().set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
-		tween.tween_property(reel, "position:x", CENTER - 10 * TILE, 1.65)
-		tween.tween_interval(0.2)
-		tween.tween_callback(show_item_reveal)
-		button(page, "Revelar agora", Rect2(32, 546, 476, 56), show_item_reveal, true)
+		var reveal := func():
+			if state == "item_reveal" and track.get_parent() == page:
+				show_item_reveal()
+		reel.play(reveal)
+		button(page, "Revelar agora", Rect2(32, 546, 476, 56), func():
+			reel.stop()
+			reveal.call()
+		, true)
 	else:
 		var item := Equipment.data(item_id)
 		header("Item recebido", Equipment.rarity_name(item_id))
 		var frame := Panel.new()
 		frame.position = Vector2(188, 238)
 		frame.size = Vector2(164, 164)
-		frame.add_theme_stylebox_override("panel", ItemArt.item_plate(item_id, true))
+		frame.add_theme_stylebox_override("panel", ItemArt.roulette_plate(int(item.rarity), true))
 		page.add_child(frame)
+		frame.set_meta("roulette_result", item_id)
 		register_layout(frame)
 		ItemArt.picture(frame, item_id, Rect2(10, 10, 144, 144))
 		label(page, item.title, Rect2(32, 422, 476, 62), 23, Equipment.tint(item_id))

@@ -16,6 +16,14 @@ static func item_plate(id:String,selected:=false) -> StyleBoxFlat:
 		style.bg_color=Gear.tint(id).darkened(.73)
 		style.border_color=Gear.tint(id).lightened(.2 if selected else 0)
 	return style
+static func roulette_plate(rank: int, selected := false) -> StyleBoxFlat:
+	var color := TaleTheme.rarity(rank)
+	var style := plate(selected)
+	style.bg_color = color.darkened(.32)
+	style.border_color = color
+	style.set_border_width_all(3 if selected else 2)
+	return style
+
 static func plate(selected := false, trophy := false) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = TaleTheme.c("border") if trophy else TaleTheme.c("surface")
