@@ -62,10 +62,10 @@ jobs:
           set -euo pipefail
           "$GODOT_BIN" --version
           "$GODOT_BIN" --headless --editor --path . --import --quit 2>&1 | tee "$RUNNER_TEMP/import.log"
-          if rg -q 'SCRIPT ERROR|Parse Error|Compile Error' "$RUNNER_TEMP/import.log"; then exit 1; fi
+          if grep -qE 'SCRIPT ERROR|Parse Error|Compile Error' "$RUNNER_TEMP/import.log"; then exit 1; fi
           timeout 120 "$GODOT_BIN" --headless --path . --script res://tests/sunflower_enemies.gd 2>&1 | tee "$RUNNER_TEMP/test.log"
-          if rg -q 'SCRIPT ERROR|ERROR:' "$RUNNER_TEMP/test.log"; then exit 1; fi
-          rg 'SUNFLOWER ENEMIES:' "$RUNNER_TEMP/test.log"
+          if grep -qE 'SCRIPT ERROR|ERROR:' "$RUNNER_TEMP/test.log"; then exit 1; fi
+          grep -F 'SUNFLOWER ENEMIES:' "$RUNNER_TEMP/test.log"
       - name: Export and verify the signed ARM64 test APK
         shell: bash
         run: |
@@ -88,7 +88,7 @@ jobs:
           "$sdk_tools/apksigner" verify --verbose --print-certs "$RUNNER_TEMP/$APK_NAME"
           "$sdk_tools/zipalign" -c -P 16 4 "$RUNNER_TEMP/$APK_NAME"
           "$sdk_tools/aapt" dump badging "$RUNNER_TEMP/$APK_NAME" > "$RUNNER_TEMP/badging.txt"
-          rg "package: name='com.jtabosa.roguetales.girassois.teste' versionCode='29'" "$RUNNER_TEMP/badging.txt"
+          grep -F "package: name='com.jtabosa.roguetales.girassois.teste' versionCode='29'" "$RUNNER_TEMP/badging.txt"
           unzip -tq "$RUNNER_TEMP/$APK_NAME"
           sha256sum "$RUNNER_TEMP/$APK_NAME"
       - name: Publish the APK on the source commit
@@ -97,6 +97,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          if ! command -v gh > /dev/null; then
+            cli_version=2.65.0
+            curl -fsSL --retry 3 "https://github.com/cli/cli/releases/download/v$cli_version/gh_${cli_version}_linux_amd64.tar.gz" -o "$RUNNER_TEMP/gh.tar.gz"
+            tar -xzf "$RUNNER_TEMP/gh.tar.gz" -C "$RUNNER_TEMP"
+            export PATH="$RUNNER_TEMP/gh_${cli_version}_linux_amd64/bin:$PATH"
+          fi
           gh release create "$RELEASE_TAG" "$RUNNER_TEMP/$APK_NAME" \
             --repo "$GITHUB_REPOSITORY" --target "$SOURCE_COMMIT" --prerelease \
             --title 'Campos de Girassóis · APK de teste' \
