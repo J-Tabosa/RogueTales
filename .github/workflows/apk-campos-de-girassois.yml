@@ -27,11 +27,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          export ANDROID_HOME="$RUNNER_TEMP/android-sdk"
+          export ANDROID_SDK_ROOT="$ANDROID_HOME"
+          mkdir -p "$ANDROID_HOME/cmdline-tools"
+          curl -fsSL --retry 3 'https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip' -o "$RUNNER_TEMP/android-commandline.zip"
+          unzip -q "$RUNNER_TEMP/android-commandline.zip" -d "$RUNNER_TEMP/android-commandline"
+          mv "$RUNNER_TEMP/android-commandline/cmdline-tools" "$ANDROID_HOME/cmdline-tools/latest"
+          sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          set +o pipefail
+          yes | "$sdkmanager" --sdk_root="$ANDROID_HOME" --licenses > /dev/null
+          set -o pipefail
+          "$sdkmanager" --sdk_root="$ANDROID_HOME" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          printf 'ANDROID_HOME=%s\nANDROID_SDK_ROOT=%s\n' "$ANDROID_HOME" "$ANDROID_HOME" >> "$GITHUB_ENV"
           version="$GODOT_VERSION-stable"
-          base="https://github.com/godotengine/godot-builds/releases/download/$version/Godot_v$version"
-          curl -fL --retry 3 "$base"_linux.x86_64.zip -o "$RUNNER_TEMP/godot.zip"
-          curl -fL --retry 3 "$base"_export_templates.tpz -o "$RUNNER_TEMP/templates.tpz"
+          downloads="https://downloads.godotengine.org/?version=$GODOT_VERSION&flavor=stable"
+          curl -fsSL --retry 3 "$downloads&platform=linux.64&slug=linux.x86_64.zip" -o "$RUNNER_TEMP/godot.zip"
+          curl -fsSL --retry 3 "$downloads&platform=templates&slug=export_templates.tpz" -o "$RUNNER_TEMP/templates.tpz"
           unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP"
           chmod +x "$RUNNER_TEMP/Godot_v${version}_linux.x86_64"
           printf 'GODOT_BIN=%s\n' "$RUNNER_TEMP/Godot_v${version}_linux.x86_64" >> "$GITHUB_ENV"
