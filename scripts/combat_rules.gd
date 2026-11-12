@@ -330,6 +330,7 @@ static func start_combat(tactics) -> void:
 		for p in a.shield_parts:a.shield+=float(p.value)
 		a.statuses=[]
 		if a.id=="peter" and boon(a,0):a.shadows=maxi(1,int(a.get("shadows",0)))
+		if a.id == "pinocchio" and a.hp > 0: shield(a, a.max_hp * (.12 if boon(a,0) else .08), a)
 		var e:=Gear.effects(a)
 		if float(e.get("shield_start",0))>0:shield(a,a.max_hp*float(e.shield_start),a)
 		status_fields(a)
@@ -462,6 +463,7 @@ static func on_basic_hit(tactics,a:Dictionary,foe:Dictionary,out:Dictionary) -> 
 	if a.id=="scarlet":foe.powder=mini(10,int(foe.get("powder",0))+(2 if boon(a,3) else 1))
 	elif a.id=="maria":status(foe,"poison",a.id,2,power(a,true)*.1,1,5 if boon(a,0) else 3)
 	elif a.id=="matches":ignite(a,foe)
+	elif a.id == "aurora" and has_status(foe,"sleep"): mana(a,10)
 	elif a.id=="ariel":
 		var ally:=weakest(tactics.run())
 		if not ally.is_empty():
@@ -496,7 +498,7 @@ static func basic_components(a:Dictionary,marked:=false,next_hit:=true) -> Array
 	var m:=power(a,true)
 	var r:=0.0
 	match str(a.id):
-		"scarlet","snow_white","joao","mulan","puss":m=0.0
+		"scarlet","snow_white","joao","mulan","puss","mogli","pinocchio":m=0.0
 		"alice":
 			if int(a.get("suit",0))%4==3:
 				if p>=m:p+=power(a,false)*(.5*(2 if boon(a,3) else 1))
@@ -519,6 +521,9 @@ static func ultimate_components(a:Dictionary) -> Array[float]:
 		"ariel":m=power(a,true)*1.5
 		"mulan","puss":p=power(a,false)*2.5
 		"matches":m=power(a,true)*2.5
+		"aurora":m=power(a,true)
+		"mogli":p=power(a,false)*2.5
+		"pinocchio":p=power(a,false)*2.4
 	return [p,m,0.0]
 
 static func attack(tactics,index:int,requested:int) -> Dictionary:
@@ -558,6 +563,8 @@ static func attack(tactics,index:int,requested:int) -> Dictionary:
 	var p:float=components[0]
 	var m:float=components[1]
 	var r:float=components[2]
+	if a.id == "mogli" and foe.hp <= foe.max_hp * .4:
+		p *= 1.5 if boon(a,0) else 1.25
 	var suit:int=int(a.get("suit",0))%4
 	if a.id=="mulan" and int(a.hits)%(2 if boon(a,0) else 3)==0:owner.unlock_stats.combos+=1
 	a["gear_attack_components"]=[p,m,r]
@@ -654,7 +661,11 @@ static func ult_targets(tactics,index:int,requested:int) -> Array[int]:
 	var target:int=requested if requested>=0 and requested<tactics.enemies.size() and tactics.enemies[requested].hp>0 else tactics.target_for(index)
 	if target<0:return []
 	if a.id in ["rapunzel","peter","aladin"]:return []
-	if a.id in ["snow_white","joao"]:return [target]
+	if a.id in ["snow_white","joao","mogli","pinocchio"]:return [target]
+	if a.id == "aurora":
+		var dream_targets: Array[int] = [target]
+		dream_targets.append_array(nearest(tactics,target,1))
+		return dream_targets
 	if a.id=="alice":
 		var list:Array[int]=[]
 		var y:float=Layout.home(tactics.enemies,target,true).y
@@ -719,6 +730,8 @@ static func ultimate(tactics,index:int,requested:int) -> Dictionary:
 			append_hit(out,at,hit)
 			if not hit.evaded:
 				if a.id=="matches":ignite(a,foe)
+				if a.id == "aurora" and status(foe,"sleep",a.id,2 if boon(a,0) else 1):
+					out.status_targets.append(at)
 				if a.id=="ariel":
 					if owner.rng.randf()<.5:
 						if status(foe,"bubble",a.id,1):
@@ -729,6 +742,9 @@ static func ultimate(tactics,index:int,requested:int) -> Dictionary:
 					var chance:=.75 if condition=="curse" else 1.0
 					if owner.rng.randf()<chance:status(foe,condition,a.id,1,power(a,true)*(1.0 if condition=="burn" else .1) if condition in ["burn","poison"] else 0,1,1,false,tactics)
 		if a.id=="alice" and boon(a,0):a["bonus_attacks"]=int(a.get("bonus_attacks",0))+1
+	if a.id == "pinocchio":
+		shield(a,a.max_hp*.10,a)
+		out.ally_targets.append(index)
 	Items.after_ult(a)
 	item_after(tactics,a,out,true)
 	deaths(tactics)

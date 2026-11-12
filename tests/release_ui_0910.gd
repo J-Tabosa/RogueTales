@@ -86,9 +86,11 @@ func test() -> void:
 		var original_file:=FileAccess.get_file_as_string(game.save_path)
 		game.show_menu();game.debug_enabled=true;game.prepare_debug_run()
 		check(game.debug_session and game.debug_source_campaign==normal and game.campaign!=normal,"PC debug uses isolated campaign")
-		check(game.campaign.unlocked.size()==12,"All protagonists selectable in debug")
+		check(TaleCatalog.HEROES.keys().all(func(id):return game.campaign.unlocked.has(id)),"All protagonists selectable in debug")
+		var blessings := preload("res://scripts/hero_blessings.gd")
 		for hero in TaleCatalog.HEROES:
-			for path in 4:check(preload("res://scripts/hero_blessings.gd").unlocked(game.campaign,"blessing:%s:%d"%[hero,path]),"All48blessings unlocked in sandbox")
+			for path in blessings.PATHS[hero].size():
+				check(blessings.unlocked(game.campaign,"blessing:%s:%d"%[hero,path]),"All roster blessings unlocked in sandbox")
 		game.show_debug_run_setup()
 		game.debug_party.assign(["alice","snow_white","rapunzel","mulan","ariel"])
 		check(not game.can_add_debug_hero("peter"),"Debug team respects five cap")

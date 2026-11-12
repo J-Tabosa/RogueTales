@@ -1,6 +1,6 @@
 # RogueTales: O Último Fio
 
-Roguelite em **Godot 4.7**, PC e Android, com 12 protagonistas e equipes de até cinco. Versão **1.0.1**: 65 cenários HD das quatro estações, 17 percursos autorais, bifurcações por estação e oito mapas por run. Cada mapa mantém seis fases. Neve, chuva, raios de sol e brasas usam shaders; a ULT da Lume aquece as bordas da arena. Detalhes em [ROTAS_100](docs/ROTAS_100.md).
+Roguelite em **Godot 4.7**, PC e Android, com 15 protagonistas e equipes de até cinco. Versão **1.0.2**: 65 cenários HD das quatro estações, 17 percursos autorais, bifurcações por estação e oito mapas por run. Cada mapa mantém seis fases. Neve, chuva, raios de sol e brasas usam shaders; a ULT da Lume aquece as bordas da arena. Detalhes em [ROTAS_100](docs/ROTAS_100.md).
 
 ## Regras e personagens
 
@@ -37,6 +37,8 @@ A capacidade começa em três e aumenta pela **Página dos Viajantes**, item len
 
 A **Loja de Itens** vende equipamentos, dois dos três tipos de poção de cura (33%, 66% e 100%, sorteados por visita) e a opção de reviver um aliado com 20% dos PV. A **Loja de Buffs** vende melhorias de atributos. É possível visitar as duas na mesma fase, com o mesmo ouro e sem renovar o estoque ao trocar de vendedor ou carregar o save.
 
+As lutas normais têm **30%** de chance de oferecer um item, antes 40%. Chefes continuam oferecendo um item. A Bela Adormecida, Mogli e Bagheera e Pinóquio podem ser comprados ou recrutados, com uma bênção inicial cada. Veja [kits e arte do trio](docs/ELENCO_15.md).
+
 Nas recompensas de combate, a opção **Item aleatório** gira uma roleta com as chances de raridade do catálogo. Os quadrados mostram as cores de raridade dos itens. O giro dura cerca de cinco segundos, começa rápido e desacelera até o resultado; é possível pular. O sorteio acontece uma vez, antes da animação, e fica no save. Com movimento reduzido, o resultado aparece direto.
 
 Os preços de equipamentos e buffs sobem de **1× para 3,35×** entre os estágios 1 e 8. As poções e o reviver seguem uma curva mais leve, de **1× a 2×**.
@@ -57,9 +59,9 @@ python3 tools/check_095.py --godot /caminho/para/godot
 
 `integration_095.gd` exercita as 48 combinações contra chefes, checkpoints, desbloqueios e a cena real. Com renderização nativa e um diretório após `--`, captura as telas PC/mobile para revisão. O runner também valida arte HD, auras, toque, recrutamento, economia, equipamentos, formações e interface. Testes históricos de regras substituídas são identificados em `tests/README.md`.
 
-No PC, **Configurações → Ferramentas DEBUG** ou **Ctrl+B** permite liberar os 12 personagens e as 48 bênçãos, montar uma equipe de até cinco e iniciar uma run de teste com os 39 itens na bolsa. O teste usa uma campanha temporária; sair do debug restaura o progresso normal e a tentativa pendente. Essas ferramentas não aparecem no Android.
+No PC, **Configurações → Ferramentas DEBUG** ou **Ctrl+B** permite liberar os 15 personagens e suas bênçãos, montar uma equipe de até cinco e iniciar uma run de teste com os 39 itens na bolsa. O teste usa uma campanha temporária; sair do debug restaura o progresso normal e a tentativa pendente. Essas ferramentas não aparecem no Android.
 
-O preset **Android Teste** exporta APK arm64, código 27, versão 1.0.1-roleta, pacote `com.jtabosa.roguetales.preview.v07`. Use a mesma chave das versões anteriores para instalar como atualização. Chaves e SDKs não são versionados.
+O preset **Android Teste** exporta APK arm64, código 28, versão 1.0.2-elenco, pacote `com.jtabosa.roguetales.preview.v07`. Use a mesma chave das versões anteriores para instalar como atualização. Chaves e SDKs não são versionados.
 
 ## Códigos de resgate
 

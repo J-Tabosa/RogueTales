@@ -33,13 +33,16 @@ static func season_for(owner) -> String:
 
 static func averages() -> Dictionary:
 	var out:={"hp":0.0,"damage":0.0,"armor":0.0,"magic_defense":0.0,"initiative":0.0}
-	for hero in Roster.BASE.values():
+	# Keep the original encounter balance independent of playable roster expansion.
+	var baseline := ["scarlet","alice","snow_white","ariel","rapunzel","mulan","maria","joao","matches","aladin","peter","puss"]
+	for id in baseline:
+		var hero: Dictionary = Roster.BASE[id]
 		out.hp+=hero.hp
 		out.damage+=hero.physical_damage+hero.magic_damage
 		out.armor+=hero.physical_defense
 		out.magic_defense+=hero.magic_defense
 		out.initiative+=hero.initiative
-	for key in out:out[key]/=Roster.BASE.size()
+	for key in out:out[key]/=baseline.size()
 	return out
 
 static func profiles() -> Dictionary:

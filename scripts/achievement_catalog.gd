@@ -97,6 +97,30 @@ const DATA = [
     "art": -1
   },
   {
+    "id": "hero_win_aurora",
+    "title": "Final: Bela Adormecida",
+    "detail": "Vença uma run do Conto com Bela Adormecida na liderança.",
+    "reward": 200,
+    "hero": "aurora",
+    "art": -1
+  },
+  {
+    "id": "hero_win_mogli",
+    "title": "Final: Mogli e Bagheera",
+    "detail": "Vença uma run do Conto com Mogli e Bagheera na liderança.",
+    "reward": 200,
+    "hero": "mogli",
+    "art": -1
+  },
+  {
+    "id": "hero_win_pinocchio",
+    "title": "Final: Pinóquio",
+    "detail": "Vença uma run do Conto com Pinóquio na liderança.",
+    "reward": 200,
+    "hero": "pinocchio",
+    "art": -1
+  },
+  {
     "id": "blessings4",
     "title": "Um conto completo",
     "detail": "Desbloqueie as quatro bênçãos de um personagem.",

@@ -104,9 +104,10 @@ func show_map() -> void:
 	label(hero, "Selecionar Personagem", Rect2(123, 11, 350, 21), 10, GOLD)
 	label(hero, TaleCatalog.HEROES[selected_hero].name, Rect2(123, 38, 350, 35), 22)
 	label(hero, "%s · trocar →" % TaleCatalog.hero_class_name(selected_hero), Rect2(123, 81, 350, 26), 14, MUTED)
-	var inner := scroll_area(381,321,4*140)
+	var count: int = Blessings.PATHS[selected_hero].size()
+	var inner := scroll_area(381,321,count*140)
 	inner.get_parent().name="BlessingList"
-	for i in 4:
+	for i in count:
 		var key:=Blessings.id_for(selected_hero,i)
 		var data:=Blessings.data(key)
 		var owned:=Blessings.unlocked(campaign,key)
@@ -856,7 +857,7 @@ func show_heroes() -> void:
 	label(page, "O LIVRO DOS VIAJANTES", Rect2(24, 20, w - 120, 28), 12, GOLD)
 	label(page, "Heróis dos contos", Rect2(24, 57, w - 48, 54), 32)
 	button(page, "Voltar", Rect2(w - 112, 23, 88, 44), show_menu)
-	label(page, "DEBUG · 12 visíveis · progresso da coleção preservado." if debug_enabled and debug_roster_all else "%02d / 12 comprados · %s memórias" % [campaign.unlocked.size(),format_gold(campaign.gold)], Rect2(24, 115, w - 48, 35), 14, MUTED)
+	label(page, "DEBUG · %d visíveis · progresso da coleção preservado." % TaleCatalog.HEROES.size() if debug_enabled and debug_roster_all else "%02d / %d comprados · %s memórias" % [campaign.unlocked.size(),TaleCatalog.HEROES.size(),format_gold(campaign.gold)], Rect2(24, 115, w - 48, 35), 14, MUTED)
 	button(page, "Todos", Rect2(24, 160, 154, 44), filter_roster.bind("all"), roster_filter == "all")
 	button(page, "Revelados", Rect2(190, 160, 154, 44), filter_roster.bind("owned"), roster_filter == "owned")
 	var ids: Array = TaleCatalog.HEROES.keys().filter(func(id): return roster_filter == "all" or hero_revealed(id))

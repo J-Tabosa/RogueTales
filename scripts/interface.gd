@@ -150,7 +150,7 @@ func show_menu() -> void:
 	idle_label = label(page, "", Rect2(91, 746, 240, 51), 15)
 	idle_button = button(page, "Coletar", Rect2(354, 743, 144, 52), show_idle_rewards)
 	update_idle_display()
-	label(page, "%d / 12 contos concluídos   ·   %d / 12 personagens" % [campaign.cleared.size(), campaign.unlocked.size()], Rect2(24, 840, 492, 25), 12, MUTED).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label(page, "%d / %d contos concluídos   ·   %d / %d personagens" % [campaign.cleared.size(), TaleCatalog.CHAPTER_COUNT, campaign.unlocked.size(), TaleCatalog.HEROES.size()], Rect2(24, 840, 492, 25), 12, MUTED).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	navigation("menu")
 
 func show_map() -> void:

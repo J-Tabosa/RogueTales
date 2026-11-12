@@ -19,9 +19,10 @@ func checks() -> void:
 		for animation in ["idle", "idle_blink", "walk", "attack"]:
 			assert(frames.has_animation(animation) and frames.get_frame_count(animation) > 0)
 			for at in frames.get_frame_count(animation):
-				var pose: MeshTexture = frames.get_frame_texture(animation, at)
-				assert(pose != null and pose.base_texture != null)
-				assert(pose.base_texture.resource_path.begins_with("res://assets/characters/%s/" % id))
+				var pose: Texture2D = frames.get_frame_texture(animation, at)
+				assert(pose is MeshTexture or pose is AtlasTexture)
+				var source: Texture2D = pose.base_texture if pose is MeshTexture else pose.atlas
+				assert(source != null and source.resource_path.begins_with("res://assets/characters/%s/" % id))
 		if layout.heroes.has(id):
 			assert(frames.get_frame_count("idle") == 8 and frames.get_frame_count("attack") == 12)
 			assert(frames.get_frame_count("ultimate") == (16 if id == "scarlet" else 12))
@@ -40,5 +41,5 @@ func checks() -> void:
 	for entry in sources:
 		assert(FileAccess.file_exists("res://" + str(entry.output)))
 		assert(entry.get("hero", "") == "puss" or entry.kind in ["effects", "arena", "secret"])
-	print("CHARACTER ASSET PATHS PASS: 12 heroes, current meshes, fixed canvases, UI portraits, basic effects, Ultimate atlases and active rebuild manifest")
+	print("CHARACTER ASSET PATHS PASS: 15 heroes, current atlases, fixed canvases, UI portraits, basic effects, Ultimate atlases and active rebuild manifest")
 	quit()

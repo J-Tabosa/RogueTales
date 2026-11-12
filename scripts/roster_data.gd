@@ -180,7 +180,10 @@ const BASE = {
 		"mana_max": 90,
 		"mana_hit": 10,
 		"mana_turn": 0
-	}
+	},
+	"aurora": {"hp": 205.0, "physical_damage": 0.0, "magic_damage": 20.0, "physical_defense": 0.0, "magic_defense": 8.0, "initiative": 55.0, "attacks": 1.0, "crit": 0, "crit_multiplier": 2.0, "evasion": 0.04, "mana_max": 100, "mana_hit": 10, "mana_turn": 0},
+	"mogli": {"hp": 225.0, "physical_damage": 14.0, "magic_damage": 0.0, "physical_defense": 2.0, "magic_defense": 2.0, "initiative": 70.0, "attacks": 2.0, "crit": 0.05, "crit_multiplier": 2.0, "evasion": 0.12, "mana_max": 80, "mana_hit": 10, "mana_turn": 0},
+	"pinocchio": {"hp": 310.0, "physical_damage": 19.0, "magic_damage": 0.0, "physical_defense": 12.0, "magic_defense": 5.0, "initiative": 46.0, "attacks": 1.0, "crit": 0.04, "crit_multiplier": 2.0, "evasion": 0.04, "mana_max": 90, "mana_hit": 10, "mana_turn": 0},
 }
 const TEXT = {
 	"scarlet": {
@@ -290,7 +293,10 @@ const TEXT = {
 		"passive_text": "Fúria do Pequeno Gigante: +1% de Dano Físico por 1% de vida máxima faltando. Recalcula com a vida atual; curar reduz o bônus. Não usa quantidade absoluta de PV perdidos.",
 		"ult": "Matador de Gigantes",
 		"ult_text": "Matador de Gigantes: 250% do Dano Físico em toda a coluna escolhida, usando o atributo aumentado pela passiva. Pode critar. Custo 90; dez de mana por acerto do básico e zero por turno; ult não gera mana."
-	}
+	},
+	"aurora": {"role": "Maga de controle; retaguarda", "basic": "Toque do Travesseiro", "basic_text": "Atinge um inimigo com 100% do Dano Mágico.", "passive": "Sonho Alimentado", "passive_text": "Acertar com um básico um inimigo sob Sono concede 10 de mana extra.", "ult": "Bruma do Sono", "ult_text": "Custa 100 de mana. Causa 100% do Dano Mágico no alvo e em até um inimigo próximo. Aplica Sono por 1 turno nos inimigos acertados que não forem imunes. Sono tem 50% de chance de impedir a ação."},
+	"mogli": {"role": "Dupla assassina física; meio", "basic": "Caçada em Dupla", "basic_text": "Mogli e Bagheera agem como uma unidade com 2 ataques por turno. Cada básico causa 100% do Dano Físico.", "passive": "Faro da Pantera", "passive_text": "Básicos causam 25% mais dano contra inimigos com 40% dos PV ou menos.", "ult": "Bote Sombrio", "ult_text": "Custa 80 de mana. Bagheera avança junto de Mogli e causa 250% do Dano Físico em um alvo."},
+	"pinocchio": {"role": "Autômato físico; vanguarda", "basic": "Soco de Engrenagem", "basic_text": "Atinge um inimigo com 100% do Dano Físico.", "passive": "Carcaça de Madeira", "passive_text": "Entra em cada combate com um escudo equivalente a 8% dos PV máximos.", "ult": "Punho Hidráulico", "ult_text": "Custa 90 de mana. Causa 240% do Dano Físico em um alvo e concede a Pinóquio um escudo de 10% dos PV máximos."},
 }
 const BOONS = {
 	"scarlet": [
@@ -556,5 +562,8 @@ const BOONS = {
 			"Até nove retornos na run, com 20% da vida máxima. Chances sucessivas: 100%, 90%, 80%, 70%, 60%, 50%, 40%, 30%, 20%. Falha resulta em morte normal. Reviver preserva mana e limpa condições negativas. Ressurreição externa não reinicia as chances.",
 			"Concluir run como protagonista."
 		]
-	]
+	],
+	"aurora": [["Sono Profundo", "O Sono aplicado pela Bruma dura 2 turnos.", "Disponível desde o início."]],
+	"mogli": [["Caçada Certeira", "O bônus de Faro da Pantera sobe de 25% para 50%.", "Disponível desde o início."]],
+	"pinocchio": [["Servo Blindado", "O escudo inicial sobe de 8% para 12% dos PV máximos.", "Disponível desde o início."]],
 }

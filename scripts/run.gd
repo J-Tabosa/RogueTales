@@ -669,9 +669,9 @@ func roll_run_offers() -> void:
 		offers.append("ally:"+map_guest)
 	elif not guests.is_empty() and (guaranteed_recruit or rng.randf() < ExpeditionContent.RECRUIT_CHANCE):
 		offers.append("ally:" + guests[rng.randi_range(0, guests.size() - 1)])
-	if (reward_boss or rng.randf() < 0.40) and inventory.size() < 144:
+	if (reward_boss or rng.randf() < ExpeditionContent.COMBAT_ITEM_OFFER_CHANCE) and inventory.size() < 144:
 		offers.append(ExpeditionContent.RANDOM_ITEM_OFFER)
-	# Recruitment/item decisions above keep their existing frequency and three slots.
+	# Fill the remaining slots with buffs after recruiting and equipment rolls.
 	while offers.size()<3:
 		var bonus_id:=Bonuses.roll(self)
 		if bonus_id.is_empty():break

@@ -131,6 +131,6 @@ func test() -> void:
 	# All twelve kits retain four mutually exclusive paths and exact base stats.
 	for id in R.Data.BASE:
 		var base:Dictionary=TaleCatalog.hero_stats(id,[0,0,0],{})
-		check(close(base.max_hp,R.Data.BASE[id].hp) and R.Data.BOONS[id].size()==4,"Roster "+id)
+		check(close(base.max_hp,R.Data.BASE[id].hp) and R.Data.BOONS[id].size()==(1 if id in ["aurora","mogli","pinocchio"] else 4),"Roster "+id)
 	print("BOONS 095 ","PASS" if failures==0 else "FAIL"," · ",checks," checks · ",failures," failures")
 	quit(1 if failures>0 else 0)

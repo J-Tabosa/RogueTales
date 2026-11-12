@@ -9,6 +9,7 @@ const ROUTE_FORMAT := 3
 const MAX_PARTY := 5
 const EVENT_CHANCE := 0.25
 const ROAD_EVENT_CHANCE := 0.35
+const COMBAT_ITEM_OFFER_CHANCE := 0.30
 const RANDOM_ITEM_OFFER := "item:random"
 const RECRUIT_CHANCE := 0.25
 const SHOP_FORMAT := 2
@@ -104,7 +105,10 @@ const KITS = {
 		"Básico — Corte Brutal (nome proposto): 100% do Dano Físico em um alvo; pode critar.",
 		"Fúria do Pequeno Gigante",
 		"Passiva — Fúria do Pequeno Gigante (nome proposto): +1% de Dano Físico por 1% de vida máxima faltando. Recalcula com a vida atual; curar reduz o bônus. Não usa quantidade absoluta de PV perdidos."
-	]
+	],
+	"aurora": ["Toque do Travesseiro", "Atinge um inimigo com 100% do Dano Mágico.", "Sonho Alimentado", "Acertar com um básico um inimigo sob Sono concede 10 de mana extra."],
+	"mogli": ["Caçada em Dupla", "Mogli e Bagheera agem como uma unidade com 2 ataques por turno. Cada básico causa 100% do Dano Físico.", "Faro da Pantera", "Básicos causam 25% mais dano contra inimigos com 40% dos PV ou menos."],
+	"pinocchio": ["Soco de Engrenagem", "Atinge um inimigo com 100% do Dano Físico.", "Carcaça de Madeira", "Entra em cada combate com um escudo equivalente a 8% dos PV máximos."],
 }
 ## Obsolete mutations no longer enter the reward pool.
 const MUTATIONS = {
@@ -119,7 +123,10 @@ const MUTATIONS = {
 	"matches": [],
 	"aladin": [],
 	"peter": [],
-	"puss": []
+	"puss": [],
+	"aurora": [],
+	"mogli": [],
+	"pinocchio": [],
 }
 const ROUTES := {
 	"road_event": {"title": "Um desvio na trilha", "detail": "Veja o que há no caminho. Você pode recusar qualquer proposta e seguir viagem."},

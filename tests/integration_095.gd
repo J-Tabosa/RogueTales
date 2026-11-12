@@ -11,7 +11,7 @@ func test() -> void:
 	# Exercise complete battle turns for every path against real world boss mechanics.
 	var encounters:=0
 	for id in R.Data.BASE:
-		for path in 4:
+		for path in Blessings.PATHS[id].size():
 			var c:=preload("res://tests/test_accounts.gd").legacy();c.unlocked.assign(TaleCatalog.HEROES.keys())
 			var run:=IdleRun.new()
 			run.start_expedition(c,id,"blessing:%s:0"%id)
@@ -39,7 +39,7 @@ func test() -> void:
 				for a in run.actors:check(is_finite(a.hp) and a.energy>=0 and a.shield>=0,"Finite battle state")
 			R.finish_combat(run)
 			encounters+=1
-	check(encounters==48,"48 roster/path boss encounter integrations")
+	check(encounters==51,"51 roster/path boss encounter integrations")
 	# Persist achievement identity without the old twelve-room substitution.
 	var run:=make(["snow_white"])
 	run.actors[0].armor=100

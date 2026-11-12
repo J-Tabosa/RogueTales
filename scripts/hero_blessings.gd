@@ -361,7 +361,10 @@ const PATHS = {
 				"path": 3
 			}
 		]
-	]
+	],
+	"aurora": [["Sono Profundo", "O Sono aplicado pela Bruma dura 2 turnos.", {"path": 0}]],
+	"mogli": [["Caçada Certeira", "O bônus de Faro da Pantera sobe de 25% para 50%.", {"path": 0}]],
+	"pinocchio": [["Servo Blindado", "O escudo inicial sobe de 8% para 12% dos PV máximos.", {"path": 0}]],
 }
 static func id_for(hero: String, index: int) -> String:
 	return "blessing:%s:%d"%[hero,index]
@@ -369,7 +372,7 @@ static func data(id: String) -> Dictionary:
 	var parts:=id.split(":")
 	if parts.size()!=3 or parts[0]!="blessing" or not PATHS.has(parts[1]) or not parts[2].is_valid_int():return {}
 	var i:=int(parts[2])
-	if i<0 or i>3:return {}
+	if i < 0 or i >= PATHS[parts[1]].size(): return {}
 	return {"id":id,"hero":parts[1],"index":i,"title":PATHS[parts[1]][i][0],"detail":PATHS[parts[1]][i][1],"effects":PATHS[parts[1]][i][2].duplicate()}
 static func unlocked(campaign, id: String) -> bool:
 	var d:=data(id)
@@ -389,7 +392,7 @@ static func record(campaign, owner: Dictionary, won:=false) -> Array[String]:
 	var newly:Array[String]=[]
 	for hero in PATHS:
 		var before:Array[bool]=[]
-		for i in 4:before.append(unlocked(campaign,id_for(hero,i)))
+		for i in PATHS[hero].size():before.append(unlocked(campaign,id_for(hero,i)))
 		var p:Dictionary=campaign.hero_milestones.get(hero,{"rooms":0,"secret":false,"win":false,"feat":false})
 		if not p.has("feat"):p["feat"]=false
 		# A per-run watermark makes checkpoint saves and terminal resolution idempotent.
@@ -411,7 +414,7 @@ static func record(campaign, owner: Dictionary, won:=false) -> Array[String]:
 			var state:Dictionary=owner.get("ability_state",{}).get(hero,{})
 			if state.get("wishes",[]).size()<3:p["feat"]=true
 		campaign.hero_milestones[hero]=p
-		for i in range(1,4):
+		for i in range(1, PATHS[hero].size()):
 			if not before[i] and unlocked(campaign,id_for(hero,i)):newly.append(id_for(hero,i))
 	# Old run watermarks can be pruned once a new run has started.
 	for key in campaign.blessing_credit.keys():

@@ -85,7 +85,10 @@ const HERO_TACTICS = {
 		"row": "front",
 		"ult": "Matador de Gigantes",
 		"detail": "Ult — Matador de Gigantes (nome proposto): 250% do Dano Físico em toda a coluna escolhida, usando o atributo aumentado pela passiva. Pode critar. Custo 90; dez de mana por acerto do básico e zero por turno; ult não gera mana."
-	}
+	},
+	"aurora": {"class": "mage", "row": "back", "ult": "Bruma do Sono", "detail": "Custa 100 de mana. Causa 100% do Dano Mágico no alvo e em até um inimigo próximo. Aplica Sono por 1 turno nos inimigos acertados que não forem imunes. Sono tem 50% de chance de impedir a ação."},
+	"mogli": {"class": "assassin", "row": "middle", "ult": "Bote Sombrio", "detail": "Custa 80 de mana. Bagheera avança junto de Mogli e causa 250% do Dano Físico em um alvo."},
+	"pinocchio": {"class": "vanguard", "row": "front", "ult": "Punho Hidráulico", "detail": "Custa 90 de mana. Causa 240% do Dano Físico em um alvo e concede a Pinóquio um escudo de 10% dos PV máximos."},
 }
 const HERO_SCENES = {
 	"scarlet": preload("res://scenes/heroes/scarlet.tscn"),
@@ -100,6 +103,9 @@ const HERO_SCENES = {
 	"matches": preload("res://scenes/heroes/matches.tscn"),
 	"peter": preload("res://scenes/heroes/peter.tscn"),
 	"aladin": preload("res://scenes/heroes/aladin.tscn"),
+	"aurora": preload("res://scenes/heroes/aurora.tscn"),
+	"mogli": preload("res://scenes/heroes/mogli.tscn"),
+	"pinocchio": preload("res://scenes/heroes/pinocchio.tscn"),
 }
 const HEROES = {
 	"scarlet":
@@ -254,6 +260,9 @@ const HEROES = {
 		"bio": "Aladin não pede um reino. Prefere um tapete, uma saída e companhia para a viagem.",
 		"skills": [["Trama encantada", "A cada 3 acertos, escudo de 3 +2 por nível ao grupo"], ["Lâmpada desperta", "+16% de dano por nível"], ["Vento das dunas", "Intervalo de ataque −5% por nível"]]
 	},
+	"aurora": {"name": "Bela Adormecida", "role": "Maga de controle; retaguarda", "hp": 205.0, "damage": 20.0, "interval": 1.85, "bio": "O reino chamou de maldição. Ela chama de cinco minutinhos.", "skills": [["Toque do Travesseiro", "Atinge um inimigo com 100% do Dano Mágico."], ["Sonho Alimentado", "Acertar com um básico um inimigo sob Sono concede 10 de mana extra."], ["Bruma do Sono", "Custa 100 de mana. Causa 100% do Dano Mágico no alvo e em até um inimigo próximo. Aplica Sono por 1 turno nos inimigos acertados que não forem imunes. Sono tem 50% de chance de impedir a ação."]], "color": Color("ed94be")},
+	"mogli": {"name": "Mogli e Bagheera", "role": "Dupla assassina física; meio", "hp": 225.0, "damage": 14.0, "interval": 1.65, "bio": "A selva ensinou o menino a ouvir. A pantera ensinou a ele quando saltar.", "skills": [["Caçada em Dupla", "Mogli e Bagheera agem como uma unidade com 2 ataques por turno. Cada básico causa 100% do Dano Físico."], ["Faro da Pantera", "Básicos causam 25% mais dano contra inimigos com 40% dos PV ou menos."], ["Bote Sombrio", "Custa 80 de mana. Bagheera avança junto de Mogli e causa 250% do Dano Físico em um alvo."]], "color": Color("63b8a3")},
+	"pinocchio": {"name": "Pinóquio", "role": "Autômato físico; vanguarda", "hp": 310.0, "damage": 19.0, "interval": 1.9, "bio": "O que começou como madeira ganhou engrenagens, vontade própria e um jeito peculiar de proteger os outros.", "skills": [["Soco de Engrenagem", "Atinge um inimigo com 100% do Dano Físico."], ["Carcaça de Madeira", "Entra em cada combate com um escudo equivalente a 8% dos PV máximos."], ["Punho Hidráulico", "Custa 90 de mana. Causa 240% do Dano Físico em um alvo e concede a Pinóquio um escudo de 10% dos PV máximos."]], "color": Color("7bd5d4")},
 }
 const UNLOCKS = {
 	"snow_white":

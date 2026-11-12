@@ -6,6 +6,7 @@ Execute `python3 tools/check_095.py --godot /caminho/para/godot`. O runner consi
 
 - `enemy_balance`: leitura do Excel entregue e de PCK, preservação dos atributos-base e da progressão, alterações de vida/dano/defesas/esquiva, iniciativa e três ataques reais na própria vez, texto compartilhado/inline, rejeição de dados inválidos e recuperação.
 
+- `roster_15`: três personagens com retrato e animações, compra, recrutamento, combate, escolha de bênção e frequência de itens.
 - `road_events_roulette`: eventos opcionais, requisitos de atributos, cura, dano, contrato, sorteio único, animação e retomada de saves.
 - `shop_map_encounters`: curva de preços por estágio, estoques separados, sorteio das duas poções, escolha de quem reviver na interface, migração do estoque e bloqueio de encontros salvos no mapa errado.
 - `seasonal_routes_100`: 6.025 verificações, todas as 17 rotas, 680 combates e 136 mercados, chances das quatro estações, cenários HD, inimigos por bioma, encontros definidos, prefixos/checkpoints/RNG, relíquia lendária de vaga, teto cinco e migração de runs antigas.
