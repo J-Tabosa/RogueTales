@@ -386,7 +386,7 @@ func sync_health(actors: Array[Dictionary]) -> void:
 			heroes[index].modulate = Color(0.4, 0.42, 0.48, 0.35)
 		unit_widgets[index].root.visible = actors[index].hp > 0
 		HealthDisplay.update(unit_widgets[index].health,actors[index])
-		unit_widgets[index].energy.max_value = 4 if simulation.expedition and actors[index].id=="alice" else maxf(1,simulation.tactics.Rules.cost(actors[index]))
+		unit_widgets[index].energy.max_value = 4.0 if simulation.expedition and actors[index].id=="alice" else maxf(1,simulation.tactics.Rules.cost(actors[index]))
 		unit_widgets[index].energy.value = actors[index].get("card_charge",0) if simulation.expedition and actors[index].id=="alice" else actors[index].energy
 		sync_conditions(unit_widgets[index],actors[index],index,false)
 		unit_widgets[index].text.text = ("%s/%s" if unit_widgets[index].panel.size.x<90 else "%s/%s PV") % [compact_hp(actors[index].hp),compact_hp(HealthDisplay.capacity(actors[index]))]
@@ -435,7 +435,7 @@ func _process(delta: float) -> void:
 	if not frozen: intro_left = maxf(0, intro_left - delta)
 	if walking and dt > 0:
 		travel_progress = minf(1, travel_progress + dt / 2.8)
-		backdrop.position.x=-12 if reduced_motion else -12-12*travel_progress
+		backdrop.position.x = -12.0 if reduced_motion else -12.0 - 12.0 * travel_progress
 	if not walking: backdrop.position.x=-12
 	entrance_left = maxf(0, entrance_left - dt)
 	if not frozen:
@@ -920,8 +920,9 @@ func ultimate_effect(index: int, result: Dictionary) -> void:
 
 func draw_burst(canvas: Node2D, burst: Dictionary) -> void:
 	if burst.get("spirit_return",false):
-		var t:float=1-burst.left/burst.duration
-		UltVFX.stamp(canvas,"peter",Vector2(burst.from).lerp(burst.at,smoothstep(0,.80,t)),Vector2.ONE*human_height()*.65,t,minf(1,(1-t)*6))
+		var return_progress: float = 1.0 - burst.left / burst.duration
+		var return_position := Vector2(burst.from).lerp(burst.at, smoothstep(0, .8, return_progress))
+		UltVFX.stamp(canvas, "peter", return_position, Vector2.ONE * human_height() * .65, return_progress, minf(1, (1 - return_progress) * 6))
 		return
 	if CharacterEffects.IDS.has(str(burst.id)):
 		CharacterEffects.burst(self,canvas,burst)
@@ -930,7 +931,14 @@ func draw_burst(canvas: Node2D, burst: Dictionary) -> void:
 	var at: Vector2 = burst.at if reduced_motion else Vector2(burst.from).lerp(burst.at, smoothstep(0, 0.65, t))
 	var extent := Vector2.ONE * human_height() * (1.25 if str(burst.id) == "alice" else 1.15)
 	var texture := UltimateArt.frame(str(burst.id), t)
-	canvas.draw_texture_rect(texture, Rect2(at - extent * 0.5, extent), false, Color(1, 1, 1, minf(1, (1 - t) * 5)))
+	var opacity := minf(1.0, (1.0 - t) * 5.0)
+	if texture != null:
+		canvas.draw_texture_rect(texture, Rect2(at - extent * 0.5, extent), false, Color(1, 1, 1, opacity))
+		return
+	var tint: Color = TaleCatalog.HEROES[burst.id].color
+	var radius := extent.x * lerpf(.14, .46, t)
+	canvas.draw_circle(at, radius * .76, Color(tint, opacity * .14), true, -1.0, true)
+	canvas.draw_arc(at, radius, 0.0, TAU, 32, Color(tint, opacity), 2.5, true)
 
 
 func compact_hp(value: float) -> String:
@@ -956,11 +964,11 @@ func sync_conditions(item: Dictionary, data: Dictionary, index: int, hostile: bo
 	var slot := 0
 	for kind in visible_conditions:
 		if not item.badges.has(kind):
-			var badge:=Button.new()
-			badge.set_script(preload("res://scripts/status_badge.gd"))
-			badge.pressed.connect(func(): status_requested.emit(index,hostile))
-			item.panel.add_child(badge)
-			item.badges[kind]=badge
+			var new_badge := Button.new()
+			new_badge.set_script(preload("res://scripts/status_badge.gd"))
+			new_badge.pressed.connect(func(): status_requested.emit(index,hostile))
+			item.panel.add_child(new_badge)
+			item.badges[kind] = new_badge
 		var badge: Button=item.badges[kind]
 		badge.configure(kind,visible_conditions[kind][0],visible_conditions[kind][1])
 		if widget_size().x < 80 and kind in ["poison","burn","bleed"]:

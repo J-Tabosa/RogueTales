@@ -10,7 +10,8 @@ static var frames: Dictionary = {}
 
 static func frame(id: String, progress: float) -> Texture2D:
 	if preload("res://scripts/character_effects.gd").IDS.has(id): return preload("res://scripts/character_effects.gd").frame(id,progress,true)
-	var data: Array = GROUPS[id]
+	var data: Array = GROUPS.get(id, [])
+	if data.is_empty(): return null
 	var key: String = data[0]
 	if not textures.has(key): textures[key] = load("res://assets/effects/ult_%s.webp" % key)
 	var number := clampi(int(progress * 6), 0, 5)

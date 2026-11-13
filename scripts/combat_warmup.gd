@@ -36,6 +36,7 @@ func start(models:Array,ids:Array) -> void:
 	busy=not jobs.is_empty()
 	if not busy:viewport.queue_free()
 func add_texture(texture:Texture2D,source_material:Material=null) -> void:
+	if texture == null: return
 	var key:=str(texture.get_instance_id())+":"+str(source_material.shader.get_instance_id() if source_material is ShaderMaterial else 0)
 	if prepared.has(key) or jobs.any(func(job):return job.key==key):return
 	jobs.append({"key":key,"texture":texture,"material":source_material.duplicate() if source_material!=null else null})

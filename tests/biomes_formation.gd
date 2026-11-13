@@ -70,7 +70,7 @@ func checks() -> void:
 				poses[hash(image.get_data())] = true
 			assert(poses.size() == 4, "Every enemy has four different authored poses")
 	assert(unique.size() == 48)
-	for id in TaleCatalog.HEROES:
+	for id in Art.GROUPS:
 		var phases := {}
 		for frame in 6:
 			var texture: AtlasTexture = Art.frame(id, frame / 6.0)
