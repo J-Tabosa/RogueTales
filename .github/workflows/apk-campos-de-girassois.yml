@@ -1,0 +1,112 @@
+name: APK Campos de Girassóis com correção do Mogli
+on:
+  push:
+    branches: [codex/apk-campos-de-girassois]
+    paths: [.github/workflows/apk-campos-de-girassois.yml]
+permissions:
+  contents: write
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    env:
+      GODOT_VERSION: 4.7.2
+      SOURCE_COMMIT: 9cd07e67bcbe47be07c342a571e6e694eba05701
+      APK_NAME: RogueTales-Girassois-Correcao-Mogli-Android.apk
+      RELEASE_TAG: campos-de-girassois-correcao-mogli
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 9cd07e67bcbe47be07c342a571e6e694eba05701
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install the official Godot editor and Android template
+        shell: bash
+        run: |
+          set -euo pipefail
+          export ANDROID_HOME="$RUNNER_TEMP/android-sdk"
+          export ANDROID_SDK_ROOT="$ANDROID_HOME"
+          mkdir -p "$ANDROID_HOME/cmdline-tools"
+          curl -fsSL --retry 3 'https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip' -o "$RUNNER_TEMP/android-commandline.zip"
+          unzip -q "$RUNNER_TEMP/android-commandline.zip" -d "$RUNNER_TEMP/android-commandline"
+          mv "$RUNNER_TEMP/android-commandline/cmdline-tools" "$ANDROID_HOME/cmdline-tools/latest"
+          sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          set +o pipefail
+          yes | "$sdkmanager" --sdk_root="$ANDROID_HOME" --licenses > /dev/null
+          set -o pipefail
+          "$sdkmanager" --sdk_root="$ANDROID_HOME" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          printf 'ANDROID_HOME=%s\nANDROID_SDK_ROOT=%s\n' "$ANDROID_HOME" "$ANDROID_HOME" >> "$GITHUB_ENV"
+          version="$GODOT_VERSION-stable"
+          downloads="https://downloads.godotengine.org/?version=$GODOT_VERSION&flavor=stable"
+          curl -fsSL --retry 3 "$downloads&platform=linux.64&slug=linux.x86_64.zip" -o "$RUNNER_TEMP/godot.zip"
+          curl -fsSL --retry 3 "$downloads&platform=templates&slug=export_templates.tpz" -o "$RUNNER_TEMP/templates.tpz"
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP"
+          chmod +x "$RUNNER_TEMP/Godot_v${version}_linux.x86_64"
+          printf 'GODOT_BIN=%s\n' "$RUNNER_TEMP/Godot_v${version}_linux.x86_64" >> "$GITHUB_ENV"
+          template_dir="$HOME/.local/share/godot/export_templates/$GODOT_VERSION.stable"
+          mkdir -p "$template_dir"
+          unzip -jq "$RUNNER_TEMP/templates.tpz" 'templates/android_debug.apk' 'templates/version.txt' -d "$template_dir"
+          mkdir -p "$HOME/.config/godot"
+          cat > "$HOME/.config/godot/editor_settings-4.7.tres" <<EOF
+          [gd_resource type="EditorSettings" format=3]
+          [resource]
+          export/android/android_sdk_path = "$ANDROID_HOME"
+          export/android/java_sdk_path = "$JAVA_HOME"
+          EOF
+      - name: Test the sunflower battle and new travelers
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$GODOT_BIN" --version
+          "$GODOT_BIN" --headless --editor --path . --import --quit 2>&1 | tee "$RUNNER_TEMP/import.log"
+          if grep -qE 'SCRIPT ERROR|Parse Error|Compile Error' "$RUNNER_TEMP/import.log"; then exit 1; fi
+          timeout 120 "$GODOT_BIN" --headless --path . --script res://tests/sunflower_enemies.gd 2>&1 | tee "$RUNNER_TEMP/test.log"
+          if grep -qE 'SCRIPT ERROR|ERROR:' "$RUNNER_TEMP/test.log"; then exit 1; fi
+          grep -F 'SUNFLOWER ENEMIES:' "$RUNNER_TEMP/test.log"
+          timeout 120 "$GODOT_BIN" --headless --path . --script res://tests/new_traveler_combat.gd 2>&1 | tee "$RUNNER_TEMP/travelers.log"
+          if grep -qE 'SCRIPT ERROR|ERROR:|Assertion failed' "$RUNNER_TEMP/travelers.log"; then exit 1; fi
+          grep -F 'NEW TRAVELER COMBAT PASS:' "$RUNNER_TEMP/travelers.log"
+      - name: Export and verify the signed ARM64 test APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          key="$RUNNER_TEMP/roguetales-girassois-test.jks"
+          keytool -genkeypair -noprompt -keystore "$key" -storepass android -keypass android \
+            -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 3650 \
+            -dname 'CN=RogueTales Girassois Android Test'
+          export GODOT_ANDROID_KEYSTORE_DEBUG_PATH="$key"
+          export GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey
+          export GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=android
+          sed -i \
+            -e 's/^version\/code=28$/version\/code=30/' \
+            -e 's/^version\/name=.*$/version\/name="1.0.4-girassois-mogli"/' \
+            -e 's/^package\/unique_name=.*$/package\/unique_name="com.jtabosa.roguetales.girassois.mogli"/' \
+            -e 's/^package\/name=.*$/package\/name="RogueTales Girassóis Corrigido"/' \
+            export_presets.cfg
+          "$GODOT_BIN" --headless --path . --export-debug "Android Teste" "$RUNNER_TEMP/$APK_NAME"
+          sdk_tools="$ANDROID_HOME/build-tools/36.0.0"
+          "$sdk_tools/apksigner" verify --verbose --print-certs "$RUNNER_TEMP/$APK_NAME"
+          "$sdk_tools/zipalign" -c -P 16 4 "$RUNNER_TEMP/$APK_NAME"
+          "$sdk_tools/aapt" dump badging "$RUNNER_TEMP/$APK_NAME" > "$RUNNER_TEMP/badging.txt"
+          grep -F "package: name='com.jtabosa.roguetales.girassois.mogli' versionCode='30'" "$RUNNER_TEMP/badging.txt"
+          unzip -tq "$RUNNER_TEMP/$APK_NAME"
+          sha256sum "$RUNNER_TEMP/$APK_NAME"
+      - name: Publish the APK on the source commit
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if ! command -v gh > /dev/null; then
+            cli_version=2.65.0
+            curl -fsSL --retry 3 "https://github.com/cli/cli/releases/download/v$cli_version/gh_${cli_version}_linux_amd64.tar.gz" -o "$RUNNER_TEMP/gh.tar.gz"
+            tar -xzf "$RUNNER_TEMP/gh.tar.gz" -C "$RUNNER_TEMP"
+            export PATH="$RUNNER_TEMP/gh_${cli_version}_linux_amd64/bin:$PATH"
+          fi
+          gh release create "$RELEASE_TAG" "$RUNNER_TEMP/$APK_NAME" \
+            --repo "$GITHUB_REPOSITORY" --target "$SOURCE_COMMIT" --prerelease \
+            --title 'Campos de Girassóis · Correção de Mogli' \
+            --notes 'APK Android ARM64 dos Campos de Girassóis com a correção de combate de Mogli, Aurora e Pinóquio, exportado no Godot 4.7.2. Esta edição de teste instala ao lado da anterior e usa progresso próprio.'
