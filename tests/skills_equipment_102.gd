@@ -43,7 +43,7 @@ func checks() -> void:
 		destination=OS.get_cmdline_user_args()[0]
 		DirAccess.make_dir_recursive_absolute(destination)
 	var regions:Dictionary={}
-	for id in TaleCatalog.HEROES:
+	for id in Art.ORDER:
 		for kind in 3:
 			var image:=Art.texture(id,kind) as AtlasTexture
 			assert(image!=null and image.region.size==Vector2(362,362))
