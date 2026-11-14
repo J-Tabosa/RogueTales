@@ -33,24 +33,31 @@ jobs:
           set -euo pipefail
           mkdir -p _artifacts
           timeout 600 "$GODOT_RUNNER" --headless --path . --editor --import --quit 2>&1 | tee _artifacts/import.log
-          if rg 'SCRIPT ERROR|Parse Error|Compile Error' _artifacts/import.log; then exit 1; fi
+          if grep -E 'SCRIPT ERROR|Parse Error|Compile Error' _artifacts/import.log; then exit 1; fi
       - name: Combat regression checks
         shell: bash
         run: |
           python3 - <<'PY'
           import os, pathlib, subprocess, sys
-          suites = ['ui_themes', 'arena_equipment_layout', 'combat_readability', 'skills_equipment_102', 'wishes_silk_097', 'reward_team_ui', 'bonuses_ui_098']
+          suites = ['ui_themes', 'arena_equipment_layout', 'combat_readability', 'skills_equipment_102', 'wishes_silk_097', 'reward_team_ui', 'bonuses_ui_098', 'new_traveler_combat']
           if pathlib.Path('tests/manuscript_combat_ui.gd').exists():
               suites.append('manuscript_combat_ui')
           failed = []
           for suite in suites:
-              result = subprocess.run([os.environ['GODOT_RUNNER'], '--headless', '--path', '.', '--script', 'res://tests/' + suite + '.gd'], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=180)
-              pathlib.Path('_artifacts', suite + '.log').write_text(result.stdout, encoding='utf-8')
-              ok = result.returncode == 0 and not any(token in result.stdout for token in ('SCRIPT ERROR', 'ERROR:', 'Assertion failed'))
+              log_path = pathlib.Path('_artifacts', suite + '.log')
+              command = [os.environ['GODOT_RUNNER'], '--headless', '--path', '.', '--script', 'res://tests/' + suite + '.gd']
+              with log_path.open('wb') as log:
+                  try:
+                      result = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, timeout=180)
+                  except subprocess.TimeoutExpired:
+                      log.write(b'\nTimed out after 180 seconds.\n')
+                      result = None
+              output = log_path.read_text(encoding='utf-8', errors='replace')
+              ok = result is not None and result.returncode == 0 and not any(token in output for token in ('SCRIPT ERROR', 'ERROR:', 'Assertion failed'))
               print(('PASS ' if ok else 'FAIL ') + suite, flush=True)
               if not ok:
                   failed.append(suite)
-                  print(result.stdout[-16000:], flush=True)
+                  print(output[-16000:], flush=True)
           sys.exit(bool(failed))
           PY
       - name: Render interface fixtures
@@ -61,7 +68,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq xvfb libgl1-mesa-dri
           xvfb-run -a -s '-screen 0 1920x1080x24' timeout 240 "$GODOT_RUNNER" --path . --rendering-method gl_compatibility --script res://tests/reward_team_ui.gd -- _artifacts/previews 2>&1 | tee _artifacts/render.log
-          if rg 'SCRIPT ERROR|ERROR:|Assertion failed' _artifacts/render.log; then exit 1; fi
+          if grep -E 'SCRIPT ERROR|ERROR:|Assertion failed' _artifacts/render.log; then exit 1; fi
       - name: Save validation logs and previews
         if: always()
         uses: actions/upload-artifact@v4
